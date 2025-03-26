@@ -1,28 +1,20 @@
-import defaultTheme from "tailwindcss/defaultTheme";
-import forms from "@tailwindcss/forms";
-
 /** @type {import('tailwindcss').Config} */
 export default {
     content: [
-        "./vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php",
-        "./storage/framework/views/*.php",
-        "./resources/views/**/*.blade.php",
+        "./resources/**/*.blade.php",
+        "./resources/**/*.js",
+        "./resources/**/*.vue",
     ],
     darkMode: ["class"],
     theme: {
-        extend: {
-            fontFamily: {
-                sans: [
-                    "system-ui",
-                    "-apple-system",
-                    "BlinkMacSystemFont",
-                    "Segoe UI",
-                    "Roboto",
-                    "Helvetica Neue",
-                    "Arial",
-                    "sans-serif",
-                ],
+        container: {
+            center: true,
+            padding: "2rem",
+            screens: {
+                "2xl": "1400px",
             },
+        },
+        extend: {
             colors: {
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
@@ -65,12 +57,12 @@ export default {
             },
             keyframes: {
                 "accordion-down": {
-                    from: { height: "0" },
+                    from: { height: 0 },
                     to: { height: "var(--radix-accordion-content-height)" },
                 },
                 "accordion-up": {
                     from: { height: "var(--radix-accordion-content-height)" },
-                    to: { height: "0" },
+                    to: { height: 0 },
                 },
             },
             animation: {
@@ -79,5 +71,5 @@ export default {
             },
         },
     },
-    plugins: [forms, require("tailwindcss-animate")],
+    plugins: [require("tailwindcss-animate")],
 };
