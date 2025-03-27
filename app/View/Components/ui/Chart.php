@@ -1,9 +1,7 @@
 <?php
 
-namespace App\View\Components\ui;
+namespace App\View\Components\Ui;
 
-use Closure;
-use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
 class Chart extends Component
@@ -37,23 +35,39 @@ class Chart extends Component
      * Create a new component instance.
      */
     public function __construct(
-        $type = 'line',
-        $id = null,
-        $data = [],
-        $options = [],
-        $height = '300px'
+        string $id,
+        string $type = 'line',
+        string $height = '300px',
+        array $data = [],
+        array $options = []
     ) {
+        $this->id = $id;
         $this->type = $type;
-        $this->id = $id ?? 'chart-' . uniqid();
+        $this->height = $height;
         $this->data = $data;
         $this->options = $options;
-        $this->height = $height;
+    }
+
+    /**
+     * Get the encoded chart data.
+     */
+    public function getEncodedData(): string
+    {
+        return json_encode($this->data ?: ['labels' => [], 'datasets' => []]);
+    }
+
+    /**
+     * Get the encoded chart options.
+     */
+    public function getEncodedOptions(): string
+    {
+        return json_encode($this->options ?: new \stdClass());
     }
 
     /**
      * Get the view / contents that represent the component.
      */
-    public function render(): View|Closure|string
+    public function render()
     {
         return view('components.ui.chart');
     }
