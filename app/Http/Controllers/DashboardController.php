@@ -30,16 +30,16 @@ class DashboardController extends Controller
         
         // Get statistics
         $stats = [
-            'total_active_vehicles' => Vehicle::where('is_archived', false)
+            'total_active_vehicles' => (int)Vehicle::where('is_archived', false)
                                        ->where('is_sold', false)
                                        ->count(),
-            'frontline_ready_vehicles' => Vehicle::where('is_frontline_ready', true)
+            'frontline_ready_vehicles' => (int)Vehicle::where('is_frontline_ready', true)
                                          ->where('is_archived', false)
                                          ->where('is_sold', false)
                                          ->count(),
-            'open_tasks' => Task::whereNotIn('status', ['completed'])
+            'open_tasks' => (int)Task::whereNotIn('status', ['completed'])
                            ->count(),
-            'overdue_tasks' => Task::whereNotIn('status', ['completed'])
+            'overdue_tasks' => (int)Task::whereNotIn('status', ['completed'])
                              ->whereNotNull('due_date')
                              ->where('due_date', '<', Carbon::now()->startOfDay())
                              ->count(),
