@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Analytics Dashboard') }}
+            {{ __('Reconditioning Dashboard') }}
         </h2>
     </x-slot>
 
@@ -11,7 +11,7 @@
             <div class="flex justify-end mb-4">
                 <form action="{{ route('dashboard') }}" method="GET" class="flex items-center space-x-2">
                     <div class="flex items-center space-x-2 bg-white rounded-md border px-3 py-2">
-                        <span class="text-sm text-gray-700">Custom Range</span>
+                        <span class="text-sm text-gray-700">Date Range</span>
                         <button type="button" onclick="this.form.reset();this.form.submit();" class="text-gray-400 hover:text-gray-500">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                         </button>
@@ -45,33 +45,33 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <x-ui-card class="bg-white">
                     <div class="flex flex-col space-y-1">
-                        <div class="text-sm font-medium text-gray-500">Total Sales</div>
-                        <div class="text-2xl font-bold">${{ number_format($stats['total_active_vehicles'] * 100, 2) }}</div>
-                        <div class="text-xs text-gray-500 mt-1">— 0% vs previous period</div>
+                        <div class="text-sm font-medium text-gray-500">Active Vehicles</div>
+                        <div class="text-2xl font-bold">{{ $stats['total_active_vehicles'] }}</div>
+                        <div class="text-xs text-gray-500 mt-1">In reconditioning process</div>
                     </div>
                 </x-ui-card>
                 
                 <x-ui-card class="bg-white">
                     <div class="flex flex-col space-y-1">
-                        <div class="text-sm font-medium text-gray-500">Total Orders</div>
+                        <div class="text-sm font-medium text-gray-500">Frontline Ready</div>
                         <div class="text-2xl font-bold">{{ $stats['frontline_ready_vehicles'] }}</div>
-                        <div class="text-xs text-gray-500 mt-1">— 0% vs previous period</div>
+                        <div class="text-xs text-gray-500 mt-1">Ready for sale</div>
                     </div>
                 </x-ui-card>
                 
                 <x-ui-card class="bg-white">
                     <div class="flex flex-col space-y-1">
-                        <div class="text-sm font-medium text-gray-500">Average Order Value</div>
-                        <div class="text-2xl font-bold">${{ number_format($stats['frontline_ready_vehicles'] > 0 ? ($stats['total_active_vehicles'] * 100 / $stats['frontline_ready_vehicles']) : 0, 2) }}</div>
-                        <div class="text-xs text-gray-500 mt-1">— 0% vs previous period</div>
+                        <div class="text-sm font-medium text-gray-500">Open Tasks</div>
+                        <div class="text-2xl font-bold">{{ $stats['open_tasks'] }}</div>
+                        <div class="text-xs text-text-red-500 mt-1">{{ $stats['overdue_tasks'] }} overdue</div>
                     </div>
                 </x-ui-card>
                 
                 <x-ui-card class="bg-white">
                     <div class="flex flex-col space-y-1">
-                        <div class="text-sm font-medium text-gray-500">Conversion Rate</div>
-                        <div class="text-2xl font-bold">{{ number_format($stats['frontline_ready_vehicles'] > 0 ? ($stats['frontline_ready_vehicles'] / $stats['total_active_vehicles'] * 100) : 0, 2) }}%</div>
-                        <div class="text-xs text-gray-500 mt-1">— 0% vs previous period</div>
+                        <div class="text-sm font-medium text-gray-500">Completion Rate</div>
+                        <div class="text-2xl font-bold">{{ number_format($stats['frontline_ready_vehicles'] > 0 ? ($stats['frontline_ready_vehicles'] / $stats['total_active_vehicles'] * 100) : 0, 1) }}%</div>
+                        <div class="text-xs text-gray-500 mt-1">Vehicles ready vs total</div>
                     </div>
                 </x-ui-card>
             </div>
@@ -79,31 +79,31 @@
             <!-- Tabs -->
             <div class="mb-6 border-b">
                 <div class="flex space-x-6">
-                    <button class="pb-2 text-sm font-medium border-b-2 border-black">Sales Overview</button>
-                    <button class="pb-2 text-sm font-medium text-gray-500 hover:text-gray-700">Top Products</button>
-                    <button class="pb-2 text-sm font-medium text-gray-500 hover:text-gray-700">Customer Insights</button>
+                    <button class="pb-2 text-sm font-medium border-b-2 border-black">Reconditioning Overview</button>
+                    <button class="pb-2 text-sm font-medium text-gray-500 hover:text-gray-700">Task Management</button>
+                    <button class="pb-2 text-sm font-medium text-gray-500 hover:text-gray-700">Vehicle Status</button>
                 </div>
             </div>
             
             <!-- Charts -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Revenue & Orders Chart -->
+                <!-- Vehicles & Tasks Chart -->
                 <div class="lg:col-span-2">
                     <x-ui-card>
                         <div class="flex flex-col space-y-2">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <h3 class="text-lg font-medium">Revenue & Orders</h3>
+                                    <h3 class="text-lg font-medium">Vehicle Processing Trends</h3>
                                     <p class="text-sm text-gray-500">{{ \Carbon\Carbon::now()->subMonth()->format('M d, Y') }} - {{ \Carbon\Carbon::now()->format('M d, Y') }}</p>
                                 </div>
                                 <div class="flex items-center space-x-2">
                                     <div class="flex items-center space-x-1">
                                         <div class="w-3 h-3 rounded-full bg-black"></div>
-                                        <span class="text-sm">Revenue</span>
+                                        <span class="text-sm">Vehicles Received</span>
                                     </div>
                                     <div class="flex items-center space-x-1">
                                         <div class="w-3 h-3 rounded-full bg-gray-300"></div>
-                                        <span class="text-sm">Orders</span>
+                                        <span class="text-sm">Completed</span>
                                     </div>
                                 </div>
                             </div>
@@ -112,7 +112,7 @@
                             <div class="h-[350px] mt-4">
                                 <x-ui.chart 
                                     type="line" 
-                                    id="revenue-chart"
+                                    id="vehicles-chart"
                                     :data="$chartData"
                                     :options="[
                                         'responsive' => true,
@@ -148,19 +148,30 @@
                     </x-ui-card>
                 </div>
                 
-                <!-- Payment Methods -->
+                <!-- Stage Distribution -->
                 <div>
                     <x-ui-card>
                         <div class="flex flex-col h-full">
-                            <h3 class="text-lg font-medium mb-4">Payment Methods</h3>
+                            <h3 class="text-lg font-medium mb-4">Stage Distribution</h3>
                             
-                            <div class="flex-1 flex items-center justify-center">
-                                <div class="text-center py-8">
-                                    <div class="flex justify-center mb-4">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><path d="M14 16H8"/></svg>
+                            <div class="flex-1">
+                                @foreach($stages as $stage)
+                                    @php
+                                        $count = $stageCounts[$stage->slug] ?? 0;
+                                        $percentage = $stats['total_active_vehicles'] > 0 
+                                            ? ($count / $stats['total_active_vehicles'] * 100) 
+                                            : 0;
+                                    @endphp
+                                    <div class="mb-4">
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span>{{ $stage->name }}</span>
+                                            <span>{{ $count }} ({{ number_format($percentage, 1) }}%)</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ $percentage }}%"></div>
+                                        </div>
                                     </div>
-                                    <p class="text-gray-500 text-sm">No payment data available for this period.</p>
-                                </div>
+                                @endforeach
                             </div>
                         </div>
                     </x-ui-card>
