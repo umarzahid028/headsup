@@ -1,0 +1,220 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
+use Illuminate\Validation\Rules;
+
+class UserController extends Controller
+{
+    /**
+     * Create a new controller instance.
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+    
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
+    {
+        $this->authorize('view users');
+        
+        $users = User::query()->with('roles');
+        
+        if ($request->has('search')) {
+            $search = $request->input('search');
+            $users->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%");
+        }
+        
+        if ($request->has('role')) {
+            $roleId = $request->input('role');
+            $users->whereHas('roles', function ($query) use ($roleId) {
+                $query->where('id', $roleId);
+            });
+        }
+        
+        $users = $users->paginate(10)->withQueryString();
+        $roles = Role::all();
+        
+        return view('users.index', compact('users', 'roles'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        $this->authorize('create users');
+        
+        $roles = Role::all();
+        
+        return view('users.create', compact('roles'));
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $this->authorize('create users');
+        
+        $this->validate($request, [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'roles' => ['nullable', 'array'],
+            'roles.*' => ['exists:roles,id'],
+        ]);
+        
+        DB::beginTransaction();
+        
+        try {
+            $user = User::create([
+                'name' => $request->input('name'),
+                'email' => $request->input('email'),
+                'password' => Hash::make($request->input('password')),
+            ]);
+            
+            // Assign roles
+            if ($request->has('roles')) {
+                $roles = Role::whereIn('id', $request->input('roles'))->get();
+                $user->assignRole($roles);
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('admin.users.index')
+                ->with('success', 'User created successfully');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return redirect()->back()->withInput()
+                ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        $this->authorize('view users');
+        
+        $user = User::with('roles')->findOrFail($id);
+        
+        return view('users.show', compact('user'));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        $this->authorize('edit users');
+        
+        $user = User::findOrFail($id);
+        $roles = Role::all();
+        $userRoles = $user->roles->pluck('id')->toArray();
+        
+        return view('users.edit', compact('user', 'roles', 'userRoles'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        $this->authorize('edit users');
+        
+        $user = User::findOrFail($id);
+        
+        $rules = [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $id],
+            'roles' => ['nullable', 'array'],
+            'roles.*' => ['exists:roles,id'],
+        ];
+        
+        // Add password validation only if password field is filled
+        if ($request->filled('password')) {
+            $rules['password'] = ['confirmed', Rules\Password::defaults()];
+        }
+        
+        $this->validate($request, $rules);
+        
+        DB::beginTransaction();
+        
+        try {
+            // Update user data
+            $userData = [
+                'name' => $request->input('name'),
+                'email' => $request->input('email'),
+            ];
+            
+            // Update password if provided
+            if ($request->filled('password')) {
+                $userData['password'] = Hash::make($request->input('password'));
+            }
+            
+            $user->update($userData);
+            
+            // Super-admin can't have roles modified for security
+            if (!$user->hasRole('super-admin')) {
+                // Sync roles if provided, otherwise remove all roles
+                if ($request->has('roles')) {
+                    $roles = Role::whereIn('id', $request->input('roles'))->get();
+                    $user->syncRoles($roles);
+                } else {
+                    $user->syncRoles([]);
+                }
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('admin.users.index')
+                ->with('success', 'User updated successfully');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return redirect()->back()->withInput()
+                ->with('error', 'An error occurred while updating the user: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        $this->authorize('delete users');
+        
+        $user = User::findOrFail($id);
+        
+        // Prevent deletion of super-admin users
+        if ($user->hasRole('super-admin')) {
+            return redirect()->route('admin.users.index')
+                ->with('error', 'Super-admin users cannot be deleted');
+        }
+        
+        // Prevent self-deletion
+        if ($user->id === auth()->id()) {
+            return redirect()->route('admin.users.index')
+                ->with('error', 'You cannot delete your own account');
+        }
+        
+        $user->delete();
+        
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User deleted successfully');
+    }
+}
