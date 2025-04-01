@@ -162,6 +162,99 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Inspection & Repair Section -->
+            <div class="mt-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">Inspection & Repair</h3>
+                        <div class="flex space-x-2">
+                            @if($vehicle->status === 'arrived')
+                                <a href="/inspection/vehicles/{{ $vehicle->id }}/comprehensive" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                    <x-heroicon-o-clipboard-document-list class="h-4 w-4 mr-1" />
+                                    Start Inspection
+                                </a>
+                            @else
+                                <div class="text-sm text-gray-500">
+                                    @if($vehicle->status === 'delivered')
+                                        Vehicle must be marked as "Arrived" to start an inspection
+                                    @elseif($vehicle->status === 'ready')
+                                        Vehicle has completed all inspections
+                                    @else
+                                        Vehicle is not ready for inspection
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                    
+                    <!-- Inspection Stages -->
+                    @if($vehicle->vehicleInspections && $vehicle->vehicleInspections->count() > 0)
+                        <div class="mt-4">
+                            <h4 class="text-md font-medium mb-3">Inspection History</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stage</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        @foreach($vehicle->vehicleInspections as $inspection)
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="text-sm font-medium text-gray-900">{{ $inspection->inspectionStage->name }}</div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">{{ $inspection->inspection_date ? $inspection->inspection_date->format('M d, Y') : 'Not started' }}</div>
+                                                    @if($inspection->completed_date)
+                                                        <div class="text-xs text-gray-500">Completed: {{ $inspection->completed_date->format('M d, Y') }}</div>
+                                                    @endif
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                        {{ $inspection->status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                                           ($inspection->status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800') }}">
+                                                        {{ ucfirst(str_replace('_', ' ', $inspection->status)) }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="text-sm text-gray-900">
+                                                        {{ $inspection->user->name }}
+                                                        @if($inspection->vendor)
+                                                            <div class="text-xs text-gray-500">Vendor: {{ $inspection->vendor->name }}</div>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <div class="flex space-x-2">
+                                                        <a href="{{ route('inspection.inspections.show', $inspection) }}" class="text-indigo-600 hover:text-indigo-900" title="View Details">
+                                                            <x-heroicon-o-eye class="h-5 w-5" />
+                                                        </a>
+                                                        @if($inspection->status !== 'completed' && $vehicle->status === 'arrived')
+                                                            <a href="{{ route('inspection.inspections.edit', $inspection) }}" class="text-indigo-600 hover:text-indigo-900" title="Continue Inspection">
+                                                                <x-heroicon-o-clipboard-document-check class="h-5 w-5" />
+                                                            </a>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @else
+                        <div class="text-center py-6 bg-gray-50 rounded-lg">
+                            <p class="text-gray-500">No inspections have been performed on this vehicle.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
 </x-app-layout> 

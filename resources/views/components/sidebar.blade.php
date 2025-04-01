@@ -48,14 +48,47 @@
                 Transporter Management
             </a>
 
-            <!-- Inspection & Repair -->
-            <a href="{{ route('dashboard') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                <svg xmlns="http://www.w3.org/2000/svg" class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Inspection & Repair
-            </a>
+            <!-- Inspection & Repair Section -->
+            <div class="pt-2">
+                <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Inspection & Repair
+                </p>
+                
+                <!-- Vehicle Inspections -->
+                <a href="{{ route('inspection.inspections.index') }}" class="{{ request()->routeIs('inspection.inspections.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
+                    <x-heroicon-o-clipboard-document-check class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                    Vehicle Inspections
+                </a>
+                
+                <!-- Inspection Stages -->
+                <div x-data="{ openStages: {{ request()->routeIs('inspection.stages.*') || request()->routeIs('inspection.items.*') ? 'true' : 'false' }} }">
+                    <button @click="openStages = !openStages" class="w-full group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                        <x-heroicon-o-adjustments-horizontal class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                        <span class="flex-1">Configure Stages</span>
+                        <svg class="text-gray-300 ml-3 h-5 w-5 transform transition-transform" :class="{ 'rotate-90': openStages }" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                    
+                    <div x-show="openStages" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="pl-4 pr-2 space-y-1">
+                        <a href="{{ route('inspection.stages.index') }}" class="{{ request()->routeIs('inspection.stages.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                            <x-heroicon-o-list-bullet class="text-gray-400 mr-3 flex-shrink-0 h-5 w-5" />
+                            Manage Stages
+                        </a>
+                        <a href="{{ route('inspection.items.index') }}" class="{{ request()->routeIs('inspection.items.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                            <x-heroicon-o-clipboard-document-list class="text-gray-400 mr-3 flex-shrink-0 h-5 w-5" />
+                            Inspection Items
+                        </a>
+                    </div>
+                </div>
+                
+               
+                <!-- Vendors Management -->
+                <a href="{{ route('vendors.index') }}" class="{{ request()->routeIs('vendors.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                    <x-heroicon-o-building-storefront class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                    Vendors
+                </a>
+            </div>
 
             <!-- Administration Section -->
             <div class="pt-5">

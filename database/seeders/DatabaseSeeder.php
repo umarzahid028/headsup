@@ -29,5 +29,12 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             TransporterSeeder::class,
         ]);
+
+        // Inspection & Repair Seeders
+        $this->call([
+            VendorSeeder::class,
+            InspectionStageSeeder::class,
+            InspectionItemSeeder::class,
+        ]);
     }
 }
