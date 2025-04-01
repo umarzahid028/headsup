@@ -64,4 +64,12 @@ class Vehicle extends Model
     {
         return $this->hasMany(Transport::class);
     }
+
+    /**
+     * Get the gate passes for the vehicle.
+     */
+    public function gatePasses(): HasMany
+    {
+        return $this->hasMany(GatePass::class);
+    }
 }

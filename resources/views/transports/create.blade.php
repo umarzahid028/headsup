@@ -31,7 +31,7 @@
                         </div>
                     @endif
                     
-                    <form action="{{ route('transports.store') }}" method="POST">
+                    <form action="{{ route('transports.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -39,17 +39,21 @@
                             <div class="bg-white p-6 rounded-lg shadow-md">
                                 <h3 class="text-lg font-semibold mb-4 pb-2 border-b">Transport Information</h3>
                                 
-                                <!-- Vehicle -->
+                                <!-- Batch Details -->
                                 <div class="mb-4">
-                                    <label for="vehicle_id" class="block text-sm font-medium text-gray-700">Vehicle *</label>
-                                    <x-shadcn.select name="vehicle_id" id="vehicle_id" required>
-                                        <option value="">-- Select Vehicle --</option>
-                                        @foreach ($vehicles as $vehicle)
-                                            <option value="{{ $vehicle->id }}" {{ old('vehicle_id') == $vehicle->id ? 'selected' : '' }}>
-                                                {{ $vehicle->stock_number }} - {{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }}
-                                            </option>
-                                        @endforeach
-                                    </x-shadcn.select>
+                                    <div class="flex items-center mb-2">
+                                        <label class="block text-sm font-medium text-gray-700">Batch ID</label>
+                                        <span class="ml-2 px-2 py-1 bg-gray-100 text-xs font-medium rounded">Auto-generated</span>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="batch_name" class="block text-sm font-medium text-gray-700">Batch Name (Optional)</label>
+                                        <x-shadcn.input
+                                            type="text"
+                                            name="batch_name"
+                                            id="batch_name"
+                                            :value="old('batch_name')"
+                                        />
+                                    </div>
                                 </div>
                                 
                                 <!-- Origin -->
@@ -169,18 +173,148 @@
                                     <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
                                     <textarea name="notes" id="notes" rows="4" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">{{ old('notes') }}</textarea>
                                 </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Vehicle Selection & Gate Pass Upload -->
+                        <div class="mt-6 bg-white p-6 rounded-lg shadow-md">
+                            <h3 class="text-lg font-semibold mb-4 pb-2 border-b">Vehicle Selection & Gate Passes</h3>
+                            
+                            <div class="mb-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="block text-sm font-medium text-gray-700">Select Vehicles</label>
+                                    <div class="flex gap-2">
+                                        <button type="button" id="selectAllBtn" class="text-sm text-indigo-600 hover:text-indigo-900">
+                                            Select All
+                                        </button>
+                                        <button type="button" id="deselectAllBtn" class="text-sm text-gray-600 hover:text-gray-900">
+                                            Deselect All
+                                        </button>
+                                    </div>
+                                </div>
                                 
-                                <!-- Submit Button -->
-                                <div class="mt-6 flex justify-end">
-                                    <x-shadcn.button type="submit" variant="default">
-                                        Create Transport
-                                    </x-shadcn.button>
+                                <div class="mb-2">
+                                    <x-shadcn.input 
+                                        type="text" 
+                                        id="vehicleSearch" 
+                                        placeholder="Search vehicles..." 
+                                        class="w-full"
+                                    />
+                                </div>
+                                
+                                <div class="space-y-4 max-h-96 overflow-y-auto border border-gray-200 rounded-md p-4">
+                                    @if($vehicles->isEmpty())
+                                        <p class="text-gray-500 text-center py-4">No available vehicles found.</p>
+                                    @else
+                                        @foreach($vehicles as $index => $vehicle)
+                                            <div class="vehicle-item border border-gray-200 rounded-md p-4 {{ $index > 0 ? 'mt-4' : '' }}">
+                                                <div class="flex items-start">
+                                                    <div class="flex items-center h-5">
+                                                        <input id="vehicle_{{ $vehicle->id }}" name="vehicle_ids[]" type="checkbox" 
+                                                            value="{{ $vehicle->id }}" class="vehicle-checkbox h-4 w-4 text-indigo-600 rounded"
+                                                            {{ in_array($vehicle->id, old('vehicle_ids', [])) ? 'checked' : '' }}>
+                                                    </div>
+                                                    <div class="ml-3 flex-grow">
+                                                        <label for="vehicle_{{ $vehicle->id }}" class="font-medium text-gray-700 cursor-pointer">
+                                                            {{ $vehicle->stock_number }} - {{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }}
+                                                        </label>
+                                                        <p class="text-sm text-gray-500">VIN: {{ $vehicle->vin }}</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Gate Pass Upload -->
+                                                <div class="mt-3 ml-7 gate-pass-upload hidden">
+                                                    <label for="gate_pass_{{ $vehicle->id }}" class="block text-sm font-medium text-gray-700">
+                                                        Upload Gate Pass
+                                                    </label>
+                                                    <input type="file" id="gate_pass_{{ $vehicle->id }}" 
+                                                        name="gate_passes[{{ $vehicle->id }}]"
+                                                        class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
+                                                        file:rounded-md file:border-0 file:text-sm file:font-semibold
+                                                        file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                                        accept=".pdf,.jpg,.jpeg,.png">
+                                                    <p class="mt-1 text-xs text-gray-500">Accepted formats: PDF, JPG, JPEG, PNG (Max: 10MB)</p>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @endif
                                 </div>
                             </div>
+                            
+                            <!-- QR Code Tracking -->
+                            <div class="mt-6 mb-4">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="generate_qr" name="generate_qr" value="1" class="h-4 w-4 text-indigo-600 rounded"
+                                        {{ old('generate_qr') ? 'checked' : '' }}>
+                                    <label for="generate_qr" class="ml-2 block text-sm font-medium text-gray-700">
+                                        Generate QR Code for batch tracking
+                                    </label>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500 ml-6">
+                                    A QR code will be generated that links to the batch details page for easy tracking
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="mt-6 flex justify-end">
+                            <x-shadcn.button type="submit" variant="default">
+                                Create Transport
+                            </x-shadcn.button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle vehicle checkboxes and gate pass upload visibility
+            const vehicleCheckboxes = document.querySelectorAll('.vehicle-checkbox');
+            vehicleCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const gatePassUpload = this.closest('.vehicle-item').querySelector('.gate-pass-upload');
+                    if (this.checked) {
+                        gatePassUpload.classList.remove('hidden');
+                    } else {
+                        gatePassUpload.classList.add('hidden');
+                    }
+                });
+                
+                // Initialize visibility based on checked state
+                if (checkbox.checked) {
+                    checkbox.closest('.vehicle-item').querySelector('.gate-pass-upload').classList.remove('hidden');
+                }
+            });
+            
+            // Select All / Deselect All buttons
+            document.getElementById('selectAllBtn').addEventListener('click', function() {
+                vehicleCheckboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                    checkbox.closest('.vehicle-item').querySelector('.gate-pass-upload').classList.remove('hidden');
+                });
+            });
+            
+            document.getElementById('deselectAllBtn').addEventListener('click', function() {
+                vehicleCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                    checkbox.closest('.vehicle-item').querySelector('.gate-pass-upload').classList.add('hidden');
+                });
+            });
+            
+            // Vehicle search functionality
+            document.getElementById('vehicleSearch').addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                document.querySelectorAll('.vehicle-item').forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
 </x-app-layout> 

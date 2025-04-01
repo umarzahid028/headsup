@@ -54,4 +54,20 @@ class Transporter extends Model
             ? "{$this->name} ({$this->contact_person})" 
             : $this->name;
     }
+
+    /**
+     * Get the batches assigned to this transporter.
+     */
+    public function batches(): HasMany
+    {
+        return $this->hasMany(Batch::class);
+    }
+    
+    /**
+     * Get the gate passes assigned to this transporter.
+     */
+    public function gatePasses(): HasMany
+    {
+        return $this->hasMany(GatePass::class);
+    }
 } 

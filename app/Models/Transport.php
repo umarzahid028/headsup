@@ -17,6 +17,7 @@ class Transport extends Model
      */
     protected $fillable = [
         'vehicle_id',
+        'transporter_id',
         'origin',
         'destination',
         'pickup_date',
@@ -26,6 +27,10 @@ class Transport extends Model
         'transporter_phone',
         'transporter_email',
         'notes',
+        'batch_id',
+        'gate_pass_path',
+        'qr_code_path',
+        'batch_name',
     ];
 
     /**
@@ -52,5 +57,45 @@ class Transport extends Model
     public function transporter(): BelongsTo
     {
         return $this->belongsTo(Transporter::class);
+    }
+
+    /**
+     * Check if a gate pass has been uploaded
+     */
+    public function hasGatePass(): bool
+    {
+        return !empty($this->gate_pass_path);
+    }
+
+    /**
+     * Get the gate pass URL if available
+     */
+    public function getGatePassUrl(): ?string
+    {
+        if ($this->hasGatePass()) {
+            return asset('storage/' . $this->gate_pass_path);
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the QR code URL if available
+     */
+    public function getQrCodeUrl(): ?string
+    {
+        if (!empty($this->qr_code_path)) {
+            return asset('storage/' . $this->qr_code_path);
+        }
+
+        return null;
+    }
+
+    /**
+     * Get all transports for a specific batch
+     */
+    public static function getByBatchId(string $batchId)
+    {
+        return self::where('batch_id', $batchId)->with('vehicle')->get();
     }
 } 

@@ -1,0 +1,94 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Batch extends Model
+{
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'batch_number',
+        'name',
+        'status',
+        'transporter_id',
+        'scheduled_pickup_date',
+        'scheduled_delivery_date',
+        'pickup_date',
+        'delivery_date',
+        'origin',
+        'destination',
+        'notes',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'scheduled_pickup_date' => 'date',
+        'scheduled_delivery_date' => 'date',
+        'pickup_date' => 'datetime',
+        'delivery_date' => 'datetime',
+    ];
+
+    /**
+     * Get the transporter assigned to this batch.
+     */
+    public function transporter(): BelongsTo
+    {
+        return $this->belongsTo(Transporter::class);
+    }
+
+    /**
+     * Get the transports in this batch.
+     */
+    public function transports(): HasMany
+    {
+        return $this->hasMany(Transport::class);
+    }
+
+    /**
+     * Get the vehicles in this batch through transports.
+     */
+    public function vehicles()
+    {
+        return $this->hasManyThrough(Vehicle::class, Transport::class, 'batch_id', 'id', 'id', 'vehicle_id');
+    }
+
+    /**
+     * Get the gate passes for this batch.
+     */
+    public function gatePasses(): HasMany
+    {
+        return $this->hasMany(GatePass::class);
+    }
+    
+    /**
+     * Get the formatted batch number with name
+     */
+    public function getFullNameAttribute(): string
+    {
+        return $this->name 
+            ? "{$this->batch_number} - {$this->name}" 
+            : $this->batch_number;
+    }
+    
+    /**
+     * Get the vehicle count
+     */
+    public function getVehicleCountAttribute(): int
+    {
+        return $this->transports()->count();
+    }
+} 

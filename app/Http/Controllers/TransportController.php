@@ -8,6 +8,9 @@ use App\Models\Transporter;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class TransportController extends Controller
 {
@@ -28,7 +31,8 @@ class TransportController extends Controller
                   ->orWhere('model', 'like', "%{$search}%");
             })
             ->orWhere('transporter_name', 'like', "%{$search}%")
-            ->orWhere('destination', 'like', "%{$search}%");
+            ->orWhere('destination', 'like', "%{$search}%")
+            ->orWhere('batch_id', 'like', "%{$search}%");
         }
 
         // Filter by status
@@ -46,6 +50,10 @@ class TransportController extends Controller
     public function create(): View
     {
         $vehicles = Vehicle::where('status', '!=', 'sold')
+                          ->where(function($query) {
+                              $query->whereNull('transport_status')
+                                    ->orWhere('transport_status', '!=', 'in_transit');
+                          })
                           ->orderBy('stock_number')
                           ->get();
         $transporters = Transporter::where('is_active', true)
@@ -60,7 +68,8 @@ class TransportController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
+            'vehicle_ids' => 'required|array|min:1',
+            'vehicle_ids.*' => 'exists:vehicles,id',
             'transporter_id' => 'nullable|exists:transporters,id',
             'origin' => 'nullable|string|max:255',
             'destination' => 'required|string|max:255',
@@ -71,6 +80,10 @@ class TransportController extends Controller
             'transporter_phone' => 'nullable|string|max:255',
             'transporter_email' => 'nullable|string|email|max:255',
             'notes' => 'nullable|string',
+            'batch_name' => 'nullable|string|max:255',
+            'generate_qr' => 'nullable|boolean',
+            'gate_passes' => 'nullable|array',
+            'gate_passes.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
         // If transporter_id is selected, clear manual transporter fields
@@ -80,15 +93,59 @@ class TransportController extends Controller
             $validated['transporter_email'] = null;
         }
 
-        // Update vehicle transport status
-        $vehicle = Vehicle::findOrFail($request->vehicle_id);
-        if ($request->status == 'in_transit') {
-            $vehicle->update(['transport_status' => 'in_transit']);
+        // Generate batch number
+        $batchNumber = 'B-' . date('ymd') . '-' . strtoupper(Str::random(4));
+        
+        // Get common transport data
+        $transportData = [
+            'batch_id' => $batchNumber,
+            'origin' => $validated['origin'],
+            'destination' => $validated['destination'],
+            'pickup_date' => $validated['pickup_date'],
+            'delivery_date' => $validated['delivery_date'],
+            'status' => $validated['status'],
+            'transporter_id' => $validated['transporter_id'],
+            'transporter_name' => $validated['transporter_name'],
+            'transporter_phone' => $validated['transporter_phone'],
+            'transporter_email' => $validated['transporter_email'],
+            'notes' => $validated['notes'],
+            'batch_name' => $validated['batch_name'],
+        ];
+
+        // Generate QR Code if requested
+        if ($request->generate_qr) {
+            $qrUrl = url('/transports/batch/' . $batchNumber);
+            $qrPath = 'qrcodes/' . $batchNumber . '.png';
+            $qrCode = QrCode::format('png')->size(300)->generate($qrUrl);
+            Storage::disk('public')->put($qrPath, $qrCode);
+            $transportData['qr_code_path'] = $qrPath;
         }
 
-        Transport::create($validated);
+        // Create a transport entry for each selected vehicle
+        foreach ($validated['vehicle_ids'] as $vehicleId) {
+            $vehicle = Vehicle::findOrFail($vehicleId);
+            
+            // Create transport record
+            $transport = new Transport($transportData);
+            $transport->vehicle_id = $vehicleId;
+            $transport->save();
+            
+            // Handle gate pass upload if provided
+            if ($request->hasFile("gate_passes.{$vehicleId}")) {
+                $file = $request->file("gate_passes.{$vehicleId}");
+                $path = $file->store('gate-passes', 'public');
+                $transport->gate_pass_path = $path;
+                $transport->save();
+            }
+            
+            // Update vehicle transport status
+            if ($request->status == 'in_transit') {
+                $vehicle->update(['transport_status' => 'in_transit']);
+            }
+        }
+
         return redirect()->route('transports.index')
-                         ->with('success', 'Transport created successfully.');
+                         ->with('success', count($validated['vehicle_ids']) . ' vehicles added to transport batch ' . $batchNumber);
     }
 
     /**
@@ -130,6 +187,7 @@ class TransportController extends Controller
             'transporter_phone' => 'nullable|string|max:255',
             'transporter_email' => 'nullable|string|email|max:255',
             'notes' => 'nullable|string',
+            'gate_pass' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
         // If transporter_id is selected, clear manual transporter fields
@@ -149,9 +207,40 @@ class TransportController extends Controller
             $vehicle->update(['transport_status' => null]);
         }
 
+        // Handle gate pass upload if provided
+        if ($request->hasFile('gate_pass')) {
+            // Delete old file if exists
+            if ($transport->gate_pass_path) {
+                Storage::disk('public')->delete($transport->gate_pass_path);
+            }
+            
+            $file = $request->file('gate_pass');
+            $path = $file->store('gate-passes', 'public');
+            $validated['gate_pass_path'] = $path;
+        }
+
         $transport->update($validated);
         return redirect()->route('transports.index')
                          ->with('success', 'Transport updated successfully.');
+    }
+
+    /**
+     * Display transports by batch ID.
+     */
+    public function showBatch(string $batchId): View
+    {
+        $transports = Transport::where('batch_id', $batchId)
+                              ->with('vehicle')
+                              ->get();
+                              
+        if ($transports->isEmpty()) {
+            abort(404, 'Batch not found');
+        }
+        
+        // Use the first transport to get common batch data
+        $batchData = $transports->first();
+        
+        return view('transports.batch', compact('transports', 'batchData', 'batchId'));
     }
 
     /**
@@ -159,6 +248,11 @@ class TransportController extends Controller
      */
     public function destroy(Transport $transport): RedirectResponse
     {
+        // Delete gate pass file if exists
+        if ($transport->gate_pass_path) {
+            Storage::disk('public')->delete($transport->gate_pass_path);
+        }
+        
         $transport->delete();
         return redirect()->route('transports.index')
                          ->with('success', 'Transport removed successfully.');
