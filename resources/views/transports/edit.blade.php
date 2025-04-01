@@ -28,6 +28,34 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            @if(session('success'))
+                <div class="mb-4 p-4 bg-green-100 border border-green-200 text-green-700 rounded">
+                    {{ session('success') }}
+                </div>
+            @endif
+            
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Batch Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <span class="block text-sm font-medium text-gray-500">Batch ID</span>
+                            <span class="block mt-1 font-semibold">{{ $transport->batch_id }}</span>
+                        </div>
+                        <div>
+                            <span class="block text-sm font-medium text-gray-500">Batch Name</span>
+                            <span class="block mt-1">{{ $transport->batch_name ?: 'Not specified' }}</span>
+                        </div>
+                        <div>
+                            <span class="block text-sm font-medium text-gray-500">View Batch</span>
+                            <a href="{{ route('transports.batch', ['batchId' => $transport->batch_id]) }}" class="inline-block mt-1 text-indigo-600 hover:text-indigo-900">
+                                View all vehicles in this batch
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     @if ($errors->any())
@@ -40,7 +68,7 @@
                         </div>
                     @endif
                     
-                    <form action="{{ route('transports.update', $transport) }}" method="POST">
+                    <form action="{{ route('transports.update', $transport) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
                         
@@ -51,7 +79,7 @@
                                 
                                 <!-- Vehicle -->
                                 <div class="mb-4">
-                                    <label for="vehicle_id" class="block text-sm font-medium text-gray-700">Vehicle *</label>
+                                    <label for="vehicle_id" class="block text-sm font-medium text-gray-700">Current Vehicle *</label>
                                     <x-shadcn.select name="vehicle_id" id="vehicle_id" required>
                                         <option value="">-- Select Vehicle --</option>
                                         @foreach ($vehicles as $vehicle)
@@ -60,6 +88,68 @@
                                             </option>
                                         @endforeach
                                     </x-shadcn.select>
+                                </div>
+                                
+                                <!-- Vehicle Batch Management -->
+                                <div class="mb-4 border-t border-gray-200 pt-4 mt-4">
+                                    <h4 class="font-medium text-gray-700 mb-3">Manage Vehicles in Batch</h4>
+                                    
+                                    <div class="mb-4">
+                                        <label class="flex items-center">
+                                            <input type="checkbox" id="toggleVehicleManagement" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 mr-2">
+                                            <span class="text-sm font-medium text-gray-700">Add/Remove vehicles in this batch</span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div id="vehicleManagementSection" class="hidden">
+                                        <div class="mb-4">
+                                            <label for="additional_vehicles" class="block text-sm font-medium text-gray-700 mb-2">Add vehicles to batch {{ $transport->batch_id }}</label>
+                                            <select id="additional_vehicles" name="additional_vehicle_ids[]" multiple class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" size="5">
+                                                @foreach ($vehicles->where('id', '!=', $transport->vehicle_id) as $vehicle)
+                                                    @if(!$vehicle->transport_status || $vehicle->transport_status !== 'in_transit')
+                                                        <option value="{{ $vehicle->id }}">
+                                                            {{ $vehicle->stock_number }} - {{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }}
+                                                        </option>
+                                                    @endif
+                                                @endforeach
+                                            </select>
+                                            <p class="mt-1 text-xs text-gray-500">Hold Ctrl/Cmd to select multiple vehicles</p>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Current vehicles in batch</label>
+                                            
+                                            @php
+                                                $batchVehicles = \App\Models\Transport::where('batch_id', $transport->batch_id)
+                                                    ->with('vehicle')
+                                                    ->get();
+                                            @endphp
+                                            
+                                            @if($batchVehicles->count() > 1)
+                                                <div class="space-y-2 max-h-60 overflow-y-auto border border-gray-200 rounded-md p-3">
+                                                    @foreach($batchVehicles as $batchTransport)
+                                                        @if($batchTransport->id != $transport->id)
+                                                            <div class="flex items-start">
+                                                                <div class="flex items-center h-5">
+                                                                    <input id="remove_vehicle_{{ $batchTransport->id }}" name="remove_vehicle_ids[]" type="checkbox" 
+                                                                        value="{{ $batchTransport->id }}" class="h-4 w-4 text-indigo-600 rounded">
+                                                                </div>
+                                                                <div class="ml-3 text-sm">
+                                                                    <label for="remove_vehicle_{{ $batchTransport->id }}" class="font-medium text-gray-700">
+                                                                        {{ $batchTransport->vehicle->stock_number }} - {{ $batchTransport->vehicle->year }} {{ $batchTransport->vehicle->make }} {{ $batchTransport->vehicle->model }}
+                                                                    </label>
+                                                                    <p class="text-gray-500">VIN: {{ $batchTransport->vehicle->vin }}</p>
+                                                                </div>
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                                <p class="mt-1 text-xs text-gray-500">Check vehicles to remove from this batch</p>
+                                            @else
+                                                <p class="text-gray-500">No other vehicles in this batch</p>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <!-- Origin -->
@@ -105,6 +195,35 @@
                                         id="delivery_date"
                                         :value="old('delivery_date', $transport->delivery_date ? $transport->delivery_date->format('Y-m-d') : '')"
                                     />
+                                </div>
+                                
+                                <!-- Gate Pass -->
+                                <div class="mb-4 border-t border-gray-200 pt-4 mt-4">
+                                    <h4 class="font-medium text-gray-700 mb-3">Gate Pass</h4>
+                                    
+                                    @if($transport->hasGatePass())
+                                        <div class="mb-4">
+                                            <span class="block text-sm font-medium text-gray-500 mb-2">Current Gate Pass</span>
+                                            <div class="flex items-center">
+                                                <a href="{{ $transport->getGatePassUrl() }}" target="_blank" class="inline-flex items-center px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                    View Gate Pass
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @endif
+                                    
+                                    <label for="gate_pass" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ $transport->hasGatePass() ? 'Replace Gate Pass' : 'Upload Gate Pass' }}
+                                    </label>
+                                    <input type="file" id="gate_pass" name="gate_pass" class="block w-full text-sm text-gray-500
+                                        file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
+                                        file:text-sm file:font-semibold file:bg-indigo-50
+                                        file:text-indigo-700 hover:file:bg-indigo-100" accept=".pdf,.jpg,.jpeg,.png">
+                                    <p class="mt-1 text-xs text-gray-500">Accepted formats: PDF, JPG, JPEG, PNG (Max: 10MB)</p>
                                 </div>
                             </div>
                             
@@ -193,4 +312,47 @@
             </div>
         </div>
     </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const transporterId = document.getElementById('transporter_id');
+            const transporterName = document.getElementById('transporter_name');
+            const transporterPhone = document.getElementById('transporter_phone');
+            const transporterEmail = document.getElementById('transporter_email');
+            
+            // Function to toggle manual transporter fields
+            function toggleManualTransporterFields() {
+                const isTransporterSelected = transporterId.value !== '';
+                const fieldsToToggle = [transporterName, transporterPhone, transporterEmail];
+                
+                fieldsToToggle.forEach(field => {
+                    field.disabled = isTransporterSelected;
+                    if (isTransporterSelected) {
+                        field.classList.add('bg-gray-100');
+                        field.value = '';
+                    } else {
+                        field.classList.remove('bg-gray-100');
+                    }
+                });
+            }
+            
+            // Initialize on page load
+            toggleManualTransporterFields();
+            
+            // Add event listener for changes
+            transporterId.addEventListener('change', toggleManualTransporterFields);
+            
+            // Add vehicle management toggle
+            const toggleVehicleManagement = document.getElementById('toggleVehicleManagement');
+            const vehicleManagementSection = document.getElementById('vehicleManagementSection');
+            
+            toggleVehicleManagement.addEventListener('change', function() {
+                if (this.checked) {
+                    vehicleManagementSection.classList.remove('hidden');
+                } else {
+                    vehicleManagementSection.classList.add('hidden');
+                }
+            });
+        });
+    </script>
 </x-app-layout> 

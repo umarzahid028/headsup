@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Facades\DB;
 
 class TransportController extends Controller
 {
@@ -114,7 +115,8 @@ class TransportController extends Controller
 
         // Generate QR Code if requested
         if ($request->generate_qr) {
-            $qrUrl = url('/transports/batch/' . $batchNumber);
+            // Create full absolute URL for the tracking page
+            $qrUrl = url("/track/{$batchNumber}");
             $qrPath = 'qrcodes/' . $batchNumber . '.png';
             $qrCode = QrCode::format('png')->size(300)->generate($qrUrl);
             Storage::disk('public')->put($qrPath, $qrCode);
@@ -188,40 +190,111 @@ class TransportController extends Controller
             'transporter_email' => 'nullable|string|email|max:255',
             'notes' => 'nullable|string',
             'gate_pass' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'additional_vehicle_ids' => 'nullable|array',
+            'additional_vehicle_ids.*' => 'exists:vehicles,id',
+            'remove_vehicle_ids' => 'nullable|array',
+            'remove_vehicle_ids.*' => 'exists:transports,id',
         ]);
 
-        // If transporter_id is selected, clear manual transporter fields
-        if (!empty($validated['transporter_id'])) {
-            $validated['transporter_name'] = null;
-            $validated['transporter_phone'] = null;
-            $validated['transporter_email'] = null;
-        }
+        DB::beginTransaction();
+        
+        try {
+            // If transporter_id is selected, clear manual transporter fields
+            if (!empty($validated['transporter_id'])) {
+                $validated['transporter_name'] = null;
+                $validated['transporter_phone'] = null;
+                $validated['transporter_email'] = null;
+            }
 
-        // Update vehicle transport status
-        $vehicle = Vehicle::findOrFail($request->vehicle_id);
-        if ($request->status == 'in_transit') {
-            $vehicle->update(['transport_status' => 'in_transit']);
-        } elseif ($request->status == 'delivered') {
-            $vehicle->update(['transport_status' => 'delivered']);
-        } elseif ($request->status == 'cancelled') {
-            $vehicle->update(['transport_status' => null]);
-        }
+            // Update vehicle transport status
+            $vehicle = Vehicle::findOrFail($request->vehicle_id);
+            if ($request->status == 'in_transit') {
+                $vehicle->update(['transport_status' => 'in_transit']);
+            } elseif ($request->status == 'delivered') {
+                $vehicle->update(['transport_status' => 'delivered']);
+            } elseif ($request->status == 'cancelled') {
+                $vehicle->update(['transport_status' => null]);
+            }
 
-        // Handle gate pass upload if provided
-        if ($request->hasFile('gate_pass')) {
-            // Delete old file if exists
-            if ($transport->gate_pass_path) {
-                Storage::disk('public')->delete($transport->gate_pass_path);
+            // Handle gate pass upload if provided
+            if ($request->hasFile('gate_pass')) {
+                // Delete old file if exists
+                if ($transport->gate_pass_path) {
+                    Storage::disk('public')->delete($transport->gate_pass_path);
+                }
+                
+                $file = $request->file('gate_pass');
+                $path = $file->store('gate-passes', 'public');
+                $validated['gate_pass_path'] = $path;
+            }
+
+            // Update the transport record
+            $transport->update($validated);
+            
+            // Handle batch management - add vehicles
+            if ($request->has('additional_vehicle_ids') && is_array($request->additional_vehicle_ids)) {
+                // Get transport data for new vehicles to reuse
+                $transportData = [
+                    'batch_id' => $transport->batch_id,
+                    'batch_name' => $transport->batch_name,
+                    'origin' => $transport->origin,
+                    'destination' => $transport->destination,
+                    'pickup_date' => $transport->pickup_date,
+                    'delivery_date' => $transport->delivery_date,
+                    'status' => $transport->status,
+                    'transporter_id' => $transport->transporter_id,
+                    'transporter_name' => $transport->transporter_name,
+                    'transporter_phone' => $transport->transporter_phone,
+                    'transporter_email' => $transport->transporter_email,
+                    'notes' => $transport->notes,
+                    'qr_code_path' => $transport->qr_code_path,
+                ];
+                
+                foreach ($request->additional_vehicle_ids as $vehicleId) {
+                    $newVehicle = Vehicle::findOrFail($vehicleId);
+                    
+                    // Create new transport record for this vehicle in the same batch
+                    $newTransport = new Transport($transportData);
+                    $newTransport->vehicle_id = $vehicleId;
+                    $newTransport->save();
+                    
+                    // Update vehicle status if needed
+                    if ($transport->status == 'in_transit') {
+                        $newVehicle->update(['transport_status' => 'in_transit']);
+                    }
+                }
             }
             
-            $file = $request->file('gate_pass');
-            $path = $file->store('gate-passes', 'public');
-            $validated['gate_pass_path'] = $path;
+            // Handle batch management - remove vehicles
+            if ($request->has('remove_vehicle_ids') && is_array($request->remove_vehicle_ids)) {
+                foreach ($request->remove_vehicle_ids as $transportId) {
+                    $transportToRemove = Transport::find($transportId);
+                    
+                    if ($transportToRemove && $transportToRemove->batch_id === $transport->batch_id) {
+                        // Update vehicle status
+                        if ($transportToRemove->vehicle) {
+                            $transportToRemove->vehicle->update(['transport_status' => null]);
+                        }
+                        
+                        // Delete gate pass file if exists
+                        if ($transportToRemove->gate_pass_path) {
+                            Storage::disk('public')->delete($transportToRemove->gate_pass_path);
+                        }
+                        
+                        // Delete transport record
+                        $transportToRemove->delete();
+                    }
+                }
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('transports.index')
+                             ->with('success', 'Transport updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->withErrors(['error' => 'Failed to update transport: ' . $e->getMessage()]);
         }
-
-        $transport->update($validated);
-        return redirect()->route('transports.index')
-                         ->with('success', 'Transport updated successfully.');
     }
 
     /**
@@ -241,6 +314,25 @@ class TransportController extends Controller
         $batchData = $transports->first();
         
         return view('transports.batch', compact('transports', 'batchData', 'batchId'));
+    }
+
+    /**
+     * Track batch via QR code - public access without header/footer.
+     */
+    public function trackBatch(string $batchId): View
+    {
+        $transports = Transport::where('batch_id', $batchId)
+                              ->with('vehicle')
+                              ->get();
+                              
+        if ($transports->isEmpty()) {
+            abort(404, 'Batch not found');
+        }
+        
+        // Use the first transport to get common batch data
+        $batchData = $transports->first();
+        
+        return view('transports.track', compact('transports', 'batchData', 'batchId'));
     }
 
     /**

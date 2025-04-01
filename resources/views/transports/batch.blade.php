@@ -94,8 +94,17 @@
                         <div class="mt-6 flex justify-center">
                             <div class="text-center">
                                 <h3 class="text-sm font-medium text-gray-500 mb-2">Batch QR Code</h3>
-                                <img src="{{ Storage::url($batchData->qr_code_path) }}" alt="Batch QR Code" class="h-36 w-36 mx-auto">
-                                <p class="mt-2 text-xs text-gray-500">Scan to track this batch</p>
+                                <div class="bg-white p-4 inline-block rounded-lg shadow-sm border border-gray-200">
+                                    <img src="{{ Storage::url($batchData->qr_code_path) }}" alt="Batch QR Code" class="h-48 w-48 mx-auto">
+                                    <p class="mt-2 text-xs text-gray-500">Scan to track this batch</p>
+                                    <p class="text-xs text-gray-700 truncate mt-1">{{ url("/track/{$batchId}") }}</p>
+                                    <a href="{{ Storage::url($batchData->qr_code_path) }}" download="batch-{{ $batchId }}-qr.png" class="mt-3 inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                        Download QR Code
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     @endif

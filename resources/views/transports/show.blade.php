@@ -27,6 +27,47 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            @if(session('success'))
+                <div class="mb-4 p-4 bg-green-100 border border-green-200 text-green-700 rounded">
+                    {{ session('success') }}
+                </div>
+            @endif
+            
+            <!-- Batch Information -->
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Batch Information</h3>
+                        <a href="{{ route('transports.batch', ['batchId' => $transport->batch_id]) }}" class="text-indigo-600 hover:text-indigo-900 text-sm flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            View All Vehicles in Batch
+                        </a>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Batch ID</p>
+                            <p class="font-semibold">{{ $transport->batch_id }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Batch Name</p>
+                            <p>{{ $transport->batch_name ?: 'Not specified' }}</p>
+                        </div>
+                        @if($transport->qr_code_path)
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">QR Code</p>
+                                <div class="mt-1">
+                                    <img src="{{ asset('storage/' . $transport->qr_code_path) }}" alt="Batch QR Code" class="h-16 w-16">
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -133,6 +174,28 @@
                                         </div>
                                     </div>
                                 </div>
+                                
+                                <!-- Gate Pass Information -->
+                                @if($transport->hasGatePass())
+                                <div class="bg-gray-50 p-4 rounded mb-4">
+                                    <h5 class="font-semibold mb-2">Gate Pass</h5>
+                                    <div class="flex items-center">
+                                        <a href="{{ $transport->getGatePassUrl() }}" target="_blank" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            View Gate Pass
+                                        </a>
+                                        <a href="{{ $transport->getGatePassUrl() }}" download class="inline-flex items-center px-3 py-2 ml-2 text-sm font-medium text-indigo-700 bg-indigo-100 rounded-md hover:bg-indigo-200">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                            </svg>
+                                            Download
+                                        </a>
+                                    </div>
+                                </div>
+                                @endif
                                 
                                 <div class="bg-gray-50 p-4 rounded mb-4">
                                     <h5 class="font-semibold mb-2">Transporter Information</h5>

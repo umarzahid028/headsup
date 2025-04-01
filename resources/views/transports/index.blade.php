@@ -107,9 +107,13 @@
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm font-medium text-gray-900">
-                                                    <a href="{{ route('transports.batch', $transport->batch_id) }}" class="text-indigo-600 hover:text-indigo-900">
-                                                        {{ $transport->batch_id }}
-                                                    </a>
+                                                    @if($transport->batch_id)
+                                                        <a href="{{ route('transports.batch', ['batchId' => $transport->batch_id]) }}" class="text-indigo-600 hover:text-indigo-900">
+                                                            {{ $transport->batch_id }}
+                                                        </a>
+                                                    @else
+                                                        <span class="text-gray-400">No batch assigned</span>
+                                                    @endif
                                                 </div>
                                                 @if($transport->batch_name)
                                                     <div class="text-sm text-gray-500">{{ $transport->batch_name }}</div>
