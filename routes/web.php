@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\VehicleController;
+use App\Http\Controllers\TransportController;
+use App\Http\Controllers\TransporterController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -14,6 +17,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Vehicle Management Routes
+    Route::resource('vehicles', VehicleController::class);
+    
+    // Transport Management Routes
+    Route::resource('transports', TransportController::class);
+    
+    // Transporter Management Routes
+    Route::resource('transporters', TransporterController::class);
     
     // Admin routes
     Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin|super-admin'])->group(function () {

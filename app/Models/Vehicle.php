@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Vehicle extends Model
 {
@@ -55,4 +56,12 @@ class Vehicle extends Model
         'advertising_price' => 'decimal:2',
         'processed_at' => 'datetime',
     ];
+
+    /**
+     * Get the transports for the vehicle.
+     */
+    public function transports(): HasMany
+    {
+        return $this->hasMany(Transport::class);
+    }
 }
