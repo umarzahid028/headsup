@@ -160,4 +160,28 @@
             </div>
         </div>
     </div>
+
+    <!-- Settings Section -->
+    <div class="px-3 py-2">
+        <h3 class="mb-2 px-4 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+            Administration
+        </h3>
+        <div class="space-y-1">
+            <a href="{{ route('admin.settings.index') }}" 
+                class="group flex items-center rounded-md px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.settings.*') ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground' }}">
+                <x-heroicon-o-cog-6-tooth class="mr-2 h-4 w-4" />
+                System Settings
+            </a>
+            <a href="{{ route('admin.roles.index') }}" 
+                class="group flex items-center rounded-md px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.roles.*') ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground' }}">
+                <x-heroicon-o-shield-check class="mr-2 h-4 w-4" />
+                Roles & Permissions
+            </a>
+            <a href="{{ route('admin.users.index') }}" 
+                class="group flex items-center rounded-md px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.users.*') ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground' }}">
+                <x-heroicon-o-users class="mr-2 h-4 w-4" />
+                Users
+            </a>
+        </div>
+    </div>
 </nav>

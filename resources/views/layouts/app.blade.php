@@ -97,7 +97,7 @@
                     <main class="flex-1 overflow-y-auto">
                         <div class="py-6">
                             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                                {{ $slot }}
+                                @yield('content')
                             </div>
                         </div>
                     </main>
