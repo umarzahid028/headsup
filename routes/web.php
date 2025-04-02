@@ -7,6 +7,8 @@ use App\Http\Controllers\TransporterController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\SalesIssueController;
 use App\Http\Controllers\GoodwillClaimController;
+use App\Http\Controllers\VendorTypeController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -14,7 +16,7 @@ Route::get('/', function () {
 });
 
 // Public routes
-Route::get('/track/{batchId}', [App\Http\Controllers\TransportController::class, 'trackBatch'])->name('transports.track');
+Route::get('/track/{batchId}', [TransportController::class, 'trackBatch'])->name('transports.track');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
@@ -31,7 +33,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Transport Management Routes
     Route::resource('transports', TransportController::class);
-    Route::get('/transports/batch/{batchId}', [App\Http\Controllers\TransportController::class, 'showBatch'])->name('transports.batch');
+    Route::get('/transports/batch/{batchId}', [TransportController::class, 'showBatch'])->name('transports.batch');
     
     // Transporter Management Routes
     Route::resource('transporters', TransporterController::class);
@@ -42,7 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Vendor Type Management Routes
     Route::resource('vendor-types', \App\Http\Controllers\VendorTypeController::class)->except(['show', 'destroy']);
-    Route::patch('vendor-types/{vendorType}/toggle-active', [\App\Http\Controllers\VendorTypeController::class, 'toggleActive'])->name('vendor-types.toggle-active');
+    Route::patch('vendor-types/{vendorType}/toggle-active', [VendorTypeController::class, 'toggleActive'])->name('vendor-types.toggle-active');
     
     // Vendor Estimates
     Route::post('/vendor-estimates', [\App\Http\Controllers\VendorEstimateController::class, 'store'])->name('vendor-estimates.store');
@@ -113,11 +115,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         Route::patch('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
     
-        // System Settings
-        Route::middleware('role:admin')->group(function () {
-            
-        });
+        // Activity Log
+        Route::get('activity-log', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('activity-log.index');
+
+        
+        Route::get('system-settings', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'index'])->name('system-settings.index');
+        Route::patch('system-settings', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'update'])->name('system-settings.update');
+   
     });
+
+    // Notification Routes
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
 });
 
 require __DIR__.'/auth.php';

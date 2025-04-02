@@ -1,9 +1,6 @@
-@extends('layouts.app')
-
-@section('content')
-<div class="container mx-auto py-6 space-y-6">
-    <!-- Breadcrumb and Title -->
-    <div class="px-4 sm:px-6 lg:px-8">
+<x-app-layout>
+    <x-slot name="header">
+        <!-- Breadcrumb and Title -->
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div class="space-y-1.5">
                 <nav class="flex items-center space-x-2 text-sm text-muted-foreground">
@@ -63,9 +60,8 @@
                 </div>
             </div>
         </div>
-    </div>
+    </x-slot>
 
-    <!-- Main Content -->
     <div class="grid grid-cols-1 md:grid-cols-[2fr,1fr] gap-6 px-4 sm:px-6 lg:px-8">
         <!-- Main Form -->
         <div class="space-y-6">
@@ -120,15 +116,9 @@
                     </div>
                 </div>
 
-                <!-- Form Actions -->
-                <div class="flex items-center justify-end gap-4">
-                    <a href="{{ route('admin.users.index') }}" 
-                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
-                        Cancel
-                    </a>
-                    <button type="submit" 
-                        class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
-                        <x-heroicon-o-check class="mr-2 h-4 w-4" />
+                <!-- Submit Button -->
+                <div class="flex justify-end">
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
                         Save Changes
                     </button>
                 </div>
@@ -208,5 +198,4 @@
             </div>
         </div>
     </div>
-</div>
-@endsection 
+</x-app-layout> 

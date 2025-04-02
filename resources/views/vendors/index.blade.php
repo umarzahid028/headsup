@@ -68,19 +68,23 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex flex-wrap gap-1">
-                                                @foreach($vendor->specialty_tags ?? [] as $tag)
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                        @if($tag == 'mechanical') bg-blue-100 text-blue-800
-                                                        @elseif($tag == 'body_shop') bg-yellow-100 text-yellow-800
-                                                        @elseif($tag == 'detail') bg-green-100 text-green-800
-                                                        @elseif($tag == 'tire') bg-purple-100 text-purple-800
-                                                        @elseif($tag == 'upholstery') bg-pink-100 text-pink-800
-                                                        @elseif($tag == 'glass') bg-indigo-100 text-indigo-800
-                                                        @else bg-gray-100 text-gray-800
-                                                        @endif">
-                                                        {{ $specialties[$tag] ?? 'Unknown' }}
-                                                    </span>
-                                                @endforeach
+                                                @if(is_array($vendor->specialty_tags) && count($vendor->specialty_tags) > 0)
+                                                    @foreach($vendor->specialty_tags as $tag)
+                                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                            @if($tag == 'mechanical') bg-blue-100 text-blue-800
+                                                            @elseif($tag == 'body_shop') bg-yellow-100 text-yellow-800
+                                                            @elseif($tag == 'detail') bg-green-100 text-green-800
+                                                            @elseif($tag == 'tire') bg-purple-100 text-purple-800
+                                                            @elseif($tag == 'upholstery') bg-pink-100 text-pink-800
+                                                            @elseif($tag == 'glass') bg-indigo-100 text-indigo-800
+                                                            @else bg-gray-100 text-gray-800
+                                                            @endif">
+                                                            {{ $specialties[$tag] ?? ucfirst(str_replace('_', ' ', $tag)) }}
+                                                        </span>
+                                                    @endforeach
+                                                @else
+                                                    <span class="text-sm text-gray-500">No specialties assigned</span>
+                                                @endif
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">

@@ -4,9 +4,9 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Transport Management') }}
             </h2>
-            <div>
+            <div></div>
                 <a href="{{ route('transports.create') }}">
-                    <x-shadcn.button>
+                    <x-shadcn.button variant="outline" class="bg-white text-black hover:bg-gray-50 hover:text-black">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>

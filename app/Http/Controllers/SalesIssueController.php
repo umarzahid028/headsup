@@ -17,10 +17,10 @@ class SalesIssueController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('permission:view sales issues')->only(['index', 'show']);
-        $this->middleware('permission:create sales issues')->only(['create', 'store']);
-        $this->middleware('permission:edit sales issues')->only(['edit', 'update']);
-        $this->middleware('permission:review sales issues')->only(['updateStatus']);
+       // $this->middleware('permission:view sales issues')->only(['index', 'show']);
+       // $this->middleware('permission:create sales issues')->only(['create', 'store']);
+       // $this->middleware('permission:edit sales issues')->only(['edit', 'update']);
+       // $this->middleware('permission:review sales issues')->only(['updateStatus']);
     }
 
     /**
