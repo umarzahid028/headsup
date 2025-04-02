@@ -5,6 +5,8 @@ use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\TransportController;
 use App\Http\Controllers\TransporterController;
 use App\Http\Controllers\VendorController;
+use App\Http\Controllers\SalesIssueController;
+use App\Http\Controllers\GoodwillClaimController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -36,6 +38,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('vendors', VendorController::class);
     Route::patch('vendors/{vendor}/toggle-active', [VendorController::class, 'toggleActive'])->name('vendors.toggle-active');
     
+    // Vendor Type Management Routes
+    Route::resource('vendor-types', \App\Http\Controllers\VendorTypeController::class)->except(['show', 'destroy']);
+    Route::patch('vendor-types/{vendorType}/toggle-active', [\App\Http\Controllers\VendorTypeController::class, 'toggleActive'])->name('vendor-types.toggle-active');
+    
+    // Vendor Estimates
+    Route::post('/vendor-estimates', [\App\Http\Controllers\VendorEstimateController::class, 'store'])->name('vendor-estimates.store');
+    Route::patch('/vendor-estimates/{estimate}/approve', [\App\Http\Controllers\VendorEstimateController::class, 'approve'])
+        ->name('vendor-estimates.approve')
+        ->middleware('approve.estimates');
+    Route::patch('/vendor-estimates/{estimate}/reject', [\App\Http\Controllers\VendorEstimateController::class, 'reject'])
+        ->name('vendor-estimates.reject')
+        ->middleware('approve.estimates');
+    Route::get('/vendor-estimates/pending', [\App\Http\Controllers\VendorEstimateController::class, 'pendingEstimates'])
+        ->name('vendor-estimates.pending')
+        ->middleware('approve.estimates');
+    
     // Inspection & Repair Routes
     Route::prefix('inspection')->name('inspection.')->group(function () {
         // Inspection Stages
@@ -64,14 +82,38 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         // Inspection Results
         Route::resource('results', \App\Http\Controllers\InspectionItemResultController::class)->only(['store', 'update', 'destroy']);
+        Route::patch('/results/{result}/assign-vendor', [\App\Http\Controllers\InspectionItemResultController::class, 'assignVendor'])->name('results.assign-vendor');
+        Route::patch('/results/{result}/mark-complete', [\App\Http\Controllers\InspectionItemResultController::class, 'markComplete'])->name('results.mark-complete');
+        Route::post('/results/{result}/upload-photo', [\App\Http\Controllers\InspectionItemResultController::class, 'uploadPhoto'])->name('results.upload-photo');
+    });
+
+    // Sales Management Routes
+    Route::prefix('sales')->name('sales.')->group(function () {
+        // Sales Issues
+        Route::resource('issues', SalesIssueController::class);
+        Route::patch('issues/{issue}/status', [SalesIssueController::class, 'updateStatus'])->name('issues.update-status');
+        Route::patch('issues/{issue}/priority', [SalesIssueController::class, 'updatePriority'])->name('issues.update-priority');
+
+        // Goodwill Claims
+        Route::resource('goodwill-claims', GoodwillClaimController::class);
+        Route::patch('goodwill-claims/{claim}/status', [GoodwillClaimController::class, 'updateStatus'])->name('goodwill-claims.update-status');
+        Route::patch('goodwill-claims/{claim}/consent', [GoodwillClaimController::class, 'updateConsent'])->name('goodwill-claims.update-consent');
     });
 
     // Admin routes
-    Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin|super-admin'])->group(function () {
+    Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(function () {
         // User management routes
-        Route::resource('users', \App\Http\Controllers\UserController::class);
-        Route::resource('roles', \App\Http\Controllers\RoleController::class);
-        Route::resource('permissions', \App\Http\Controllers\PermissionController::class);
+        Route::middleware('role:admin|super-admin')->group(function () {
+            Route::resource('users', \App\Http\Controllers\UserController::class);
+            Route::resource('roles', \App\Http\Controllers\RoleController::class);
+            Route::resource('permissions', \App\Http\Controllers\PermissionController::class);
+        });
+
+        // System Settings
+        Route::middleware('permission:edit users')->group(function () {
+            Route::get('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
+            Route::patch('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+        });
     });
 });
 

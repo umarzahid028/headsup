@@ -71,7 +71,7 @@ class VendorSeeder extends Seeder
                     'contact_person' => $vendor['contact_person'],
                     'email' => $vendor['email'],
                     'phone' => $vendor['phone'],
-                    'type' => $vendor['type'],
+                    'specialty_tags' => $vendor['type'],
                     'is_active' => true,
                 ]
             );

@@ -114,4 +114,69 @@ class InspectionItemResultController extends Controller
         
         return redirect()->back()->with('success', 'Assessment deleted successfully.');
     }
+
+    /**
+     * Assign a vendor to an inspection item result.
+     */
+    public function assignVendor(Request $request, InspectionItemResult $result)
+    {
+        $validated = $request->validate([
+            'vendor_id' => 'required|exists:vendors,id',
+            'is_vendor_visible' => 'boolean',
+            'diagnostic_status' => 'nullable|string',
+        ]);
+        
+        $result->update([
+            'vendor_id' => $validated['vendor_id'],
+            'is_vendor_visible' => $validated['is_vendor_visible'] ?? false,
+            'diagnostic_status' => $validated['diagnostic_status'],
+            'assigned_at' => now(),
+        ]);
+        
+        return redirect()->back()->with('success', 'Vendor assigned successfully');
+    }
+
+    /**
+     * Mark an inspection item result as complete.
+     */
+    public function markComplete(Request $request, InspectionItemResult $result)
+    {
+        $validated = $request->validate([
+            'repair_completed' => 'boolean',
+            'notes' => 'nullable|string',
+        ]);
+        
+        $result->update([
+            'repair_completed' => $validated['repair_completed'] ?? true,
+            'notes' => $validated['notes'] ?? $result->notes,
+            'completed_at' => now(),
+        ]);
+        
+        return redirect()->back()->with('success', 'Repair marked as completed');
+    }
+
+    /**
+     * Upload a photo for an inspection item result.
+     */
+    public function uploadPhoto(Request $request, InspectionItemResult $result)
+    {
+        $request->validate([
+            'photo' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+        ]);
+
+        // Delete old photo if exists
+        if ($result->photo_path && Storage::disk('public')->exists($result->photo_path)) {
+            Storage::disk('public')->delete($result->photo_path);
+        }
+
+        // Store the new photo
+        $path = $request->file('photo')->store('inspection-photos', 'public');
+        
+        // Update the result with the new photo path
+        $result->update([
+            'photo_path' => $path,
+        ]);
+
+        return redirect()->back()->with('success', 'Photo uploaded successfully.');
+    }
 } 

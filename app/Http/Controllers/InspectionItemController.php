@@ -70,7 +70,7 @@ class InspectionItemController extends Controller
         
         // Set vendor_required and cost_tracking defaults
         $validated['vendor_required'] = $validated['vendor_required'] ?? false;
-        $validated['cost_tracking'] = $validated['cost_tracking'] ?? false;
+        $validated['cost_tracking'] = true; // Always enable cost tracking
         
         // Set order default (highest order in its stage + 1)
         if (empty($validated['order'])) {

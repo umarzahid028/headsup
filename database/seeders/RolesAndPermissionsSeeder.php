@@ -29,6 +29,22 @@ class RolesAndPermissionsSeeder extends Seeder
             'bulk edit vehicles',
             'scan vehicle barcodes',
             
+            // Sales Issues permissions
+            'view sales issues',
+            'create sales issues',
+            'edit sales issues',
+            'delete sales issues',
+            'review sales issues',
+            
+            // Goodwill Claims permissions
+            'view goodwill claims',
+            'create goodwill claims',
+            'edit goodwill claims',
+            'delete goodwill claims',
+            'approve goodwill claims',
+            'reject goodwill claims',
+            'update goodwill claims',
+            
             // Tags permissions
             'view tags',
             'create tags',
@@ -79,6 +95,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'admin' => array_diff($permissions, ['delete users', 'assign roles']),
             'manager' => [
                 'view vehicles', 'create vehicles', 'edit vehicles', 'archive vehicles', 'bulk edit vehicles', 'scan vehicle barcodes',
+                'view sales issues', 'create sales issues', 'edit sales issues', 'review sales issues',
+                'view goodwill claims', 'create goodwill claims', 'edit goodwill claims', 'approve goodwill claims', 'reject goodwill claims', 'update goodwill claims',
                 'view tags', 'create tags', 'edit tags', 'assign tags',
                 'view timeline', 'add timeline entries',
                 'view alerts', 'create alerts', 'edit alerts',
@@ -87,8 +105,17 @@ class RolesAndPermissionsSeeder extends Seeder
                 'view notifications', 'manage notification settings',
                 'view users',
             ],
+            'sales' => [
+                'view vehicles', 'view sales issues', 'create sales issues',
+                'view goodwill claims', 'create goodwill claims',
+                'view timeline', 'add timeline entries',
+                'view photos', 'upload photos',
+                'view notifications',
+            ],
             'staff' => [
                 'view vehicles', 'edit vehicles', 'scan vehicle barcodes',
+                'view sales issues',
+                'view goodwill claims',
                 'view tags', 'assign tags',
                 'view timeline', 'add timeline entries',
                 'view alerts',

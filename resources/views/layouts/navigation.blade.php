@@ -23,6 +23,24 @@
                     <x-nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.index') || request()->routeIs('tasks.create') || request()->routeIs('tasks.edit')">
                         {{ __('Tasks') }}
                     </x-nav-link>
+                    
+                    <x-nav-link :href="route('vendors.index')" :active="request()->routeIs('vendors.*') || request()->routeIs('vendor-types.*')">
+                        {{ __('Vendors') }}
+                    </x-nav-link>
+                    
+                    @can('approve-estimates')
+                    <x-nav-link :href="route('vendor-estimates.pending')" :active="request()->routeIs('vendor-estimates.*')">
+                        {{ __('Pending Estimates') }}
+                        @php
+                            $pendingCount = \App\Models\VendorEstimate::where('status', 'pending')->count();
+                        @endphp
+                        @if($pendingCount > 0)
+                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                {{ $pendingCount }}
+                            </span>
+                        @endif
+                    </x-nav-link>
+                    @endcan
                 </div>
             </div>
 
@@ -97,6 +115,24 @@
             <x-responsive-nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.index') || request()->routeIs('tasks.create') || request()->routeIs('tasks.edit')">
                 {{ __('Tasks') }}
             </x-responsive-nav-link>
+            
+            <x-responsive-nav-link :href="route('vendors.index')" :active="request()->routeIs('vendors.*') || request()->routeIs('vendor-types.*')">
+                {{ __('Vendors') }}
+            </x-responsive-nav-link>
+            
+            @can('approve-estimates')
+            <x-responsive-nav-link :href="route('vendor-estimates.pending')" :active="request()->routeIs('vendor-estimates.*')">
+                {{ __('Pending Estimates') }}
+                @php
+                    $pendingCount = \App\Models\VendorEstimate::where('status', 'pending')->count();
+                @endphp
+                @if($pendingCount > 0)
+                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        {{ $pendingCount }}
+                    </span>
+                @endif
+            </x-responsive-nav-link>
+            @endcan
         </div>
 
         <!-- Responsive Settings Options -->

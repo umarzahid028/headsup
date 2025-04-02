@@ -90,37 +90,65 @@
                 </a>
             </div>
 
+            <!-- Sales Management Section -->
+            @canany(['view sales issues', 'view goodwill claims'])
+            <div class="pt-5">
+                <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Sales Management
+                </p>
+
+                <!-- Sales Issues -->
+                @can('view sales issues')
+                <a href="{{ route('sales.issues.index') }}" class="{{ request()->routeIs('sales.issues.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
+                    <x-heroicon-o-exclamation-triangle class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                    <span class="flex-1">Sales Issues</span>
+                    
+                </a>
+                @endcan
+
+                <!-- Goodwill Claims -->
+                @can('view goodwill claims')
+                <a href="{{ route('sales.goodwill-claims.index') }}" class="{{ request()->routeIs('sales.goodwill-claims.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                    <x-heroicon-o-document-text class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                    <span class="flex-1">Goodwill Claims</span>
+                    
+                </a>
+                @endcan
+            </div>
+            @endcanany
+
             <!-- Administration Section -->
+            @canany(['view users', 'assign roles'])
             <div class="pt-5">
                 <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Administration
                 </p>
 
-                <!-- Roles and Permissions -->
-                <a href="{{ route('dashboard') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                    </svg>
-                    Roles and Permissions
-                </a>
-
                 <!-- User Management -->
-                <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
+                @can('view users')
+                <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
+                    <x-heroicon-o-users class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
                     Users
                 </a>
+                @endcan
 
-                <!-- System Setting -->
-                <a href="{{ route('dashboard') }}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    System Setting
+                <!-- Roles Management -->
+                @role('super-admin|admin')
+                <a href="{{ route('admin.roles.index') }}" class="{{ request()->routeIs('admin.roles.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                    <x-heroicon-o-shield-check class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                    Roles & Permissions
                 </a>
+                @endrole
+
+                <!-- System Settings -->
+                @can('edit users')
+                <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                    <x-heroicon-o-cog-6-tooth class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                    System Settings
+                </a>
+                @endcan
             </div>
+            @endcanany
         </nav>
     </div>
 

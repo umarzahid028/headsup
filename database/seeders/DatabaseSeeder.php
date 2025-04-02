@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
 
         // Inspection & Repair Seeders
         $this->call([
+            VendorTypeSeeder::class,
             VendorSeeder::class,
             InspectionStageSeeder::class,
             InspectionItemSeeder::class,

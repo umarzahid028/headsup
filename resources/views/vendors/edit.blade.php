@@ -39,18 +39,33 @@
                                 <x-input-error :messages="$errors->get('name')" class="mt-2" />
                             </div>
 
-                            <!-- Type -->
+                            <!-- Specialty Tags -->
                             <div>
-                                <x-input-label for="type" :value="__('Vendor Type')" />
-                                <select id="type" name="type" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                <x-searchable-multi-select
+                                    name="specialty_tags"
+                                    label="Specialty Tags"
+                                    :options="$specialties"
+                                    :selected="old('specialty_tags', $vendor->specialty_tags ?? [])"
+                                    placeholder="Select specialties..."
+                                    help-text="Select all specialties that apply to this vendor"
+                                />
+                            </div>
+
+                            <!-- Vendor Type -->
+                            <div>
+                                <x-input-label for="type_id" :value="__('Vendor Type')" />
+                                <select id="type_id" name="type_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                                     <option value="">Select vendor type</option>
-                                    @foreach($types as $typeKey => $typeName)
-                                        <option value="{{ $typeKey }}" {{ old('type', $vendor->type) == $typeKey ? 'selected' : '' }}>
-                                            {{ $typeName }}
+                                    @foreach($types as $type)
+                                        <option value="{{ $type->id }}" 
+                                            {{ old('type_id', $vendor->type_id) == $type->id ? 'selected' : '' }}
+                                            data-is-onsite="{{ $type->is_on_site ? '1' : '0' }}">
+                                            {{ $type->name }} ({{ $type->is_on_site ? 'On-Site' : 'Off-Site' }})
                                         </option>
                                     @endforeach
                                 </select>
-                                <x-input-error :messages="$errors->get('type')" class="mt-2" />
+                                <x-input-error :messages="$errors->get('type_id')" class="mt-2" />
+                                <p class="mt-1 text-xs text-gray-500">Determines if vendor is on-site or off-site and how they interact with the system</p>
                             </div>
 
                             <!-- Contact Person -->

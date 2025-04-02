@@ -20,12 +20,20 @@ class InspectionItemResult extends Model
         'vendor_id',
         'requires_repair',
         'repair_completed',
+        'diagnostic_status',
+        'is_vendor_visible',
+        'assigned_at',
+        'completed_at',
+        'photo_path',
     ];
 
     protected $casts = [
         'cost' => 'decimal:2',
         'requires_repair' => 'boolean',
         'repair_completed' => 'boolean',
+        'is_vendor_visible' => 'boolean',
+        'assigned_at' => 'datetime',
+        'completed_at' => 'datetime',
     ];
 
     /**
@@ -58,6 +66,14 @@ class InspectionItemResult extends Model
     public function repairImages(): HasMany
     {
         return $this->hasMany(RepairImage::class);
+    }
+
+    /**
+     * Get the vendor estimates for this result.
+     */
+    public function vendorEstimates(): HasMany
+    {
+        return $this->hasMany(VendorEstimate::class);
     }
 
     /**
@@ -98,5 +114,21 @@ class InspectionItemResult extends Model
     public function hasPassed(): bool
     {
         return $this->status === 'pass';
+    }
+
+    /**
+     * Check if this item has a pending estimate.
+     */
+    public function isPendingEstimate(): bool
+    {
+        return $this->vendorEstimates()->where('status', 'pending')->exists();
+    }
+
+    /**
+     * Get the latest vendor estimate.
+     */
+    public function latestEstimate()
+    {
+        return $this->vendorEstimates()->latest()->first();
     }
 } 

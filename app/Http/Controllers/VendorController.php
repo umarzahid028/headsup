@@ -3,36 +3,42 @@
 namespace App\Http\Controllers;
 
 use App\Models\Vendor;
+use App\Models\VendorType;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class VendorController extends Controller
 {
+    protected $specialties = [
+        'mechanical' => 'Mechanical',
+        'body_shop' => 'Body Shop',
+        'detail' => 'Detailing',
+        'tire' => 'Tire Services',
+        'upholstery' => 'Upholstery',
+        'glass' => 'Glass Repair',
+        'other' => 'Other Services',
+    ];
+
     /**
      * Display a listing of the vendors.
      */
     public function index(Request $request)
     {
         $type = $request->query('type');
-        $query = Vendor::query();
+        $query = Vendor::query()->with('type');
         
         if ($type) {
-            $query->where('type', $type);
+            $query->where('specialty_tags', 'like', '%' . $type . '%');
         }
         
-        $vendors = $query->orderBy('name')->get();
+        $vendors = $query->orderBy('created_at', 'desc')->get();
         
-        $types = [
-            'mechanical' => 'Mechanical',
-            'body_shop' => 'Body Shop',
-            'detail' => 'Detailing',
-            'tire' => 'Tire Services',
-            'upholstery' => 'Upholstery',
-            'glass' => 'Glass Repair',
-            'other' => 'Other Services',
-        ];
-        
-        return view('vendors.index', compact('vendors', 'types', 'type'));
+        return view('vendors.index', [
+            'vendors' => $vendors,
+            'specialties' => $this->specialties,
+            'type' => $type,
+            'types' => $this->specialties, // Use specialties for the filter dropdown
+        ]);
     }
 
     /**
@@ -40,17 +46,14 @@ class VendorController extends Controller
      */
     public function create()
     {
-        $types = [
-            'mechanical' => 'Mechanical',
-            'body_shop' => 'Body Shop',
-            'detail' => 'Detailing',
-            'tire' => 'Tire Services',
-            'upholstery' => 'Upholstery',
-            'glass' => 'Glass Repair',
-            'other' => 'Other Services',
-        ];
+        $types = VendorType::where('is_active', true)
+            ->orderBy('name')
+            ->get();
         
-        return view('vendors.create', compact('types'));
+        return view('vendors.create', [
+            'specialties' => $this->specialties,
+            'types' => $types,
+        ]);
     }
 
     /**
@@ -64,7 +67,9 @@ class VendorController extends Controller
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
-            'type' => 'required|in:mechanical,body_shop,detail,tire,upholstery,glass,other',
+            'specialty_tags' => 'required|array',
+            'specialty_tags.*' => 'required|in:mechanical,body_shop,detail,tire,upholstery,glass,other',
+            'type_id' => 'nullable|exists:vendor_types,id',
             'notes' => 'nullable|string',
             'is_active' => 'nullable|boolean',
         ]);
@@ -83,12 +88,19 @@ class VendorController extends Controller
      */
     public function show(Vendor $vendor)
     {
+        $vendor->load('type');
+        
         $inspectionItems = $vendor->inspectionItemResults()
             ->with(['inspectionItem', 'vehicleInspection.vehicle'])
             ->get()
             ->groupBy('vehicleInspection.vehicle_id');
             
-        return view('vendors.show', compact('vendor', 'inspectionItems'));
+        return view('vendors.show', [
+            'vendor' => $vendor,
+            'inspectionItems' => $inspectionItems,
+            'types' => VendorType::orderBy('name')->get(),
+            'specialties' => $this->specialties,
+        ]);
     }
 
     /**
@@ -96,17 +108,13 @@ class VendorController extends Controller
      */
     public function edit(Vendor $vendor)
     {
-        $types = [
-            'mechanical' => 'Mechanical',
-            'body_shop' => 'Body Shop',
-            'detail' => 'Detailing',
-            'tire' => 'Tire Services',
-            'upholstery' => 'Upholstery',
-            'glass' => 'Glass Repair',
-            'other' => 'Other Services',
-        ];
+        $types = VendorType::orderBy('name')->get();
         
-        return view('vendors.edit', compact('vendor', 'types'));
+        return view('vendors.edit', [
+            'vendor' => $vendor,
+            'specialties' => $this->specialties,
+            'types' => $types,
+        ]);
     }
 
     /**
@@ -125,7 +133,9 @@ class VendorController extends Controller
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
-            'type' => 'required|in:mechanical,body_shop,detail,tire,upholstery,glass,other',
+            'specialty_tags' => 'required|array',
+            'specialty_tags.*' => 'required|in:mechanical,body_shop,detail,tire,upholstery,glass,other',
+            'type_id' => 'nullable|exists:vendor_types,id',
             'notes' => 'nullable|string',
             'is_active' => 'nullable|boolean',
         ]);

@@ -30,12 +30,12 @@
                     <!-- Filter Bar -->
                     <div class="mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center">
                         <div>
-                            <label for="type-filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Type:</label>
+                            <label for="type-filter" class="block text-sm font-medium text-gray-700 mb-1">Filter by Specialty:</label>
                             <select id="type-filter" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                 onchange="window.location.href='{{ route('vendors.index') }}' + (this.value ? '?type=' + this.value : '')">
-                                <option value="">All Types</option>
+                                <option value="">All Specialties</option>
                                 @foreach($types as $typeKey => $typeName)
-                                    <option value="{{ $typeKey }}" {{ $type == $typeKey ? 'selected' : '' }}>
+                                    <option value="{{ $typeKey }}" {{ request('type') == $typeKey ? 'selected' : '' }}>
                                         {{ $typeName }}
                                     </option>
                                 @endforeach
@@ -49,6 +49,7 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tags</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -66,17 +67,30 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                @if($vendor->type == 'mechanical') bg-blue-100 text-blue-800
-                                                @elseif($vendor->type == 'body_shop') bg-yellow-100 text-yellow-800
-                                                @elseif($vendor->type == 'detail') bg-green-100 text-green-800
-                                                @elseif($vendor->type == 'tire') bg-purple-100 text-purple-800
-                                                @elseif($vendor->type == 'upholstery') bg-pink-100 text-pink-800
-                                                @elseif($vendor->type == 'glass') bg-indigo-100 text-indigo-800
-                                                @else bg-gray-100 text-gray-800
-                                                @endif">
-                                                {{ $types[$vendor->type] ?? 'Unknown' }}
-                                            </span>
+                                            <div class="flex flex-wrap gap-1">
+                                                @foreach($vendor->specialty_tags ?? [] as $tag)
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                        @if($tag == 'mechanical') bg-blue-100 text-blue-800
+                                                        @elseif($tag == 'body_shop') bg-yellow-100 text-yellow-800
+                                                        @elseif($tag == 'detail') bg-green-100 text-green-800
+                                                        @elseif($tag == 'tire') bg-purple-100 text-purple-800
+                                                        @elseif($tag == 'upholstery') bg-pink-100 text-pink-800
+                                                        @elseif($tag == 'glass') bg-indigo-100 text-indigo-800
+                                                        @else bg-gray-100 text-gray-800
+                                                        @endif">
+                                                        {{ $specialties[$tag] ?? 'Unknown' }}
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if($vendor->type)
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $vendor->type->is_on_site ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800' }}">
+                                                    {{ $vendor->type->name }}
+                                                </span>
+                                            @else
+                                                <span class="text-xs text-gray-500">Not categorized</span>
+                                            @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900">
