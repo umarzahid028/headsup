@@ -130,16 +130,15 @@ class RoleController extends Controller
         DB::beginTransaction();
         
         try {
-            // Don't allow renaming of built-in roles
-            if (!in_array($role->name, ['super-admin', 'admin'])) {
+            // Check if role can be modified
+            if (!in_array($role->name, ['admin'])) {
                 $role->name = $request->input('name');
                 $role->save();
             }
-            
-            // Sync permissions
-            if ($role->name !== 'super-admin') { // Don't modify super-admin permissions
-                $permissions = $request->input('permissions') ?? [];
-                $role->syncPermissions($permissions);
+
+            // Don't modify admin permissions
+            if ($role->name !== 'admin') {
+                $role->syncPermissions($request->input('permissions', []));
             }
             
             DB::commit();
@@ -164,10 +163,10 @@ class RoleController extends Controller
         
         $role = Role::findOrFail($id);
         
-        // Prevent deletion of built-in roles
-        if (in_array($role->name, ['super-admin', 'admin', 'staff', 'vendor'])) {
+        // Prevent deletion of system roles
+        if (in_array($role->name, ['admin', 'staff', 'vendor'])) {
             return redirect()->route('admin.roles.index')
-                ->with('error', 'Cannot delete built-in roles');
+                ->with('error', 'This role cannot be deleted');
         }
         
         // Check if users are assigned to this role

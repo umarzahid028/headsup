@@ -14,67 +14,51 @@ class UserRoleSeeder extends Seeder
      */
     public function run(): void
     {
-        // Define roles to create accounts for
         $roles = [
-            'Admin',
-            'Sales Manager',
-            'Recon Manager',
-            'Transporter',
-            'Vendor',
-            'Sales Team',
+            'Admin' => [
+                'name' => 'Admin User',
+                'email' => 'admin@admin.com',
+                'password' => 'admin@admin.com'
+            ],
+            'Sales Manager' => [
+                'name' => 'Sales Manager',
+                'email' => 'sales-manager@sales-manager.com',
+                'password' => 'password'
+            ],
+            'Recon Manager' => [
+                'name' => 'Recon Manager',
+                'email' => 'recon-manager@recon-manager.com',
+                'password' => 'password'
+            ],
+            'Transporter' => [
+                'name' => 'Transporter',
+                'email' => 'transporter@transporter.com',
+                'password' => 'password'
+            ],
+            'Vendor' => [
+                'name' => 'Vendor',
+                'email' => 'vendor@vendor.com',
+                'password' => 'password'
+            ],
+            'Sales Team' => [
+                'name' => 'Sales Team',
+                'email' => 'sales-team@sales-team.com',
+                'password' => 'password'
+            ]
         ];
 
-        foreach ($roles as $roleName) {
-            // Convert role name for email (lowercase, replace spaces with dashes)
-            $emailPrefix = strtolower(str_replace(' ', '-', $roleName));
-            $email = "{$emailPrefix}@{$emailPrefix}.com";
-
-            // Create user with email as password
+        foreach ($roles as $role => $userData) {
             $user = User::firstOrCreate(
-                ['email' => $email],
+                ['email' => $userData['email']],
                 [
-                    'name' => $roleName,
-                    'email' => $email,
-                    'password' => Hash::make($email),
+                    'name' => $userData['name'],
+                    'password' => Hash::make($userData['password']),
+                    'email_verified_at' => now()
                 ]
             );
 
-            // Find the role (use lowercase and hyphenated for spatie roles)
-            $roleSlug = strtolower(str_replace(' ', '-', $roleName));
-            
-            // Check if role exists in system
-            $role = Role::where('name', $roleSlug)->first();
-            
-            // If role doesn't exist, use appropriate mapping or fallback to staff
-            if (!$role) {
-                switch ($roleSlug) {
-                    case 'admin':
-                        $roleSlug = 'super-admin';
-                        break;
-                    case 'sales-manager':
-                    case 'recon-manager':
-                        $roleSlug = 'manager';
-                        break;
-                    case 'transporter':
-                    case 'sales-team':
-                        $roleSlug = 'staff';
-                        break;
-                    case 'vendor':
-                        $roleSlug = 'vendor';
-                        break;
-                    default:
-                        $roleSlug = 'staff';
-                        break;
-                }
-                $role = Role::where('name', $roleSlug)->first();
-            }
-
-            // Assign role if it exists
-            if ($role) {
-                $user->assignRole($role);
-            }
-
-            $this->command->info("Created user for role {$roleName}: {$email}");
+            $user->assignRole($role);
+            $this->command->info("Created user for role {$role}: {$userData['email']}");
         }
     }
 } 

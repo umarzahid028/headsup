@@ -89,49 +89,64 @@ class RolesAndPermissionsSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permission]);
         }
 
-        // Create roles and assign permissions
+        // Define roles and their permissions
         $roles = [
-            'super-admin' => $permissions,
-            'admin' => array_diff($permissions, ['delete users', 'assign roles']),
-            'manager' => [
-                'view vehicles', 'create vehicles', 'edit vehicles', 'archive vehicles', 'bulk edit vehicles', 'scan vehicle barcodes',
+            'Admin' => $permissions, // Admin gets all permissions
+            'Sales Manager' => [
+                'view vehicles', 'create vehicles', 'edit vehicles', 'archive vehicles',
                 'view sales issues', 'create sales issues', 'edit sales issues', 'review sales issues',
-                'view goodwill claims', 'create goodwill claims', 'edit goodwill claims', 'approve goodwill claims', 'reject goodwill claims', 'update goodwill claims',
-                'view tags', 'create tags', 'edit tags', 'assign tags',
-                'view timeline', 'add timeline entries',
-                'view alerts', 'create alerts', 'edit alerts',
-                'view photos', 'upload photos', 'delete photos',
-                'view checklists', 'create checklists', 'complete checklists',
-                'view notifications', 'manage notification settings',
-                'view users',
-            ],
-            'sales' => [
-                'view vehicles', 'view sales issues', 'create sales issues',
-                'view goodwill claims', 'create goodwill claims',
-                'view timeline', 'add timeline entries',
-                'view photos', 'upload photos',
-                'view notifications',
-            ],
-            'staff' => [
-                'view vehicles', 'edit vehicles', 'scan vehicle barcodes',
-                'view sales issues',
-                'view goodwill claims',
+                'view goodwill claims', 'create goodwill claims', 'edit goodwill claims',
+                'approve goodwill claims', 'reject goodwill claims',
                 'view tags', 'assign tags',
                 'view timeline', 'add timeline entries',
-                'view alerts',
+                'view alerts', 'create alerts',
                 'view photos', 'upload photos',
-                'view checklists', 'complete checklists',
-                'view notifications',
+                'view notifications', 'manage notification settings',
+                'view users'
             ],
-            'vendor' => [
+            'Recon Manager' => [
+                'view vehicles', 'edit vehicles', 'archive vehicles', 'bulk edit vehicles',
+                'view sales issues', 'edit sales issues',
+                'view goodwill claims', 'edit goodwill claims',
+                'view tags', 'assign tags',
+                'view timeline', 'add timeline entries',
+                'view alerts', 'create alerts',
+                'view photos', 'upload photos',
+                'view checklists', 'create checklists', 'complete checklists',
+                'view notifications', 'manage notification settings'
+            ],
+            'Transporter' => [
                 'view vehicles',
                 'view timeline',
-                'view photos', 'upload photos',
-                'view checklists', 'complete checklists',
-                'view notifications',
+                'add timeline entries',
+                'view photos',
+                'upload photos',
+                'view notifications'
             ],
+            'Vendor' => [
+                'view vehicles',
+                'view timeline',
+                'view photos',
+                'upload photos',
+                'view checklists',
+                'complete checklists',
+                'view notifications'
+            ],
+            'Sales Team' => [
+                'view vehicles',
+                'view sales issues',
+                'create sales issues',
+                'view goodwill claims',
+                'create goodwill claims',
+                'view timeline',
+                'add timeline entries',
+                'view photos',
+                'upload photos',
+                'view notifications'
+            ]
         ];
 
+        // Create roles and assign permissions
         foreach ($roles as $roleName => $rolePermissions) {
             // Create role if it doesn't exist
             $role = Role::firstOrCreate(['name' => $roleName]);
@@ -143,10 +158,10 @@ class RolesAndPermissionsSeeder extends Seeder
             $role->syncPermissions($permissionsToSync);
         }
 
-        // Assign super-admin role to first user if exists
+        // Assign admin role to first user if exists
         $user = User::first();
-        if ($user && !$user->hasRole('super-admin')) {
-            $user->assignRole('super-admin');
+        if ($user && !$user->hasRole('admin')) {
+            $user->assignRole('admin');
         }
     }
 }

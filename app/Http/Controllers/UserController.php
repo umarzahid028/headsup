@@ -131,90 +131,31 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, User $user)
     {
-        $this->authorize('edit users');
-        
-        $user = User::findOrFail($id);
-        
-        $rules = [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $id],
-            'roles' => ['nullable', 'array'],
-            'roles.*' => ['exists:roles,id'],
-        ];
-        
-        // Add password validation only if password field is filled
-        if ($request->filled('password')) {
-            $rules['password'] = ['confirmed', Rules\Password::defaults()];
+        // Admin role can't have roles modified for security
+        if (!$user->hasRole('admin')) {
+            $user->syncRoles($request->input('roles', []));
         }
-        
-        $this->validate($request, $rules);
-        
-        DB::beginTransaction();
-        
-        try {
-            // Update user data
-            $userData = [
-                'name' => $request->input('name'),
-                'email' => $request->input('email'),
-            ];
-            
-            // Update password if provided
-            if ($request->filled('password')) {
-                $userData['password'] = Hash::make($request->input('password'));
-            }
-            
-            $user->update($userData);
-            
-            // Super-admin can't have roles modified for security
-            if (!$user->hasRole('super-admin')) {
-                // Sync roles if provided, otherwise remove all roles
-                if ($request->has('roles')) {
-                    $roles = Role::whereIn('id', $request->input('roles'))->get();
-                    $user->syncRoles($roles);
-                } else {
-                    $user->syncRoles([]);
-                }
-            }
-            
-            DB::commit();
-            
-            return redirect()->route('admin.users.index')
-                ->with('success', 'User updated successfully');
-                
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            return redirect()->back()->withInput()
-                ->with('error', 'An error occurred while updating the user: ' . $e->getMessage());
-        }
+
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User updated successfully.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(User $user)
     {
-        $this->authorize('delete users');
-        
-        $user = User::findOrFail($id);
-        
-        // Prevent deletion of super-admin users
-        if ($user->hasRole('super-admin')) {
+        // Prevent deletion of admin users
+        if ($user->hasRole('admin')) {
             return redirect()->route('admin.users.index')
-                ->with('error', 'Super-admin users cannot be deleted');
+                ->with('error', 'Admin users cannot be deleted');
         }
-        
-        // Prevent self-deletion
-        if ($user->id === auth()->id()) {
-            return redirect()->route('admin.users.index')
-                ->with('error', 'You cannot delete your own account');
-        }
-        
+
         $user->delete();
-        
+
         return redirect()->route('admin.users.index')
-            ->with('success', 'User deleted successfully');
+            ->with('success', 'User deleted successfully.');
     }
 }

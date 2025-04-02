@@ -103,14 +103,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Admin routes
     Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(function () {
         // User management routes
-        Route::middleware('role:admin|super-admin')->group(function () {
+        Route::middleware('role:admin')->group(function () {
             Route::resource('users', \App\Http\Controllers\UserController::class);
             Route::resource('roles', \App\Http\Controllers\RoleController::class);
             Route::resource('permissions', \App\Http\Controllers\PermissionController::class);
         });
 
         // System Settings
-        Route::middleware('permission:edit users')->group(function () {
+        Route::middleware('role:admin')->group(function () {
             Route::get('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
             Route::patch('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
         });

@@ -37,5 +37,9 @@ class DatabaseSeeder extends Seeder
             InspectionStageSeeder::class,
             InspectionItemSeeder::class,
         ]);
+
+        $this->call([
+            RoleSeeder::class,
+        ]);
     }
 }

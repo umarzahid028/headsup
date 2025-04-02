@@ -12,16 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('vendors', function (Blueprint $table) {
-            // First drop the foreign key constraint
-            $table->dropForeign(['vendor_type_id']);
-            
             // Rename type to specialty_tags
             $table->renameColumn('type', 'specialty_tags');
             
-            // Rename vendor_type_id to type_id
-            $table->renameColumn('vendor_type_id', 'type_id');
+            // Add type_id column
+            $table->unsignedBigInteger('type_id')->nullable();
             
-            // Re-add the foreign key constraint with the new column name
+            // Add foreign key constraint
             $table->foreign('type_id')
                   ->references('id')
                   ->on('vendor_types')
@@ -35,17 +32,12 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('vendors', function (Blueprint $table) {
-            // First drop the foreign key constraint
+            // Drop the foreign key and column
             $table->dropForeign(['type_id']);
+            $table->dropColumn('type_id');
             
+            // Rename specialty_tags back to type
             $table->renameColumn('specialty_tags', 'type');
-            $table->renameColumn('type_id', 'vendor_type_id');
-            
-            // Re-add the foreign key constraint with the old column name
-            $table->foreign('vendor_type_id')
-                  ->references('id')
-                  ->on('vendor_types')
-                  ->nullOnDelete();
         });
     }
 }; 

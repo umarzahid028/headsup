@@ -13,7 +13,7 @@ class SettingsController extends Controller
      */
     public function __construct()
     {
-        $this->middleware(['auth', 'verified', 'permission:edit users']);
+        $this->middleware(['auth', 'verified']);
     }
 
     /**
@@ -21,6 +21,8 @@ class SettingsController extends Controller
      */
     public function index()
     {
+        $this->authorize('edit users');
+        
         $settings = Cache::get('system_settings', [
             'company_name' => config('app.name'),
             'notification_email' => config('mail.from.address'),
@@ -36,6 +38,8 @@ class SettingsController extends Controller
      */
     public function update(Request $request)
     {
+        $this->authorize('edit users');
+        
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'notification_email' => 'required|email|max:255',
