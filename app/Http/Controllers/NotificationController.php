@@ -24,29 +24,28 @@ class NotificationController extends Controller
     }
 
     /**
-     * Mark a specific notification as read.
+     * Mark a notification as read.
+     *
+     * @param  string  $id
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function markAsRead($id)
     {
-        $notification = DatabaseNotification::findOrFail($id);
-        
-        // Check if the notification belongs to the authenticated user
-        if ($notification->notifiable_id !== auth()->id()) {
-            abort(403);
-        }
-        
+        $notification = auth()->user()->notifications()->findOrFail($id);
         $notification->markAsRead();
 
-        return back()->with('success', 'Notification marked as read');
+        return back()->with('success', 'Notification marked as read.');
     }
 
     /**
      * Mark all notifications as read.
+     *
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function markAllAsRead()
     {
         auth()->user()->unreadNotifications->markAsRead();
 
-        return back()->with('success', 'All notifications marked as read');
+        return back()->with('success', 'All notifications marked as read.');
     }
 } 

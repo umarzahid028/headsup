@@ -24,6 +24,9 @@
     },
     "dependencies": {
         "@shadcn/ui": "^0.0.4",
-        "chart.js": "^3.9.1"
+        "chart.js": "^3.9.1",
+        "laravel-echo": "^2.0.2",
+        "pusher-js": "^8.4.0",
+        "sweetalert2": "^11.17.2"
     }
 }

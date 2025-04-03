@@ -20,7 +20,12 @@ class TransportController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Transport::with('vehicle')->latest();
+        $query = Transport::with(['vehicle', 'transporter', 'acknowledgedBy']);
+
+        // Filter transports based on user role
+        if (auth()->user()->hasRole('Transporter')) {
+            $query->where('transporter_id', auth()->user()->transporter_id);
+        }
 
         // Search functionality
         if ($request->has('search') && $request->search != '') {
@@ -41,7 +46,12 @@ class TransportController extends Controller
             $query->where('status', $request->status);
         }
 
-        $transports = $query->paginate(10);
+        // Filter by acknowledgment
+        if ($request->has('acknowledged') && $request->acknowledged != '') {
+            $query->where('is_acknowledged', $request->acknowledged === 'true');
+        }
+
+        $transports = $query->latest()->paginate(10);
         return view('transports.index', compact('transports'));
     }
 
@@ -348,5 +358,49 @@ class TransportController extends Controller
         $transport->delete();
         return redirect()->route('transports.index')
                          ->with('success', 'Transport removed successfully.');
+    }
+
+    /**
+     * Acknowledge a transport.
+     */
+    public function acknowledge(Transport $transport): RedirectResponse
+    {
+        // Check if the user is authorized to acknowledge transports
+        if (!auth()->user()->hasRole('Transporter')) {
+            return redirect()->back()->with('error', 'You are not authorized to acknowledge transports.');
+        }
+
+        // Check if the transport belongs to the user's transporter
+        if ($transport->transporter_id !== auth()->user()->transporter_id) {
+            return redirect()->back()->with('error', 'You can only acknowledge transports assigned to your company.');
+        }
+
+        // Check if already acknowledged
+        if ($transport->is_acknowledged) {
+            return redirect()->back()->with('info', 'This transport has already been acknowledged.');
+        }
+
+        DB::beginTransaction();
+        
+        try {
+            $transport->update([
+                'is_acknowledged' => true,
+                'acknowledged_at' => now(),
+                'acknowledged_by' => auth()->id(),
+            ]);
+
+            // Update vehicle status if needed
+            if ($transport->status === 'pending') {
+                $transport->update(['status' => 'in_transit']);
+                $transport->vehicle->update(['transport_status' => 'in_transit']);
+            }
+
+            DB::commit();
+            
+            return redirect()->back()->with('success', 'Transport acknowledged successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to acknowledge transport: ' . $e->getMessage());
+        }
     }
 } 

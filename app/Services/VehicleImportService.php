@@ -136,6 +136,8 @@ class VehicleImportService
         
         // Process each row
         $rowCount = 0;
+        $vehiclesToNotify = [];
+        
         while (($data = fgetcsv($handle)) !== false) {
             $rowCount++;
             
@@ -171,9 +173,9 @@ class VehicleImportService
                     $imported++;
                     $this->log('info', "Imported vehicle: {$result['message']}");
                     
-                    // Send notifications for new vehicles
+                    // Add to notification queue if it's a new vehicle
                     if ($shouldSendNotifications && !$this->dryRun) {
-                        $this->sendNotifications($result['vehicle'], $fileName);
+                        $vehiclesToNotify[] = $result['vehicle'];
                     }
                 } elseif ($result['status'] === 'skipped') {
                     $skipped++;
@@ -190,6 +192,17 @@ class VehicleImportService
         }
         
         fclose($handle);
+        
+        // Send notifications for all successfully imported vehicles
+        if (!empty($vehiclesToNotify) && $shouldSendNotifications && !$this->dryRun) {
+            foreach ($vehiclesToNotify as $vehicle) {
+                try {
+                    $this->sendNotifications($vehicle, $fileName);
+                } catch (\Exception $e) {
+                    $this->log('error', "Error sending notifications for vehicle {$vehicle->stock_number}: " . $e->getMessage());
+                }
+            }
+        }
         
         return [
             'success' => true,
@@ -238,29 +251,32 @@ class VehicleImportService
             ];
         }
         
-        // Check if vehicle already exists by stock_number or VIN
-        $existingVehicle = Vehicle::where('stock_number', $vehicleData['stock_number'])
-            ->orWhere('vin', $vehicleData['vin'])
-            ->first();
+        // Start database transaction
+        return DB::transaction(function() use ($vehicleData, $fileName) {
+            // Check if vehicle already exists by stock_number or VIN
+            $existingVehicle = Vehicle::where('stock_number', $vehicleData['stock_number'])
+                ->orWhere('vin', $vehicleData['vin'])
+                ->first();
+                
+            if ($existingVehicle) {
+                // Update existing vehicle
+                $existingVehicle->update($vehicleData);
+                return [
+                    'status' => 'skipped',
+                    'vehicle' => $existingVehicle,
+                    'message' => "Updated existing vehicle: {$vehicleData['stock_number']}",
+                ];
+            }
             
-        if ($existingVehicle) {
-            // Update existing vehicle
-            $existingVehicle->update($vehicleData);
+            // Create new vehicle
+            $vehicle = Vehicle::create($vehicleData);
+            
             return [
-                'status' => 'skipped',
-                'vehicle' => $existingVehicle,
-                'message' => "Updated existing vehicle: {$vehicleData['stock_number']}",
+                'status' => 'imported',
+                'vehicle' => $vehicle,
+                'message' => "Imported new vehicle: {$vehicleData['stock_number']}",
             ];
-        }
-        
-        // Create new vehicle
-        $vehicle = Vehicle::create($vehicleData);
-        
-        return [
-            'status' => 'imported',
-            'vehicle' => $vehicle,
-            'message' => "Imported new vehicle: {$vehicleData['stock_number']}",
-        ];
+        });
     }
     
     /**
@@ -396,30 +412,31 @@ class VehicleImportService
      */
     protected function sendNotifications(Vehicle $vehicle, string $fileName): void
     {
+        // Get users with Admin role
+        $admins = User::role('Admin')->get();
+        
         // Get users with Sales Manager role
-        $salesManagers = User::role('manager')
-            ->where('email', 'like', '%sales-manager%')
-            ->get();
+        $salesManagers = User::role('Sales Manager')->get();
             
         // Get users with Recon Manager role
-        $reconManagers = User::role('manager')
-            ->where('email', 'like', '%recon-manager%')
-            ->get();
+        $reconManagers = User::role('Recon Manager')->get();
             
-        // Combine the users
-        $usersToNotify = $salesManagers->merge($reconManagers);
+        // Combine all users
+        $usersToNotify = $admins->merge($salesManagers)->merge($reconManagers);
         
         if ($usersToNotify->isEmpty()) {
-            $this->log('warning', "No Sales or Recon Managers found to notify about imported vehicle");
+            $this->log('warning', "No Admins, Sales or Recon Managers found to notify about imported vehicle");
             return;
         }
         
         // Create notification
         $notification = new NewVehicleImported($vehicle, $fileName);
         
-        // Send notification to each user
-        Notification::send($usersToNotify, $notification);
+        // Send notification to each user directly
+        foreach ($usersToNotify as $user) {
+            $user->notify($notification);
+        }
         
-        $this->log('info', "Sent notifications about new vehicle to " . $usersToNotify->count() . " managers");
+        $this->log('info', "Sent notifications about new vehicle to " . $usersToNotify->count() . " users");
     }
 } 

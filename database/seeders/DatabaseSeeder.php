@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
         // Seed users with specific roles
         $this->call(UserRoleSeeder::class);
 
-        $this->call([
+        $this->call([        
             PermissionSeeder::class,
             TransporterSeeder::class,
         ]);
@@ -36,10 +36,6 @@ class DatabaseSeeder extends Seeder
             VendorSeeder::class,
             InspectionStageSeeder::class,
             InspectionItemSeeder::class,
-        ]);
-
-        $this->call([
-            RoleSeeder::class,
         ]);
     }
 }

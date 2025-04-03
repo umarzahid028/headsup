@@ -4,9 +4,9 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Transport Management') }}
             </h2>
-            <div></div>
+            <div>
                 <a href="{{ route('transports.create') }}">
-                    <x-shadcn.button variant="outline" class="bg-white text-black hover:bg-gray-50 hover:text-black">
+                    <x-shadcn.button variant="outline" class="bg-black text-white hover:bg-gray-50 hover:text-black">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
@@ -87,6 +87,9 @@
                                             Status
                                         </th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Acknowledgment
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Documents
                                         </th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -146,14 +149,43 @@
                                                 @endif
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                    {{ $transport->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                                    {{ $transport->status === 'in_transit' ? 'bg-blue-100 text-blue-800' : '' }}
-                                                    {{ $transport->status === 'delivered' ? 'bg-green-100 text-green-800' : '' }}
-                                                    {{ $transport->status === 'cancelled' ? 'bg-red-100 text-red-800' : '' }}
-                                                ">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                    @if($transport->status === 'pending') bg-yellow-100 text-yellow-800
+                                                    @elseif($transport->status === 'in_transit') bg-blue-100 text-blue-800
+                                                    @elseif($transport->status === 'delivered') bg-green-100 text-green-800
+                                                    @else bg-red-100 text-red-800
+                                                    @endif">
                                                     {{ ucfirst($transport->status) }}
                                                 </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                @if($transport->is_acknowledged)
+                                                    <div class="text-sm text-gray-900">
+                                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                            Acknowledged
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-xs text-gray-500">
+                                                        {{ $transport->acknowledged_at->format('M d, Y H:i') }}
+                                                        @if($transport->acknowledgedBy)
+                                                            by {{ $transport->acknowledgedBy->name }}
+                                                        @endif
+                                                    </div>
+                                                @else
+                                                    <div class="text-sm text-gray-900">
+                                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                            Pending
+                                                        </span>
+                                                    </div>
+                                                    @if(auth()->user()->hasRole('Transporter') && auth()->user()->transporter_id === $transport->transporter_id)
+                                                        <form action="{{ route('transports.acknowledge', $transport) }}" method="POST" class="mt-1">
+                                                            @csrf
+                                                            <button type="submit" class="text-xs text-blue-600 hover:text-blue-900">
+                                                                Acknowledge Now
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                @endif
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="flex space-x-2">
@@ -172,9 +204,11 @@
                                                     <a href="{{ route('transports.show', $transport) }}" class="text-indigo-600 hover:text-indigo-900">
                                                         View
                                                     </a>
-                                                    <a href="{{ route('transports.edit', $transport) }}" class="text-indigo-600 hover:text-indigo-900">
-                                                        Edit
-                                                    </a>
+                                                    @if(!$transport->is_acknowledged)
+                                                        <a href="{{ route('transports.edit', $transport) }}" class="text-indigo-600 hover:text-indigo-900">
+                                                            Edit
+                                                        </a>
+                                                    @endif
                                                     <form action="{{ route('transports.destroy', $transport) }}" method="POST" class="inline-block">
                                                         @csrf
                                                         @method('DELETE')

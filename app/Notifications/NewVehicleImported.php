@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class NewVehicleImported extends Notification implements ShouldQueue
+class NewVehicleImported extends Notification
 {
     use Queueable;
 
@@ -42,7 +42,7 @@ class NewVehicleImported extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['database', 'broadcast'];
     }
 
     /**
@@ -79,6 +79,7 @@ class NewVehicleImported extends Notification implements ShouldQueue
             'vehicle_info' => "{$this->vehicle->year} {$this->vehicle->make} {$this->vehicle->model}",
             'file_name' => $this->fileName,
             'message' => "New vehicle imported from {$this->fileName}",
+            'type' => 'vehicle_imported'
         ];
     }
 }

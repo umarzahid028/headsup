@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Vehicle;
+use App\Models\User;
+use App\Notifications\NewVehicleArrival;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Notification;
 
 class VehicleController extends Controller
 {
@@ -62,24 +66,22 @@ class VehicleController extends Controller
         $this->authorize('create vehicles');
         
         $validated = $request->validate([
-            'stock_number' => 'required|string|max:255|unique:vehicles',
-            'vin' => 'required|string|max:255|unique:vehicles',
-            'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
-            'make' => 'required|string|max:255',
-            'model' => 'required|string|max:255',
-            'trim' => 'nullable|string|max:255',
+            'stock_number' => 'required|unique:vehicles',
+            'vin' => 'required|unique:vehicles',
+            'year' => 'nullable|integer',
+            'make' => 'nullable|string',
+            'model' => 'nullable|string',
+            'trim' => 'nullable|string',
             'date_in_stock' => 'nullable|date',
             'odometer' => 'nullable|integer',
-            'exterior_color' => 'nullable|string|max:255',
-            'interior_color' => 'nullable|string|max:255',
-            'status' => 'nullable|string|max:255',
-            'body_type' => 'nullable|string|max:255',
-            'drive_train' => 'nullable|string|max:255',
-            'engine' => 'nullable|string|max:255',
-            'fuel_type' => 'nullable|string|max:255',
-            'is_featured' => 'boolean',
-            'transmission' => 'nullable|string|max:255',
-            'transmission_type' => 'nullable|string|max:255',
+            'exterior_color' => 'nullable|string',
+            'interior_color' => 'nullable|string',
+            'transmission' => 'nullable|string',
+            'body_type' => 'nullable|string',
+            'drive_train' => 'nullable|string',
+            'engine' => 'nullable|string',
+            'fuel_type' => 'nullable|string',
+            'status' => 'nullable|string',
             'advertising_price' => 'nullable|numeric',
         ]);
         
@@ -88,6 +90,27 @@ class VehicleController extends Controller
         try {
             $vehicle = Vehicle::create($validated);
             
+            // Get users with Admin role
+            $admins = User::role('Admin')->get();
+            
+            // Get users with Sales Manager role
+            $salesManagers = User::role('Sales Manager')->get();
+            
+            // Get users with Recon Manager role
+            $reconManagers = User::role('Recon Manager')->get();
+            
+            // Combine all users to notify
+            $managers = $admins->merge($salesManagers)->merge($reconManagers);
+            
+            if ($managers->isEmpty()) {
+                \Log::warning("No Admins, Sales or Recon Managers found to notify about new vehicle {$vehicle->stock_number}");
+            } else {
+                foreach ($managers as $manager) {
+                    $manager->notify(new NewVehicleArrival($vehicle));
+                }
+                \Log::info("Sent notifications about new vehicle {$vehicle->stock_number} to " . $managers->count() . " users");
+            }
+            
             DB::commit();
             
             return redirect()->route('vehicles.index')
@@ -95,6 +118,7 @@ class VehicleController extends Controller
                 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error("Error creating vehicle: " . $e->getMessage());
             
             return redirect()->back()->withInput()
                 ->with('error', 'An error occurred while creating the vehicle: ' . $e->getMessage());

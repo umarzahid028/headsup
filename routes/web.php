@@ -34,6 +34,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Transport Management Routes
     Route::resource('transports', TransportController::class);
     Route::get('/transports/batch/{batchId}', [TransportController::class, 'showBatch'])->name('transports.batch');
+    Route::post('/transports/{transport}/acknowledge', [TransportController::class, 'acknowledge'])->name('transports.acknowledge');
     
     // Transporter Management Routes
     Route::resource('transporters', TransporterController::class);
@@ -125,7 +126,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Notification Routes
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications', function () {
+        return view('notifications.index', [
+            'notifications' => auth()->user()->notifications()->paginate(20)
+        ]);
+    })->name('notifications.index');
     Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
 });

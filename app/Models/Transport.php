@@ -23,6 +23,9 @@ class Transport extends Model
         'pickup_date',
         'delivery_date',
         'status',
+        'is_acknowledged',
+        'acknowledged_at',
+        'acknowledged_by',
         'transporter_name',
         'transporter_phone',
         'transporter_email',
@@ -41,6 +44,8 @@ class Transport extends Model
     protected $casts = [
         'pickup_date' => 'date',
         'delivery_date' => 'date',
+        'is_acknowledged' => 'boolean',
+        'acknowledged_at' => 'datetime',
     ];
 
     /**
@@ -57,6 +62,14 @@ class Transport extends Model
     public function transporter(): BelongsTo
     {
         return $this->belongsTo(Transporter::class);
+    }
+
+    /**
+     * Get the user who acknowledged the transport.
+     */
+    public function acknowledgedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'acknowledged_by');
     }
 
     /**

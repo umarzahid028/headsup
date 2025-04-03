@@ -28,7 +28,24 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
-                Vehicle Management
+                <span class="flex-1">Vehicle Management</span>
+                @php
+                    $unreadVehicleCount = auth()->user()->unreadNotifications()
+                        ->whereIn('type', [
+                            'App\\Notifications\\NewVehicleArrival',
+                            'App\\Notifications\\NewVehicleImported'
+                        ])
+                        ->count();
+                @endphp
+                @if($unreadVehicleCount > 0)
+                    <span id="vehicle-notification-counter" class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                        {{ $unreadVehicleCount }}
+                    </span>
+                @else
+                    <span id="vehicle-notification-counter" class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full hidden">
+                        0
+                    </span>
+                @endif
             </a>
 
             <!-- Transport Management -->
