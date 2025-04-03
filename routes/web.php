@@ -117,7 +117,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('notifications.index');
     Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
-    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::post('/notifications/mark-all-read', function () {
+        auth()->user()->unreadNotifications->markAsRead();
+        return back()->with('success', 'All notifications marked as read');
+    })->name('notifications.mark-all-read');
 
     // Dashboard Routes
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

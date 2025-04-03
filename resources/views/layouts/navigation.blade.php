@@ -44,6 +44,22 @@
                 </div>
             </div>
 
+            <!-- Notifications Dropdown -->
+            <div class="hidden sm:flex sm:items-center sm:ml-6">
+                <x-notification-dropdown align="right" width="96">
+                    <x-slot name="trigger">
+                        <button class="relative inline-flex items-center p-2 text-sm font-medium text-gray-500 rounded-full hover:text-gray-700 focus:outline-none transition duration-150 ease-in-out">
+                            <x-heroicon-o-bell class="w-6 h-6" />
+                            @if(auth()->user()->unreadNotifications->count() > 0)
+                                <span class="absolute top-0 right-0 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full">
+                                    {{ auth()->user()->unreadNotifications->count() }}
+                                </span>
+                            @endif
+                        </button>
+                    </x-slot>
+                </x-notification-dropdown>
+            </div>
+
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ml-6">
                 <x-dropdown align="right" width="48">

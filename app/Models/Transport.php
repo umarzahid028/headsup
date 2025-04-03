@@ -23,6 +23,15 @@ class Transport extends Model
         });
     }
 
+    protected static function booted()
+    {
+        static::created(function ($transport) {
+            if ($transport->transporter && $transport->transporter->user) {
+                $transport->transporter->user->notify(new \App\Notifications\NewTransportAssigned($transport));
+            }
+        });
+    }
+
     /**
      * The attributes that are mass assignable.
      *

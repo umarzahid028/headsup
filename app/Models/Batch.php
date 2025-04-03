@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
+use App\Notifications\NewBatchAssigned;
 
 class Batch extends Model
 {
@@ -25,6 +26,18 @@ class Batch extends Model
                               $q->where('transporter_id', auth()->user()->transporter_id);
                           });
                 });
+            }
+        });
+    }
+
+    protected static function booted()
+    {
+        static::updated(function ($batch) {
+            // Check if transporter_id was changed and is not null
+            if ($batch->isDirty('transporter_id') && $batch->transporter_id) {
+                if ($batch->transporter && $batch->transporter->user) {
+                    $batch->transporter->user->notify(new NewBatchAssigned($batch));
+                }
             }
         });
     }
