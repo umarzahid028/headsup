@@ -132,4 +132,57 @@ class Transport extends Model
     {
         return self::where('batch_id', $batchId)->with('vehicle')->get();
     }
+
+    /**
+     * Get monthly transport counts for a specific year
+     * 
+     * @param int|null $year The year to get data for (defaults to current year)
+     * @param int|null $transporterId Filter by transporter ID (optional)
+     * @return array An array of counts indexed by month (0-11 for Jan-Dec)
+     */
+    public static function getMonthlyTransportCounts(?int $year = null, ?int $transporterId = null): array
+    {
+        $year = $year ?? now()->year;
+        
+        // Create base query
+        $query = self::whereYear('created_at', $year);
+        
+        // Apply transporter filter if provided
+        if ($transporterId) {
+            $query->where('transporter_id', $transporterId);
+        }
+        
+        // Get raw data first to debug
+        $rawData = (clone $query)
+            ->selectRaw('MONTH(created_at) as month, COUNT(*) as count')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+            
+        // Initialize array with zeros for all months (0-11 for Jan-Dec)
+        $monthlyTransports = array_fill(0, 12, 0);
+        
+        // Fill in the actual counts, ensure we're handling the index correctly
+        foreach ($rawData as $data) {
+            // Ensure month is treated as integer and properly normalize to 0-based index
+            $monthIndex = (int)$data->month - 1;
+            if ($monthIndex >= 0 && $monthIndex < 12) {
+                $monthlyTransports[$monthIndex] = (int)$data->count;
+            }
+        }
+       
+        return $monthlyTransports;
+    }
+    
+    /**
+     * Check if any transport data exists for the given year
+     * 
+     * @param int|null $year The year to check (defaults to current year)
+     * @return bool True if data exists, false otherwise
+     */
+    public static function hasDataForYear(?int $year = null): bool
+    {
+        $year = $year ?? now()->year;
+        return self::whereYear('created_at', $year)->exists();
+    }
 } 

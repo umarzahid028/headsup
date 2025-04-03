@@ -9,7 +9,12 @@ use App\Http\Controllers\SalesIssueController;
 use App\Http\Controllers\GoodwillClaimController;
 use App\Http\Controllers\VendorTypeController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
+
+// Register Broadcasting Routes
+Broadcast::routes(['middleware' => ['web', 'auth']]);
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -113,6 +118,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('notifications.index');
     Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+
+    // Dashboard Routes
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/manager', [DashboardController::class, 'manager'])
+        ->name('dashboard.manager')
+        ->middleware('role:manager');
+    Route::get('/dashboard/transporter', [DashboardController::class, 'transporter'])
+        ->middleware('role:Admin,Manager,Transporter')
+        ->name('dashboard.transporter');
+    Route::get('/dashboard/vendor', [DashboardController::class, 'vendor'])
+        ->middleware('role:Admin,Manager,Vendor')
+        ->name('dashboard.vendor');
 });
 
 require __DIR__.'/auth.php';

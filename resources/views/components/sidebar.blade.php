@@ -165,7 +165,7 @@
             </div>
             <div class="ml-3">
                 <p class="text-sm font-medium text-gray-900">{{ Auth::user()->name ?? 'User' }}</p>
-                <div class="flex mt-1">
+                <div class="flex mt-1 items-center">
                     <a href="{{ route('profile.edit') }}" class="text-xs font-medium text-gray-500 hover:text-gray-700">Profile</a>
                     <span class="mx-1 text-gray-500">|</span>
                     <form method="POST" action="{{ route('logout') }}">

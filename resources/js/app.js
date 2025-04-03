@@ -6,9 +6,6 @@ window.Alpine = Alpine;
 
 Alpine.start();
 
-// Import Chart.js
-import "@/lib/chart";
-
 import { NotificationListener } from "./components/NotificationListener.js";
 
 // Make NotificationListener available globally
