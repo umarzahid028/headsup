@@ -187,9 +187,11 @@
                                             <a href="{{ route('transports.show', $transport) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">
                                                 View
                                             </a>
-                                            <a href="{{ route('transports.edit', $transport) }}" class="text-indigo-600 hover:text-indigo-900">
-                                                Edit
-                                            </a>
+                                            @if(!auth()->user()->hasRole('Transporter'))
+                                                <a href="{{ route('transports.edit', $transport) }}" class="text-indigo-600 hover:text-indigo-900">
+                                                    Edit
+                                                </a>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach

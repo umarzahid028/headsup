@@ -6,6 +6,9 @@ use App\Models\Vendor;
 use App\Models\VendorType;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use App\Notifications\LoginCredentials;
 
 class VendorController extends Controller
 {
@@ -64,7 +67,7 @@ class VendorController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:vendors',
             'contact_person' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'specialty_tags' => 'required|array',
@@ -72,12 +75,31 @@ class VendorController extends Controller
             'type_id' => 'nullable|exists:vendor_types,id',
             'notes' => 'nullable|string',
             'is_active' => 'nullable|boolean',
+            'password' => 'required|string|min:8|confirmed',
         ]);
         
         // Set is_active default if not provided
         $validated['is_active'] = $validated['is_active'] ?? true;
         
-        Vendor::create($validated);
+        // Store the password before creating the vendor
+        $password = $validated['password'];
+        unset($validated['password']); // Remove password from vendor data
+
+        // Create the vendor
+        $vendor = Vendor::create($validated);
+
+        // Create the user account manually since we have a password
+        $user = User::create([
+            'name' => $validated['contact_person'] ?? $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($password),
+        ]);
+
+        // Assign vendor role
+        $user->assignRole('Vendor');
+
+        // Send welcome notification without password since user set it themselves
+        $user->notify(new LoginCredentials('(your chosen password)', 'Vendor'));
         
         return redirect()->route('vendors.index')
             ->with('success', 'Vendor created successfully.');

@@ -6,6 +6,9 @@ use App\Models\Transporter;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use App\Notifications\LoginCredentials;
 
 class TransporterController extends Controller
 {
@@ -51,13 +54,14 @@ class TransporterController extends Controller
             'name' => 'required|string|max:255',
             'contact_person' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:255',
-            'email' => 'nullable|string|email|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email',
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'state' => 'nullable|string|max:255',
             'zip' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'is_active' => 'sometimes|boolean',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
         // Set is_active to true if not provided
@@ -65,7 +69,26 @@ class TransporterController extends Controller
             $validated['is_active'] = true;
         }
 
-        Transporter::create($validated);
+        // Store the password before creating the transporter
+        $password = $validated['password'];
+        unset($validated['password']); // Remove password from transporter data
+
+        // Create the transporter
+        $transporter = Transporter::create($validated);
+
+        // Create the user account manually since we have a password
+        $user = User::create([
+            'name' => $validated['contact_person'] ?? $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($password),
+        ]);
+
+        // Assign transporter role
+        $user->assignRole('Transporter');
+
+        // Send welcome notification without password since user set it themselves
+        $user->notify(new LoginCredentials('(your chosen password)', 'Transporter'));
+
         return redirect()->route('transporters.index')
                          ->with('success', 'Transporter created successfully.');
     }

@@ -5,10 +5,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class Transport extends Model
 {
     use HasFactory;
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Add global scope to filter transports for transporters
+        static::addGlobalScope('transporter_access', function (Builder $builder) {
+            if (auth()->check() && auth()->user()->hasRole('Transporter')) {
+                $builder->where('transporter_id', auth()->user()->transporter_id);
+            }
+        });
+    }
 
     /**
      * The attributes that are mass assignable.

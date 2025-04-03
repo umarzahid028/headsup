@@ -82,6 +82,33 @@
                                         id="email"
                                         :value="old('email')"
                                     />
+                                    <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                                </div>
+                                
+                                <!-- Password -->
+                                <div class="space-y-2">
+                                    <label for="password" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Password</label>
+                                    <input
+                                        id="password"
+                                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                        type="password"
+                                        name="password"
+                                        required
+                                    />
+                                    <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                                </div>
+
+                                <!-- Confirm Password -->
+                                <div class="space-y-2">
+                                    <label for="password_confirmation" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Confirm Password</label>
+                                    <input
+                                        id="password_confirmation"
+                                        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                        type="password"
+                                        name="password_confirmation"
+                                        required
+                                    />
+                                    <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
                                 </div>
                                 
                                 <!-- Status -->

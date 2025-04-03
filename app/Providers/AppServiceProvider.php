@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Transporter;
+use App\Models\Vendor;
+use App\Observers\TransporterObserver;
+use App\Observers\VendorObserver;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
 
@@ -24,5 +28,8 @@ class AppServiceProvider extends ServiceProvider
         Blade::if('role', function ($role) {
             return auth()->check() && auth()->user()->hasRole($role);
         });
+
+        Transporter::observe(TransporterObserver::class);
+        Vendor::observe(VendorObserver::class);
     }
 }

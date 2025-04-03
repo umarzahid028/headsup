@@ -15,6 +15,20 @@ use Illuminate\Support\Facades\DB;
 
 class TransportController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        // Only allow transporters to access index and show methods
+        $this->middleware(function ($request, $next) {
+            if (auth()->user()->hasRole('Transporter')) {
+                if (!in_array($request->route()->getActionMethod(), ['index', 'show', 'acknowledge'])) {
+                    abort(403, 'Unauthorized action.');
+                }
+            }
+            return $next($request);
+        });
+    }
+
     /**
      * Display a listing of the transports.
      */
@@ -60,6 +74,11 @@ class TransportController extends Controller
      */
     public function create(): View
     {
+        if (auth()->user()->hasRole('Transporter')) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        $this->authorize('create transports');
         $vehicles = Vehicle::where('status', '!=', 'sold')
                           ->where(function($query) {
                               $query->whereNull('transport_status')
@@ -78,6 +97,11 @@ class TransportController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        if (auth()->user()->hasRole('Transporter')) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        $this->authorize('create transports');
         $validated = $request->validate([
             'vehicle_ids' => 'required|array|min:1',
             'vehicle_ids.*' => 'exists:vehicles,id',
@@ -173,6 +197,11 @@ class TransportController extends Controller
      */
     public function edit(Transport $transport): View
     {
+        if (auth()->user()->hasRole('Transporter')) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        $this->authorize('edit transports');
         $vehicles = Vehicle::where('status', '!=', 'sold')
                           ->orderBy('stock_number')
                           ->get();
@@ -187,6 +216,11 @@ class TransportController extends Controller
      */
     public function update(Request $request, Transport $transport): RedirectResponse
     {
+        if (auth()->user()->hasRole('Transporter')) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        $this->authorize('edit transports');
         $validated = $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
             'transporter_id' => 'nullable|exists:transporters,id',
@@ -350,6 +384,11 @@ class TransportController extends Controller
      */
     public function destroy(Transport $transport): RedirectResponse
     {
+        if (auth()->user()->hasRole('Transporter')) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        $this->authorize('delete transports');
         // Delete gate pass file if exists
         if ($transport->gate_pass_path) {
             Storage::disk('public')->delete($transport->gate_pass_path);

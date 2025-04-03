@@ -25,7 +25,7 @@ class VehicleController extends Controller
      */
     public function index(Request $request)
     {
-        $this->authorize('view vehicles');
+        //$this->authorize('view vehicles');
         
         $vehicles = Vehicle::query();
         
