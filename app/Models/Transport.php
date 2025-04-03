@@ -78,6 +78,14 @@ class Transport extends Model
     }
 
     /**
+     * Get the batch associated with the transport.
+     */
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(Batch::class);
+    }
+
+    /**
      * Get the user who acknowledged the transport.
      */
     public function acknowledgedBy(): BelongsTo

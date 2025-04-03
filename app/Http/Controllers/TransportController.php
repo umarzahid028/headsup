@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\DB;
+use App\Models\Batch;
 
 class TransportController extends Controller
 {
@@ -21,7 +22,8 @@ class TransportController extends Controller
         // Only allow transporters to access index and show methods
         $this->middleware(function ($request, $next) {
             if (auth()->user()->hasRole('Transporter')) {
-                if (!in_array($request->route()->getActionMethod(), ['index', 'show', 'acknowledge'])) {
+                //dd($request->route()->getActionMethod());
+                if (!in_array($request->route()->getActionMethod(), ['index', 'show', 'showBatch', 'acknowledge', 'updateBatchStatus', 'updateTransportStatus'])) {
                     abort(403, 'Unauthorized action.');
                 }
             }
@@ -35,8 +37,8 @@ class TransportController extends Controller
     public function index(Request $request): View
     {
         $query = Transport::with(['vehicle', 'transporter', 'acknowledgedBy']);
-
         // Filter transports based on user role
+       
         if (auth()->user()->hasRole('Transporter')) {
             $query->where('transporter_id', auth()->user()->transporter_id);
         }
@@ -384,19 +386,46 @@ class TransportController extends Controller
      */
     public function destroy(Transport $transport): RedirectResponse
     {
-        if (auth()->user()->hasRole('Transporter')) {
+        // Check if user has admin or manager role
+        if (!auth()->user()->hasAnyRole(['Admin', 'Manager'])) {
             abort(403, 'Unauthorized action.');
         }
-        
-        $this->authorize('delete transports');
-        // Delete gate pass file if exists
-        if ($transport->gate_pass_path) {
-            Storage::disk('public')->delete($transport->gate_pass_path);
+
+        DB::beginTransaction();
+
+        try {
+            // Reset the vehicle's transport status
+            if ($transport->vehicle) {
+                $transport->vehicle->update(['transport_status' => null]);
+            }
+
+            // Delete any associated gate pass files
+            if ($transport->gate_pass_path) {
+                Storage::disk('public')->delete($transport->gate_pass_path);
+            }
+
+            // Delete the transport record
+            $transport->delete();
+
+            // Check if this was part of a batch and update batch status if needed
+            if ($transport->batch_id) {
+                $remainingTransports = Transport::where('batch_id', $transport->batch_id)->count();
+                
+                if ($remainingTransports === 0) {
+                    // If no transports left, delete the batch
+                    Batch::where('id', $transport->batch_id)->delete();
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->back()
+                ->with('success', 'Transport deleted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Error deleting transport: ' . $e->getMessage());
         }
-        
-        $transport->delete();
-        return redirect()->route('transports.index')
-                         ->with('success', 'Transport removed successfully.');
     }
 
     /**
@@ -440,6 +469,176 @@ class TransportController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Failed to acknowledge transport: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update transport status.
+     */
+    public function updateTransportStatus(Request $request, Transport $transport): RedirectResponse
+    {
+        // Verify user is a transporter and has access to this transport
+        if (!auth()->user()->hasRole('Transporter') || 
+            auth()->user()->transporter_id !== $transport->transporter_id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|string|in:in_transit,delivered',
+            'pickup_date' => 'nullable|date',
+            'delivery_date' => 'nullable|date',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // Prepare transport update data
+            $transportUpdateData = ['status' => $validated['status']];
+            
+            // Add dates based on status
+            if ($validated['status'] === 'in_transit' && isset($validated['pickup_date'])) {
+                $transportUpdateData['pickup_date'] = $validated['pickup_date'];
+            }
+            if ($validated['status'] === 'delivered' && isset($validated['delivery_date'])) {
+                $transportUpdateData['delivery_date'] = $validated['delivery_date'];
+            }
+
+            // Update transport status and dates
+            $transport->update($transportUpdateData);
+
+            // Update vehicle status
+            if ($transport->vehicle) {
+                $transport->vehicle->update([
+                    'transport_status' => $validated['status']
+                ]);
+            }
+
+            DB::commit();
+
+            $statusMessage = ucfirst(str_replace('_', ' ', $validated['status']));
+            return redirect()->back()
+                ->with('success', "Transport successfully marked as {$statusMessage}.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Error updating transport status: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update transport status for multiple vehicles in a batch.
+     */
+    public function updateBatchStatus(Request $request, string $batchId): RedirectResponse
+    {
+       
+        // Verify user is a transporter
+        if (!auth()->user()->hasRole('Transporter')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'transport_ids' => 'required|array',
+            'transport_ids.*' => 'exists:transports,id',
+            'status' => 'required|string|in:in_transit,delivered',
+            'pickup_date' => 'nullable|date',
+            'delivery_date' => 'nullable|date',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // Get all transports in this batch that belong to the authenticated transporter
+            $transports = Transport::whereIn('id', $validated['transport_ids'])
+                ->where('batch_id', $batchId)
+                ->where('transporter_id', auth()->user()->transporter_id)
+                ->get();
+
+            if ($transports->isEmpty()) {
+                return redirect()->back()->with('error', 'No valid transports found to update.');
+            }
+
+            // Get the batch record
+            $batch = Batch::where('id', $batchId)->first();
+            if (!$batch) {
+                return redirect()->back()->with('error', 'Batch not found.');
+            }
+
+            // Prepare update data for transports
+            $transportUpdateData = ['status' => $validated['status']];
+            if ($validated['status'] === 'in_transit' && isset($validated['pickup_date'])) {
+                $transportUpdateData['pickup_date'] = $validated['pickup_date'];
+            }
+            if ($validated['status'] === 'delivered' && isset($validated['delivery_date'])) {
+                $transportUpdateData['delivery_date'] = $validated['delivery_date'];
+            }
+
+            // Update each selected transport and its associated vehicle
+            foreach ($transports as $transport) {
+                // Update transport status and dates
+                $transport->update($transportUpdateData);
+                
+                // Update vehicle transport status
+                if ($transport->vehicle) {
+                    $transport->vehicle->update([
+                        'transport_status' => $validated['status']
+                    ]);
+                }
+            }
+
+            // Check if all vehicles in the batch should update the batch status
+            $allTransportsInBatch = Transport::where('batch_id', $batchId)->get();
+            $selectedTransportIds = collect($validated['transport_ids']);
+
+            // Count statuses for all transports in the batch
+            $statusCounts = $allTransportsInBatch->groupBy('status')->map->count();
+            
+            // Determine if batch status should be updated
+            $shouldUpdateBatchStatus = false;
+            
+            if ($validated['status'] === 'in_transit') {
+                // Update batch to in_transit if any transport is in_transit
+                $shouldUpdateBatchStatus = true;
+                $batchStatus = 'in_transit';
+            } elseif ($validated['status'] === 'delivered') {
+                // Only update batch to delivered if ALL transports are delivered
+                $allDelivered = $allTransportsInBatch->every(function ($transport) {
+                    return $transport->status === 'delivered';
+                });
+                
+                if ($allDelivered) {
+                    $shouldUpdateBatchStatus = true;
+                    $batchStatus = 'delivered';
+                }
+            }
+
+            // Update batch status if needed
+            if ($shouldUpdateBatchStatus) {
+                $batchUpdateData = ['status' => $batchStatus];
+                
+                if ($batchStatus === 'in_transit' && isset($validated['pickup_date'])) {
+                    $batchUpdateData['pickup_date'] = $validated['pickup_date'];
+                }
+                if ($batchStatus === 'delivered' && isset($validated['delivery_date'])) {
+                    $batchUpdateData['delivery_date'] = $validated['delivery_date'];
+                }
+                
+                $batch->update($batchUpdateData);
+            }
+            
+            DB::commit();
+            
+            $message = 'Transport status updated successfully for ' . $transports->count() . ' vehicles.';
+            if ($shouldUpdateBatchStatus) {
+                $message .= ' Batch status updated to ' . ucfirst($batchStatus) . '.';
+            }
+            
+            return redirect()->back()->with('success', $message);
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Error updating transport status: ' . $e->getMessage());
         }
     }
 } 

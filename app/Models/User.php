@@ -23,6 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'transporter_id',
     ];
 
     /**
@@ -47,7 +48,7 @@ class User extends Authenticatable
 
     public function transporter()
     {
-        return $this->hasOne(Transporter::class, 'email', 'email');
+        return $this->belongsTo(Transporter::class);
     }
 
     public function vendor()

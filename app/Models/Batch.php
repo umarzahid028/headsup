@@ -6,10 +6,28 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Builder;
 
 class Batch extends Model
 {
     use HasFactory;
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Add global scope to filter batches for transporters
+        static::addGlobalScope('transporter_access', function (Builder $builder) {
+            if (auth()->check() && auth()->user()->hasRole('Transporter')) {
+                $builder->where(function($query) {
+                    $query->where('transporter_id', auth()->user()->transporter_id)
+                          ->orWhereHas('transports', function($q) {
+                              $q->where('transporter_id', auth()->user()->transporter_id);
+                          });
+                });
+            }
+        });
+    }
 
     /**
      * The attributes that are mass assignable.

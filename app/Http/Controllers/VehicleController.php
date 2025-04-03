@@ -18,6 +18,16 @@ class VehicleController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
+        
+        // Allow transporters to only access index and show methods
+        $this->middleware(function ($request, $next) {
+            if (auth()->user()->hasRole('Transporter')) {
+                if (!in_array($request->route()->getActionMethod(), ['index', 'show'])) {
+                    abort(403, 'Unauthorized action.');
+                }
+            }
+            return $next($request);
+        });
     }
     
     /**
@@ -25,10 +35,9 @@ class VehicleController extends Controller
      */
     public function index(Request $request)
     {
-        //$this->authorize('view vehicles');
-        
         $vehicles = Vehicle::query();
         
+        // Apply search filters
         if ($request->has('search')) {
             $search = $request->input('search');
             $vehicles->where(function($query) use ($search) {
@@ -39,10 +48,12 @@ class VehicleController extends Controller
             });
         }
         
+        // Apply status filter
         if ($request->has('status')) {
             $vehicles->where('status', $request->input('status'));
         }
         
+        // Note: The global scope in Vehicle model will automatically filter for transporters
         $vehicles = $vehicles->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
         
         return view('vehicles.index', compact('vehicles'));
@@ -54,7 +65,6 @@ class VehicleController extends Controller
     public function create()
     {
         $this->authorize('create vehicles');
-        
         return view('vehicles.create');
     }
 
@@ -130,9 +140,25 @@ class VehicleController extends Controller
      */
     public function show(string $id)
     {
-        $this->authorize('view vehicles');
-        
         $vehicle = Vehicle::findOrFail($id);
+        
+        // For transporters, verify they have access to this vehicle
+        if (auth()->user()->hasRole('Transporter')) {
+            $hasAccess = $vehicle->transports()
+                ->where(function($query) {
+                    $query->where('transporter_id', auth()->user()->transporter_id)
+                        ->orWhereHas('batch', function($q) {
+                            $q->where('transporter_id', auth()->user()->transporter_id);
+                        });
+                })
+                ->exists();
+                
+            if (!$hasAccess) {
+                abort(403, 'Unauthorized access to this vehicle.');
+            }
+        } else {
+            $this->authorize('view vehicles');
+        }
         
         return view('vehicles.show', compact('vehicle'));
     }
@@ -143,9 +169,7 @@ class VehicleController extends Controller
     public function edit(string $id)
     {
         $this->authorize('edit vehicles');
-        
         $vehicle = Vehicle::findOrFail($id);
-        
         return view('vehicles.edit', compact('vehicle'));
     }
 

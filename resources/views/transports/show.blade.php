@@ -151,6 +151,65 @@
                                     </span>
                                 </div>
                                 
+                                <!-- Status Update Form for Transporters -->
+                                @if(auth()->user()->hasRole('Transporter'))
+                                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                                        <h5 class="font-semibold mb-4">Update Transport Status</h5>
+                                        <form action="{{ route('transports.update-status', $transport) }}" method="POST">
+                                            @csrf
+                                            
+                                            <div class="space-y-4">
+                                                <div>
+                                                    <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                                                    <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                                                        <option value="">Select Status</option>
+                                                        @if($transport->status === 'pending')
+                                                            <option value="in_transit">Mark as Picked Up</option>
+                                                        @elseif($transport->status === 'in_transit')
+                                                            <option value="delivered">Mark as Delivered</option>
+                                                        @endif
+                                                    </select>
+                                                </div>
+                                                
+                                                <div id="pickupDateField" class="hidden">
+                                                    <label for="pickup_date" class="block text-sm font-medium text-gray-700">Pickup Date</label>
+                                                    <input type="date" name="pickup_date" id="pickup_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                                </div>
+                                                
+                                                <div id="deliveryDateField" class="hidden">
+                                                    <label for="delivery_date" class="block text-sm font-medium text-gray-700">Delivery Date</label>
+                                                    <input type="date" name="delivery_date" id="delivery_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                                </div>
+                                                
+                                                <div class="flex justify-end">
+                                                    <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                        Update Status
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    
+                                    <!-- JavaScript for form fields visibility -->
+                                    <script>
+                                        document.getElementById('status').addEventListener('change', function() {
+                                            const pickupDateField = document.getElementById('pickupDateField');
+                                            const deliveryDateField = document.getElementById('deliveryDateField');
+                                            
+                                            if (this.value === 'in_transit') {
+                                                pickupDateField.classList.remove('hidden');
+                                                deliveryDateField.classList.add('hidden');
+                                            } else if (this.value === 'delivered') {
+                                                pickupDateField.classList.add('hidden');
+                                                deliveryDateField.classList.remove('hidden');
+                                            } else {
+                                                pickupDateField.classList.add('hidden');
+                                                deliveryDateField.classList.add('hidden');
+                                            }
+                                        });
+                                    </script>
+                                @endif
+                                
                                 <div class="grid grid-cols-1 gap-4 mb-6">
                                     <div class="bg-gray-50 p-4 rounded">
                                         <h5 class="font-semibold mb-2">Route Information</h5>

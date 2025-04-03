@@ -28,6 +28,7 @@ class TransporterObserver
             'name' => $transporter->contact_person ?? $transporter->name,
             'email' => $transporter->email,
             'password' => Hash::make($password),
+            'transporter_id' => $transporter->id,
         ]);
 
         // Assign transporter role

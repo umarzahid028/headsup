@@ -36,6 +36,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/transports/batch/{batchId}', [TransportController::class, 'showBatch'])->name('transports.batch');
     Route::post('/transports/{transport}/acknowledge', [TransportController::class, 'acknowledge'])->name('transports.acknowledge');
     
+    // Transport status update routes
+    Route::post('/transports/{transport}/update-status', [TransportController::class, 'updateTransportStatus'])
+        ->name('transports.update-status');
+    Route::post('/transports/batch/{batchId}/update-status', [TransportController::class, 'updateBatchStatus'])
+        ->name('transports.batch.update-status');
+    
     // Transporter Management Routes
     Route::resource('transporters', TransporterController::class);
     

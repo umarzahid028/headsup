@@ -13,12 +13,39 @@ use Illuminate\Support\Str;
 
 class BatchController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+        // Allow transporters to access their assigned batches
+        $this->middleware(function ($request, $next) {
+            if (auth()->user()->hasRole('Transporter')) {
+                // Allow access to index, show, and updateStatus methods
+                $allowedMethods = ['index', 'show', 'updateStatus'];
+                if (!in_array($request->route()->getActionMethod(), $allowedMethods)) {
+                    abort(403, 'Unauthorized action.');
+                }
+
+                // For show method, verify the batch belongs to the transporter
+                if ($request->route()->getActionMethod() === 'show') {
+                    $batchId = $request->route('batch');
+                    if ($batchId) {
+                        $batch = Batch::find($batchId);
+                        if (!$batch || $batch->transporter_id !== auth()->user()->transporter_id) {
+                            abort(403, 'Unauthorized access to this batch.');
+                        }
+                    }
+                }
+            }
+            return $next($request);
+        });
+    }
+
     /**
-     * Display a listing of batches.
+     * Display a listing of the batches.
      */
     public function index(Request $request): View
     {
-        $query = Batch::with(['transporter', 'transports.vehicle'])->latest();
+        $query = Batch::with(['transporter', 'transports.vehicle']);
 
         // Search functionality
         if ($request->has('search') && $request->search != '') {
@@ -27,18 +54,26 @@ class BatchController extends Controller
                 $q->where('batch_number', 'like', "%{$search}%")
                   ->orWhere('name', 'like', "%{$search}%")
                   ->orWhere('destination', 'like', "%{$search}%")
-                  ->orWhereHas('transporter', function($q2) use ($search) {
-                      $q2->where('name', 'like', "%{$search}%");
+                  ->orWhereHas('transporter', function($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
                   });
             });
         }
 
-        // Filter by status
+        // Status filter
         if ($request->has('status') && $request->status != '') {
             $query->where('status', $request->status);
         }
 
-        $batches = $query->paginate(10);
+        // Date range filter
+        if ($request->has('date_from') && $request->date_from != '') {
+            $query->where('scheduled_pickup_date', '>=', $request->date_from);
+        }
+        if ($request->has('date_to') && $request->date_to != '') {
+            $query->where('scheduled_delivery_date', '<=', $request->date_to);
+        }
+
+        $batches = $query->latest()->paginate(10);
         return view('batches.index', compact('batches'));
     }
 

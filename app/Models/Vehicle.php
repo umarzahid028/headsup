@@ -5,10 +5,28 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class Vehicle extends Model
 {
     use HasFactory;
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Add global scope to filter vehicles for transporters
+        static::addGlobalScope('transporter_access', function (Builder $builder) {
+            if (auth()->check() && auth()->user()->hasRole('Transporter')) {
+                $builder->whereHas('transports', function ($query) {
+                    $query->where('transporter_id', auth()->user()->transporter_id)
+                          ->orWhereHas('batch', function ($q) {
+                              $q->where('transporter_id', auth()->user()->transporter_id);
+                          });
+                });
+            }
+        });
+    }
 
     protected $fillable = [
         'stock_number',
