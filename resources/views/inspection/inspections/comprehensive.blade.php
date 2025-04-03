@@ -122,7 +122,7 @@
                                                 <div class="flex flex-wrap gap-4">
                                                     <label class="inline-flex items-center">
                                                         <input type="radio" class="item-status-radio" name="items[{{ $item->id }}][status]" value="pass" data-item-id="{{ $item->id }}" 
-                                                            {{ old("items.{$item->id}.status") == 'pass' ? 'checked' : '' }} required form="inspection-form">
+                                                            {{ old("items.{$item->id}.status") == 'pass' ? 'checked' : '' }} form="inspection-form">
                                                         <span class="ml-2 text-sm text-gray-900 bg-green-100 px-2 py-1 rounded-full">Pass</span>
                                                     </label>
                                                     <label class="inline-flex items-center">
@@ -135,6 +135,8 @@
                                                             {{ old("items.{$item->id}.status") == 'fail' ? 'checked' : '' }} form="inspection-form">
                                                         <span class="ml-2 text-sm text-gray-900 bg-red-100 px-2 py-1 rounded-full">Fail</span>
                                                     </label>
+                                                    <!-- Hidden default value to ensure the field is always submitted -->
+                                                    <input type="hidden" name="items[{{ $item->id }}][status]" value="" class="default-status-{{ $item->id }}">
                                                 </div>
                                                 
                                                 <!-- Notes field -->
@@ -300,45 +302,24 @@
             // Form validation
             const form = document.getElementById('inspection-form');
             form.addEventListener('submit', function(e) {
-                // Validate that at least one radio button is selected for each item
-                const itemGroups = document.querySelectorAll('[name^="items["]');
-                const groups = {};
-                
-                itemGroups.forEach(input => {
-                    const name = input.getAttribute('name');
-                    if (name.includes('[status]')) {
-                        const group = name;
-                        if (!groups[group]) {
-                            groups[group] = {
-                                selected: false,
-                                elements: []
-                            };
-                        }
-                        
-                        if (input.checked) {
-                            groups[group].selected = true;
-                        }
-                        
-                        groups[group].elements.push(input);
-                    }
-                });
-                
-                // Check if all groups have a selection
                 let valid = true;
                 let firstInvalidTab = null;
                 
-                Object.entries(groups).forEach(([groupName, group]) => {
-                    if (!group.selected) {
+                // Get all item containers
+                const itemContainers = document.querySelectorAll('.item-container');
+                
+                itemContainers.forEach(container => {
+                    const itemId = container.querySelector('.item-status-radio').getAttribute('data-item-id');
+                    const radios = container.querySelectorAll(`input[name="items[${itemId}][status]"][type="radio"]`);
+                    const isChecked = Array.from(radios).some(radio => radio.checked);
+                    
+                    if (!isChecked) {
                         valid = false;
-                        
-                        // Highlight the group
-                        const element = group.elements[0];
-                        const itemContainer = element.closest('.border');
-                        itemContainer.classList.add('border-red-500', 'bg-red-50/30');
+                        container.classList.add('border-red-500', 'bg-red-50/30');
                         
                         // Find which tab contains this invalid item
-                        const stageContent = element.closest('.stage-content');
-                        const stageId = stageContent.id.replace('stage-', '');
+                        const stageContent = container.closest('.stage-content');
+                        const stageId = container.getAttribute('data-stage-id');
                         
                         if (!firstInvalidTab) {
                             firstInvalidTab = Array.from(stageTabs).findIndex(tab => 
@@ -346,9 +327,7 @@
                             );
                         }
                     } else {
-                        const element = group.elements[0];
-                        const itemContainer = element.closest('.border');
-                        itemContainer.classList.remove('border-red-500', 'bg-red-50/30');
+                        container.classList.remove('border-red-500', 'bg-red-50/30');
                     }
                 });
                 
@@ -363,6 +342,44 @@
                     
                     window.scrollTo(0, 0);
                 }
+            });
+
+            // Handle radio button changes
+            document.querySelectorAll('.item-status-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const itemId = this.getAttribute('data-item-id');
+                    const status = this.value;
+                    const vendorField = document.getElementById(`vendor-field-${itemId}`);
+                    const costField = document.getElementById(`cost-field-${itemId}`);
+                    const defaultStatus = document.querySelector(`.default-status-${itemId}`);
+                    
+                    // Update the hidden default value
+                    if (defaultStatus) {
+                        defaultStatus.value = status;
+                    }
+                    
+                    if (status === 'warning' || status === 'fail') {
+                        // Show vendor and cost fields for repairs
+                        if (vendorField) {
+                            vendorField.classList.remove('hidden');
+                            vendorField.querySelector('select').disabled = false;
+                        }
+                        if (costField) {
+                            costField.classList.remove('hidden');
+                            costField.querySelector('input').disabled = false;
+                        }
+                    } else {
+                        // Hide and disable vendor and cost fields for passing items
+                        if (vendorField) {
+                            vendorField.classList.add('hidden');
+                            vendorField.querySelector('select').disabled = true;
+                        }
+                        if (costField) {
+                            costField.classList.add('hidden');
+                            costField.querySelector('input').disabled = true;
+                        }
+                    }
+                });
             });
 
             // Handle batch vendor assignment
@@ -380,42 +397,6 @@
                 });
                 
                 alert('Vendor assigned to all repair items');
-            });
-
-            // Toggle vendor and cost fields based on item status
-            document.querySelectorAll('.item-status-radio').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    const itemId = this.getAttribute('data-item-id');
-                    const status = this.value;
-                    const vendorField = document.getElementById(`vendor-field-${itemId}`);
-                    const costField = document.getElementById(`cost-field-${itemId}`);
-                    
-                    if (status === 'warning' || status === 'fail') {
-                        // Show vendor and cost fields for repairs
-                        if (vendorField) vendorField.classList.remove('hidden');
-                        if (costField) costField.classList.remove('hidden');
-                    } else {
-                        // Hide vendor and cost fields for passing items
-                        if (vendorField) vendorField.classList.add('hidden');
-                        if (costField) costField.classList.add('hidden');
-                    }
-                });
-            });
-            
-            // Initialize fields visibility based on current status
-            document.querySelectorAll('.item-status-radio:checked').forEach(radio => {
-                const itemId = radio.getAttribute('data-item-id');
-                const status = radio.value;
-                const vendorField = document.getElementById(`vendor-field-${itemId}`);
-                const costField = document.getElementById(`cost-field-${itemId}`);
-                
-                if (status === 'warning' || status === 'fail') {
-                    if (vendorField) vendorField.classList.remove('hidden');
-                    if (costField) costField.classList.remove('hidden');
-                } else {
-                    if (vendorField) vendorField.classList.add('hidden');
-                    if (costField) costField.classList.add('hidden');
-                }
             });
         });
     </script>

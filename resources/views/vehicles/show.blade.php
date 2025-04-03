@@ -169,15 +169,15 @@
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold">Inspection & Repair</h3>
                         <div class="flex space-x-2">
-                            @if($vehicle->status === 'arrived')
+                            @if($vehicle->status === 'arrived' || $vehicle->transport_status === 'delivered')
                                 <a href="/inspection/vehicles/{{ $vehicle->id }}/comprehensive" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                                     <x-heroicon-o-clipboard-document-list class="h-4 w-4 mr-1" />
                                     Start Inspection
                                 </a>
                             @else
                                 <div class="text-sm text-gray-500">
-                                    @if($vehicle->status === 'delivered')
-                                        Vehicle must be marked as "Arrived" to start an inspection
+                                    @if($vehicle->transport_status !== 'delivered')
+                                        Vehicle must be delivered by transporter to start an inspection
                                     @elseif($vehicle->status === 'ready')
                                         Vehicle has completed all inspections
                                     @else

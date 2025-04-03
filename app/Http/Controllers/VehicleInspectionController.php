@@ -64,7 +64,7 @@ class VehicleInspectionController extends Controller
         $vehicleId = $request->query('vehicle_id');
         
         // Get vehicles with better display format
-        $vehicles = Vehicle::where('status', '!=', 'sold')
+        $vehicles = Vehicle::where('transport_status', 'delivered')
             ->orderBy('stock_number')
             ->get(['id', 'stock_number', 'year', 'make', 'model'])
             ->mapWithKeys(function($vehicle) {
@@ -334,7 +334,7 @@ class VehicleInspectionController extends Controller
         // Group items by their stage
         $stageItems = [];
         $needsRepair = false;
-        
+       
         foreach ($request->items as $itemId => $itemData) {
             $item = InspectionItem::findOrFail($itemId);
             $stageId = $item->inspection_stage_id;
@@ -413,6 +413,7 @@ class VehicleInspectionController extends Controller
                 ->with('success', 'Inspection completed successfully. ' . 
                 ($needsRepair ? 'Repair items have been ' . ($request->vendor_id ? 'assigned to vendor.' : 'identified.') : 'Vehicle is ready.'));
         } catch (\Exception $e) {
+            dd($e);
             DB::rollBack();
             
             return redirect()->back()

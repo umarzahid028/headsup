@@ -133,7 +133,7 @@
                                         <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
                                             <option value="">Select Status</option>
                                             @if($batchData->status === 'pending' || $batchData->status === 'in_transit')
-                                                <option value="in_transit">Mark Selected as Picked Up</option>
+                                                <option value="picked_up">Mark Selected as Picked Up</option>
                                             @endif
                                             @if($batchData->status === 'in_transit')
                                                 <option value="delivered">Mark Selected as Delivered</option>
@@ -276,7 +276,7 @@
                                     pickupDateField.classList.add('hidden');
                                     deliveryDateField.classList.add('hidden');
                                     
-                                    if (this.value === 'in_transit') {
+                                    if (this.value === 'picked_up') {
                                         pickupDateField.classList.remove('hidden');
                                         document.getElementById('pickup_date').required = true;
                                         document.getElementById('delivery_date').required = false;

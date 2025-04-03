@@ -477,6 +477,7 @@ class TransportController extends Controller
      */
     public function updateTransportStatus(Request $request, Transport $transport): RedirectResponse
     {
+
         // Verify user is a transporter and has access to this transport
         if (!auth()->user()->hasRole('Transporter') || 
             auth()->user()->transporter_id !== $transport->transporter_id) {
@@ -511,6 +512,8 @@ class TransportController extends Controller
                 $transport->vehicle->update([
                     'transport_status' => $validated['status']
                 ]);
+
+                
             }
 
             DB::commit();
@@ -531,7 +534,7 @@ class TransportController extends Controller
      */
     public function updateBatchStatus(Request $request, string $batchId): RedirectResponse
     {
-       
+    
         // Verify user is a transporter
         if (!auth()->user()->hasRole('Transporter')) {
             abort(403, 'Unauthorized action.');
@@ -540,7 +543,7 @@ class TransportController extends Controller
         $validated = $request->validate([
             'transport_ids' => 'required|array',
             'transport_ids.*' => 'exists:transports,id',
-            'status' => 'required|string|in:in_transit,delivered',
+            'status' => 'required|string|in:picked_up,delivered',
             'pickup_date' => 'nullable|date',
             'delivery_date' => 'nullable|date',
         ]);
@@ -553,17 +556,18 @@ class TransportController extends Controller
                 ->where('batch_id', $batchId)
                 ->where('transporter_id', auth()->user()->transporter_id)
                 ->get();
-
+           
             if ($transports->isEmpty()) {
                 return redirect()->back()->with('error', 'No valid transports found to update.');
             }
 
             // Get the batch record
-            $batch = Batch::where('id', $batchId)->first();
+            $batch = Transport::where('batch_id', $batchId)->first();
+            
             if (!$batch) {
                 return redirect()->back()->with('error', 'Batch not found.');
             }
-
+           
             // Prepare update data for transports
             $transportUpdateData = ['status' => $validated['status']];
             if ($validated['status'] === 'in_transit' && isset($validated['pickup_date'])) {
@@ -578,11 +582,14 @@ class TransportController extends Controller
                 // Update transport status and dates
                 $transport->update($transportUpdateData);
                 
-                // Update vehicle transport status
+                // Update vehicle transport status and status
                 if ($transport->vehicle) {
-                    $transport->vehicle->update([
-                        'transport_status' => $validated['status']
-                    ]);
+                    $vehicleUpdateData = [
+                        'transport_status' => $validated['status'],
+                        'status' => $validated['status'] // Update vehicle status to match transport status
+                    ];
+                    
+                    $transport->vehicle->update($vehicleUpdateData);
                 }
             }
 
@@ -636,6 +643,7 @@ class TransportController extends Controller
             return redirect()->back()->with('success', $message);
                 
         } catch (\Exception $e) {
+         
             DB::rollBack();
             return redirect()->back()
                 ->with('error', 'Error updating transport status: ' . $e->getMessage());

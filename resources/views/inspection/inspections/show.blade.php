@@ -71,7 +71,6 @@
                         
                         <div>
                             <h3 class="text-lg font-medium text-gray-900 mb-1">Assignment</h3>
-                            <p class="text-gray-600">Manager: {{ $inspection->user->name }}</p>
                             @if($inspection->vendor_id)
                                 <p class="text-gray-600">Vendor: {{ $inspection->vendor->name }}</p>
                             @endif
@@ -153,15 +152,15 @@
                     <div class="mb-4 p-3 bg-gray-50 rounded-md border border-gray-200 flex flex-wrap gap-4">
                         <div class="flex items-center">
                             <span class="w-3 h-3 rounded-full bg-green-500 mr-1"></span>
-                            <span class="text-sm">Pass</span>
+                            <span class="text-sm">Status: Pass</span>
                         </div>
                         <div class="flex items-center">
                             <span class="w-3 h-3 rounded-full bg-yellow-500 mr-1"></span>
-                            <span class="text-sm">Repair</span>
+                            <span class="text-sm">Status: Repair</span>
                         </div>
                         <div class="flex items-center">
                             <span class="w-3 h-3 rounded-full bg-red-500 mr-1"></span>
-                            <span class="text-sm">Replace</span>
+                            <span class="text-sm">Status: Replace</span>
                         </div>
                         <div class="flex items-center">
                             <span class="w-3 h-3 rounded-full bg-gray-300 mr-1"></span>
@@ -203,15 +202,15 @@
                                                 @php $result = $resultsMap->get($item->id); @endphp
                                                 @if($result->status === 'pass')
                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                        Pass
+                                                        Status: Pass
                                                     </span>
                                                 @elseif($result->status === 'warning')
                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                        Repair
+                                                        Status: Repair
                                                     </span>
                                                 @elseif($result->status === 'fail')
                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                        Replace
+                                                        Status: Replace
                                                     </span>
                                                 @else
                                                     <span class="text-sm text-gray-500">Pending</span>
@@ -237,7 +236,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900">
                                                 @if(isset($resultsMap[$item->id]) && $resultsMap[$item->id]->vendor_id)
-                                                    {{ $resultsMap[$item->id]->vendor->name }}
+                                                    {{ $resultsMap[$item->id]->assignedVendor->name }}
                                                 @else
                                                     --
                                                 @endif

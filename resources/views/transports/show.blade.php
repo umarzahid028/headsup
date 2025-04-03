@@ -164,8 +164,8 @@
                                                     <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
                                                         <option value="">Select Status</option>
                                                         @if($transport->status === 'pending')
-                                                            <option value="in_transit">Mark as Picked Up</option>
-                                                        @elseif($transport->status === 'in_transit')
+                                                            <option value="picked_up">Mark as Picked Up</option>
+                                                        @elseif($transport->status === 'picked_up')
                                                             <option value="delivered">Mark as Delivered</option>
                                                         @endif
                                                     </select>

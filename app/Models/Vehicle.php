@@ -59,6 +59,7 @@ class Vehicle extends Model
         'buyer_name',
         'import_file',
         'processed_at',
+        'transport_status',
     ];
 
     protected $casts = [

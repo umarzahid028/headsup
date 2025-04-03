@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Transport;
 use App\Models\Transporter;
 use App\Models\Vendor;
+use App\Observers\TransportObserver;
 use App\Observers\TransporterObserver;
 use App\Observers\VendorObserver;
 use Illuminate\Support\ServiceProvider;
@@ -29,6 +31,8 @@ class AppServiceProvider extends ServiceProvider
             return auth()->check() && auth()->user()->hasRole($role);
         });
 
+        // Register observers
+        Transport::observe(TransportObserver::class);
         Transporter::observe(TransporterObserver::class);
         Vendor::observe(VendorObserver::class);
     }
