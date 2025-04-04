@@ -1,8 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Vendor Dashboard') }}
-        </h2>
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold leading-tight text-zinc-800 dark:text-zinc-200">
+                {{ __('Vendor Dashboard') }}
+            </h2>
+        </div>
     </x-slot>
 
     <div class="py-12">
@@ -119,31 +121,56 @@
                                                     </td>
                                                     <td class="px-6 py-4">
                                                         <div class="text-sm text-zinc-900 dark:text-zinc-100">
-                                                            {{ $inspection->inspectionItems->where('vendor_id', auth()->id())->count() }} items
+                                                            @php
+                                                                $items = $inspection->itemResults->where('vendor_id', auth()->user()->vendor->id);
+                                                                $totalItems = $items->count();
+                                                                $pendingItems = $items->whereIn('status', ['pending', 'fail', 'warning'])->count();
+                                                                $diagnosticItems = $items->whereNotNull('diagnostic_status')->count();
+                                                                $repairItems = $items->where('requires_repair', true)->where('repair_completed', false)->count();
+                                                            @endphp
+                                                            {{ $totalItems }} items
+                                                            @if($pendingItems > 0)
+                                                                <span class="text-xs text-amber-600 dark:text-amber-400 block">
+                                                                    {{ $pendingItems }} pending
+                                                                </span>
+                                                            @endif
+                                                            @if($diagnosticItems > 0)
+                                                                <span class="text-xs text-blue-600 dark:text-blue-400 block">
+                                                                    {{ $diagnosticItems }} need diagnosis
+                                                                </span>
+                                                            @endif
+                                                            @if($repairItems > 0)
+                                                                <span class="text-xs text-red-600 dark:text-red-400 block">
+                                                                    {{ $repairItems }} need repair
+                                                                </span>
+                                                            @endif
                                                         </div>
                                                     </td>
                                                     <td class="px-6 py-4">
                                                         @php
-                                                            $items = $inspection->inspectionItems->where('vendor_id', auth()->id());
-                                                            $diagnostic = $items->contains('status', 'diagnostic');
-                                                            $pending = $items->contains('status', 'pending');
-                                                            $pendingApproval = $items->contains('status', 'pending_approval');
-                                                            $inProgress = $items->contains('status', 'in_progress');
+                                                            $items = $inspection->itemResults->where('vendor_id', auth()->user()->vendor->id);
+                                                            $hasUrgent = $items->contains(function($item) {
+                                                                return $item->status === 'fail' || 
+                                                                    ($item->requires_repair && !$item->repair_completed);
+                                                            });
+                                                            $hasDiagnostic = $items->whereNotNull('diagnostic_status')->count() > 0;
+                                                            $hasPending = $items->where('status', 'pending')->count() > 0;
+                                                            $hasWarning = $items->where('status', 'warning')->count() > 0;
                                                         @endphp
                                                         
-                                                        @if($diagnostic)
-                                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">
-                                                                Diagnostic Required
+                                                        @if($hasUrgent)
+                                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                                                                Urgent
                                                             </span>
-                                                        @elseif($pendingApproval)
-                                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">
-                                                                Pending Approval
+                                                        @elseif($hasDiagnostic)
+                                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                                                                Needs Diagnosis
                                                             </span>
-                                                        @elseif($inProgress)
-                                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">
-                                                                In Progress
+                                                        @elseif($hasWarning)
+                                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200">
+                                                                Warning
                                                             </span>
-                                                        @elseif($pending)
+                                                        @elseif($hasPending)
                                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">
                                                                 Pending
                                                             </span>
@@ -161,7 +188,11 @@
                                                     </td>
                                                     <td class="px-6 py-4 text-right">
                                                         <a href="{{ route('vendor.inspections.show', $inspection) }}" 
-                                                           class="inline-flex items-center px-3 py-2 border border-zinc-200 dark:border-zinc-800 text-sm leading-4 font-medium rounded-md text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-950 hover:bg-zinc-50 dark:hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-500">
+                                                           class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium bg-white hover:bg-zinc-50 text-zinc-900 rounded-lg border border-zinc-200">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                            </svg>
                                                             View Details
                                                         </a>
                                                     </td>
@@ -302,7 +333,11 @@
                                                 </td>
                                                 <td class="px-6 py-4 text-right">
                                                     <a href="{{ route('vendor.inspections.show', $inspection) }}" 
-                                                       class="inline-flex items-center px-3 py-2 border border-zinc-200 dark:border-zinc-800 text-sm leading-4 font-medium rounded-md text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-950 hover:bg-zinc-50 dark:hover:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-500">
+                                                       class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium bg-white hover:bg-zinc-50 text-zinc-900 rounded-lg border border-zinc-200">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                        </svg>
                                                         View Details
                                                     </a>
                                                 </td>

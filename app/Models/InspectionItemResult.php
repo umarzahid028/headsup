@@ -17,6 +17,8 @@ class InspectionItemResult extends Model
         'status',
         'notes',
         'cost',
+        'actual_cost',
+        'completion_notes',
         'vendor_id',
         'requires_repair',
         'repair_completed',
@@ -29,6 +31,7 @@ class InspectionItemResult extends Model
 
     protected $casts = [
         'cost' => 'decimal:2',
+        'actual_cost' => 'decimal:2',
         'requires_repair' => 'boolean',
         'repair_completed' => 'boolean',
         'is_vendor_visible' => 'boolean',

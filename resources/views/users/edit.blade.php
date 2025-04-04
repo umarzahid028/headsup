@@ -4,7 +4,7 @@
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div class="space-y-1.5">
                 <nav class="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <a href="{{ route('admin.dashboard') }}" class="hover:text-foreground">
+                    <a href="{{ route('dashboard') }}" class="hover:text-foreground">
                         Dashboard
                     </a>
                     <x-heroicon-m-chevron-right class="h-4 w-4" />

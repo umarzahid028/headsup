@@ -29,6 +29,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'bulk edit vehicles',
             'scan vehicle barcodes',
             
+            // Transport permissions
+            'view transports',
+            'create transports',
+            'edit transports',
+            'delete transports',
+            'manage transports',
+            
             // Sales Issues permissions
             'view sales issues',
             'create sales issues',
@@ -94,6 +101,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'Admin' => $permissions, // Admin gets all permissions
             'Sales Manager' => [
                 'view vehicles', 'create vehicles', 'edit vehicles', 'archive vehicles',
+                'view transports', 'create transports', 'edit transports', 'manage transports',
                 'view sales issues', 'create sales issues', 'edit sales issues', 'review sales issues',
                 'view goodwill claims', 'create goodwill claims', 'edit goodwill claims',
                 'approve goodwill claims', 'reject goodwill claims',
@@ -106,6 +114,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
             'Recon Manager' => [
                 'view vehicles', 'edit vehicles', 'archive vehicles', 'bulk edit vehicles',
+                'view transports', 'create transports', 'edit transports', 'manage transports',
                 'view sales issues', 'edit sales issues',
                 'view goodwill claims', 'edit goodwill claims',
                 'view tags', 'assign tags',

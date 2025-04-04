@@ -16,11 +16,20 @@ class InspectionController extends Controller
     public function index(): View
     {
         $user = auth()->user();
+        $vendor = $user->vendor;
         
-        $assignedInspections = VehicleInspection::with(['vehicle', 'inspectionItems'])
-            ->whereHas('inspectionItems', function ($query) use ($user) {
-                $query->where('vendor_id', $user->id)
-                    ->whereIn('status', ['pending', 'diagnostic', 'in_progress']);
+        if (!$vendor) {
+            abort(403, 'No vendor profile found for this user.');
+        }
+        
+        $assignedInspections = VehicleInspection::with(['vehicle', 'itemResults'])
+            ->whereHas('itemResults', function ($query) use ($vendor) {
+                $query->where('vendor_id', $vendor->id)
+                    ->where(function($q) {
+                        $q->whereIn('status', ['pending', 'fail', 'warning'])
+                            ->orWhereNotNull('diagnostic_status')
+                            ->orWhere('requires_repair', true);
+                    });
             })
             ->orderBy('created_at', 'desc')
             ->get();
@@ -34,15 +43,24 @@ class InspectionController extends Controller
     public function show(VehicleInspection $inspection): View
     {
         $user = auth()->user();
+        $vendor = $user->vendor;
         
+        if (!$vendor) {
+            abort(403, 'No vendor profile found for this user.');
+        }
+
         // Ensure the vendor has access to this inspection
-        if (!$inspection->inspectionItems()->where('vendor_id', $user->id)->exists()) {
+        if (!$inspection->itemResults()->where('vendor_id', $vendor->id)->exists()) {
             abort(403);
         }
 
-        $inspection->load(['vehicle', 'inspectionItems' => function ($query) use ($user) {
-            $query->where('vendor_id', $user->id);
-        }]);
+        $inspection->load([
+            'vehicle',
+            'itemResults' => function ($query) use ($vendor) {
+                $query->where('vendor_id', $vendor->id);
+            },
+            'itemResults.inspectionItem'
+        ]);
 
         return view('vendor.inspections.show', compact('inspection'));
     }
@@ -53,27 +71,37 @@ class InspectionController extends Controller
     public function updateItemStatus(Request $request, InspectionItemResult $item)
     {
         $user = auth()->user();
+        $vendor = $user->vendor;
         
+        if (!$vendor) {
+            abort(403, 'No vendor profile found for this user.');
+        }
+
         // Ensure the vendor owns this item
-        if ($item->vendor_id !== $user->id) {
+        if ($item->vendor_id !== $vendor->id) {
             abort(403);
         }
 
         $validated = $request->validate([
-            'status' => 'required|in:repair,replace',
-            'notes' => 'nullable|string',
+            'status' => 'required|in:completed,cancelled',
+            'actual_cost' => 'required_if:status,completed|nullable|numeric|min:0',
+            'completion_notes' => 'nullable|string',
         ]);
 
-        $item->update([
+        $updateData = [
             'status' => $validated['status'],
-            'notes' => $validated['notes'],
+            'actual_cost' => $validated['status'] === 'completed' ? $validated['actual_cost'] : null,
+            'completion_notes' => $validated['completion_notes'] ?? null,
             'completed_at' => now(),
-        ]);
+            'repair_completed' => $validated['status'] === 'completed',
+        ];
+
+        $item->update($updateData);
 
         // Check if all items are completed
         $inspection = $item->vehicleInspection;
-        $allCompleted = $inspection->inspectionItems()
-            ->where('vendor_id', $user->id)
+        $allCompleted = $inspection->itemResults()
+            ->where('vendor_id', $vendor->id)
             ->whereNull('completed_at')
             ->doesntExist();
 

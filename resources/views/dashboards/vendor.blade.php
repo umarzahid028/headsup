@@ -18,9 +18,7 @@ $dummyEstimateStats = [
 @endphp
 
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-3xl font-bold tracking-tight">Vendor Dashboard</h2>
-    </x-slot>
+
 
     <div class="container mx-auto px-4">
         <h2 class="text-3xl font-bold tracking-tight mb-6">Vendor Dashboard</h2>

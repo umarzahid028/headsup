@@ -41,10 +41,11 @@
                                                     VIN: {{ $inspection->vehicle->vin }}
                                                 </div>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
+                                            <td class="px-6 py-4">
                                                 @php
-                                                    $totalItems = $inspection->inspectionItems->where('vendor_id', auth()->id())->count();
-                                                    $completedItems = $inspection->inspectionItems->where('vendor_id', auth()->id())->whereNotNull('completed_at')->count();
+                                                    $vendorItems = $inspection->itemResults;
+                                                    $totalItems = $vendorItems->count();
+                                                    $completedItems = $vendorItems->whereIn('status', ['completed', 'cancelled'])->count();
                                                 @endphp
                                                 <div class="text-sm text-gray-900">
                                                     {{ $completedItems }} / {{ $totalItems }} completed
@@ -52,10 +53,34 @@
                                                 <div class="mt-1 relative w-24 bg-gray-200 rounded-full h-2">
                                                     <div class="absolute left-0 top-0 h-2 rounded-full bg-green-500" style="width: {{ $totalItems > 0 ? ($completedItems / $totalItems * 100) : 0 }}%"></div>
                                                 </div>
+                                                <div class="mt-2 text-xs text-gray-500 space-y-1">
+                                                    @foreach($vendorItems as $item)
+                                                        <div class="flex items-center">
+                                                            @if($item->status === 'completed')
+                                                                <span class="h-1.5 w-1.5 rounded-full bg-green-500 mr-2"></span>
+                                                            @elseif($item->status === 'cancelled')
+                                                                <span class="h-1.5 w-1.5 rounded-full bg-gray-500 mr-2"></span>
+                                                            @else
+                                                                <span class="h-1.5 w-1.5 rounded-full bg-yellow-500 mr-2"></span>
+                                                            @endif
+                                                            {{ $item->inspectionItem->name }}
+                                                        </div>
+                                                    @endforeach
+                                                </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $inspection->status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
-                                                    {{ ucfirst($inspection->status) }}
+                                                @php
+                                                    $allCompleted = $vendorItems->every(function($item) {
+                                                        return in_array($item->status, ['completed', 'cancelled']);
+                                                    });
+                                                    $allCancelled = $vendorItems->every(function($item) {
+                                                        return $item->status === 'cancelled';
+                                                    });
+                                                @endphp
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                    {{ $allCancelled ? 'bg-gray-100 text-gray-800' : 
+                                                       ($allCompleted ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800') }}">
+                                                    {{ $allCancelled ? 'Cancelled' : ($allCompleted ? 'Completed' : 'In Progress') }}
                                                 </span>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

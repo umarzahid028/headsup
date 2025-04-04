@@ -50,11 +50,17 @@
                             <div>
                                 <span class="text-gray-500 text-sm">Specialties:</span>
                                 <div class="mt-1 flex flex-wrap gap-2">
-                                    @foreach($vendor->specialty_tags ?? [] as $tag)
+                                    @php
+                                        $tags = is_array($vendor->specialty_tags) ? $vendor->specialty_tags : [];
+                                    @endphp
+                                    @foreach($tags as $tag)
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                                             {{ $specialties[$tag] ?? ucfirst(str_replace('_', ' ', $tag)) }}
                                         </span>
                                     @endforeach
+                                    @if(empty($tags))
+                                        <span class="text-gray-500 text-sm">No specialties specified</span>
+                                    @endif
                                 </div>
                             </div>
 

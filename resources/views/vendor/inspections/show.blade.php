@@ -47,11 +47,11 @@
                 <div class="p-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Assigned Items</h3>
                     
-                    @if($inspection->inspectionItems->isEmpty())
+                    @if($inspection->itemResults->isEmpty())
                         <p class="text-gray-500">No items assigned to you for this inspection.</p>
                     @else
                         <div class="space-y-6">
-                            @foreach($inspection->inspectionItems as $item)
+                            @foreach($inspection->itemResults as $item)
                                 <div class="border rounded-lg p-4 {{ $item->completed_at ? 'bg-gray-50' : 'bg-white' }}">
                                     <div class="flex flex-col md:flex-row md:items-start md:justify-between">
                                         <div class="flex-grow">
@@ -66,11 +66,25 @@
                                                     <p class="text-sm text-gray-900">{{ $item->notes }}</p>
                                                 </div>
                                             @endif
+
+                                            @if($item->actual_cost)
+                                                <div class="mt-2">
+                                                    <p class="text-sm text-gray-600">Actual Cost:</p>
+                                                    <p class="text-sm text-gray-900">${{ number_format($item->actual_cost, 2) }}</p>
+                                                </div>
+                                            @endif
+
+                                            @if($item->completion_notes)
+                                                <div class="mt-2">
+                                                    <p class="text-sm text-gray-600">Completion Notes:</p>
+                                                    <p class="text-sm text-gray-900">{{ $item->completion_notes }}</p>
+                                                </div>
+                                            @endif
                                         </div>
                                         
                                         <div class="mt-4 md:mt-0 md:ml-6">
                                             @if($item->completed_at)
-                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $item->status === 'repair' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}">
+                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $item->status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
                                                     {{ ucfirst($item->status) }}
                                                 </span>
                                             @else
@@ -78,18 +92,22 @@
                                                     @csrf
                                                     @method('PATCH')
                                                     
-                                                    <div class="flex space-x-2">
-                                                        <button type="submit" name="status" value="repair" class="inline-flex items-center px-3 py-1 border border-blue-600 rounded-md text-sm font-medium text-blue-600 hover:bg-blue-50">
-                                                            <x-heroicon-o-wrench class="h-4 w-4 mr-1" />
-                                                            Repair
-                                                        </button>
-                                                        <button type="submit" name="status" value="replace" class="inline-flex items-center px-3 py-1 border border-purple-600 rounded-md text-sm font-medium text-purple-600 hover:bg-purple-50">
-                                                            <x-heroicon-o-arrow-path class="h-4 w-4 mr-1" />
-                                                            Replace
-                                                        </button>
+                                                    <div class="flex flex-col space-y-2">
+                                                        <div class="flex space-x-2">
+                                                            <button type="submit" name="status" value="completed" class="inline-flex items-center px-3 py-1 border border-blue-600 rounded-md text-sm font-medium text-blue-600 hover:bg-blue-50">
+                                                                <x-heroicon-o-wrench class="h-4 w-4 mr-1" />
+                                                                Repair/Replace
+                                                            </button>
+                                                            <button type="submit" name="status" value="cancelled" class="inline-flex items-center px-3 py-1 border border-red-600 rounded-md text-sm font-medium text-red-600 hover:bg-red-50">
+                                                                <x-heroicon-o-x-mark class="h-4 w-4 mr-1" />
+                                                                Cancel
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        <input type="number" name="actual_cost" step="0.01" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm" placeholder="Actual cost" required>
+                                                        
+                                                        <textarea name="completion_notes" rows="2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm" placeholder="Add completion notes"></textarea>
                                                     </div>
-                                                    
-                                                    <textarea name="notes" rows="2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm" placeholder="Add notes (optional)"></textarea>
                                                 </form>
                                             @endif
                                         </div>

@@ -65,9 +65,20 @@ class SalesIssueController extends Controller
             ->select('id', 'stock_number', 'year', 'make', 'model')
             ->get();
 
+        // Define issue types
+        $issueTypes = [
+            'mechanical' => 'Mechanical Issue',
+            'cosmetic' => 'Cosmetic Issue',
+            'electrical' => 'Electrical Issue',
+            'accessory' => 'Accessory Issue',
+            'documentation' => 'Documentation Issue',
+            'other' => 'Other Issue'
+        ];
+
         return view('sales.issues.create', [
             'vehicles' => $vehicles,
             'selectedVehicle' => $vehicle,
+            'issueTypes' => $issueTypes,
         ]);
     }
 

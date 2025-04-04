@@ -44,31 +44,50 @@
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm text-gray-900">
-                                                    {{ $inspection->inspectionItems->where('vendor_id', auth()->id())->count() }} items
+                                                    {{ $inspection->itemResults->count() }} items
+                                                </div>
+                                                <div class="text-xs text-gray-500">
+                                                    @foreach($inspection->itemResults as $item)
+                                                        <div>{{ $item->inspectionItem->name }}</div>
+                                                    @endforeach
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 @php
-                                                    $items = $inspection->inspectionItems->where('vendor_id', auth()->id());
-                                                    $completed = $items->where('status', 'completed')->count();
-                                                    $cancelled = $items->where('status', 'cancelled')->count();
-                                                    $total = $items->count();
+                                                    $completed = $inspection->itemResults->where('status', 'completed')->count();
+                                                    $cancelled = $inspection->itemResults->where('status', 'cancelled')->count();
+                                                    $total = $inspection->itemResults->count();
+                                                    
+                                                    $allCompleted = $completed === $total && $total > 0;
+                                                    $allCancelled = $cancelled === $total && $total > 0;
                                                 @endphp
                                                 
                                                 <div class="text-sm text-gray-900">
-                                                    @if($cancelled === $total)
+                                                    @if($allCancelled)
                                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                                                             Cancelled
                                                         </span>
-                                                    @else
+                                                    @elseif($allCompleted)
                                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                             Completed
                                                         </span>
+                                                    @else
+                                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                            Mixed
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                                <div class="text-xs text-gray-500 mt-1">
+                                                    @if($completed > 0)
+                                                        <div>{{ $completed }} completed</div>
+                                                    @endif
+                                                    @if($cancelled > 0)
+                                                        <div>{{ $cancelled }} cancelled</div>
                                                     @endif
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ $inspection->completed_at?->format('M d, Y h:ia') }}
+                                                {{ $inspection->completed_date?->format('M d, Y h:ia') }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <a href="{{ route('vendor.inspections.show', $inspection) }}" class="text-indigo-600 hover:text-indigo-900">

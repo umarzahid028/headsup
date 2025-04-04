@@ -10,7 +10,7 @@
 <div x-data="{
     open: false,
     search: '',
-    selectedOptions: @js($selected),
+    selectedOptions: @js(is_array($selected) ? $selected : []),
     options: @js($options),
     toggleOption(value) {
         const index = this.selectedOptions.indexOf(value);
@@ -26,7 +26,10 @@
         );
     },
     getSelectedLabels() {
-        return this.selectedOptions.map(value => this.options[value]).join(', ');
+        return this.selectedOptions
+            .map(value => this.options[value])
+            .filter(label => label) // Filter out undefined values
+            .join(', ');
     }
 }">
     <div class="relative" @click.away="open = false">
@@ -34,7 +37,7 @@
         
         <!-- Hidden input for form submission -->
         <template x-for="option in selectedOptions" :key="option">
-            <input type="hidden" :name="'{{ $name }}[]'" :value="option">
+            <input type="hidden" :name="`{{ $name }}[]`" :value="option">
         </template>
 
         <!-- Searchable input -->

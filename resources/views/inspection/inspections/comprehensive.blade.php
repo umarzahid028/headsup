@@ -123,7 +123,7 @@
                                                     <div class="flex flex-wrap gap-4">
                                                         <label class="relative flex items-center group">
                                                             <input type="radio" 
-                                                                class="peer sr-only" 
+                                                                class="peer sr-only item-status-radio" 
                                                                 name="items[{{ $item->id }}][status]" 
                                                                 value="pass" 
                                                                 data-item-id="{{ $item->id }}"
@@ -141,7 +141,7 @@
                                                         </label>
                                                         <label class="relative flex items-center group">
                                                             <input type="radio" 
-                                                                class="peer sr-only" 
+                                                                class="peer sr-only item-status-radio" 
                                                                 name="items[{{ $item->id }}][status]" 
                                                                 value="warning" 
                                                                 data-item-id="{{ $item->id }}"
@@ -159,7 +159,7 @@
                                                         </label>
                                                         <label class="relative flex items-center group">
                                                             <input type="radio" 
-                                                                class="peer sr-only" 
+                                                                class="peer sr-only item-status-radio" 
                                                                 name="items[{{ $item->id }}][status]" 
                                                                 value="fail" 
                                                                 data-item-id="{{ $item->id }}"
@@ -300,6 +300,32 @@
             const tabs = document.querySelectorAll('.stage-tab');
             const contents = document.querySelectorAll('.stage-content');
             
+            // Add batch assign vendor functionality
+            const batchAssignVendorBtn = document.getElementById('batch-assign-vendor');
+            const globalVendorSelect = document.getElementById('vendor_id');
+            
+            if (batchAssignVendorBtn && globalVendorSelect) {
+                batchAssignVendorBtn.addEventListener('click', function() {
+                    const selectedVendorId = globalVendorSelect.value;
+                    if (!selectedVendorId) {
+                        alert('Please select a vendor first.');
+                        return;
+                    }
+                    
+                    // Update all vendor selects that are visible (items marked as warning or fail)
+                    document.querySelectorAll('.item-vendor-select').forEach(select => {
+                        const container = select.closest('.item-container');
+                        const statusInputs = container.querySelectorAll('input[type="radio"]');
+                        const selectedStatus = Array.from(statusInputs).find(input => input.checked)?.value;
+                        
+                        if (selectedStatus === 'warning' || selectedStatus === 'fail') {
+                            select.value = selectedVendorId;
+                            select.closest('div').classList.remove('hidden');
+                        }
+                    });
+                });
+            }
+            
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
                     const stageId = tab.dataset.stageId;
@@ -333,8 +359,12 @@
                 
                 // Check each item container
                 document.querySelectorAll('.item-container').forEach(container => {
-                    const itemId = container.querySelector('.item-status-radio').dataset.itemId;
-                    const radios = container.querySelectorAll(`input[name="items[${itemId}][status]"]`);
+                    const radios = container.querySelectorAll('input[type="radio"]');
+                    if (!radios.length) return; // Skip if no radio buttons found
+                    
+                    const itemId = radios[0].dataset.itemId; // Get itemId from first radio
+                    if (!itemId) return; // Skip if no itemId found
+                    
                     const checked = Array.from(radios).some(radio => radio.checked);
                     
                     if (!checked) {
@@ -342,7 +372,10 @@
                         hasErrors = true;
                         
                         if (!firstErrorTab) {
-                            firstErrorTab = container.dataset.stageId;
+                            const stageContent = container.closest('.stage-content');
+                            if (stageContent) {
+                                firstErrorTab = stageContent.id.replace('stage-', '');
+                            }
                         }
                     }
                 });
@@ -371,9 +404,6 @@
                     
                     // Remove error highlight if it exists
                     container.classList.remove('error-highlight');
-                    
-                    // Clear default value
-                    document.querySelector(`.default-status-${itemId}`).value = '';
                     
                     // Show/hide vendor and cost fields based on status
                     if (vendorField) {

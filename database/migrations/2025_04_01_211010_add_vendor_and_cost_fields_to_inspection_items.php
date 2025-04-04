@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('inspection_items', function (Blueprint $table) {
-            $table->boolean('vendor_required')->default(false)->after('is_active');
-            $table->boolean('cost_tracking')->default(false)->after('vendor_required');
+            if (!Schema::hasColumn('inspection_items', 'vendor_required')) {
+                $table->boolean('vendor_required')->default(false)->after('is_active');
+            }
+            if (!Schema::hasColumn('inspection_items', 'cost_tracking')) {
+                $table->boolean('cost_tracking')->default(false)->after('vendor_required');
+            }
         });
     }
 
