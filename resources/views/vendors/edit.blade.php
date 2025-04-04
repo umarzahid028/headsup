@@ -33,22 +33,35 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Name -->
                             <div>
-                                <x-input-label for="name" :value="__('Vendor Name')" />
-                                <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" 
-                                    :value="old('name', $vendor->name)" required autofocus />
+                                <x-input-label for="name" :value="__('Vendor Name')" required />
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <x-heroicon-o-building-office class="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <x-text-input id="name" class="block mt-1 w-full pl-10" type="text" name="name" 
+                                        :value="old('name', $vendor->name)" required placeholder="Enter vendor name" />
+                                </div>
                                 <x-input-error :messages="$errors->get('name')" class="mt-2" />
                             </div>
 
                             <!-- Specialty Tags -->
                             <div>
-                                <x-searchable-multi-select
-                                    name="specialty_tags"
-                                    label="Specialty Tags"
-                                    :options="$specialties"
-                                    :selected="old('specialty_tags', $vendor->specialty_tags ?? [])"
-                                    placeholder="Select specialties..."
-                                    help-text="Select all specialties that apply to this vendor"
-                                />
+                              
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <x-heroicon-o-tag class="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <x-searchable-multi-select
+                                        name="specialty_tags"
+                                        label="Specialty Tags"
+                                        :options="$specialties"
+                                        :selected="old('specialty_tags', $vendor->specialty_tags ?? [])"
+                                        placeholder="Select specialties..."
+                                        help-text="Select all specialties that apply to this vendor"
+                                        required
+                                    />
+                                </div>
+                                <x-input-error :messages="$errors->get('specialty_tags')" class="mt-2" />
                             </div>
 
                             <!-- Vendor Type -->
@@ -71,40 +84,92 @@
                             <!-- Contact Person -->
                             <div>
                                 <x-input-label for="contact_person" :value="__('Contact Person')" />
-                                <x-text-input id="contact_person" class="block mt-1 w-full" type="text" name="contact_person" 
-                                    :value="old('contact_person', $vendor->contact_person)" />
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <x-heroicon-o-user class="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <x-text-input id="contact_person" class="block mt-1 w-full pl-10" type="text" name="contact_person" 
+                                        :value="old('contact_person', $vendor->contact_person)" placeholder="Primary contact person" />
+                                </div>
                                 <x-input-error :messages="$errors->get('contact_person')" class="mt-2" />
                             </div>
 
                             <!-- Phone -->
                             <div>
                                 <x-input-label for="phone" :value="__('Phone Number')" />
-                                <x-text-input id="phone" class="block mt-1 w-full" type="text" name="phone" 
-                                    :value="old('phone', $vendor->phone)" />
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <x-heroicon-o-phone class="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <x-text-input id="phone" class="block mt-1 w-full pl-10" type="tel" name="phone" 
+                                        :value="old('phone', $vendor->phone)" placeholder="(555) 555-5555" />
+                                </div>
                                 <x-input-error :messages="$errors->get('phone')" class="mt-2" />
                             </div>
 
                             <!-- Email -->
                             <div>
-                                <x-input-label for="email" :value="__('Email')" />
-                                <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" 
-                                    :value="old('email', $vendor->email)" />
+                                <x-input-label for="email" :value="__('Email')" required />
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <x-heroicon-o-envelope class="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <x-text-input id="email" class="block mt-1 w-full pl-10" type="email" name="email" 
+                                        :value="old('email', $vendor->email)" required placeholder="vendor@example.com" />
+                                </div>
                                 <x-input-error :messages="$errors->get('email')" class="mt-2" />
                             </div>
 
                             <!-- Address -->
                             <div>
                                 <x-input-label for="address" :value="__('Address')" />
-                                <x-text-input id="address" class="block mt-1 w-full" type="text" name="address" 
-                                    :value="old('address', $vendor->address)" />
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <x-heroicon-o-map-pin class="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <x-text-input id="address" class="block mt-1 w-full pl-10" type="text" name="address" 
+                                        :value="old('address', $vendor->address)" placeholder="Full business address" />
+                                </div>
                                 <x-input-error :messages="$errors->get('address')" class="mt-2" />
+                            </div>
+
+                            <!-- Password -->
+                            <div>
+                                <x-input-label for="password" :value="__('New Password')" />
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <x-heroicon-o-key class="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <x-text-input id="password" class="block mt-1 w-full pl-10" type="password" name="password" 
+                                        placeholder="Leave blank to keep current password" />
+                                </div>
+                                <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                            </div>
+
+                            <!-- Password Confirmation -->
+                            <div>
+                                <x-input-label for="password_confirmation" :value="__('Confirm New Password')" />
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <x-heroicon-o-key class="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <x-text-input id="password_confirmation" class="block mt-1 w-full pl-10" type="password" 
+                                        name="password_confirmation" placeholder="Confirm new password" />
+                                </div>
+                                <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
                             </div>
 
                             <!-- Notes -->
                             <div class="md:col-span-2">
                                 <x-input-label for="notes" :value="__('Notes')" />
-                                <textarea id="notes" name="notes" rows="3" 
-                                    class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">{{ old('notes', $vendor->notes) }}</textarea>
+                                <div class="relative">
+                                    <div class="absolute top-3 left-3 pointer-events-none">
+                                        <x-heroicon-o-document-text class="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <textarea id="notes" name="notes" rows="3" 
+                                        class="block mt-1 w-full pl-10 border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                        placeholder="Additional notes about the vendor">{{ old('notes', $vendor->notes) }}</textarea>
+                                </div>
                                 <x-input-error :messages="$errors->get('notes')" class="mt-2" />
                             </div>
 

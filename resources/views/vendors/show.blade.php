@@ -25,47 +25,61 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Vendor Information</h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-2">
+                        <div class="space-y-4">
                             <div>
                                 <span class="text-gray-500 text-sm">Name:</span>
                                 <p class="font-medium">{{ $vendor->name }}</p>
                             </div>
+                            
                             <div>
-                                <span class="text-gray-500 text-sm">Type:</span>
+                                <span class="text-gray-500 text-sm">Vendor Type:</span>
                                 <p class="font-medium">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                        @if($vendor->type == 'mechanical') bg-blue-100 text-blue-800
-                                        @elseif($vendor->type == 'body_shop') bg-yellow-100 text-yellow-800
-                                        @elseif($vendor->type == 'detail') bg-green-100 text-green-800
-                                        @elseif($vendor->type == 'tire') bg-purple-100 text-purple-800
-                                        @elseif($vendor->type == 'upholstery') bg-pink-100 text-pink-800
-                                        @elseif($vendor->type == 'glass') bg-indigo-100 text-indigo-800
-                                        @else bg-gray-100 text-gray-800
-                                        @endif">
-                                        {{ ucfirst(str_replace('_', ' ', $vendor->type)) }}
-                                    </span>
+                                    @if($vendor->type)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium {{ $vendor->type->is_on_site ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800' }}">
+                                            {{ $vendor->type->name }}
+                                            @if($vendor->type->is_on_site)
+                                                <span class="ml-1 text-xs">(On-Site)</span>
+                                            @endif
+                                        </span>
+                                    @else
+                                        Not specified
+                                    @endif
                                 </p>
                             </div>
+
+                            <div>
+                                <span class="text-gray-500 text-sm">Specialties:</span>
+                                <div class="mt-1 flex flex-wrap gap-2">
+                                    @foreach($vendor->specialty_tags ?? [] as $tag)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                            {{ $specialties[$tag] ?? ucfirst(str_replace('_', ' ', $tag)) }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            </div>
+
                             <div>
                                 <span class="text-gray-500 text-sm">Status:</span>
                                 <p class="font-medium">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $vendor->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $vendor->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                         {{ $vendor->is_active ? 'Active' : 'Inactive' }}
                                     </span>
                                 </p>
                             </div>
                         </div>
                         
-                        <div class="space-y-2">
+                        <div class="space-y-4">
                             <div>
                                 <span class="text-gray-500 text-sm">Contact Person:</span>
                                 <p class="font-medium">{{ $vendor->contact_person ?: 'Not specified' }}</p>
                             </div>
+
                             <div>
                                 <span class="text-gray-500 text-sm">Email:</span>
                                 <p class="font-medium">
                                     @if($vendor->email)
-                                        <a href="mailto:{{ $vendor->email }}" class="text-indigo-600 hover:text-indigo-900">
+                                        <a href="mailto:{{ $vendor->email }}" class="text-indigo-600 hover:text-indigo-900 inline-flex items-center">
+                                            <x-heroicon-o-envelope class="h-4 w-4 mr-1" />
                                             {{ $vendor->email }}
                                         </a>
                                     @else
@@ -73,11 +87,13 @@
                                     @endif
                                 </p>
                             </div>
+
                             <div>
                                 <span class="text-gray-500 text-sm">Phone:</span>
                                 <p class="font-medium">
                                     @if($vendor->phone)
-                                        <a href="tel:{{ $vendor->phone }}" class="text-indigo-600 hover:text-indigo-900">
+                                        <a href="tel:{{ $vendor->phone }}" class="text-indigo-600 hover:text-indigo-900 inline-flex items-center">
+                                            <x-heroicon-o-phone class="h-4 w-4 mr-1" />
                                             {{ $vendor->phone }}
                                         </a>
                                     @else
@@ -85,17 +101,29 @@
                                     @endif
                                 </p>
                             </div>
+
                             <div>
                                 <span class="text-gray-500 text-sm">Address:</span>
-                                <p class="font-medium">{{ $vendor->address ?: 'Not specified' }}</p>
+                                <p class="font-medium">
+                                    @if($vendor->address)
+                                        <span class="inline-flex items-center">
+                                            <x-heroicon-o-map-pin class="h-4 w-4 mr-1 text-gray-400" />
+                                            {{ $vendor->address }}
+                                        </span>
+                                    @else
+                                        Not specified
+                                    @endif
+                                </p>
                             </div>
                         </div>
                         
                         @if($vendor->notes)
-                        <div class="col-span-1 md:col-span-2 mt-4">
-                            <span class="text-gray-500 text-sm">Notes:</span>
-                            <p class="mt-1 text-sm text-gray-900 whitespace-pre-line">{{ $vendor->notes }}</p>
-                        </div>
+                            <div class="col-span-1 md:col-span-2 mt-4">
+                                <span class="text-gray-500 text-sm">Notes:</span>
+                                <div class="mt-1 p-4 bg-gray-50 rounded-md">
+                                    <p class="text-sm text-gray-900 whitespace-pre-line">{{ $vendor->notes }}</p>
+                                </div>
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -111,7 +139,7 @@
                             @foreach($inspectionItems as $vehicleId => $items)
                                 @php
                                     $vehicle = $items->first()->vehicleInspection->vehicle;
-                                    $totalCost = $items->sum('vendor_cost');
+                                    $totalCost = $items->sum('cost');
                                 @endphp
                                 
                                 <div class="border border-gray-200 rounded-lg overflow-hidden">
@@ -152,16 +180,24 @@
                                                             </td>
                                                             <td class="px-6 py-4 whitespace-nowrap">
                                                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                                    @if($result->status == 'pass') bg-green-100 text-green-800
-                                                                    @elseif($result->status == 'fail') bg-red-100 text-red-800
-                                                                    @elseif($result->status == 'repaired') bg-blue-100 text-blue-800
-                                                                    @else bg-yellow-100 text-yellow-800
+                                                                    @if($result->status === 'pass') bg-green-100 text-green-800
+                                                                    @elseif($result->status === 'warning') bg-yellow-100 text-yellow-800
+                                                                    @elseif($result->status === 'fail') bg-red-100 text-red-800
+                                                                    @else bg-gray-100 text-gray-800
                                                                     @endif">
-                                                                    {{ ucfirst($result->status) }}
+                                                                    @if($result->status === 'pass')
+                                                                        Status: Pass
+                                                                    @elseif($result->status === 'warning')
+                                                                        Status: Repair
+                                                                    @elseif($result->status === 'fail')
+                                                                        Status: Replace
+                                                                    @else
+                                                                        {{ ucfirst($result->status) }}
+                                                                    @endif
                                                                 </span>
                                                             </td>
                                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                                ${{ number_format($result->vendor_cost, 2) }}
+                                                                ${{ number_format($result->cost, 2) }}
                                                             </td>
                                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                                 {{ $result->updated_at->format('M d, Y') }}

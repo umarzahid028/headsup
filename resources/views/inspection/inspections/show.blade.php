@@ -151,20 +151,28 @@
                     <!-- Legend -->
                     <div class="mb-4 p-3 bg-gray-50 rounded-md border border-gray-200 flex flex-wrap gap-4">
                         <div class="flex items-center">
-                            <span class="w-3 h-3 rounded-full bg-green-500 mr-1"></span>
-                            <span class="text-sm">Status: Pass</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-1">
+                                Status: Pass
+                            </span>
+                            <span class="text-sm text-gray-500">No issues found</span>
                         </div>
                         <div class="flex items-center">
-                            <span class="w-3 h-3 rounded-full bg-yellow-500 mr-1"></span>
-                            <span class="text-sm">Status: Repair</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mr-1">
+                                Status: Repair
+                            </span>
+                            <span class="text-sm text-gray-500">Needs repair</span>
                         </div>
                         <div class="flex items-center">
-                            <span class="w-3 h-3 rounded-full bg-red-500 mr-1"></span>
-                            <span class="text-sm">Status: Replace</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mr-1">
+                                Status: Replace
+                            </span>
+                            <span class="text-sm text-gray-500">Needs replacement</span>
                         </div>
                         <div class="flex items-center">
-                            <span class="w-3 h-3 rounded-full bg-gray-300 mr-1"></span>
-                            <span class="text-sm">Pending</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mr-1">
+                                Pending
+                            </span>
+                            <span class="text-sm text-gray-500">Not inspected yet</span>
                         </div>
                     </div>
 
@@ -200,21 +208,22 @@
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @if($resultsMap->has($item->id))
                                                 @php $result = $resultsMap->get($item->id); @endphp
-                                                @if($result->status === 'pass')
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                    @if($result->status === 'pass') bg-green-100 text-green-800
+                                                    @elseif($result->status === 'warning') bg-yellow-100 text-yellow-800
+                                                    @elseif($result->status === 'fail') bg-red-100 text-red-800
+                                                    @else bg-gray-100 text-gray-800
+                                                    @endif">
+                                                    @if($result->status === 'pass')
                                                         Status: Pass
-                                                    </span>
-                                                @elseif($result->status === 'warning')
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                    @elseif($result->status === 'warning')
                                                         Status: Repair
-                                                    </span>
-                                                @elseif($result->status === 'fail')
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                    @elseif($result->status === 'fail')
                                                         Status: Replace
-                                                    </span>
-                                                @else
-                                                    <span class="text-sm text-gray-500">Pending</span>
-                                                @endif
+                                                    @else
+                                                        {{ ucfirst($result->status) }}
+                                                    @endif
+                                                </span>
                                             @else
                                                 <span class="text-sm text-gray-500">Pending</span>
                                             @endif

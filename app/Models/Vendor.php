@@ -29,6 +29,14 @@ class Vendor extends Model
     ];
 
     /**
+     * Get the user account associated with this vendor.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'email', 'email');
+    }
+
+    /**
      * Get the vendor type that this vendor belongs to.
      */
     public function type(): BelongsTo

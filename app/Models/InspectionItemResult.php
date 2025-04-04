@@ -117,6 +117,28 @@ class InspectionItemResult extends Model
     }
 
     /**
+     * Determine if this item needs repair.
+     */
+    public function needsRepair(): bool
+    {
+        return $this->status === 'warning';
+    }
+
+    /**
+     * Get the formatted status label.
+     */
+    public function getStatusLabel(): string
+    {
+        return match($this->status) {
+            'pass' => 'Status: Pass',
+            'warning' => 'Status: Repair',
+            'fail' => 'Status: Replace',
+            'not_applicable' => 'Not Applicable',
+            default => ucfirst($this->status),
+        };
+    }
+
+    /**
      * Check if this item has a pending estimate.
      */
     public function isPendingEstimate(): bool

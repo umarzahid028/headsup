@@ -16,7 +16,7 @@
             <!-- Vehicle Info Card -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6 text-gray-900">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <h3 class="text-lg font-medium text-gray-900 mb-1">Vehicle Information</h3>
                             <p class="text-gray-600">{{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }}</p>
@@ -33,36 +33,35 @@
                         </div>
                         
                         <div>
-                            <h3 class="text-lg font-medium text-gray-900 mb-1">Inspection Assignment</h3>
-                            <form id="inspection-form" method="POST" action="/inspection/vehicles/{{ $vehicle->id }}/comprehensive" class="space-y-4">
-                                @csrf
-                                <div>
-                                    <label for="user_id" class="block text-sm font-medium text-gray-700">Manager:</label>
-                                    <select id="user_id" name="user_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                        @foreach($users as $user)
-                                            <option value="{{ $user->id }}" {{ auth()->id() == $user->id ? 'selected' : '' }}>
-                                                {{ $user->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Legend</h3>
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div class="flex items-center bg-green-50 p-4 rounded-lg border border-green-200 shadow-sm hover:shadow transition-all duration-200">
+                                    <div class="flex-shrink-0 w-3 h-3 bg-green-500 rounded-full ring-2 ring-green-500 ring-opacity-25 mr-3"></div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-green-700">Pass</p>
+                                        <p class="text-xs text-green-600">No issues found</p>
+                                    </div>
                                 </div>
-                            </form>
-                        </div>
-                        
-                        <div>
-                            <h3 class="text-lg font-medium text-gray-900 mb-1">Legend</h3>
-                            <div class="flex flex-col space-y-2 mt-2">
-                                <div class="flex items-center">
-                                    <span class="w-4 h-4 rounded-full bg-green-500 mr-2"></span>
-                                    <span class="text-sm text-gray-600">Pass - Item meets standards</span>
+                                <div class="flex items-center bg-yellow-50 p-4 rounded-lg border border-yellow-200 shadow-sm hover:shadow transition-all duration-200">
+                                    <div class="flex-shrink-0 w-3 h-3 bg-yellow-500 rounded-full ring-2 ring-yellow-500 ring-opacity-25 mr-3"></div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-yellow-700">Repair</p>
+                                        <p class="text-xs text-yellow-600">Needs repair</p>
+                                    </div>
                                 </div>
-                                <div class="flex items-center">
-                                    <span class="w-4 h-4 rounded-full bg-yellow-500 mr-2"></span>
-                                    <span class="text-sm text-gray-600">Repair - Needs minor repair</span>
+                                <div class="flex items-center bg-red-50 p-4 rounded-lg border border-red-200 shadow-sm hover:shadow transition-all duration-200">
+                                    <div class="flex-shrink-0 w-3 h-3 bg-red-500 rounded-full ring-2 ring-red-500 ring-opacity-25 mr-3"></div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-red-700">Replace</p>
+                                        <p class="text-xs text-red-600">Needs replacement</p>
+                                    </div>
                                 </div>
-                                <div class="flex items-center">
-                                    <span class="w-4 h-4 rounded-full bg-red-500 mr-2"></span>
-                                    <span class="text-sm text-gray-600">Replace - Major issue requiring replacement</span>
+                                <div class="flex items-center bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow transition-all duration-200">
+                                    <div class="flex-shrink-0 w-3 h-3 bg-gray-400 rounded-full ring-2 ring-gray-400 ring-opacity-25 mr-3"></div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-700">Pending</p>
+                                        <p class="text-xs text-gray-600">Not inspected yet</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -87,103 +86,143 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Manager Inspection</h3>
                     <p class="mb-4 text-gray-700">First, complete your inspection below. After submitting, you'll be able to assign repairs to vendors.</p>
                 
-                    <!-- Stages Tabs -->
-                    <div class="mb-6 border-b border-gray-200">
-                        <div class="flex overflow-x-auto">
-                            @foreach($stages as $index => $stage)
-                                <button type="button" 
-                                        class="stage-tab px-4 py-2 text-sm font-medium {{ $index === 0 ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700' }}"
-                                        data-stage-id="{{ $stage->id }}">
-                                    {{ $stage->name }}
-                                </button>
-                            @endforeach
-                        </div>
-                    </div>
-                
-                    <!-- Stage Content -->
-                    @foreach($stages as $index => $stage)
-                        <div id="stage-{{ $stage->id }}" class="stage-content {{ $index === 0 ? 'block' : 'hidden' }}">
-                            <div class="space-y-6">
-                                @foreach($stage->inspectionItems as $item)
-                                    <!-- Template for each inspection item -->
-                                    <div class="border-b border-gray-200 mb-4 pb-4 item-container" data-stage-id="{{ $item->inspectionStage->id }}">
-                                        <div class="flex flex-col lg:flex-row lg:items-start lg:space-x-4">
-                                            <div class="flex-grow">
-                                                <div class="flex flex-col">
-                                                    <div class="font-semibold text-gray-900">{{ $item->name }}</div>
-                                                    @if($item->description)
-                                                        <div class="text-sm text-gray-600 mt-1">{{ $item->description }}</div>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="mt-3 lg:mt-0 space-y-3">
-                                                <!-- Assessment Status -->
-                                                <div class="flex flex-wrap gap-4">
-                                                    <label class="inline-flex items-center">
-                                                        <input type="radio" class="item-status-radio" name="items[{{ $item->id }}][status]" value="pass" data-item-id="{{ $item->id }}" 
-                                                            {{ old("items.{$item->id}.status") == 'pass' ? 'checked' : '' }} form="inspection-form">
-                                                        <span class="ml-2 text-sm text-gray-900 bg-green-100 px-2 py-1 rounded-full">Pass</span>
-                                                    </label>
-                                                    <label class="inline-flex items-center">
-                                                        <input type="radio" class="item-status-radio" name="items[{{ $item->id }}][status]" value="warning" data-item-id="{{ $item->id }}" 
-                                                            {{ old("items.{$item->id}.status") == 'warning' ? 'checked' : '' }} form="inspection-form">
-                                                        <span class="ml-2 text-sm text-gray-900 bg-yellow-100 px-2 py-1 rounded-full">Warning</span>
-                                                    </label>
-                                                    <label class="inline-flex items-center">
-                                                        <input type="radio" class="item-status-radio" name="items[{{ $item->id }}][status]" value="fail" data-item-id="{{ $item->id }}" 
-                                                            {{ old("items.{$item->id}.status") == 'fail' ? 'checked' : '' }} form="inspection-form">
-                                                        <span class="ml-2 text-sm text-gray-900 bg-red-100 px-2 py-1 rounded-full">Fail</span>
-                                                    </label>
-                                                    <!-- Hidden default value to ensure the field is always submitted -->
-                                                    <input type="hidden" name="items[{{ $item->id }}][status]" value="" class="default-status-{{ $item->id }}">
-                                                </div>
-                                                
-                                                <!-- Notes field -->
-                                                <div class="w-full">
-                                                    <textarea name="items[{{ $item->id }}][notes]" rows="2" form="inspection-form"
-                                                        class="w-full text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                                        placeholder="Add inspection notes...">{{ old("items.{$item->id}.notes") }}</textarea>
-                                                </div>
-                                                
-                                                <!-- Vendor field - conditionally shown -->
-                                                @if($item->vendor_required)
-                                                <div id="vendor-field-{{ $item->id }}" class="w-full hidden">
-                                                    <label for="vendor_{{ $item->id }}" class="block text-xs font-medium text-gray-700 mb-1">Select Vendor:</label>
-                                                    <select id="vendor_{{ $item->id }}" name="items[{{ $item->id }}][vendor_id]" form="inspection-form"
-                                                        class="w-full text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm item-vendor-select">
-                                                        <option value="">Select vendor (optional)</option>
-                                                        @foreach($vendors as $vendor)
-                                                            <option value="{{ $vendor->id }}" {{ old("items.{$item->id}.vendor_id") == $vendor->id ? 'selected' : '' }}>
-                                                                {{ $vendor->name }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                                @endif
-                                                
-                                                <!-- Cost field - conditionally shown -->
-                                                @if($item->cost_tracking)
-                                                <div id="cost-field-{{ $item->id }}" class="w-full hidden">
-                                                    <label for="cost_{{ $item->id }}" class="block text-xs font-medium text-gray-700 mb-1">Estimated Cost:</label>
-                                                    <div class="relative rounded-md shadow-sm">
-                                                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                                            <span class="text-gray-500 sm:text-sm">$</span>
-                                                        </div>
-                                                        <input type="number" step="0.01" min="0" id="cost_{{ $item->id }}" name="items[{{ $item->id }}][cost]" form="inspection-form"
-                                                            value="{{ old("items.{$item->id}.cost") }}" 
-                                                            class="w-full pl-7 text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                                            placeholder="0.00">
-                                                    </div>
-                                                </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
+                    <form id="inspection-form" method="POST" action="/inspection/vehicles/{{ $vehicle->id }}/comprehensive" class="space-y-4">
+                        @csrf
+                        <!-- Stages Tabs -->
+                        <div class="mb-6 border-b border-gray-200">
+                            <div class="flex overflow-x-auto">
+                                @foreach($stages as $index => $stage)
+                                    <button type="button" 
+                                            class="stage-tab px-4 py-2 text-sm font-medium {{ $index === 0 ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500 hover:text-gray-700' }}"
+                                            data-stage-id="{{ $stage->id }}">
+                                        {{ $stage->name }}
+                                    </button>
                                 @endforeach
                             </div>
                         </div>
-                    @endforeach
+                    
+                        <!-- Stage Content -->
+                        @foreach($stages as $index => $stage)
+                            <div id="stage-{{ $stage->id }}" class="stage-content {{ $index === 0 ? 'block' : 'hidden' }}">
+                                <div class="space-y-6">
+                                    @foreach($stage->inspectionItems as $item)
+                                        <!-- Template for each inspection item -->
+                                        <div class="border-b border-gray-200 mb-4 pb-4 item-container" data-stage-id="{{ $item->inspectionStage->id }}">
+                                            <div class="flex flex-col lg:flex-row lg:items-start lg:space-x-4">
+                                                <div class="flex-grow">
+                                                    <div class="flex flex-col">
+                                                        <div class="font-semibold text-gray-900">{{ $item->name }}</div>
+                                                        @if($item->description)
+                                                            <div class="text-sm text-gray-600 mt-1">{{ $item->description }}</div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mt-3 lg:mt-0 space-y-3">
+                                                    <!-- Assessment Status -->
+                                                    <div class="flex flex-wrap gap-4">
+                                                        <label class="relative flex items-center group">
+                                                            <input type="radio" 
+                                                                class="peer sr-only" 
+                                                                name="items[{{ $item->id }}][status]" 
+                                                                value="pass" 
+                                                                data-item-id="{{ $item->id }}"
+                                                                {{ old("items.{$item->id}.status") == 'pass' ? 'checked' : '' }} 
+                                                                form="inspection-form">
+                                                            <div class="flex items-center px-6 py-2.5 rounded-lg border-2 cursor-pointer
+                                                                text-sm font-medium transition-all duration-200
+                                                                border-green-200 text-green-700 bg-green-50
+                                                                peer-checked:bg-green-100 peer-checked:border-green-500
+                                                                hover:bg-green-100 hover:border-green-300
+                                                                group-hover:scale-102 transform">
+                                                                <div class="w-3 h-3 bg-green-500 rounded-full ring-2 ring-green-500 ring-opacity-25 mr-3"></div>
+                                                                Pass
+                                                            </div>
+                                                        </label>
+                                                        <label class="relative flex items-center group">
+                                                            <input type="radio" 
+                                                                class="peer sr-only" 
+                                                                name="items[{{ $item->id }}][status]" 
+                                                                value="warning" 
+                                                                data-item-id="{{ $item->id }}"
+                                                                {{ old("items.{$item->id}.status") == 'warning' ? 'checked' : '' }} 
+                                                                form="inspection-form">
+                                                            <div class="flex items-center px-6 py-2.5 rounded-lg border-2 cursor-pointer
+                                                                text-sm font-medium transition-all duration-200
+                                                                border-yellow-200 text-yellow-700 bg-yellow-50
+                                                                peer-checked:bg-yellow-100 peer-checked:border-yellow-500
+                                                                hover:bg-yellow-100 hover:border-yellow-300
+                                                                group-hover:scale-102 transform">
+                                                                <div class="w-3 h-3 bg-yellow-500 rounded-full ring-2 ring-yellow-500 ring-opacity-25 mr-3"></div>
+                                                                Repair
+                                                            </div>
+                                                        </label>
+                                                        <label class="relative flex items-center group">
+                                                            <input type="radio" 
+                                                                class="peer sr-only" 
+                                                                name="items[{{ $item->id }}][status]" 
+                                                                value="fail" 
+                                                                data-item-id="{{ $item->id }}"
+                                                                {{ old("items.{$item->id}.status") == 'fail' ? 'checked' : '' }} 
+                                                                form="inspection-form">
+                                                            <div class="flex items-center px-6 py-2.5 rounded-lg border-2 cursor-pointer
+                                                                text-sm font-medium transition-all duration-200
+                                                                border-red-200 text-red-700 bg-red-50
+                                                                peer-checked:bg-red-100 peer-checked:border-red-500
+                                                                hover:bg-red-100 hover:border-red-300
+                                                                group-hover:scale-102 transform">
+                                                                <div class="w-3 h-3 bg-red-500 rounded-full ring-2 ring-red-500 ring-opacity-25 mr-3"></div>
+                                                                Replace
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                    
+                                                    <!-- Notes field -->
+                                                    <div class="w-full">
+                                                        <textarea name="items[{{ $item->id }}][notes]" rows="2" form="inspection-form"
+                                                            class="w-full text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                                            placeholder="Add inspection notes...">{{ old("items.{$item->id}.notes") }}</textarea>
+                                                    </div>
+                                                    
+                                                    <!-- Vendor field - conditionally shown -->
+                                                    @if($item->vendor_required)
+                                                    <div id="vendor-field-{{ $item->id }}" class="w-full hidden">
+                                                        <label for="vendor_{{ $item->id }}" class="block text-xs font-medium text-gray-700 mb-1">Select Vendor:</label>
+                                                        <select id="vendor_{{ $item->id }}" name="items[{{ $item->id }}][vendor_id]" form="inspection-form"
+                                                            class="w-full text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm item-vendor-select">
+                                                            <option value="">Select vendor (optional)</option>
+                                                            @foreach($vendors as $vendor)
+                                                                <option value="{{ $vendor->id }}" {{ old("items.{$item->id}.vendor_id") == $vendor->id ? 'selected' : '' }}>
+                                                                    {{ $vendor->name }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    @endif
+                                                    
+                                                    <!-- Cost field - conditionally shown -->
+                                                    @if($item->cost_tracking)
+                                                    <div id="cost-field-{{ $item->id }}" class="w-full hidden">
+                                                        <label for="cost_{{ $item->id }}" class="block text-xs font-medium text-gray-700 mb-1">Estimated Cost:</label>
+                                                        <div class="relative rounded-md shadow-sm">
+                                                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                                                <span class="text-gray-500 sm:text-sm">$</span>
+                                                            </div>
+                                                            <input type="number" step="0.01" min="0" id="cost_{{ $item->id }}" name="items[{{ $item->id }}][cost]" form="inspection-form"
+                                                                value="{{ old("items.{$item->id}.cost") }}" 
+                                                                class="w-full pl-7 text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                                                placeholder="0.00">
+                                                        </div>
+                                                    </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </form>
                 </div>
             </div>
 
@@ -257,148 +296,105 @@
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Tab navigation logic
-            const stageTabs = document.querySelectorAll('.stage-tab');
-            const stageContents = document.querySelectorAll('.stage-content');
-            const prevButton = document.getElementById('prev-stage');
-            const nextButton = document.getElementById('next-stage');
-            let currentStageIndex = 0;
+            // Handle tab switching
+            const tabs = document.querySelectorAll('.stage-tab');
+            const contents = document.querySelectorAll('.stage-content');
             
-            function showStage(index) {
-                stageTabs.forEach(tab => tab.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600'));
-                stageTabs.forEach(tab => tab.classList.add('text-gray-500', 'hover:text-gray-700'));
-                stageContents.forEach(content => content.classList.add('hidden'));
-                
-                stageTabs[index].classList.remove('text-gray-500', 'hover:text-gray-700');
-                stageTabs[index].classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600');
-                stageContents[index].classList.remove('hidden');
-                
-                // Update buttons
-                prevButton.disabled = index === 0;
-                nextButton.disabled = index === stageTabs.length - 1;
-                
-                currentStageIndex = index;
-            }
-            
-            stageTabs.forEach((tab, index) => {
-                tab.addEventListener('click', () => showStage(index));
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const stageId = tab.dataset.stageId;
+                    
+                    // Update tab styles
+                    tabs.forEach(t => t.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600'));
+                    tab.classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600');
+                    
+                    // Show/hide content
+                    contents.forEach(content => {
+                        if (content.id === `stage-${stageId}`) {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
             });
-            
-            prevButton.addEventListener('click', () => {
-                if (currentStageIndex > 0) {
-                    showStage(currentStageIndex - 1);
-                }
-            });
-            
-            nextButton.addEventListener('click', () => {
-                if (currentStageIndex < stageTabs.length - 1) {
-                    showStage(currentStageIndex + 1);
-                }
-            });
-            
-            // Initialize
-            showStage(0);
-            
-            // Form validation
+
+            // Handle form submission
             const form = document.getElementById('inspection-form');
             form.addEventListener('submit', function(e) {
-                let valid = true;
-                let firstInvalidTab = null;
+                e.preventDefault();
                 
-                // Get all item containers
-                const itemContainers = document.querySelectorAll('.item-container');
+                // Reset error states
+                const errorItems = document.querySelectorAll('.error-highlight');
+                errorItems.forEach(item => item.classList.remove('error-highlight'));
                 
-                itemContainers.forEach(container => {
-                    const itemId = container.querySelector('.item-status-radio').getAttribute('data-item-id');
-                    const radios = container.querySelectorAll(`input[name="items[${itemId}][status]"][type="radio"]`);
-                    const isChecked = Array.from(radios).some(radio => radio.checked);
+                let hasErrors = false;
+                let firstErrorTab = null;
+                
+                // Check each item container
+                document.querySelectorAll('.item-container').forEach(container => {
+                    const itemId = container.querySelector('.item-status-radio').dataset.itemId;
+                    const radios = container.querySelectorAll(`input[name="items[${itemId}][status]"]`);
+                    const checked = Array.from(radios).some(radio => radio.checked);
                     
-                    if (!isChecked) {
-                        valid = false;
-                        container.classList.add('border-red-500', 'bg-red-50/30');
+                    if (!checked) {
+                        container.classList.add('error-highlight');
+                        hasErrors = true;
                         
-                        // Find which tab contains this invalid item
-                        const stageContent = container.closest('.stage-content');
-                        const stageId = container.getAttribute('data-stage-id');
-                        
-                        if (!firstInvalidTab) {
-                            firstInvalidTab = Array.from(stageTabs).findIndex(tab => 
-                                tab.getAttribute('data-stage-id') === stageId
-                            );
+                        if (!firstErrorTab) {
+                            firstErrorTab = container.dataset.stageId;
                         }
-                    } else {
-                        container.classList.remove('border-red-500', 'bg-red-50/30');
                     }
                 });
                 
-                if (!valid) {
-                    e.preventDefault();
-                    alert('Please complete the assessment for all inspection items.');
-                    
-                    // Navigate to the first tab with an error
-                    if (firstInvalidTab !== null) {
-                        showStage(firstInvalidTab);
+                if (hasErrors) {
+                    // Switch to the first tab with errors
+                    if (firstErrorTab) {
+                        document.querySelector(`.stage-tab[data-stage-id="${firstErrorTab}"]`).click();
                     }
                     
-                    window.scrollTo(0, 0);
-                }
-            });
-
-            // Handle radio button changes
-            document.querySelectorAll('.item-status-radio').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    const itemId = this.getAttribute('data-item-id');
-                    const status = this.value;
-                    const vendorField = document.getElementById(`vendor-field-${itemId}`);
-                    const costField = document.getElementById(`cost-field-${itemId}`);
-                    const defaultStatus = document.querySelector(`.default-status-${itemId}`);
-                    
-                    // Update the hidden default value
-                    if (defaultStatus) {
-                        defaultStatus.value = status;
-                    }
-                    
-                    if (status === 'warning' || status === 'fail') {
-                        // Show vendor and cost fields for repairs
-                        if (vendorField) {
-                            vendorField.classList.remove('hidden');
-                            vendorField.querySelector('select').disabled = false;
-                        }
-                        if (costField) {
-                            costField.classList.remove('hidden');
-                            costField.querySelector('input').disabled = false;
-                        }
-                    } else {
-                        // Hide and disable vendor and cost fields for passing items
-                        if (vendorField) {
-                            vendorField.classList.add('hidden');
-                            vendorField.querySelector('select').disabled = true;
-                        }
-                        if (costField) {
-                            costField.classList.add('hidden');
-                            costField.querySelector('input').disabled = true;
-                        }
-                    }
-                });
-            });
-
-            // Handle batch vendor assignment
-            document.getElementById('batch-assign-vendor').addEventListener('click', function() {
-                const globalVendorId = document.getElementById('vendor_id').value;
-                if (!globalVendorId) {
-                    alert('Please select a vendor first');
+                    alert('Please complete all inspection items before submitting.');
                     return;
                 }
                 
-                // Find all individual vendor selects and set them to the global vendor
-                const vendorSelects = document.querySelectorAll('.item-vendor-select');
-                vendorSelects.forEach(select => {
-                    select.value = globalVendorId;
+                // Submit the form if no errors
+                form.submit();
+            });
+
+            // Handle status radio changes
+            document.querySelectorAll('.item-status-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const itemId = this.dataset.itemId;
+                    const container = this.closest('.item-container');
+                    const vendorField = container.querySelector(`#vendor-field-${itemId}`);
+                    const costField = container.querySelector(`#cost-field-${itemId}`);
+                    
+                    // Remove error highlight if it exists
+                    container.classList.remove('error-highlight');
+                    
+                    // Clear default value
+                    document.querySelector(`.default-status-${itemId}`).value = '';
+                    
+                    // Show/hide vendor and cost fields based on status
+                    if (vendorField) {
+                        vendorField.classList.toggle('hidden', this.value === 'pass');
+                    }
+                    
+                    if (costField) {
+                        costField.classList.toggle('hidden', this.value === 'pass');
+                    }
                 });
-                
-                alert('Vendor assigned to all repair items');
             });
         });
     </script>
+    
+    <style>
+        .error-highlight {
+            border-color: #ef4444;
+            background-color: #fee2e2;
+            padding: 1rem;
+            border-radius: 0.375rem;
+        }
+    </style>
     @endpush
 </x-app-layout> 

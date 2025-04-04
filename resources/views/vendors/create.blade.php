@@ -40,14 +40,22 @@
 
                             <!-- Specialty Tags -->
                             <div>
-                                <x-searchable-multi-select
-                                    name="specialty_tags"
-                                    label="Specialty Tags"
-                                    :options="$specialties"
-                                    :selected="old('specialty_tags', [])"
-                                    placeholder="Select specialties..."
-                                    help-text="Select all specialties that apply to this vendor"
-                                />
+                                
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <x-heroicon-o-tag class="h-5 w-5 text-gray-400" />
+                                    </div>
+                                    <x-searchable-multi-select
+                                        name="specialty_tags"
+                                        label="Specialty Tags"
+                                        :options="$specialties"
+                                        :selected="old('specialty_tags', [])"
+                                        placeholder="Select specialties..."
+                                        help-text="Select all specialties that apply to this vendor"
+                                        required
+                                    />
+                                </div>
+                                <x-input-error :messages="$errors->get('specialty_tags')" class="mt-2" />
                             </div>
 
                             <!-- Vendor Type -->

@@ -185,7 +185,7 @@ class VehicleInspectionController extends Controller
         $validated = $request->validate([
             'items' => 'required|array',
             'items.*.id' => 'required|exists:inspection_item_results,id',
-            'items.*.status' => 'required|in:pass,fail,warning,not_applicable',
+            'items.*.status' => 'required|in:pass,warning,fail,not_applicable',
             'items.*.notes' => 'nullable|string',
             'items.*.requires_repair' => 'nullable|boolean',
             'items.*.repair_cost' => 'nullable|numeric|min:0',
@@ -204,9 +204,8 @@ class VehicleInspectionController extends Controller
                     throw new \Exception("Item result doesn't belong to this inspection");
                 }
                 
-                // Set defaults for checkbox fields
-                $itemData['requires_repair'] = $itemData['requires_repair'] ?? false;
-                $itemData['repair_completed'] = $itemData['repair_completed'] ?? false;
+                // Set requires_repair based on status
+                $itemData['requires_repair'] = in_array($itemData['status'], ['warning', 'fail']);
                 
                 $itemResult->update($itemData);
             }
@@ -300,41 +299,37 @@ class VehicleInspectionController extends Controller
     }
 
     /**
-     * Display the comprehensive inspection form for all stages at once.
+     * Show the comprehensive inspection form.
      */
     public function comprehensive(Vehicle $vehicle)
     {
-        $stages = InspectionStage::with(['inspectionItems' => function($query) {
-            $query->where('is_active', true)->orderBy('id');
+        $stages = InspectionStage::with(['inspectionItems' => function ($query) {
+            $query->where('is_active', true)->orderBy('order');
         }])->where('is_active', true)->orderBy('order')->get();
         
         $vendors = Vendor::where('is_active', true)->orderBy('name')->get();
-        $users = \App\Models\User::orderBy('name')->get();
         
-        return view('inspection.inspections.comprehensive', compact('vehicle', 'stages', 'vendors', 'users'));
+        return view('inspection.inspections.comprehensive', compact('vehicle', 'stages', 'vendors'));
     }
 
     /**
-     * Store the comprehensive inspection for all stages at once.
+     * Store a comprehensive inspection.
      */
     public function comprehensiveStore(Request $request, Vehicle $vehicle)
     {
-        // Validate the request
         $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'vendor_id' => 'nullable|exists:vendors,id',
             'items' => 'required|array',
             'items.*' => 'array',
-            'items.*.status' => 'required|in:pass,warning,fail',
+            'items.*.status' => 'required|in:pass,warning,fail,not_applicable',
             'items.*.notes' => 'nullable|string',
-            'items.*.cost' => 'nullable|numeric|min:0',
             'items.*.vendor_id' => 'nullable|exists:vendors,id',
+            'items.*.cost' => 'nullable|numeric|min:0',
         ]);
 
-        // Group items by their stage
+        // Group items by stage
         $stageItems = [];
         $needsRepair = false;
-       
+        
         foreach ($request->items as $itemId => $itemData) {
             $item = InspectionItem::findOrFail($itemId);
             $stageId = $item->inspection_stage_id;
@@ -360,7 +355,7 @@ class VehicleInspectionController extends Controller
                 $inspection = VehicleInspection::create([
                     'vehicle_id' => $vehicle->id,
                     'inspection_stage_id' => $stageId,
-                    'user_id' => $request->user_id,
+                    'user_id' => auth()->id(),
                     'vendor_id' => $request->vendor_id, // Global vendor assignment if provided
                     'status' => 'in_progress',
                     'inspection_date' => now(),
@@ -413,7 +408,6 @@ class VehicleInspectionController extends Controller
                 ->with('success', 'Inspection completed successfully. ' . 
                 ($needsRepair ? 'Repair items have been ' . ($request->vendor_id ? 'assigned to vendor.' : 'identified.') : 'Vehicle is ready.'));
         } catch (\Exception $e) {
-            dd($e);
             DB::rollBack();
             
             return redirect()->back()

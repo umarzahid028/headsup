@@ -9,6 +9,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Notifications\LoginCredentials;
+use Illuminate\Support\Facades\DB;
 
 class VendorController extends Controller
 {
@@ -65,13 +66,13 @@ class VendorController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:vendors',
+            'name' => 'required|string|max:255',
             'contact_person' => 'nullable|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email',
+            'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'specialty_tags' => 'required|array',
-            'specialty_tags.*' => 'required|in:mechanical,body_shop,detail,tire,upholstery,glass,other',
+            'specialty_tags.*' => 'required|string|in:mechanical,body_shop,detail,tire,upholstery,glass,other',
             'type_id' => 'nullable|exists:vendor_types,id',
             'notes' => 'nullable|string',
             'is_active' => 'nullable|boolean',
@@ -85,24 +86,50 @@ class VendorController extends Controller
         $password = $validated['password'];
         unset($validated['password']); // Remove password from vendor data
 
-        // Create the vendor
-        $vendor = Vendor::create($validated);
-
-        // Create the user account manually since we have a password
-        $user = User::create([
-            'name' => $validated['contact_person'] ?? $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($password),
-        ]);
-
-        // Assign vendor role
-        $user->assignRole('Vendor');
-
-        // Send welcome notification without password since user set it themselves
-        $user->notify(new LoginCredentials('(your chosen password)', 'Vendor'));
+        DB::beginTransaction();
         
-        return redirect()->route('vendors.index')
-            ->with('success', 'Vendor created successfully.');
+        try {
+            // Create the vendor
+            $vendor = Vendor::create($validated);
+
+            // Check if user already exists
+            $user = User::where('email', $validated['email'])->first();
+
+            if ($user) {
+                // If user exists, ensure they have the Vendor role
+                $user->assignRole('Vendor');
+                
+                // Update user's name if needed
+                $user->update([
+                    'name' => $validated['contact_person'] ?? $validated['name']
+                ]);
+            } else {
+                // Create new user account
+                $user = User::create([
+                    'name' => $validated['contact_person'] ?? $validated['name'],
+                    'email' => $validated['email'],
+                    'password' => Hash::make($password),
+                ]);
+
+                // Assign vendor role
+                $user->assignRole('Vendor');
+
+                // Send welcome notification
+                $user->notify(new LoginCredentials('(your chosen password)', 'Vendor'));
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('vendors.index')
+                ->with('success', 'Vendor created successfully.');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'An error occurred while creating the vendor: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -145,30 +172,60 @@ class VendorController extends Controller
     public function update(Request $request, Vendor $vendor)
     {
         $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('vendors')->ignore($vendor->id),
-            ],
+            'name' => 'required|string|max:255',
             'contact_person' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users')->ignore($vendor->user->id),
+            ],
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'specialty_tags' => 'required|array',
-            'specialty_tags.*' => 'required|in:mechanical,body_shop,detail,tire,upholstery,glass,other',
+            'specialty_tags.*' => 'required|string|in:mechanical,body_shop,detail,tire,upholstery,glass,other',
             'type_id' => 'nullable|exists:vendor_types,id',
             'notes' => 'nullable|string',
             'is_active' => 'nullable|boolean',
+            'password' => 'nullable|string|min:8|confirmed',
         ]);
         
         // Set is_active default if not provided
         $validated['is_active'] = $validated['is_active'] ?? false;
         
-        $vendor->update($validated);
+        // Start transaction
+        DB::beginTransaction();
         
-        return redirect()->route('vendors.index')
-            ->with('success', 'Vendor updated successfully.');
+        try {
+            // Update vendor
+            $vendor->update($validated);
+            
+            // Update associated user account
+            $userUpdate = [
+                'name' => $validated['contact_person'] ?? $validated['name'],
+                'email' => $validated['email'],
+            ];
+            
+            // Only update password if provided
+            if (!empty($validated['password'])) {
+                $userUpdate['password'] = Hash::make($validated['password']);
+            }
+            
+            // Update the user
+            $vendor->user()->update($userUpdate);
+            
+            DB::commit();
+            
+            return redirect()->route('vendors.index')
+                ->with('success', 'Vendor updated successfully.');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'An error occurred while updating the vendor: ' . $e->getMessage());
+        }
     }
 
     /**
