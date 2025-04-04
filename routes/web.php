@@ -10,6 +10,7 @@ use App\Http\Controllers\GoodwillClaimController;
 use App\Http\Controllers\VendorTypeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\VendorDashboardController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Broadcast;
 
@@ -158,6 +159,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard/vendor', [DashboardController::class, 'vendor'])
         ->middleware('role:Admin,Manager,Vendor')
         ->name('dashboard.vendor');
+});
+
+// Vendor Routes
+Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function () {
+    // Redirect base vendor URL to vendor dashboard
+    Route::get('/', function() {
+        return redirect()->route('vendor.dashboard');
+    });
+    
+    Route::get('/dashboard', [VendorDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/inspection-history', [VendorDashboardController::class, 'inspectionHistory'])->name('inspection-history');
+    Route::get('/inspections/{inspection}', [VendorDashboardController::class, 'showInspection'])->name('inspections.show');
+    Route::post('/inspections/{inspection}/submit-estimate', [VendorDashboardController::class, 'submitEstimate'])->name('inspections.submit-estimate');
+    Route::post('/inspections/{inspection}/update-status', [VendorDashboardController::class, 'updateServiceStatus'])->name('inspections.update-status');
+
+    // New Vendor Inspection Routes
+    Route::get('/assigned-inspections', [\App\Http\Controllers\Vendor\InspectionController::class, 'index'])->name('inspections.index');
+    Route::get('/assigned-inspections/{inspection}', [\App\Http\Controllers\Vendor\InspectionController::class, 'show'])->name('inspections.show');
+    Route::patch('/inspection-items/{item}/update-status', [\App\Http\Controllers\Vendor\InspectionController::class, 'updateItemStatus'])->name('inspections.update-item');
 });
 
 require __DIR__.'/auth.php';

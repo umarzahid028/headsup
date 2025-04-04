@@ -72,6 +72,14 @@ class VehicleInspection extends Model
     }
 
     /**
+     * Alias for itemResults() for backward compatibility
+     */
+    public function inspectionItems(): HasMany
+    {
+        return $this->itemResults();
+    }
+
+    /**
      * Calculate if the inspection is fully completed.
      */
     public function isCompleted(): bool

@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Laravel\Sanctum\HasApiTokens;
+use App\Enums\Role;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -23,7 +25,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'transporter_id',
+        'role',
+        'vendor_type',
+        'is_active',
     ];
 
     /**
@@ -44,6 +48,8 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'role' => Role::class,
+        'is_active' => 'boolean',
     ];
 
     public function transporter()
@@ -59,5 +65,40 @@ class User extends Authenticatable
     public function receivesBroadcastNotificationsOn(): string
     {
         return 'users.' . $this->id;
+    }
+
+    public function inspectionAssignments(): HasMany
+    {
+        return $this->hasMany(InspectionAssignment::class, 'vendor_id');
+    }
+
+    public function assignedInspections(): HasMany
+    {
+        return $this->hasMany(VehicleInspection::class, 'vendor_id');
+    }
+
+    public function canEnterCosts(): bool
+    {
+        return $this->role?->canEnterCosts() ?? false;
+    }
+
+    public function canApproveEstimates(): bool
+    {
+        return $this->role?->canApproveEstimates() ?? false;
+    }
+
+    public function isVendor(): bool
+    {
+        return $this->role?->isVendor() ?? false;
+    }
+
+    public function isOnSiteVendor(): bool
+    {
+        return $this->role === Role::ONSITE_VENDOR;
+    }
+
+    public function isOffSiteVendor(): bool
+    {
+        return $this->role === Role::OFFSITE_VENDOR;
     }
 }

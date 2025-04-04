@@ -15,143 +15,155 @@
     <!-- Sidebar content -->
     <div class="flex-1 overflow-y-auto p-4">
         <nav class="space-y-1">
-            <!-- Dashboard -->
-            <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+            <!-- Vendor Dashboard -->
+            <a href="{{ route('vendor.dashboard') }}" class="{{ request()->routeIs('vendor.dashboard') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                 <svg class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
                 Dashboard
             </a>
 
-            @if(!auth()->user()->hasRole('Transporter'))
-                <!-- Vehicle Management -->
-                <a href="{{ route('vehicles.index') }}" class="{{ request()->routeIs('vehicles.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                    <svg class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                    Vehicle Management
-                </a>
-            @endif
-
-            <!-- Transport Management -->
-            <a href="{{ route('transports.index') }}" class="{{ request()->routeIs('transports.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                <svg xmlns="http://www.w3.org/2000/svg" class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                </svg>
-                Transport Management
+            <!-- Assigned Inspections -->
+            <a href="{{ route('vendor.inspections.index') }}" class="{{ request()->routeIs('vendor.inspections.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                <x-heroicon-o-wrench-screwdriver class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                Assigned Inspections
             </a>
 
-            @if(!auth()->user()->hasRole('Transporter'))
-                <!-- Transporter Management -->
-                <a href="{{ route('transporters.index') }}" class="{{ request()->routeIs('transporters.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            <!-- Inspection History -->
+            <a href="{{ route('vendor.inspection-history') }}" class="{{ request()->routeIs('vendor.inspection-history') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                <x-heroicon-o-clipboard-document-check class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                Inspection History
+            </a>
+
+            <!-- Regular Dashboard -->
+            @if(!auth()->user()->hasRole('Vendor'))
+                <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                    <svg class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
-                    Transporter Management
+                    Dashboard
                 </a>
 
-                <!-- Inspection & Repair Section -->
-                <div class="pt-2">
-                    <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        Inspection & Repair
-                    </p>
-                    
-                    <!-- Vehicle Inspections -->
-                    <a href="{{ route('inspection.inspections.index') }}" class="{{ request()->routeIs('inspection.inspections.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
-                        <x-heroicon-o-clipboard-document-check class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
-                        Vehicle Inspections
+                @if(!auth()->user()->hasRole('Vendor') && !auth()->user()->hasRole('Transporter'))
+                    <!-- Transport Management -->
+                    <a href="{{ route('transports.index') }}" class="{{ request()->routeIs('transports.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                        </svg>
+                        Transport Management
                     </a>
-                    
-                    <!-- Inspection Stages -->
-                    <div x-data="{ openStages: {{ request()->routeIs('inspection.stages.*') || request()->routeIs('inspection.items.*') ? 'true' : 'false' }} }">
-                        <button @click="openStages = !openStages" class="w-full group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">
-                            <x-heroicon-o-adjustments-horizontal class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
-                            <span class="flex-1">Configure Stages</span>
-                            <svg class="text-gray-300 ml-3 h-5 w-5 transform transition-transform" :class="{ 'rotate-90': openStages }" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
+
+                    <!-- Transporter Management -->
+                    <a href="{{ route('transporters.index') }}" class="{{ request()->routeIs('transporters.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Transporter Management
+                    </a>
+
+                    <!-- Inspection & Repair Section -->
+                    <div class="pt-2">
+                        <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Inspection & Repair
+                        </p>
                         
-                        <div x-show="openStages" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="pl-4 pr-2 space-y-1">
-                            <a href="{{ route('inspection.stages.index') }}" class="{{ request()->routeIs('inspection.stages.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                                <x-heroicon-o-list-bullet class="text-gray-400 mr-3 flex-shrink-0 h-5 w-5" />
-                                Manage Stages
-                            </a>
-                            <a href="{{ route('inspection.items.index') }}" class="{{ request()->routeIs('inspection.items.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                                <x-heroicon-o-clipboard-document-list class="text-gray-400 mr-3 flex-shrink-0 h-5 w-5" />
-                                Inspection Items
-                            </a>
+                        <!-- Vehicle Inspections -->
+                        <a href="{{ route('inspection.inspections.index') }}" class="{{ request()->routeIs('inspection.inspections.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
+                            <x-heroicon-o-clipboard-document-check class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                            Vehicle Inspections
+                        </a>
+                        
+                        <!-- Inspection Stages -->
+                        <div x-data="{ openStages: {{ request()->routeIs('inspection.stages.*') || request()->routeIs('inspection.items.*') ? 'true' : 'false' }} }">
+                            <button @click="openStages = !openStages" class="w-full group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900">
+                                <x-heroicon-o-adjustments-horizontal class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                                <span class="flex-1">Configure Stages</span>
+                                <svg class="text-gray-300 ml-3 h-5 w-5 transform transition-transform" :class="{ 'rotate-90': openStages }" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                            
+                            <div x-show="openStages" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="pl-4 pr-2 space-y-1">
+                                <a href="{{ route('inspection.stages.index') }}" class="{{ request()->routeIs('inspection.stages.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                                    <x-heroicon-o-list-bullet class="text-gray-400 mr-3 flex-shrink-0 h-5 w-5" />
+                                    Manage Stages
+                                </a>
+                                <a href="{{ route('inspection.items.index') }}" class="{{ request()->routeIs('inspection.items.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                                    <x-heroicon-o-clipboard-document-list class="text-gray-400 mr-3 flex-shrink-0 h-5 w-5" />
+                                    Inspection Items
+                                </a>
+                            </div>
                         </div>
+                        
+                        <!-- Vendors Management -->
+                        <a href="{{ route('vendors.index') }}" class="{{ request()->routeIs('vendors.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                            <x-heroicon-o-building-storefront class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                            Vendors
+                        </a>
                     </div>
-                    
-                    <!-- Vendors Management -->
-                    <a href="{{ route('vendors.index') }}" class="{{ request()->routeIs('vendors.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                        <x-heroicon-o-building-storefront class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
-                        Vendors
+                @endif
+
+                <!-- Sales Management Section -->
+                @canany(['view sales issues', 'view goodwill claims'])
+                <div class="pt-5">
+                    <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Sales Management
+                    </p>
+
+                    <!-- Sales Issues -->
+                    @can('view sales issues')
+                    <a href="{{ route('sales.issues.index') }}" class="{{ request()->routeIs('sales.issues.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
+                        <x-heroicon-o-exclamation-triangle class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                        <span class="flex-1">Sales Issues</span>
+                        
                     </a>
+                    @endcan
+
+                    <!-- Goodwill Claims -->
+                    @can('view goodwill claims')
+                    <a href="{{ route('sales.goodwill-claims.index') }}" class="{{ request()->routeIs('sales.goodwill-claims.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                        <x-heroicon-o-document-text class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                        <span class="flex-1">Goodwill Claims</span>
+                        
+                    </a>
+                    @endcan
                 </div>
+                @endcanany
+
+                <!-- Administration Section -->
+                @canany(['view users', 'assign roles'])
+                <div class="pt-5">
+                    <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Administration
+                    </p>
+
+                    <!-- User Management -->
+                    @can('view users')
+                    <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
+                        <x-heroicon-o-users class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                        Users
+                    </a>
+                    @endcan
+
+                    <!-- Roles Management -->
+                    @role('Admin')
+                    <a href="{{ route('admin.roles.index') }}" class="{{ request()->routeIs('admin.roles.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                        <x-heroicon-o-shield-check class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                        Roles & Permissions
+                    </a>
+                    @endrole
+
+                    <!-- System Settings -->
+                    @can('edit users')
+                    <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                        <x-heroicon-o-cog-6-tooth class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                        System Settings
+                    </a>
+                    @endcan
+                </div>
+                @endcanany
             @endif
-
-            <!-- Sales Management Section -->
-            @canany(['view sales issues', 'view goodwill claims'])
-            <div class="pt-5">
-                <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Sales Management
-                </p>
-
-                <!-- Sales Issues -->
-                @can('view sales issues')
-                <a href="{{ route('sales.issues.index') }}" class="{{ request()->routeIs('sales.issues.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
-                    <x-heroicon-o-exclamation-triangle class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
-                    <span class="flex-1">Sales Issues</span>
-                    
-                </a>
-                @endcan
-
-                <!-- Goodwill Claims -->
-                @can('view goodwill claims')
-                <a href="{{ route('sales.goodwill-claims.index') }}" class="{{ request()->routeIs('sales.goodwill-claims.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                    <x-heroicon-o-document-text class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
-                    <span class="flex-1">Goodwill Claims</span>
-                    
-                </a>
-                @endcan
-            </div>
-            @endcanany
-
-            <!-- Administration Section -->
-            @canany(['view users', 'assign roles'])
-            <div class="pt-5">
-                <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Administration
-                </p>
-
-                <!-- User Management -->
-                @can('view users')
-                <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
-                    <x-heroicon-o-users class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
-                    Users
-                </a>
-                @endcan
-
-                <!-- Roles Management -->
-                @role('Admin')
-                <a href="{{ route('admin.roles.index') }}" class="{{ request()->routeIs('admin.roles.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                    <x-heroicon-o-shield-check class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
-                    Roles & Permissions
-                </a>
-                @endrole
-
-                <!-- System Settings -->
-                @can('edit users')
-                <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-                    <x-heroicon-o-cog-6-tooth class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
-                    System Settings
-                </a>
-                @endcan
-            </div>
-            @endcanany
         </nav>
     </div>
 
