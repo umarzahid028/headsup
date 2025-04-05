@@ -86,7 +86,7 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Manager Inspection</h3>
                     <p class="mb-4 text-gray-700">First, complete your inspection below. After submitting, you'll be able to assign repairs to vendors.</p>
                 
-                    <form id="inspection-form" method="POST" action="/inspection/vehicles/{{ $vehicle->id }}/comprehensive" class="space-y-4">
+                    <form id="inspection-form" method="POST" action="/inspection/vehicles/{{ $vehicle->id }}/comprehensive" class="space-y-4" enctype="multipart/form-data">
                         @csrf
                         <!-- Stages Tabs -->
                         <div class="mb-6 border-b border-gray-200">
@@ -182,6 +182,30 @@
                                                         <textarea name="items[{{ $item->id }}][notes]" rows="2" form="inspection-form"
                                                             class="w-full text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                                             placeholder="Add inspection notes...">{{ old("items.{$item->id}.notes") }}</textarea>
+                                                    </div>
+
+                                                    <!-- Image Upload -->
+                                                    <div class="w-full">
+                                                        <label class="block text-xs font-medium text-gray-700 mb-1">
+                                                            Upload Images
+                                                            <span class="text-gray-500">(Optional)</span>
+                                                        </label>
+                                                        <div class="mt-1 flex items-center gap-2">
+                                                            <input type="file" 
+                                                                name="items[{{ $item->id }}][images][]" 
+                                                                accept="image/*" 
+                                                                multiple
+                                                                class="block w-full text-sm text-gray-500
+                                                                    file:mr-4 file:py-2 file:px-4
+                                                                    file:rounded-md file:border-0
+                                                                    file:text-sm file:font-semibold
+                                                                    file:bg-indigo-50 file:text-indigo-700
+                                                                    hover:file:bg-indigo-100"
+                                                            >
+                                                        </div>
+                                                        <p class="mt-1 text-xs text-gray-500">
+                                                            You can upload multiple images. Supported formats: JPG, PNG (max 5MB each)
+                                                        </p>
                                                     </div>
                                                     
                                                     <!-- Vendor field - conditionally shown -->

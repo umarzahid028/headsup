@@ -23,7 +23,15 @@ class TransportController extends Controller
         $this->middleware(function ($request, $next) {
             if (auth()->user()->hasRole('Transporter')) {
                 //dd($request->route()->getActionMethod());
-                if (!in_array($request->route()->getActionMethod(), ['index', 'show', 'showBatch', 'acknowledge', 'updateBatchStatus', 'updateTransportStatus'])) {
+                if (!in_array($request->route()->getActionMethod(), [
+                    'index', 
+                    'show', 
+                    'showBatch', 
+                    'acknowledge', 
+                    'acknowledgeBatch',
+                    'updateBatchStatus', 
+                    'updateTransportStatus'
+                ])) {
                     abort(403, 'Unauthorized action.');
                 }
             }
@@ -52,9 +60,9 @@ class TransportController extends Controller
                 DB::raw('MIN(created_at) as batch_created_at'),
                 DB::raw('MIN(updated_at) as batch_updated_at'),
                 DB::raw('MIN(batch_name) as batch_name'),
-                DB::raw('MIN(is_acknowledged) as is_acknowledged'),
-                DB::raw('MIN(acknowledged_at) as acknowledged_at'),
-                DB::raw('MIN(acknowledged_by) as acknowledged_by')
+                DB::raw('CASE WHEN COUNT(*) = SUM(CASE WHEN is_acknowledged = 1 THEN 1 ELSE 0 END) THEN 1 ELSE 0 END as is_acknowledged'),
+                DB::raw('MAX(acknowledged_at) as acknowledged_at'),
+                DB::raw('MAX(acknowledged_by) as acknowledged_by')
             ])
             ->groupBy('batch_id');
 
@@ -462,16 +470,18 @@ class TransportController extends Controller
             return redirect()->back()->with('error', 'You are not authorized to acknowledge transports.');
         }
 
+      
         // Check if the transport belongs to the user's transporter
         if ($transport->transporter_id !== auth()->user()->transporter_id) {
             return redirect()->back()->with('error', 'You can only acknowledge transports assigned to your company.');
         }
-
+     
         // Check if already acknowledged
         if ($transport->is_acknowledged) {
             return redirect()->back()->with('info', 'This transport has already been acknowledged.');
         }
 
+     
         DB::beginTransaction();
         
         try {
@@ -671,6 +681,54 @@ class TransportController extends Controller
             DB::rollBack();
             return redirect()->back()
                 ->with('error', 'Error updating transport status: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Acknowledge all transports in a batch.
+     */
+    public function acknowledgeBatch(string $batchId): RedirectResponse
+    {
+        // Check if the user is authorized to acknowledge transports
+        if (!auth()->user()->hasRole('Transporter')) {
+            return redirect()->back()->with('error', 'You are not authorized to acknowledge transports.');
+        }
+
+        DB::beginTransaction();
+        
+        try {
+            // Get all unacknowledged transports in this batch for the current transporter
+            $transports = Transport::where('batch_id', $batchId)
+                ->where('transporter_id', auth()->user()->transporter_id)
+                ->where('is_acknowledged', false)
+                ->get();
+
+            if ($transports->isEmpty()) {
+                return redirect()->back()->with('info', 'No transports to acknowledge in this batch.');
+            }
+
+            foreach ($transports as $transport) {
+                $transport->update([
+                    'is_acknowledged' => true,
+                    'acknowledged_at' => now(),
+                    'acknowledged_by' => auth()->id(),
+                ]);
+
+                // Update vehicle status if needed
+                if ($transport->status === 'pending') {
+                    $transport->update(['status' => 'in_transit']);
+                    if ($transport->vehicle) {
+                        $transport->vehicle->update(['transport_status' => 'in_transit']);
+                    }
+                }
+            }
+
+            DB::commit();
+            
+            return redirect()->back()->with('success', 'All transports in batch acknowledged successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to acknowledge transports: ' . $e->getMessage());
         }
     }
 } 

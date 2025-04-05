@@ -187,8 +187,8 @@
                                                             Pending Acknowledgment
                                                         </span>
                                                     </div>
-                                                    @if(auth()->user()->hasRole('Transporter') && auth()->user()->transporter_id === $transport->transporter_id)
-                                                        <form action="{{ route('transports.acknowledge', $transport) }}" method="POST" class="mt-1">
+                                                    @if(auth()->user()->hasRole('Transporter'))
+                                                        <form action="{{ route('transports.batch.acknowledge', ['batchId' => $transport->batch_id]) }}" method="POST" class="mt-1">
                                                             @csrf
                                                             <button type="submit" class="text-xs text-blue-600 hover:text-blue-900">
                                                                 Acknowledge Now
@@ -198,14 +198,25 @@
                                                 @endif
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="flex space-x-2">
-                                                    @if($transport->hasGatePass())
-                                                        <a href="{{ $transport->getGatePassUrl() }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 flex items-center">
+                                                <div class="flex flex-col space-y-2">
+                                                    @if($transport->qr_code_path)
+                                                        <a href="{{ Storage::url($transport->qr_code_path) }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 flex items-center">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                                            </svg>
+                                                            QR Code
+                                                        </a>
+                                                    @endif
+                                                    @if($transport->gate_pass_path)
+                                                        <a href="{{ Storage::url($transport->gate_pass_path) }}" target="_blank" class="text-indigo-600 hover:text-indigo-900 flex items-center">
                                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                             </svg>
                                                             Gate Pass
                                                         </a>
+                                                    @endif
+                                                    @if(!$transport->qr_code_path && !$transport->gate_pass_path)
+                                                        <span class="text-gray-400 text-sm">No documents available</span>
                                                     @endif
                                                 </div>
                                             </td>

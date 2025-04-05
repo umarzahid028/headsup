@@ -389,6 +389,7 @@ class VehicleInspectionController extends Controller
             'items.*.notes' => 'nullable|string',
             'items.*.vendor_id' => 'nullable|exists:vendors,id',
             'items.*.cost' => 'nullable|numeric|min:0',
+            'items.*.images.*' => 'nullable|image|mimes:jpeg,png|max:5120',
         ]);
 
         // Group items by stage
@@ -444,6 +445,20 @@ class VehicleInspectionController extends Controller
                         'repair_completed' => false, // Initially not completed
                     ]);
                     
+                    // Handle image uploads for this item
+                    if (isset($itemData['images']) && is_array($itemData['images'])) {
+                        foreach ($itemData['images'] as $image) {
+                            if ($image && $image->isValid()) {
+                                $path = $image->store('inspection-images/' . $vehicle->id, 'public');
+                                $result->repairImages()->create([
+                                    'image_path' => $path,
+                                    'image_type' => 'before', // Initial inspection images are "before" type
+                                    'caption' => 'Initial inspection image'
+                                ]);
+                            }
+                        }
+                    }
+
                     $totalCost += $result->cost;
                 }
                 
