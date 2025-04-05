@@ -91,4 +91,12 @@ class Vehicle extends Model
     {
         return $this->hasMany(GatePass::class);
     }
+
+    /**
+     * Get the inspections for the vehicle.
+     */
+    public function vehicleInspections(): HasMany
+    {
+        return $this->hasMany(VehicleInspection::class);
+    }
 }

@@ -71,8 +71,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         //->middleware('approve.estimates');
     
     // Inspection & Repair Routes
-    Route::prefix('inspection')->name('inspection.')->group(function () {
-    // Inspection Stages
+    Route::prefix('inspection')->name('inspection.')->middleware(['auth'])->group(function () {
+        // Inspection Stages
         Route::resource('stages', \App\Http\Controllers\InspectionStageController::class);
         Route::post('stages/reorder', [\App\Http\Controllers\InspectionStageController::class, 'reorder'])->name('stages.reorder');
         Route::patch('stages/{stage}/toggle-active', [\App\Http\Controllers\InspectionStageController::class, 'toggleActive'])->name('stages.toggle-active');

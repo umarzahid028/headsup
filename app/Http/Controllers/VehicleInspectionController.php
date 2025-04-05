@@ -48,48 +48,25 @@ class VehicleInspectionController extends Controller
         });
 
         // Apply search filter
-        if ($request->has('search')) {
-            $search = $request->input('search');
+        if ($request->has('search') && $request->search !== '') {
+            $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('vehicles.stock_number', 'LIKE', "%{$search}%")
-                  ->orWhere('vehicles.vin', 'LIKE', "%{$search}%");
+                  ->orWhere('vehicles.vin', 'LIKE', "%{$search}%")
+                  ->orWhere('vehicles.make', 'LIKE', "%{$search}%")
+                  ->orWhere('vehicles.model', 'LIKE', "%{$search}%");
             });
         }
 
-        // Apply filters
-        if ($request->has('stage_id')) {
-            $query->where('inspection_stage_id', $request->input('stage_id'));
-        }
-        
-        if ($request->has('status')) {
-            $query->where('status', $request->input('status'));
-        }
-        
-        if ($request->has('date_from')) {
-            $query->whereDate('inspection_date', '>=', $request->input('date_from'));
+        // Apply status filter
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('vehicle_inspections.status', $request->status);
         }
 
-        if ($request->has('date_to')) {
-            $query->whereDate('inspection_date', '<=', $request->input('date_to'));
-        }
-
-        // Get paginated results with all relationships eager loaded
-        $inspections = $query->paginate(10)->withQueryString();
+        // Get paginated results
+        $inspections = $query->latest('vehicle_inspections.created_at')->paginate(10)->withQueryString();
         
-        // Get all stages for the filter dropdown
-        $stages = InspectionStage::orderBy('order')->get();
-        $statusOptions = [
-            'pending' => 'Pending',
-            'in_progress' => 'In Progress',
-            'completed' => 'Completed',
-            'failed' => 'Failed',
-        ];
-        
-        return view('inspection.inspections.index', compact(
-            'inspections', 
-            'stages', 
-            'statusOptions'
-        ));
+        return view('inspection.inspections.index', compact('inspections'));
     }
 
     /**

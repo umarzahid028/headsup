@@ -55,59 +55,22 @@
                         <div>
                             <h3 class="text-lg font-medium text-gray-900 mb-1">Inspection Details</h3>
                             <p class="text-gray-600">Stage: {{ $inspection->inspectionStage->name }}</p>
-                            <p class="text-gray-600">Status: 
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ 
-                                    $inspection->status === 'completed' ? 'bg-green-100 text-green-800' : 
-                                    ($inspection->status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800') 
-                                }}">
-                                    {{ ucfirst(str_replace('_', ' ', $inspection->status)) }}
-                                </span>
-                            </p>
-                            <p class="text-gray-600">Started: {{ $inspection->inspection_date ? \Carbon\Carbon::parse($inspection->inspection_date)->format('M d, Y') : 'Not started' }}</p>
+                            <p class="text-gray-600">Inspector: {{ $inspection->user->name }}</p>
+                            <p class="text-gray-600">Date: {{ $inspection->inspection_date ? $inspection->inspection_date->format('M d, Y') : 'Not started' }}</p>
                             @if($inspection->completed_date)
-                                <p class="text-gray-600">Completed: {{ \Carbon\Carbon::parse($inspection->completed_date)->format('M d, Y') }}</p>
+                                <p class="text-gray-600">Completed: {{ $inspection->completed_date->format('M d, Y') }}</p>
                             @endif
                         </div>
                         
                         <div>
-                            <h3 class="text-lg font-medium text-gray-900 mb-1">Assignment</h3>
-                            @if($inspection->vendor_id)
-                                <p class="text-gray-600">Vendor: {{ $inspection->vendor->name }}</p>
-                            @endif
-                            
-                            @php
-                                $passCount = $inspection->itemResults->where('status', 'pass')->count();
-                                $warningCount = $inspection->itemResults->where('status', 'warning')->count();
-                                $failCount = $inspection->itemResults->where('status', 'fail')->count();
-                                $pendingCount = $inspection->itemResults->where('status', 'not_applicable')->count();
-                                $totalItems = $inspection->inspectionStage->inspectionItems->count();
-                            @endphp
-                            
-                            <div class="mt-3">
-                                <h4 class="text-sm font-medium text-gray-900">Assessment Summary</h4>
-                                <div class="mt-2 flex flex-col space-y-1">
-                                    <div class="flex justify-between">
-                                        <span class="text-sm text-gray-600">Pass:</span>
-                                        <span class="text-sm font-medium text-green-600">{{ $passCount }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-sm text-gray-600">Repair Needed:</span>
-                                        <span class="text-sm font-medium text-yellow-600">{{ $warningCount }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-sm text-gray-600">Replace Needed:</span>
-                                        <span class="text-sm font-medium text-red-600">{{ $failCount }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-sm text-gray-600">Pending Assessment:</span>
-                                        <span class="text-sm font-medium text-gray-600">{{ $pendingCount }}</span>
-                                    </div>
-                                    <div class="flex justify-between pt-1 border-t">
-                                        <span class="text-sm font-medium text-gray-800">Total Cost:</span>
-                                        <span class="text-sm font-bold text-gray-900">${{ number_format($inspection->total_cost, 2) }}</span>
-                                    </div>
-                                </div>
-                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-1">Status</h3>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ 
+                                $inspection->status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                ($inspection->status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 
+                                ($inspection->status === 'failed' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800')) 
+                            }}">
+                                {{ ucfirst($inspection->status) }}
+                            </span>
                         </div>
                     </div>
 
@@ -122,163 +85,190 @@
                         <h3 class="text-lg font-medium text-gray-900 mb-2">Inspection Progress</h3>
                         <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
                             @php
-                                $progress = 0;
-                                $completedItems = $passCount + $warningCount + $failCount;
-                                if ($totalItems > 0) {
-                                    $progress = ($completedItems / $totalItems) * 100;
-                                }
+                                $completedItems = $inspection->itemResults->whereIn('status', ['pass', 'warning', 'fail'])->count();
+                                $totalItems = $inspection->inspectionStage->inspectionItems->count();
+                                $progress = $totalItems > 0 ? ($completedItems / $totalItems) * 100 : 0;
                             @endphp
                             <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ $progress }}%"></div>
                         </div>
                         <p class="text-sm text-gray-600">{{ $completedItems }} of {{ $totalItems }} items assessed ({{ round($progress) }}%)</p>
                     </div>
+
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">Cost Summary</h3>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm text-gray-600">Estimated Total Cost:</span>
+                                    <span class="text-lg font-semibold text-gray-900">${{ number_format($totalEstimatedCost, 2) }}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">Actual Total Cost:</span>
+                                    <span class="text-lg font-semibold {{ $totalActualCost > $totalEstimatedCost ? 'text-red-600' : 'text-green-600' }}">
+                                        ${{ number_format($totalActualCost, 2) }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Cost Difference -->
+                            @if($totalActualCost > 0)
+                                <div class="mt-2 text-sm">
+                                    @php
+                                        $difference = $totalActualCost - $totalEstimatedCost;
+                                        $percentDiff = $totalEstimatedCost > 0 ? ($difference / $totalEstimatedCost) * 100 : 0;
+                                    @endphp
+                                    <span class="{{ $difference > 0 ? 'text-red-600' : 'text-green-600' }}">
+                                        {{ $difference > 0 ? 'Over' : 'Under' }} budget by: ${{ number_format(abs($difference), 2) }}
+                                        ({{ number_format(abs($percentDiff), 1) }}%)
+                                    </span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Inspection Results -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
+            <!-- Inspection Items -->
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-medium text-gray-900">{{ $inspection->inspectionStage->name }} - Inspection Results</h3>
-                        @if($inspection->status !== 'completed' && $inspection->vehicle->status == 'arrived')
-                            <a href="{{ route('inspection.inspections.edit', $inspection) }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                <x-heroicon-o-clipboard-document-check class="h-4 w-4 mr-1" />
-                                Continue Assessment
-                            </a>
-                        @endif
-                    </div>
-
-                    <!-- Legend -->
-                    <div class="mb-4 p-3 bg-gray-50 rounded-md border border-gray-200 flex flex-wrap gap-4">
-                        <div class="flex items-center">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-1">
-                                Status: Pass
-                            </span>
-                            <span class="text-sm text-gray-500">No issues found</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mr-1">
-                                Status: Repair
-                            </span>
-                            <span class="text-sm text-gray-500">Needs repair</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mr-1">
-                                Status: Replace
-                            </span>
-                            <span class="text-sm text-gray-500">Needs replacement</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mr-1">
-                                Pending
-                            </span>
-                            <span class="text-sm text-gray-500">Not inspected yet</span>
+                        <h3 class="text-lg font-medium text-gray-900">Inspection Items</h3>
+                        <div class="text-sm text-gray-500">
+                            Total Items: {{ $totalItems }}
                         </div>
                     </div>
-
+                    
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Result</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Repair Cost</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Images</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                @php
-                                    $resultsMap = $inspection->itemResults->keyBy('inspection_item_id');
-                                @endphp
-
-                                @foreach($inspection->inspectionStage->inspectionItems as $item)
-                                    <tr class="{{ 
-                                        $resultsMap->has($item->id) && $resultsMap[$item->id]->status === 'pass' ? 'bg-green-50' :
-                                        ($resultsMap->has($item->id) && $resultsMap[$item->id]->status === 'warning' ? 'bg-yellow-50' :
-                                        ($resultsMap->has($item->id) && $resultsMap[$item->id]->status === 'fail' ? 'bg-red-50' : '')) 
-                                    }}">
+                                @foreach($inspection->itemResults as $result)
+                                    <tr>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">{{ $item->name }}</div>
-                                            @if($item->description)
-                                                <div class="text-xs text-gray-500">{{ $item->description }}</div>
+                                            <div class="text-sm font-medium text-gray-900">
+                                                {{ $result->inspectionItem->name }}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ 
+                                                $result->status === 'pass' ? 'bg-green-100 text-green-800' : 
+                                                ($result->status === 'warning' ? 'bg-yellow-100 text-yellow-800' : 
+                                                ($result->status === 'fail' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800')) 
+                                            }}">
+                                                {{ ucfirst($result->status) }}
+                                            </span>
+                                            @if($result->repair_completed)
+                                                <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    Repair Completed
+                                                </span>
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            @if($resultsMap->has($item->id))
-                                                @php $result = $resultsMap->get($item->id); @endphp
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                    @if($result->status === 'pass') bg-green-100 text-green-800
-                                                    @elseif($result->status === 'warning') bg-yellow-100 text-yellow-800
-                                                    @elseif($result->status === 'fail') bg-red-100 text-red-800
-                                                    @else bg-gray-100 text-gray-800
-                                                    @endif">
-                                                    @if($result->status === 'pass')
-                                                        Status: Pass
-                                                    @elseif($result->status === 'warning')
-                                                        Status: Repair
-                                                    @elseif($result->status === 'fail')
-                                                        Status: Replace
-                                                    @else
-                                                        {{ ucfirst($result->status) }}
-                                                    @endif
-                                                </span>
-                                            @else
-                                                <span class="text-sm text-gray-500">Pending</span>
+                                            <div class="text-sm text-gray-900">
+                                                {{ $result->assignedVendor ? $result->assignedVendor->name : 'Not Assigned' }}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">
+                                                @if($result->cost > 0)
+                                                    ${{ number_format($result->cost, 2) }}
+                                                @else
+                                                    -
+                                                @endif
+                                            </div>
+                                            @if($result->actual_cost > 0)
+                                                <div class="text-xs text-gray-500">
+                                                    Actual: ${{ number_format($result->actual_cost, 2) }}
+                                                </div>
                                             @endif
                                         </td>
                                         <td class="px-6 py-4">
-                                            <div class="text-sm text-gray-500">
-                                                {{ isset($resultsMap[$item->id]) ? ($resultsMap[$item->id]->notes ?: 'No notes') : 'Not inspected yet' }}
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900">
-                                                @if(isset($resultsMap[$item->id]) && $resultsMap[$item->id]->cost > 0)
-                                                    ${{ number_format($resultsMap[$item->id]->cost, 2) }}
-                                                @else
-                                                    --
-                                                @endif
+                                                {{ $result->notes ?: '-' }}
                                             </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">
-                                                @if(isset($resultsMap[$item->id]) && $resultsMap[$item->id]->vendor_id)
-                                                    {{ $resultsMap[$item->id]->assignedVendor->name }}
-                                                @else
-                                                    --
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            @if(isset($resultsMap[$item->id]) && $resultsMap[$item->id]->repairImages->count() > 0)
-                                                <div class="flex items-center space-x-1">
-                                                    <span class="text-sm text-gray-500">{{ $resultsMap[$item->id]->repairImages->count() }}</span>
-                                                    <button type="button" 
-                                                            class="text-indigo-600 hover:text-indigo-900"
-                                                            onclick="openImagesModal('{{ $item->id }}')">
-                                                        <x-heroicon-o-camera class="h-5 w-5" />
-                                                    </button>
+                                            @if($result->completion_notes)
+                                                <div class="text-xs text-gray-500 mt-1">
+                                                    <strong>Completion Notes:</strong> {{ $result->completion_notes }}
                                                 </div>
-                                                
-                                                <!-- Hidden div with images for this result -->
-                                                <div id="images-{{ $item->id }}" class="hidden">
-                                                    @foreach($resultsMap[$item->id]->repairImages as $image)
-                                                        <img src="{{ asset('storage/' . $image->image_path) }}" alt="Repair Image {{ $loop->iteration }}" class="max-w-full rounded shadow-md mb-2">
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            @if($result->repairImages->count() > 0)
+                                                <div class="flex flex-wrap gap-2">
+                                                    @foreach($result->repairImages as $image)
+                                                        <a href="{{ Storage::url($image->path) }}" target="_blank" class="block">
+                                                            <img src="{{ Storage::url($image->path) }}" alt="Repair Image" class="h-10 w-10 object-cover rounded">
+                                                        </a>
                                                     @endforeach
                                                 </div>
                                             @else
-                                                <span class="text-sm text-gray-500">None</span>
+                                                <span class="text-sm text-gray-500">No images</span>
                                             @endif
+                                            
+                                            @can('edit vehicles')
+                                                <form action="{{ route('inspection.inspections.upload-images', $result->id) }}" 
+                                                      method="POST" 
+                                                      enctype="multipart/form-data" 
+                                                      class="mt-2">
+                                                    @csrf
+                                                    <div class="flex items-center space-x-2">
+                                                        <input type="file" 
+                                                               name="images[]" 
+                                                               accept="image/*" 
+                                                               multiple 
+                                                               class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                                        <button type="submit" 
+                                                                class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                            Upload
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            @endcan
                                         </td>
                                     </tr>
                                 @endforeach
                             </tbody>
+                            <tfoot class="bg-gray-50">
+                                <tr>
+                                    <td colspan="3" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        Total Cost
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            Est: ${{ number_format($totalEstimatedCost, 2) }}
+                                        </div>
+                                        @if($totalActualCost > 0)
+                                            <div class="text-xs text-gray-500">
+                                                Act: ${{ number_format($totalActualCost, 2) }}
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
             </div>
+
+            @if($inspection->notes)
+                <!-- Additional Notes -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Additional Notes</h3>
+                        <div class="text-gray-600 whitespace-pre-line">{{ $inspection->notes }}</div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 

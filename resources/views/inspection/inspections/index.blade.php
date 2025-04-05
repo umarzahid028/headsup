@@ -18,43 +18,42 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Search Bar -->
             <div class="mb-6">
-                <form action="{{ route('inspection.inspections.index') }}" method="GET">
-                    <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-6 rounded-lg shadow-sm">
-                        <div class="w-full md:w-96">
-                            <label for="search" class="block text-sm font-medium text-gray-700 mb-1">
-                                Search Vehicle
-                            </label>
-                            <div class="relative rounded-md shadow-sm">
-                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                                    </svg>
-                                </div>
-                                <input type="text" 
-                                       name="search" 
-                                       id="search" 
-                                       value="{{ request('search') }}"
-                                       class="block w-full rounded-md border-0 py-3 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gray-600 sm:text-sm sm:leading-6"
-                                       placeholder="Search by Stock Number or VIN"
-                                >
-                            </div>
-                            <p class="mt-1 text-sm text-gray-500">
-                                Enter a stock number or VIN to find specific vehicles
-                            </p>
+                <form action="{{ route('inspection.inspections.index') }}" method="GET" class="flex gap-3">
+                    <div class="flex-1 relative">
+                        <div class="pointer-events-none absolute inset-y-0 left-4 flex items-center">
+                            <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <button type="submit" 
-                                    class="inline-flex items-center px-6 py-3 bg-gray-900 border border-transparent rounded-md font-semibold text-sm text-white uppercase tracking-wider hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200">
-                                Search Vehicles
-                            </button>
-                            @if(request()->has('search'))
-                                <a href="{{ route('inspection.inspections.index') }}" 
-                                   class="inline-flex items-center px-4 py-3 bg-gray-100 border border-gray-300 rounded-md font-medium text-sm text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200">
-                                    Clear
-                                </a>
-                            @endif
+                        <input type="text" 
+                               name="search" 
+                               id="search" 
+                               value="{{ request('search') }}"
+                               class="block w-full pl-11 pr-4 py-3 text-base text-gray-900 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 focus:border-gray-300 bg-white shadow-sm"
+                               placeholder="Search by Stock #, VIN, Make, or Model"
+                        >
+                    </div>
+
+                    <div class="relative min-w-[200px]">
+                        <select name="status" 
+                                class="appearance-none block w-full py-3 pl-4 pr-10 text-base text-gray-900 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-gray-300 focus:border-gray-300 bg-white shadow-sm cursor-pointer">
+                            <option value="">All Statuses</option>
+                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                            <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>Failed</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
+                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
                         </div>
                     </div>
+
+                    <button type="submit" 
+                            class="px-6 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200">
+                        Filter
+                    </button>
                 </form>
             </div>
 
