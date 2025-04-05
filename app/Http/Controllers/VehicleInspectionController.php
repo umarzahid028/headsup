@@ -76,8 +76,11 @@ class VehicleInspectionController extends Controller
     {
         $vehicleId = $request->query('vehicle_id');
         
-        // Get vehicles with better display format
-        $vehicles = Vehicle::where('transport_status', 'delivered')
+        // Get vehicles that are delivered and haven't started inspection
+        $vehicles = Vehicle::whereDoesntHave('vehicleInspections')
+            ->whereHas('transports', function($query) {
+                $query->where('status', 'delivered');
+            })
             ->orderBy('stock_number')
             ->get(['id', 'stock_number', 'year', 'make', 'model'])
             ->mapWithKeys(function($vehicle) {
