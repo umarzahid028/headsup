@@ -106,17 +106,17 @@
                                         <tr>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm font-medium text-gray-900">
-                                                    {{ $transport->vehicle->stock_number }}
+                                                    {{ $transport->vehicle_count }} {{ Str::plural('Vehicle', $transport->vehicle_count) }}
                                                 </div>
                                                 <div class="text-sm text-gray-500">
-                                                    {{ $transport->vehicle->year }} {{ $transport->vehicle->make }} {{ $transport->vehicle->model }}
+                                                    In this batch
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm font-medium text-gray-900">
                                                     @if($transport->batch_id)
                                                         <a href="{{ route('transports.batch', ['batchId' => $transport->batch_id]) }}" class="text-indigo-600 hover:text-indigo-900">
-                                                            {{ $transport->batch_id }}
+                                                            Batch #{{ $transport->batch_id }}
                                                         </a>
                                                     @else
                                                         <span class="text-gray-400">No batch assigned</span>
@@ -125,6 +125,9 @@
                                                 @if($transport->batch_name)
                                                     <div class="text-sm text-gray-500">{{ $transport->batch_name }}</div>
                                                 @endif
+                                                <div class="text-xs text-gray-500 mt-1">
+                                                    Created {{ $transport->created_at->diffForHumans() }}
+                                                </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm text-gray-900">
@@ -145,7 +148,7 @@
                                                     @elseif($transport->transporter_name)
                                                         {{ $transport->transporter_name }}
                                                     @else
-                                                        <span class="text-gray-400">—</span>
+                                                        <span class="text-gray-400">Not assigned</span>
                                                     @endif
                                                 </div>
                                                 @if($transport->transporter_phone)
@@ -161,12 +164,15 @@
                                                     @endif">
                                                     {{ ucfirst($transport->status) }}
                                                 </span>
+                                                <div class="text-xs text-gray-500 mt-1">
+                                                    Last updated {{ $transport->updated_at->diffForHumans() }}
+                                                </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 @if($transport->is_acknowledged)
                                                     <div class="text-sm text-gray-900">
                                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                            Acknowledged
+                                                            All Acknowledged
                                                         </span>
                                                     </div>
                                                     <div class="text-xs text-gray-500">
@@ -178,7 +184,7 @@
                                                 @else
                                                     <div class="text-sm text-gray-900">
                                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                            Pending
+                                                            Pending Acknowledgment
                                                         </span>
                                                     </div>
                                                     @if(auth()->user()->hasRole('Transporter') && auth()->user()->transporter_id === $transport->transporter_id)
@@ -198,21 +204,22 @@
                                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                             </svg>
-                                                            <span class="text-xs">Gate Pass</span>
+                                                            Gate Pass
                                                         </a>
                                                     @endif
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <a href="{{ route('transports.show', $transport) }}" class="text-indigo-600 hover:text-indigo-900">View</a>
-                                                @if(!auth()->user()->hasRole('Transporter'))
-                                                    <a href="{{ route('transports.edit', $transport) }}" class="ml-2 text-blue-600 hover:text-blue-900">Edit</a>
-                                                    <form action="{{ route('transports.destroy', $transport) }}" method="POST" class="inline ml-2">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to delete this transport?')">Delete</button>
-                                                    </form>
-                                                @endif
+                                                <div class="flex space-x-3">
+                                                    <a href="{{ route('transports.batch', ['batchId' => $transport->batch_id]) }}" class="text-indigo-600 hover:text-indigo-900">
+                                                        View Details
+                                                    </a>
+                                                    @if(!auth()->user()->hasRole('Transporter'))
+                                                        <a href="{{ route('transports.edit', $transport) }}" class="text-indigo-600 hover:text-indigo-900">
+                                                            Edit
+                                                        </a>
+                                                    @endif
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach

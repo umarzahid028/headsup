@@ -36,9 +36,21 @@ class TransportController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Transport::with(['vehicle', 'transporter', 'acknowledgedBy']);
+        $query = Transport::with(['vehicle', 'transporter', 'acknowledgedBy'])
+            ->select([
+                'transports.*',
+                DB::raw('COUNT(DISTINCT vehicle_id) as vehicle_count'),
+                DB::raw('MIN(origin) as origin'),
+                DB::raw('MIN(destination) as destination'),
+                DB::raw('MIN(pickup_date) as pickup_date'),
+                DB::raw('MIN(delivery_date) as delivery_date'),
+                DB::raw('MIN(transporter_name) as transporter_name'),
+                DB::raw('MIN(status) as batch_status'),
+                DB::raw('MIN(created_at) as batch_created_at')
+            ])
+            ->groupBy('batch_id');
+
         // Filter transports based on user role
-       
         if (auth()->user()->hasRole('Transporter')) {
             $query->where('transporter_id', auth()->user()->transporter_id);
         }
@@ -46,28 +58,32 @@ class TransportController extends Controller
         // Search functionality
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
-            $query->whereHas('vehicle', function ($q) use ($search) {
-                $q->where('stock_number', 'like', "%{$search}%")
-                  ->orWhere('vin', 'like', "%{$search}%")
-                  ->orWhere('make', 'like', "%{$search}%")
-                  ->orWhere('model', 'like', "%{$search}%");
-            })
-            ->orWhere('transporter_name', 'like', "%{$search}%")
-            ->orWhere('destination', 'like', "%{$search}%")
-            ->orWhere('batch_id', 'like', "%{$search}%");
+            $query->where(function($q) use ($search) {
+                $q->whereHas('vehicle', function ($vq) use ($search) {
+                    $vq->where('stock_number', 'like', "%{$search}%")
+                      ->orWhere('vin', 'like', "%{$search}%")
+                      ->orWhere('make', 'like', "%{$search}%")
+                      ->orWhere('model', 'like', "%{$search}%");
+                })
+                ->orWhere('transporter_name', 'like', "%{$search}%")
+                ->orWhere('destination', 'like', "%{$search}%")
+                ->orWhere('batch_id', 'like', "%{$search}%");
+            });
         }
 
         // Filter by status
         if ($request->has('status') && $request->status != '') {
-            $query->where('status', $request->status);
+            $query->having('batch_status', $request->status);
         }
 
         // Filter by acknowledgment
         if ($request->has('acknowledged') && $request->acknowledged != '') {
-            $query->where('is_acknowledged', $request->acknowledged === 'true');
+            $isAcknowledged = $request->acknowledged === 'true';
+            $query->where('is_acknowledged', $isAcknowledged);
         }
 
-        $transports = $query->latest()->paginate(10);
+        $transports = $query->latest('batch_created_at')->paginate(10);
+
         return view('transports.index', compact('transports'));
     }
 
