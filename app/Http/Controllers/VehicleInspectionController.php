@@ -14,31 +14,70 @@ use Illuminate\Support\Facades\DB;
 
 class VehicleInspectionController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+       // $this->middleware('role_or_permission:Admin|Sales Manager|Recon Manager|view vehicles');
+    }
+
     /**
      * Display a listing of the vehicle inspections.
      */
     public function index(Request $request)
     {
-        $stageId = $request->query('stage_id');
-        $status = $request->query('status');
-        $vehicleId = $request->query('vehicle_id');
+        $query = VehicleInspection::with([
+            'vehicle.vehicleInspections.inspectionStage',
+            'inspectionStage',
+            'itemResults.inspectionItem',
+            'itemResults.repairImages',
+            'itemResults.assignedVendor'
+        ])
+        ->select([
+            'vehicle_inspections.*',
+            'vehicles.stock_number',
+            'vehicles.year',
+            'vehicles.make',
+            'vehicles.model',
+            'vehicles.vin'
+        ])
+        ->join('vehicles', 'vehicle_inspections.vehicle_id', '=', 'vehicles.id')
+        ->whereIn('vehicle_inspections.id', function($query) {
+            $query->selectRaw('MAX(vi2.id)')
+                ->from('vehicle_inspections as vi2')
+                ->groupBy('vi2.vehicle_id');
+        });
 
-        $query = VehicleInspection::with(['vehicle', 'inspectionStage', 'user']);
-        
-        if ($stageId) {
-            $query->where('inspection_stage_id', $stageId);
+        // Apply search filter
+        if ($request->has('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('vehicles.stock_number', 'LIKE', "%{$search}%")
+                  ->orWhere('vehicles.vin', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Apply filters
+        if ($request->has('stage_id')) {
+            $query->where('inspection_stage_id', $request->input('stage_id'));
         }
         
-        if ($status) {
-            $query->where('status', $status);
+        if ($request->has('status')) {
+            $query->where('status', $request->input('status'));
         }
         
-        if ($vehicleId) {
-            $query->where('vehicle_id', $vehicleId);
+        if ($request->has('date_from')) {
+            $query->whereDate('inspection_date', '>=', $request->input('date_from'));
         }
+
+        if ($request->has('date_to')) {
+            $query->whereDate('inspection_date', '<=', $request->input('date_to'));
+        }
+
+        // Get paginated results with all relationships eager loaded
+        $inspections = $query->paginate(10)->withQueryString();
         
-        $inspections = $query->latest()->paginate(10);
-        $stages = InspectionStage::orderBy('order')->pluck('name', 'id');
+        // Get all stages for the filter dropdown
+        $stages = InspectionStage::orderBy('order')->get();
         $statusOptions = [
             'pending' => 'Pending',
             'in_progress' => 'In Progress',
@@ -49,10 +88,7 @@ class VehicleInspectionController extends Controller
         return view('inspection.inspections.index', compact(
             'inspections', 
             'stages', 
-            'statusOptions', 
-            'stageId', 
-            'status', 
-            'vehicleId'
+            'statusOptions'
         ));
     }
 
@@ -101,11 +137,51 @@ class VehicleInspectionController extends Controller
      */
     public function show(VehicleInspection $inspection)
     {
-        $inspection->load(['vehicle', 'inspectionStage', 'user', 'vendor', 'itemResults.inspectionItem', 'itemResults.repairImages']);
+        $inspection->load([
+            'vehicle', 
+            'inspectionStage.inspectionItems', 
+            'user', 
+            'vendor', 
+            'itemResults.inspectionItem', 
+            'itemResults.repairImages',
+            'itemResults.assignedVendor'
+        ]);
+        
+        // Create missing item results for all inspection items in this stage
+        $existingItemIds = $inspection->itemResults->pluck('inspection_item_id')->toArray();
+        $stageItems = $inspection->inspectionStage->inspectionItems;
+        
+        foreach ($stageItems as $item) {
+            if (!in_array($item->id, $existingItemIds)) {
+                $inspection->itemResults()->create([
+                    'inspection_item_id' => $item->id,
+                    'status' => 'pending',
+                    'cost' => 0,
+                    'actual_cost' => 0
+                ]);
+            }
+        }
+        
+        // Reload the inspection with the new item results
+        $inspection->load('itemResults.inspectionItem');
+        
+        // Calculate total costs
+        $totalEstimatedCost = $inspection->itemResults->sum('cost');
+        $totalActualCost = $inspection->itemResults->sum('actual_cost');
+        
+        // Update the inspection's total cost
+        $inspection->update([
+            'total_cost' => $totalEstimatedCost
+        ]);
         
         $vendors = Vendor::orderBy('name')->pluck('name', 'id');
         
-        return view('inspection.inspections.show', compact('inspection', 'vendors'));
+        return view('inspection.inspections.show', compact(
+            'inspection', 
+            'vendors',
+            'totalEstimatedCost',
+            'totalActualCost'
+        ));
     }
 
     /**
@@ -188,7 +264,8 @@ class VehicleInspectionController extends Controller
             'items.*.status' => 'required|in:pass,warning,fail,not_applicable',
             'items.*.notes' => 'nullable|string',
             'items.*.requires_repair' => 'nullable|boolean',
-            'items.*.repair_cost' => 'nullable|numeric|min:0',
+            'items.*.cost' => 'nullable|numeric|min:0',
+            'items.*.actual_cost' => 'nullable|numeric|min:0',
             'items.*.assigned_to_vendor_id' => 'nullable|exists:vendors,id',
             'items.*.repair_completed' => 'nullable|boolean',
         ]);
@@ -196,6 +273,9 @@ class VehicleInspectionController extends Controller
         DB::beginTransaction();
 
         try {
+            $totalEstimatedCost = 0;
+            $totalActualCost = 0;
+
             foreach ($validated['items'] as $itemData) {
                 $itemResult = InspectionItemResult::findOrFail($itemData['id']);
                 
@@ -207,15 +287,20 @@ class VehicleInspectionController extends Controller
                 // Set requires_repair based on status
                 $itemData['requires_repair'] = in_array($itemData['status'], ['warning', 'fail']);
                 
+                // Update the item result
                 $itemResult->update($itemData);
+
+                // Add to totals
+                $totalEstimatedCost += $itemData['cost'] ?? 0;
+                $totalActualCost += $itemData['actual_cost'] ?? 0;
             }
             
             // Update the inspection status if all items have been checked
             $this->updateInspectionStatus($inspection);
             
-            // Update total cost
+            // Update total costs
             $inspection->update([
-                'total_cost' => $inspection->calculateTotalCost()
+                'total_cost' => $totalEstimatedCost
             ]);
             
             DB::commit();
