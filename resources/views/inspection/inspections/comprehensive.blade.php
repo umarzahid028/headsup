@@ -88,6 +88,9 @@
                 
                     <form id="inspection-form" method="POST" action="/inspection/vehicles/{{ $vehicle->id }}/comprehensive" class="space-y-4" enctype="multipart/form-data">
                         @csrf
+                        @if(isset($existingInspection))
+                            @method('PUT')
+                        @endif
                         <!-- Stages Tabs -->
                         <div class="mb-6 border-b border-gray-200">
                             <div class="flex overflow-x-auto">
@@ -127,6 +130,7 @@
                                                                 name="items[{{ $item->id }}][status]" 
                                                                 value="pass" 
                                                                 data-item-id="{{ $item->id }}"
+                                                                {{ isset($existingInspection) && $existingInspection->itemResults->where('inspection_item_id', $item->id)->first()?->status === 'pass' ? 'checked' : '' }}
                                                                 {{ old("items.{$item->id}.status") == 'pass' ? 'checked' : '' }} 
                                                                 form="inspection-form">
                                                             <div class="flex items-center px-6 py-2.5 rounded-lg border-2 cursor-pointer
@@ -145,6 +149,7 @@
                                                                 name="items[{{ $item->id }}][status]" 
                                                                 value="warning" 
                                                                 data-item-id="{{ $item->id }}"
+                                                                {{ isset($existingInspection) && $existingInspection->itemResults->where('inspection_item_id', $item->id)->first()?->status === 'warning' ? 'checked' : '' }}
                                                                 {{ old("items.{$item->id}.status") == 'warning' ? 'checked' : '' }} 
                                                                 form="inspection-form">
                                                             <div class="flex items-center px-6 py-2.5 rounded-lg border-2 cursor-pointer
@@ -163,6 +168,7 @@
                                                                 name="items[{{ $item->id }}][status]" 
                                                                 value="fail" 
                                                                 data-item-id="{{ $item->id }}"
+                                                                {{ isset($existingInspection) && $existingInspection->itemResults->where('inspection_item_id', $item->id)->first()?->status === 'fail' ? 'checked' : '' }}
                                                                 {{ old("items.{$item->id}.status") == 'fail' ? 'checked' : '' }} 
                                                                 form="inspection-form">
                                                             <div class="flex items-center px-6 py-2.5 rounded-lg border-2 cursor-pointer
@@ -181,7 +187,7 @@
                                                     <div class="w-full">
                                                         <textarea name="items[{{ $item->id }}][notes]" rows="2" form="inspection-form"
                                                             class="w-full text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                                            placeholder="Add inspection notes...">{{ old("items.{$item->id}.notes") }}</textarea>
+                                                            placeholder="Add inspection notes...">{{ isset($existingInspection) ? ($existingInspection->itemResults->where('inspection_item_id', $item->id)->first()?->notes ?? '') : old("items.{$item->id}.notes") }}</textarea>
                                                     </div>
 
                                                     <!-- Image Upload -->
@@ -216,7 +222,9 @@
                                                             class="w-full text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm item-vendor-select">
                                                             <option value="">Select vendor (optional)</option>
                                                             @foreach($vendors as $vendor)
-                                                                <option value="{{ $vendor->id }}" {{ old("items.{$item->id}.vendor_id") == $vendor->id ? 'selected' : '' }}>
+                                                                <option value="{{ $vendor->id }}" 
+                                                                    {{ isset($existingInspection) && $existingInspection->itemResults->where('inspection_item_id', $item->id)->first()?->vendor_id == $vendor->id ? 'selected' : '' }}
+                                                                    {{ old("items.{$item->id}.vendor_id") == $vendor->id ? 'selected' : '' }}>
                                                                     {{ $vendor->name }}
                                                                 </option>
                                                             @endforeach
@@ -233,7 +241,7 @@
                                                                 <span class="text-gray-500 sm:text-sm">$</span>
                                                             </div>
                                                             <input type="number" step="0.01" min="0" id="cost_{{ $item->id }}" name="items[{{ $item->id }}][cost]" form="inspection-form"
-                                                                value="{{ old("items.{$item->id}.cost") }}" 
+                                                                value="{{ isset($existingInspection) ? ($existingInspection->itemResults->where('inspection_item_id', $item->id)->first()?->cost ?? '') : old("items.{$item->id}.cost") }}" 
                                                                 class="w-full pl-7 text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
                                                                 placeholder="0.00">
                                                         </div>

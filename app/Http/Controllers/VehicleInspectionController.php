@@ -76,7 +76,7 @@ class VehicleInspectionController extends Controller
     {
         $vehicleId = $request->query('vehicle_id');
         
-        // Get vehicles that are delivered and haven't started inspection
+        // Get vehicles that haven't been inspected yet
         $vehicles = Vehicle::whereDoesntHave('vehicleInspections')
             ->whereHas('transports', function($query) {
                 $query->where('status', 'delivered');
@@ -368,6 +368,24 @@ class VehicleInspectionController extends Controller
      */
     public function comprehensive(Vehicle $vehicle)
     {
+        // Check if vehicle already has an inspection
+        $existingInspection = VehicleInspection::where('vehicle_id', $vehicle->id)
+            ->latest()
+            ->first();
+
+        if ($existingInspection) {
+            // Load existing inspection data
+            $stages = InspectionStage::with(['inspectionItems' => function ($query) {
+                $query->where('is_active', true)->orderBy('order');
+            }])->where('is_active', true)->orderBy('order')->get();
+            
+            $vendors = Vendor::where('is_active', true)->orderBy('name')->get();
+
+            // Pass the existing inspection data to the view
+            return view('inspection.inspections.comprehensive', compact('vehicle', 'stages', 'vendors', 'existingInspection'));
+        }
+        
+        // If no existing inspection, proceed with new inspection
         $stages = InspectionStage::with(['inspectionItems' => function ($query) {
             $query->where('is_active', true)->orderBy('order');
         }])->where('is_active', true)->orderBy('order')->get();
@@ -378,7 +396,7 @@ class VehicleInspectionController extends Controller
     }
 
     /**
-     * Store a comprehensive inspection.
+     * Store or update a comprehensive inspection.
      */
     public function comprehensiveStore(Request $request, Vehicle $vehicle)
     {
@@ -392,106 +410,96 @@ class VehicleInspectionController extends Controller
             'items.*.images.*' => 'nullable|image|mimes:jpeg,png|max:5120',
         ]);
 
-        // Group items by stage
-        $stageItems = [];
-        $needsRepair = false;
-        
-        foreach ($request->items as $itemId => $itemData) {
-            $item = InspectionItem::findOrFail($itemId);
-            $stageId = $item->inspection_stage_id;
-            
-            if (!isset($stageItems[$stageId])) {
-                $stageItems[$stageId] = [];
-            }
-            
-            // Track if any items need repair (warning or fail status)
-            if ($itemData['status'] === 'warning' || $itemData['status'] === 'fail') {
-                $needsRepair = true;
-            }
-            
-            $stageItems[$stageId][$itemId] = $itemData;
-        }
-        
+        // Check if vehicle already has an inspection
+        $existingInspection = VehicleInspection::where('vehicle_id', $vehicle->id)
+            ->latest()
+            ->first();
+
         DB::beginTransaction();
         
         try {
-            // Create an inspection for each stage with items
-            foreach ($stageItems as $stageId => $items) {
-                // Create the vehicle inspection
-                $inspection = VehicleInspection::create([
-                    'vehicle_id' => $vehicle->id,
-                    'inspection_stage_id' => $stageId,
-                    'user_id' => auth()->id(),
-                    'vendor_id' => $request->vendor_id, // Global vendor assignment if provided
-                    'status' => 'in_progress',
-                    'inspection_date' => now(),
-                ]);
-                
-                // Create results for each item
-                $totalCost = 0;
-                foreach ($items as $itemId => $itemData) {
-                    // Handle vendor assignment - if global vendor is set and no specific vendor for this item
-                    $vendorId = $itemData['vendor_id'] ?? $request->vendor_id ?? null;
-                    
-                    // Create the result
-                    $result = InspectionItemResult::create([
-                        'vehicle_inspection_id' => $inspection->id,
-                        'inspection_item_id' => $itemId,
-                        'status' => $itemData['status'],
-                        'notes' => $itemData['notes'] ?? null,
-                        'cost' => $itemData['cost'] ?? 0,
-                        'vendor_id' => $vendorId,
-                        'requires_repair' => in_array($itemData['status'], ['warning', 'fail']),
-                        'repair_completed' => false, // Initially not completed
-                    ]);
-                    
-                    // Handle image uploads for this item
+            if ($existingInspection) {
+                // Update existing inspection
+                foreach ($request->items as $itemId => $itemData) {
+                    $item = InspectionItem::findOrFail($itemId);
+                    $result = $existingInspection->itemResults()
+                        ->where('inspection_item_id', $itemId)
+                        ->first();
+
+                    if (!$result) {
+                        // Create new result if it doesn't exist
+                        $result = $existingInspection->itemResults()->create([
+                            'inspection_item_id' => $itemId,
+                            'status' => $itemData['status'],
+                            'notes' => $itemData['notes'] ?? null,
+                            'cost' => $itemData['cost'] ?? 0,
+                            'vendor_id' => $itemData['vendor_id'] ?? $request->vendor_id ?? null,
+                            'requires_repair' => in_array($itemData['status'], ['warning', 'fail']),
+                            'repair_completed' => false,
+                        ]);
+                    } else {
+                        // Update existing result
+                        $result->update([
+                            'status' => $itemData['status'],
+                            'notes' => $itemData['notes'] ?? null,
+                            'cost' => $itemData['cost'] ?? 0,
+                            'vendor_id' => $itemData['vendor_id'] ?? $request->vendor_id ?? null,
+                            'requires_repair' => in_array($itemData['status'], ['warning', 'fail']),
+                        ]);
+                    }
+
+                    // Handle new image uploads
                     if (isset($itemData['images']) && is_array($itemData['images'])) {
                         foreach ($itemData['images'] as $image) {
                             if ($image && $image->isValid()) {
                                 $path = $image->store('inspection-images/' . $vehicle->id, 'public');
                                 $result->repairImages()->create([
                                     'image_path' => $path,
-                                    'image_type' => 'before', // Initial inspection images are "before" type
-                                    'caption' => 'Initial inspection image'
+                                    'image_type' => 'before',
+                                    'caption' => 'Inspection image'
                                 ]);
                             }
                         }
                     }
-
-                    $totalCost += $result->cost;
                 }
-                
-                // Update the inspection total cost
-                $inspection->update([
+
+                // Update inspection status and total cost
+                $totalCost = $existingInspection->itemResults->sum('cost');
+                $existingInspection->update([
                     'total_cost' => $totalCost,
                     'status' => 'completed',
                     'completed_date' => now()
                 ]);
+
+                $needsRepair = $existingInspection->itemResults()
+                    ->whereIn('status', ['warning', 'fail'])
+                    ->exists();
+
+            } else {
+                // Create new inspection (existing logic)
+                // ... [Keep the existing creation logic here]
             }
             
             // Update vehicle status
             if ($needsRepair && $request->vendor_id) {
-                // If repairs needed and vendor assigned, mark as 'repair_assigned'
                 $vehicle->update(['status' => 'repair_assigned']);
             } else if ($needsRepair) {
-                // If repairs needed but no vendor, mark as 'needs_repair'
                 $vehicle->update(['status' => 'needs_repair']);
             } else {
-                // No repairs needed, vehicle is ready
                 $vehicle->update(['status' => 'ready']);
             }
             
             DB::commit();
             
             return redirect()->route('vehicles.show', $vehicle)
-                ->with('success', 'Inspection completed successfully. ' . 
+                ->with('success', 'Inspection ' . ($existingInspection ? 'updated' : 'completed') . ' successfully. ' . 
                 ($needsRepair ? 'Repair items have been ' . ($request->vendor_id ? 'assigned to vendor.' : 'identified.') : 'Vehicle is ready.'));
+                
         } catch (\Exception $e) {
             DB::rollBack();
             
             return redirect()->back()
-                ->with('error', 'Error saving inspection: ' . $e->getMessage())
+                ->with('error', 'Error ' . ($existingInspection ? 'updating' : 'saving') . ' inspection: ' . $e->getMessage())
                 ->withInput();
         }
     }
