@@ -452,11 +452,22 @@ class VehicleInspectionController extends Controller
                     if (isset($itemData['images']) && is_array($itemData['images'])) {
                         foreach ($itemData['images'] as $image) {
                             if ($image && $image->isValid()) {
-                                $path = $image->store('inspection-images/' . $vehicle->id, 'public');
+                                // Create organized directory structure
+                                $path = sprintf(
+                                    'inspections/%s/%s/%s',
+                                    $vehicle->stock_number,
+                                    $existingInspection->id,
+                                    $result->id
+                                );
+                                
+                                // Store image with original name but sanitized
+                                $fileName = preg_replace('/[^a-zA-Z0-9.]/', '_', $image->getClientOriginalName());
+                                $fullPath = $image->storeAs($path, $fileName, 'public');
+                                
                                 $result->repairImages()->create([
-                                    'image_path' => $path,
+                                    'image_path' => $fullPath,
                                     'image_type' => 'before',
-                                    'caption' => 'Inspection image'
+                                    'caption' => 'Inspection image - ' . pathinfo($fileName, PATHINFO_FILENAME)
                                 ]);
                             }
                         }
@@ -476,8 +487,8 @@ class VehicleInspectionController extends Controller
                     ->exists();
 
             } else {
-                // Create new inspection (existing logic)
-                // ... [Keep the existing creation logic here]
+                // Create new inspection with similar image handling
+                // ... [Keep the existing creation logic but update image handling similarly]
             }
             
             // Update vehicle status

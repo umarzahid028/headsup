@@ -260,6 +260,16 @@
 
             <!-- Vendor Assignment Section -->
             <div class="mt-8 p-4 bg-white border border-gray-200 rounded-lg shadow">
+                <!-- Estimated Total Cost Display -->
+                <div class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            <span class="text-blue-600"><i class="fas fa-calculator mr-2"></i>Estimated Total Cost</span>
+                        </h3>
+                        <div class="text-2xl font-bold text-gray-900" id="estimated-total-cost">$0.00</div>
+                    </div>
+                </div>
+
                 <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
                     <span class="text-blue-600"><i class="fas fa-tools mr-2"></i>Vendor Assignment</span>
                 </h3>
@@ -328,6 +338,61 @@
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Add total cost calculation function
+            function updateTotalCost() {
+                let total = 0;
+                document.querySelectorAll('input[name$="[cost]"]').forEach(input => {
+                    const container = input.closest('.item-container');
+                    const statusInputs = container.querySelectorAll('input[type="radio"]');
+                    const selectedStatus = Array.from(statusInputs).find(input => input.checked)?.value;
+                    
+                    // Only add to total if status is warning or fail
+                    if (selectedStatus === 'warning' || selectedStatus === 'fail') {
+                        total += parseFloat(input.value || 0);
+                    }
+                });
+                
+                // Update the display with formatted total
+                const formattedTotal = new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD'
+                }).format(total);
+                document.getElementById('estimated-total-cost').textContent = formattedTotal;
+            }
+
+            // Add event listeners for cost updates
+            document.querySelectorAll('input[name$="[cost]"]').forEach(input => {
+                input.addEventListener('input', updateTotalCost);
+            });
+
+            // Add event listeners for status changes to recalculate total
+            document.querySelectorAll('.item-status-radio').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const itemId = this.dataset.itemId;
+                    const container = this.closest('.item-container');
+                    const vendorField = container.querySelector(`#vendor-field-${itemId}`);
+                    const costField = container.querySelector(`#cost-field-${itemId}`);
+                    
+                    // Remove error highlight if it exists
+                    container.classList.remove('error-highlight');
+                    
+                    // Show/hide vendor and cost fields based on status
+                    if (vendorField) {
+                        vendorField.classList.toggle('hidden', this.value === 'pass');
+                    }
+                    
+                    if (costField) {
+                        costField.classList.toggle('hidden', this.value === 'pass');
+                    }
+
+                    // Update total cost when status changes
+                    updateTotalCost();
+                });
+            });
+
+            // Initial total cost calculation
+            updateTotalCost();
+
             // Handle tab switching
             const tabs = document.querySelectorAll('.stage-tab');
             const contents = document.querySelectorAll('.stage-content');
@@ -424,28 +489,6 @@
                 
                 // Submit the form if no errors
                 form.submit();
-            });
-
-            // Handle status radio changes
-            document.querySelectorAll('.item-status-radio').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    const itemId = this.dataset.itemId;
-                    const container = this.closest('.item-container');
-                    const vendorField = container.querySelector(`#vendor-field-${itemId}`);
-                    const costField = container.querySelector(`#cost-field-${itemId}`);
-                    
-                    // Remove error highlight if it exists
-                    container.classList.remove('error-highlight');
-                    
-                    // Show/hide vendor and cost fields based on status
-                    if (vendorField) {
-                        vendorField.classList.toggle('hidden', this.value === 'pass');
-                    }
-                    
-                    if (costField) {
-                        costField.classList.toggle('hidden', this.value === 'pass');
-                    }
-                });
             });
         });
     </script>
