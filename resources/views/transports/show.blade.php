@@ -157,7 +157,6 @@
                                         <h5 class="font-semibold mb-4">Update Transport Status</h5>
                                         <form action="{{ route('transports.update-status', $transport) }}" method="POST">
                                             @csrf
-                                            
                                             <div class="space-y-4">
                                                 <div>
                                                     <label for="status" class="block text-sm font-medium text-gray-700">Status</label>

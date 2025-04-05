@@ -205,8 +205,9 @@
                                             @if($result->repairImages->count() > 0)
                                                 <div class="flex flex-wrap gap-2">
                                                     @foreach($result->repairImages as $image)
-                                                        <a href="{{ Storage::url($image->path) }}" target="_blank" class="block">
-                                                            <img src="{{ Storage::url($image->path) }}" alt="Repair Image" class="h-10 w-10 object-cover rounded">
+                                                        <a href="{{ Storage::url($image->image_path) }}" target="_blank" class="block">
+
+                                                        <img src="{{ Storage::url($image->image_path) }}" alt="Repair Image" class="h-10 w-10 object-cover rounded">
                                                         </a>
                                                     @endforeach
                                                 </div>
