@@ -126,18 +126,18 @@
                                                     <div class="text-sm text-gray-500">{{ $transport->batch_name }}</div>
                                                 @endif
                                                 <div class="text-xs text-gray-500 mt-1">
-                                                    Created {{ $transport->created_at->diffForHumans() }}
+                                                    Created {{ $transport->batch_created_at ? \Carbon\Carbon::parse($transport->batch_created_at)->diffForHumans() : 'N/A' }}
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm text-gray-900">
-                                                    {{ $transport->origin ?: '—' }} → {{ $transport->destination }}
+                                                    {{ $transport->batch_origin ?: '—' }} → {{ $transport->batch_destination }}
                                                 </div>
                                                 <div class="text-xs text-gray-500">
-                                                    @if($transport->pickup_date || $transport->delivery_date)
-                                                        {{ $transport->pickup_date ? $transport->pickup_date->format('M d, Y') : 'TBD' }}
+                                                    @if($transport->batch_pickup_date || $transport->batch_delivery_date)
+                                                        {{ $transport->batch_pickup_date ? \Carbon\Carbon::parse($transport->batch_pickup_date)->format('M d, Y') : 'TBD' }}
                                                         to 
-                                                        {{ $transport->delivery_date ? $transport->delivery_date->format('M d, Y') : 'TBD' }}
+                                                        {{ $transport->batch_delivery_date ? \Carbon\Carbon::parse($transport->batch_delivery_date)->format('M d, Y') : 'TBD' }}
                                                     @endif
                                                 </div>
                                             </td>
@@ -145,8 +145,8 @@
                                                 <div class="text-sm text-gray-900">
                                                     @if($transport->transporter_id && $transport->transporter)
                                                         {{ $transport->transporter->name }}
-                                                    @elseif($transport->transporter_name)
-                                                        {{ $transport->transporter_name }}
+                                                    @elseif($transport->batch_transporter_name)
+                                                        {{ $transport->batch_transporter_name }}
                                                     @else
                                                         <span class="text-gray-400">Not assigned</span>
                                                     @endif
@@ -157,15 +157,15 @@
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                    @if($transport->status === 'pending') bg-yellow-100 text-yellow-800
-                                                    @elseif($transport->status === 'in_transit') bg-blue-100 text-blue-800
-                                                    @elseif($transport->status === 'delivered') bg-green-100 text-green-800
+                                                    @if($transport->batch_status === 'pending') bg-yellow-100 text-yellow-800
+                                                    @elseif($transport->batch_status === 'in_transit') bg-blue-100 text-blue-800
+                                                    @elseif($transport->batch_status === 'delivered') bg-green-100 text-green-800
                                                     @else bg-red-100 text-red-800
                                                     @endif">
-                                                    {{ ucfirst($transport->status) }}
+                                                    {{ ucfirst($transport->batch_status) }}
                                                 </span>
                                                 <div class="text-xs text-gray-500 mt-1">
-                                                    Last updated {{ $transport->updated_at->diffForHumans() }}
+                                                    Last updated {{ $transport->batch_updated_at ? \Carbon\Carbon::parse($transport->batch_updated_at)->diffForHumans() : 'N/A' }}
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
@@ -176,7 +176,7 @@
                                                         </span>
                                                     </div>
                                                     <div class="text-xs text-gray-500">
-                                                        {{ $transport->acknowledged_at->format('M d, Y H:i') }}
+                                                        {{ $transport->acknowledged_at ? \Carbon\Carbon::parse($transport->acknowledged_at)->format('M d, Y H:i') : 'N/A' }}
                                                         @if($transport->acknowledgedBy)
                                                             by {{ $transport->acknowledgedBy->name }}
                                                         @endif

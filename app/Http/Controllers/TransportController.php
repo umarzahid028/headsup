@@ -36,17 +36,25 @@ class TransportController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Transport::with(['vehicle', 'transporter', 'acknowledgedBy'])
+        $query = Transport::query()
             ->select([
-                'transports.*',
+                'batch_id',
+                DB::raw('MIN(id) as id'), // Select one ID per batch for pagination
                 DB::raw('COUNT(DISTINCT vehicle_id) as vehicle_count'),
-                DB::raw('MIN(origin) as origin'),
-                DB::raw('MIN(destination) as destination'),
-                DB::raw('MIN(pickup_date) as pickup_date'),
-                DB::raw('MIN(delivery_date) as delivery_date'),
-                DB::raw('MIN(transporter_name) as transporter_name'),
+                DB::raw('MIN(origin) as batch_origin'),
+                DB::raw('MIN(destination) as batch_destination'),
+                DB::raw('MIN(pickup_date) as batch_pickup_date'),
+                DB::raw('MIN(delivery_date) as batch_delivery_date'),
+                DB::raw('MIN(transporter_id) as transporter_id'),
+                DB::raw('MIN(transporter_name) as batch_transporter_name'),
+                DB::raw('MIN(transporter_phone) as transporter_phone'),
                 DB::raw('MIN(status) as batch_status'),
-                DB::raw('MIN(created_at) as batch_created_at')
+                DB::raw('MIN(created_at) as batch_created_at'),
+                DB::raw('MIN(updated_at) as batch_updated_at'),
+                DB::raw('MIN(batch_name) as batch_name'),
+                DB::raw('MIN(is_acknowledged) as is_acknowledged'),
+                DB::raw('MIN(acknowledged_at) as acknowledged_at'),
+                DB::raw('MIN(acknowledged_by) as acknowledged_by')
             ])
             ->groupBy('batch_id');
 
@@ -79,7 +87,7 @@ class TransportController extends Controller
         // Filter by acknowledgment
         if ($request->has('acknowledged') && $request->acknowledged != '') {
             $isAcknowledged = $request->acknowledged === 'true';
-            $query->where('is_acknowledged', $isAcknowledged);
+            $query->having('is_acknowledged', $isAcknowledged);
         }
 
         $transports = $query->latest('batch_created_at')->paginate(10);
