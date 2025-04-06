@@ -6,10 +6,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Vehicle extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
+
+    /**
+     * Vehicle status constants
+     */
+    const STATUS_READY_FOR_SALE = 'Ready for Sale';
+    const STATUS_IN_PROGRESS = 'In Progress';
+    const STATUS_SOLD = 'Sold';
 
     protected static function boot()
     {
@@ -98,5 +107,29 @@ class Vehicle extends Model
     public function vehicleInspections(): HasMany
     {
         return $this->hasMany(VehicleInspection::class);
+    }
+
+    /**
+     * Scope for vehicles that are ready for sale
+     */
+    public function scopeReadyForSale($query)
+    {
+        return $query->where('status', self::STATUS_READY_FOR_SALE);
+    }
+
+    /**
+     * Check if the vehicle is ready for sale
+     */
+    public function isReadyForSale(): bool
+    {
+        return $this->status === self::STATUS_READY_FOR_SALE;
+    }
+
+    /**
+     * Mark the vehicle as ready for sale
+     */
+    public function markAsReadyForSale(): bool
+    {
+        return $this->update(['status' => self::STATUS_READY_FOR_SALE]);
     }
 }

@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use App\Models\RepairImage;
+use App\Policies\RepairImagePolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -14,6 +16,7 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         //
+        RepairImage::class => RepairImagePolicy::class,
     ];
 
     /**
@@ -31,9 +34,12 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        // Implicitly grant "Super Admin" role all permissions
+        // Implicitly grant "Admin" role all permissions
         Gate::before(function ($user, $ability) {
-            return $user->hasRole('Super Admin') ? true : null;
+            if ($user->hasRole('Admin')) {
+                return true;
+            }
+            return null;
         });
 
         // Define permissions for user management
@@ -43,7 +49,7 @@ class AuthServiceProvider extends ServiceProvider
 
         // Define gate for approving vendor estimates
         Gate::define('approve-estimates', function ($user) {
-            return $user->hasAnyRole(['admin', 'manager', 'sales_manager', 'recon_manager']);
+            return $user->hasAnyRole(['Admin', 'Sales Manager', 'Recon Manager']);
         });
     }
 }

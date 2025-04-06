@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Vendor;
 use App\Http\Controllers\Controller;
 use App\Models\VehicleInspection;
 use App\Models\InspectionItemResult;
+use App\Models\RepairImage;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Storage;
 
 class InspectionController extends Controller
 {
@@ -113,5 +115,54 @@ class InspectionController extends Controller
         }
 
         return redirect()->back()->with('success', 'Inspection item updated successfully.');
+    }
+
+    /**
+     * Upload images for an inspection item.
+     */
+    public function uploadImages(Request $request, InspectionItemResult $item)
+    {
+        $user = auth()->user();
+        $vendor = $user->vendor;
+        
+        if (!$vendor) {
+            abort(403, 'No vendor profile found for this user.');
+        }
+
+        // Ensure the vendor has access to this item
+        if ($item->vendor_id !== $vendor->id) {
+            abort(403, 'You do not have permission to upload images for this item.');
+        }
+
+        $request->validate([
+            'images' => 'required|array',
+            'images.*' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+            'image_type' => 'required|in:before,after,documentation',
+            'caption' => 'nullable|string|max:255',
+        ]);
+
+        foreach ($request->file('images') as $image) {
+            // Create organized directory structure
+            $path = sprintf(
+                'inspections/%s/%s/%s',
+                $item->vehicleInspection->vehicle->stock_number,
+                $item->vehicleInspection->id,
+                $item->id
+            );
+            
+            // Store image with original name but sanitized
+            $fileName = preg_replace('/[^a-zA-Z0-9.]/', '_', $image->getClientOriginalName());
+            $fullPath = $image->storeAs($path, $fileName, 'public');
+            
+            // Create repair image record
+            RepairImage::create([
+                'inspection_item_result_id' => $item->id,
+                'image_path' => $fullPath,
+                'image_type' => $request->image_type,
+                'caption' => $request->caption,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Images uploaded successfully.');
     }
 } 

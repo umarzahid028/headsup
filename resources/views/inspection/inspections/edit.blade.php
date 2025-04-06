@@ -201,11 +201,13 @@
                                         
                                         <div class="{{ !$item->cost_tracking || !$item->vendor_required ? 'md:col-span-2' : '' }}">
                                             <label for="images-{{ $item->id }}" class="block text-sm font-medium text-gray-700 mb-1">
-                                                Upload Images
-                                                <span class="text-xs text-gray-500 ml-1">(optional, multiple files allowed)</span>
+                                                Upload Pre-Repair Images
+                                                <span class="text-xs text-gray-500 ml-1">(required for repair items)</span>
                                             </label>
                                             <input type="file" id="images-{{ $item->id }}" name="images[]" multiple 
                                                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                            <input type="hidden" name="image_type" value="before">
+                                            <p class="mt-1 text-xs text-gray-500">Please upload clear photos of the areas requiring repair</p>
                                         </div>
                                     </div>
                                     

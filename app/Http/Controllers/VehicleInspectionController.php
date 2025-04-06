@@ -8,6 +8,7 @@ use App\Models\VehicleInspection;
 use App\Models\Vendor;
 use App\Models\InspectionItem;
 use App\Models\InspectionItemResult;
+use App\Models\RepairImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -328,24 +329,48 @@ class VehicleInspectionController extends Controller
     }
 
     /**
-     * Upload repair images.
+     * Upload images for an inspection item.
      */
     public function uploadImages(Request $request, InspectionItemResult $result)
     {
-        $validated = $request->validate([
+        $user = auth()->user();
+        
+        // Determine allowed image types based on user role
+        $allowedImageTypes = [];
+        if ($user->hasRole('Sales Manager')) {
+            $allowedImageTypes = ['before'];
+        } elseif ($user->vendor && $result->vendor_id === $user->vendor->id) {
+            $allowedImageTypes = ['after', 'documentation'];
+        } else {
+            abort(403, 'You do not have permission to upload images for this item.');
+        }
+
+        $request->validate([
             'images' => 'required|array',
-            'images.*' => 'image|mimes:jpeg,png,jpg|max:5120',
-            'image_type' => 'required|in:before,after,documentation',
+            'images.*' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+            'image_type' => 'required|in:' . implode(',', $allowedImageTypes),
             'caption' => 'nullable|string|max:255',
         ]);
 
         foreach ($request->file('images') as $image) {
-            $path = $image->store('repair-images', 'public');
+            // Create organized directory structure
+            $path = sprintf(
+                'inspections/%s/%s/%s',
+                $result->vehicleInspection->vehicle->stock_number,
+                $result->vehicleInspection->id,
+                $result->id
+            );
             
-            $result->repairImages()->create([
-                'image_path' => $path,
-                'image_type' => $validated['image_type'],
-                'caption' => $validated['caption'] ?? null,
+            // Store image with original name but sanitized
+            $fileName = preg_replace('/[^a-zA-Z0-9.]/', '_', $image->getClientOriginalName());
+            $fullPath = $image->storeAs($path, $fileName, 'public');
+            
+            // Create repair image record
+            RepairImage::create([
+                'inspection_item_result_id' => $result->id,
+                'image_path' => $fullPath,
+                'image_type' => $request->image_type,
+                'caption' => $request->caption,
             ]);
         }
 
@@ -555,5 +580,71 @@ class VehicleInspectionController extends Controller
         
         return redirect()->route('inspection.inspections.index')
             ->with('success', 'Inspection marked as completed successfully.');
+    }
+
+    protected function handleInspectionItem($inspection, $itemId, $itemData)
+    {
+        $result = $inspection->itemResults()->updateOrCreate(
+            ['inspection_item_id' => $itemId],
+            [
+                'status' => $itemData['status'] ?? null,
+                'notes' => $itemData['notes'] ?? null,
+                'vendor_id' => $itemData['vendor_id'] ?? null,
+                'cost' => $itemData['cost'] ?? null,
+                'completion_notes' => $itemData['completion_notes'] ?? null,
+                'repair_completed' => isset($itemData['repair_completed']) ? true : false,
+            ]
+        );
+
+        // Handle repair images if they exist
+        if (isset($itemData['repair_images']) && is_array($itemData['repair_images'])) {
+            foreach ($itemData['repair_images'] as $image) {
+                if ($image->isValid()) {
+                    $stockNumber = $inspection->vehicle->stock_number;
+                    $path = $image->store("public/inspections/{$stockNumber}/{$inspection->id}/repairs");
+                    
+                    // Create repair image record
+                    $result->repairImages()->create([
+                        'image_path' => str_replace('public/', '', $path),
+                        'type' => $itemData['status'] === 'warning' ? 'repair' : 'replace',
+                        'original_name' => $image->getClientOriginalName()
+                    ]);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    protected function handleRepairCompletion($inspection, $itemId, $itemData)
+    {
+        $result = $inspection->itemResults()->where('inspection_item_id', $itemId)->first();
+        
+        if ($result) {
+            $result->update([
+                'repair_completed' => true,
+                'completion_notes' => $itemData['completion_notes'] ?? null,
+                'completion_date' => now(),
+            ]);
+
+            // Handle repair completion images
+            if (isset($itemData['repair_images']) && is_array($itemData['repair_images'])) {
+                foreach ($itemData['repair_images'] as $image) {
+                    if ($image->isValid()) {
+                        $stockNumber = $inspection->vehicle->stock_number;
+                        $path = $image->store("public/inspections/{$stockNumber}/{$inspection->id}/repairs/completed");
+                        
+                        // Create repair image record with completion flag
+                        $result->repairImages()->create([
+                            'image_path' => str_replace('public/', '', $path),
+                            'type' => $result->status === 'warning' ? 'repair_completed' : 'replace_completed',
+                            'original_name' => $image->getClientOriginalName()
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return $result;
     }
 } 

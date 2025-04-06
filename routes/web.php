@@ -11,6 +11,7 @@ use App\Http\Controllers\VendorTypeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\VendorDashboardController;
+use App\Http\Controllers\RepairImageController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Broadcast;
 
@@ -24,7 +25,7 @@ Route::get('/', function () {
 // Public routes
 Route::get('/track/{batchId}', [TransportController::class, 'trackBatch'])->name('transports.track');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
@@ -108,16 +109,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Sales Management Routes
-    Route::prefix('sales')->name('sales.')->group(function () {
-        // Sales Issues
-        Route::resource('issues', SalesIssueController::class);
-        Route::patch('issues/{issue}/status', [SalesIssueController::class, 'updateStatus'])->name('issues.update-status');
-        Route::patch('issues/{issue}/priority', [SalesIssueController::class, 'updatePriority'])->name('issues.update-priority');
+    Route::prefix('sales')->middleware(['auth'])->group(function () {
+        // Sales Team Dashboard
+        Route::get('/dashboard', [App\Http\Controllers\SalesTeam\DashboardController::class, 'index'])
+            ->name('sales-team.dashboard');
 
-        // Goodwill Claims
-        Route::resource('goodwill-claims', GoodwillClaimController::class);
-        Route::patch('goodwill-claims/{claim}/status', [GoodwillClaimController::class, 'updateStatus'])->name('goodwill-claims.update-status');
-        Route::patch('goodwill-claims/{claim}/consent', [GoodwillClaimController::class, 'updateConsent'])->name('goodwill-claims.update-consent');
+        // Sales Team Routes
+        Route::resource('sales-team', App\Http\Controllers\SalesTeamController::class);
+        Route::patch('sales-team/{salesTeam}/toggle-active', [App\Http\Controllers\SalesTeamController::class, 'toggleActive'])->name('sales-team.toggle-active');
+        Route::get('sales-team-test-flow', [App\Http\Controllers\SalesTeamController::class, 'testCreateFlow'])->name('sales-team.test-flow');
+
+        // Sales Issues Routes
+        Route::resource('issues', SalesIssueController::class)->names([
+            'index' => 'sales.issues.index',
+            'create' => 'sales.issues.create',
+            'store' => 'sales.issues.store',
+            'show' => 'sales.issues.show',
+            'edit' => 'sales.issues.edit',
+            'update' => 'sales.issues.update',
+            'destroy' => 'sales.issues.destroy'
+        ]);
+        Route::patch('issues/{issue}/status', [SalesIssueController::class, 'updateStatus'])->name('sales.issues.update-status');
+        Route::patch('issues/{issue}/priority', [SalesIssueController::class, 'updatePriority'])->name('sales.issues.update-priority');
+
+        // Goodwill Claims Routes
+        Route::resource('goodwill-claims', GoodwillClaimController::class)->names([
+            'index' => 'sales.goodwill-claims.index',
+            'create' => 'sales.goodwill-claims.create',
+            'store' => 'sales.goodwill-claims.store',
+            'show' => 'sales.goodwill-claims.show',
+            'edit' => 'sales.goodwill-claims.edit',
+            'update' => 'sales.goodwill-claims.update',
+            'destroy' => 'sales.goodwill-claims.destroy'
+        ]);
+        Route::patch('goodwill-claims/{claim}/status', [GoodwillClaimController::class, 'updateStatus'])->name('sales.goodwill-claims.update-status');
+        Route::patch('goodwill-claims/{claim}/consent', [GoodwillClaimController::class, 'updateConsent'])->name('sales.goodwill-claims.update-consent');
     });
 
     // Admin routes
@@ -182,6 +208,9 @@ Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function (
     Route::get('/assigned-inspections', [\App\Http\Controllers\Vendor\InspectionController::class, 'index'])->name('inspections.index');
     Route::get('/assigned-inspections/{inspection}', [\App\Http\Controllers\Vendor\InspectionController::class, 'show'])->name('inspections.show');
     Route::patch('/inspection-items/{item}/update-status', [\App\Http\Controllers\Vendor\InspectionController::class, 'updateItemStatus'])->name('inspections.update-item');
+    Route::post('/inspection-items/{item}/upload-images', [\App\Http\Controllers\Vendor\InspectionController::class, 'uploadImages'])->name('inspections.upload-images');
 });
+
+Route::delete('/repair-images/{repairImage}', [RepairImageController::class, 'destroy'])->name('repair-images.destroy');
 
 require __DIR__.'/auth.php';

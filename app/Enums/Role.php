@@ -4,11 +4,11 @@ namespace App\Enums;
 
 enum Role: string
 {
-    case ADMIN = 'admin';
-    case MANAGER = 'manager';
-    case SALES_MANAGER = 'sales_manager';
-    case ONSITE_VENDOR = 'onsite_vendor';
-    case OFFSITE_VENDOR = 'offsite_vendor';
+    case ADMIN = 'Admin';
+    case MANAGER = 'Manager';
+    case SALES_MANAGER = 'Sales Manager';
+    case ONSITE_VENDOR = 'On-Site Vendor';
+    case OFFSITE_VENDOR = 'Off-Site Vendor';
 
     public function label(): string
     {

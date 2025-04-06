@@ -204,7 +204,7 @@
                     <!-- Page Content -->
                     <main class="flex-1 overflow-y-auto bg-background">
                         <div class="py-6">
-                            {{ $slot }}
+                            @yield('content')
                         </div>
                     </main>
                 </div>

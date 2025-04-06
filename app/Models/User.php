@@ -62,6 +62,11 @@ class User extends Authenticatable
         return $this->hasOne(Vendor::class, 'email', 'email');
     }
 
+    public function salesTeam()
+    {
+        return $this->hasOne(SalesTeam::class, 'email', 'email');
+    }
+
     public function receivesBroadcastNotificationsOn(): string
     {
         return 'users.' . $this->id;
