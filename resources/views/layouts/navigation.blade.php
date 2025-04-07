@@ -28,6 +28,10 @@
                         {{ __('Vendors') }}
                     </x-nav-link>
                     
+                    <x-nav-link :href="route('sales.goodwill-claims.index')" :active="request()->routeIs('sales.goodwill-claims.*')">
+                        {{ __('Goodwill Claims') }}
+                    </x-nav-link>
+                    
                     @can('approve-estimates')
                     <x-nav-link :href="route('vendor-estimates.pending')" :active="request()->routeIs('vendor-estimates.*')">
                         {{ __('Pending Estimates') }}
@@ -134,6 +138,10 @@
             
             <x-responsive-nav-link :href="route('vendors.index')" :active="request()->routeIs('vendors.*') || request()->routeIs('vendor-types.*')">
                 {{ __('Vendors') }}
+            </x-responsive-nav-link>
+            
+            <x-responsive-nav-link :href="route('sales.goodwill-claims.index')" :active="request()->routeIs('sales.goodwill-claims.*')">
+                {{ __('Goodwill Claims') }}
             </x-responsive-nav-link>
             
             @can('approve-estimates')

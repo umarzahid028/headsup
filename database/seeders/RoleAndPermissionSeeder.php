@@ -16,6 +16,14 @@ class RoleAndPermissionSeeder extends Seeder
 
         // Define all permissions
         $permissions = [
+            // Basic Permissions
+            'view any',
+            'view own',
+            'create',
+            'edit',
+            'delete',
+            'manage',
+
             // User Management
             'view users',
             'create users',
@@ -125,7 +133,6 @@ class RoleAndPermissionSeeder extends Seeder
 
         // Create or update roles with guard_name
         $roles = [
-            'Super Admin' => $permissions, // Super Admin gets all permissions
             'Admin' => $permissions, // Admin gets all permissions
             'Sales Manager' => [
                 // Sales Team permissions (full access)
@@ -209,20 +216,24 @@ class RoleAndPermissionSeeder extends Seeder
             'Sales Team' => [
                 // Basic sales team access
                 'view sales team',
-                'view any',
-                'view own',
-                
-                // Vehicle permissions
                 'view vehicles',
                 
-                // Sales related
+                // Sales Issues - Full Access
                 'view sales issues',
                 'create sales issues',
                 'edit sales issues',
+                'delete sales issues',
+                'manage sales issues',
+                'review sales issues',
                 
+                // Goodwill Claims - Full Access
                 'view goodwill claims',
                 'create goodwill claims',
                 'edit goodwill claims',
+                'delete goodwill claims',
+                'manage goodwill claims',
+                'approve goodwill claims',
+                'reject goodwill claims',
             ],
             'Vendor' => [
                 'view vehicles',

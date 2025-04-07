@@ -15,6 +15,11 @@ use Illuminate\Support\Facades\DB;
 class SalesTeamController extends Controller
 {
     /**
+     * Create a new controller instance.
+     */
+
+
+    /**
      * Display a listing of the resource.
      */
     public function index()

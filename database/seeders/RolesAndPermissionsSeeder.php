@@ -42,6 +42,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit sales issues',
             'delete sales issues',
             'review sales issues',
+            'manage sales issues',
+            'assign sales issues',
+            'resolve sales issues',
+            'export sales issues',
             
             // Goodwill Claims permissions
             'view goodwill claims',
@@ -89,6 +93,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'edit users',
             'delete users',
             'assign roles',
+            
+            // Sales Team Management permissions
+            'view sales team',
+            'add sales team members',
+            'edit sales team members',
+            'remove sales team members',
+            'manage sales team',
         ];
 
         // Create permissions if they don't exist
@@ -100,17 +111,38 @@ class RolesAndPermissionsSeeder extends Seeder
         $roles = [
             'Admin' => $permissions, // Admin gets all permissions
             'Sales Manager' => [
-                'view vehicles', 'create vehicles', 'edit vehicles', 'archive vehicles',
-                'view transports', 'create transports', 'edit transports', 'manage transports',
-                'view sales issues', 'create sales issues', 'edit sales issues', 'review sales issues',
-                'view goodwill claims', 'create goodwill claims', 'edit goodwill claims',
-                'approve goodwill claims', 'reject goodwill claims',
-                'view tags', 'assign tags',
+                // Vehicle permissions
+                'view vehicles', 'create vehicles', 'edit vehicles', 'delete vehicles', 'archive vehicles', 'bulk edit vehicles', 'scan vehicle barcodes',
+                
+                // Transport permissions
+                'view transports', 'create transports', 'edit transports', 'delete transports', 'manage transports',
+                
+                // Sales Issues - all permissions
+                'view sales issues', 'create sales issues', 'edit sales issues', 'delete sales issues',
+                'review sales issues', 'manage sales issues', 'assign sales issues', 'resolve sales issues', 'export sales issues',
+                
+                // Goodwill Claims - all permissions
+                'view goodwill claims', 'create goodwill claims', 'edit goodwill claims', 'delete goodwill claims',
+                'approve goodwill claims', 'reject goodwill claims', 'update goodwill claims',
+                
+                // Tags permissions
+                'view tags', 'create tags', 'edit tags', 'delete tags', 'assign tags',
+                
+                // Timeline permissions
                 'view timeline', 'add timeline entries',
-                'view alerts', 'create alerts',
-                'view photos', 'upload photos',
+                
+                // Alerts permissions
+                'view alerts', 'create alerts', 'edit alerts', 'delete alerts',
+                
+                // Photos permissions
+                'view photos', 'upload photos', 'delete photos',
+                
+                // Notifications permissions
                 'view notifications', 'manage notification settings',
-                'view users'
+                
+                // User and Team management
+                'view users', 'edit users',
+                'view sales team', 'add sales team members', 'edit sales team members', 'remove sales team members', 'manage sales team'
             ],
             'Recon Manager' => [
                 'view vehicles', 'edit vehicles', 'archive vehicles', 'bulk edit vehicles',
@@ -145,6 +177,8 @@ class RolesAndPermissionsSeeder extends Seeder
                 'view vehicles',
                 'view sales issues',
                 'create sales issues',
+                'edit sales issues',
+                'resolve sales issues',
                 'view goodwill claims',
                 'create goodwill claims',
                 'view timeline',

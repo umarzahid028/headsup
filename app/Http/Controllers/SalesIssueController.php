@@ -15,14 +15,7 @@ class SalesIssueController extends Controller
     /**
      * Create a new controller instance.
      */
-    public function __construct()
-    {
-       // $this->middleware('permission:view sales issues')->only(['index', 'show']);
-       // $this->middleware('permission:create sales issues')->only(['create', 'store']);
-       // $this->middleware('permission:edit sales issues')->only(['edit', 'update']);
-       // $this->middleware('permission:review sales issues')->only(['updateStatus']);
-    }
-
+    
     /**
      * Display a listing of sales issues.
      */
@@ -122,15 +115,15 @@ class SalesIssueController extends Controller
     public function updateStatus(Request $request, SalesIssue $issue)
     {
         $validated = $request->validate([
-            'status' => 'required|in:pending,reviewed',
-            'review_notes' => 'required_if:status,reviewed|nullable|string',
+            'status' => 'required|in:pending,in_review,resolved,closed',
+            'review_notes' => 'required_if:status,in_review,resolved,closed|nullable|string',
         ]);
 
         $issue->update([
             'status' => $validated['status'],
             'review_notes' => $validated['review_notes'],
             'reviewed_by_user_id' => Auth::id(),
-            'reviewed_at' => $validated['status'] === 'reviewed' ? now() : null,
+            'reviewed_at' => in_array($validated['status'], ['in_review', 'resolved', 'closed']) ? now() : null,
         ]);
 
         return redirect()->route('sales.issues.show', $issue)

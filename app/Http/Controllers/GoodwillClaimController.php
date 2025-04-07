@@ -16,14 +16,7 @@ class GoodwillClaimController extends Controller
     /**
      * Create a new controller instance.
      */
-    public function __construct()
-    {
-       // $this->middleware('permission:view goodwill claims')->only(['index', 'show']);
-       // $this->middleware('permission:create goodwill claims')->only(['create', 'store']);
-       // $this->middleware('permission:edit goodwill claims')->only(['edit', 'update']);
-       // $this->middleware('permission:approve goodwill claims|reject goodwill claims')->only(['updateStatus']);
-       // $this->middleware('permission:update goodwill claims')->only(['updateConsent']);
-    }
+    
 
     /**
      * Display a listing of goodwill claims.
@@ -52,6 +45,7 @@ class GoodwillClaimController extends Controller
      */
     public function create(Request $request)
     {
+        
         $vehicle = null;
         $salesIssue = null;
 
