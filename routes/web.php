@@ -40,8 +40,7 @@ Route::middleware(['auth'])->group(function () {
     
     // Transport Management Routes
     Route::resource('transports', TransportController::class);
-    Route::get('/transports/batch/{batchId}', [TransportController::class, 'showBatch'])
-        ->name('transports.batch')
+    Route::get('/transports/batch/{batchId}', [TransportController::class, 'showBatch'])->name('transports.batch')
         ->middleware(['auth', 'verified']);
     Route::post('/transports/batch/{batchId}/acknowledge', [TransportController::class, 'acknowledgeBatch'])
         ->name('transports.batch.acknowledge')
@@ -147,7 +146,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Admin routes
-    Route::prefix('admin')->name('admin.')->group(function () {
+    Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
         Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
         Route::patch('/settings/csv', [App\Http\Controllers\Admin\SettingsController::class, 'updateCsvSettings'])->name('settings.update-csv-settings');
         // User management routes

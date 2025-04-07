@@ -20,6 +20,19 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Create permissions
         $permissions = [
+            // Role and Permission Management
+            'view roles',
+            'create roles',
+            'edit roles',
+            'delete roles',
+            'assign roles',
+            'view permissions',
+            'create permissions',
+            'edit permissions',
+            'delete permissions',
+            'assign permissions',
+            'manage roles and permissions',
+            
             // Vehicle permissions
             'view vehicles',
             'create vehicles',

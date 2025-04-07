@@ -202,9 +202,11 @@
                     @endisset
 
                     <!-- Page Content -->
-                    <main class="flex-1 overflow-y-auto bg-background">
+                    <main class="flex-1 overflow-y-auto">
                         <div class="py-6">
-                            @yield('content')
+                            <div class="max-w-full">
+                                {{ $slot }}
+                            </div>
                         </div>
                     </main>
                 </div>

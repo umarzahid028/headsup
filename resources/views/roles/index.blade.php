@@ -5,6 +5,14 @@
                 <h2 class="text-2xl font-semibold tracking-tight">Roles & Permissions</h2>
                 <p class="text-sm text-muted-foreground">View system roles and their permissions.</p>
             </div>
+            @can('create roles')
+            <div class="flex items-center gap-4">
+                <a href="{{ route('admin.roles.create') }}" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                    <x-heroicon-s-plus class="mr-2 h-4 w-4" />
+                    New Role
+                </a>
+            </div>
+            @endcan
         </div>
     </x-slot>
 
@@ -17,51 +25,77 @@
                             <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Name</th>
                             <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Permissions</th>
                             <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Users</th>
+                            @canany(['edit roles', 'delete roles'])
+                            <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Actions</th>
+                            @endcanany
                         </tr>
                     </thead>
                     <tbody class="[&_tr:last-child]:border-0">
                         @foreach($roles as $role)
-                            <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                <td class="p-4 align-middle">
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-medium">{{ $role->name }}</span>
-                                    </div>
-                                </td>
-                                <td class="p-4 align-middle">
-                                    <div class="flex flex-wrap gap-1">
-                                        @foreach($role->permissions as $permission)
-                                            <span class="inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
-                                                {{ $permission->name }}
-                                            </span>
-                                        @endforeach
-                                    </div>
-                                </td>
-                                <td class="p-4 align-middle">
+                        <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                            <td class="p-4 align-middle">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium">{{ $role->name }}</span>
+                                </div>
+                            </td>
+                            <td class="p-4 align-middle">
+                                <div class="flex flex-wrap gap-1">
+                                    @foreach($role->permissions as $permission)
                                     <span class="inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
-                                        {{ $role->users_count ?? 0 }} users
+                                        {{ $permission->name }}
                                     </span>
-                                </td>
-                            </tr>
+                                    @endforeach
+                                </div>
+                            </td>
+                            <td class="p-4 align-middle">
+                                <span class="inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
+                                    {{ $role->users_count ?? 0 }} users
+                                </span>
+                            </td>
+                            @canany(['edit roles', 'delete roles'])
+                            <td class="p-4 align-middle">
+                                <div class="flex items-center gap-2">
+                                    @can('edit roles')
+                                    <a href="{{ route('admin.roles.edit', $role) }}" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+                                        <x-heroicon-m-pencil-square class="h-4 w-4" />
+                                    </a>
+                                    @endcan
+                                    
+                                    @can('delete roles')
+                                    @if(!in_array(strtolower($role->name), ['admin']))
+                                    <form action="{{ route('admin.roles.destroy', $role) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3" onclick="return confirm('Are you sure you want to delete this role?')">
+                                            <x-heroicon-m-trash class="h-4 w-4 text-red-500" />
+                                        </button>
+                                    </form>
+                                    @endif
+                                    @endcan
+                                </div>
+                            </td>
+                            @endcanany
+                        </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
 
             @if($roles->isEmpty())
-                <div class="flex items-center justify-center p-8 text-center">
-                    <div class="space-y-2">
-                        <x-heroicon-o-user-group class="mx-auto h-12 w-12 text-muted-foreground/60" />
-                        <h3 class="text-lg font-medium">No roles found</h3>
-                        <p class="text-sm text-muted-foreground">The system has no roles configured.</p>
-                    </div>
+            <div class="flex items-center justify-center p-8 text-center">
+                <div class="space-y-2">
+                    <x-heroicon-o-user-group class="mx-auto h-12 w-12 text-muted-foreground/60" />
+                    <h3 class="text-lg font-medium">No roles found</h3>
+                    <p class="text-sm text-muted-foreground">The system has no roles configured.</p>
                 </div>
+            </div>
             @endif
         </div>
 
         @if($roles->hasPages())
-            <div class="px-4 sm:px-6 lg:px-8">
-                {{ $roles->links() }}
-            </div>
+        <div class="px-4 sm:px-6 lg:px-8">
+            {{ $roles->links() }}
+        </div>
         @endif
     </div>
 </x-app-layout> 

@@ -26,23 +26,27 @@ class UserController extends Controller
     {
         $this->authorize('view users');
         
-        $users = User::query()->with('roles');
+        $query = User::query()
+            ->with('roles')
+            ->withCount('roles');
         
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->input('search');
-            $users->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
-        }
-        
-        if ($request->has('role')) {
-            $roleId = $request->input('role');
-            $users->whereHas('roles', function ($query) use ($roleId) {
-                $query->where('id', $roleId);
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
             });
         }
         
-        $users = $users->paginate(10)->withQueryString();
-        $roles = Role::all();
+        if ($request->filled('role')) {
+            $roleId = $request->input('role');
+            $query->whereHas('roles', function ($q) use ($roleId) {
+                $q->where('id', $roleId);
+            });
+        }
+        
+        $users = $query->latest()->paginate(10)->withQueryString();
+        $roles = Role::orderBy('name')->get();
         
         return view('users.index', compact('users', 'roles'));
     }

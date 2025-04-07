@@ -1,14 +1,12 @@
-@extends('layouts.app')
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-2xl text-gray-800 dark:text-gray-200 leading-tight text-center w-full">
+                {{ __('GOODWILL REPAIR ACKNOWLEDGEMENT') }}
+            </h2>
+        </div>
+    </x-slot>
 
-@section('header')
-    <div class="flex items-center justify-between">
-        <h2 class="font-semibold text-2xl text-gray-800 dark:text-gray-200 leading-tight text-center w-full">
-            {{ __('GOODWILL REPAIR ACKNOWLEDGEMENT') }}
-        </h2>
-    </div>
-@endsection
-
-@section('content')
     <div class="py-6">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden">
@@ -195,4 +193,4 @@
             {{ session('error') }}
         </div>
     @endif
-@endsection 
+</x-app-layout> 

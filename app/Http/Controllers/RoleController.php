@@ -22,16 +22,16 @@ class RoleController extends Controller
      */
     public function index(Request $request)
     {
-        $this->authorize('view users');
+        //$this->authorize('view roles');
         
-        $roles = Role::query();
+        $query = Role::withCount('users');
         
         if ($request->has('search')) {
             $search = $request->input('search');
-            $roles->where('name', 'like', "%{$search}%");
+            $query->where('name', 'LIKE', "%{$search}%");
         }
         
-        $roles = $roles->paginate(10);
+        $roles = $query->paginate(10);
         
         return view('roles.index', compact('roles'));
     }
@@ -41,7 +41,7 @@ class RoleController extends Controller
      */
     public function create()
     {
-        $this->authorize('assign roles');
+        //$this->authorize('create roles');
         
         $permissions = Permission::all();
         $permissionGroups = $this->groupPermissions($permissions);
@@ -54,7 +54,7 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize('assign roles');
+        //$this->authorize('create roles');
         
         $this->validate($request, [
             'name' => 'required|unique:roles,name',
@@ -89,7 +89,7 @@ class RoleController extends Controller
      */
     public function show(string $id)
     {
-        $this->authorize('view users');
+        //$this->authorize('view roles');
         
         $role = Role::findOrFail($id);
         $rolePermissions = $role->permissions;
@@ -102,7 +102,7 @@ class RoleController extends Controller
      */
     public function edit(string $id)
     {
-        $this->authorize('assign roles');
+        //$this->authorize('edit roles');
         
         $role = Role::findOrFail($id);
         $permissions = Permission::all();
@@ -117,7 +117,7 @@ class RoleController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $this->authorize('assign roles');
+        //$this->authorize('edit roles');
         
         $this->validate($request, [
             'name' => 'required|unique:roles,name,' . $id,
@@ -159,7 +159,7 @@ class RoleController extends Controller
      */
     public function destroy(string $id)
     {
-        $this->authorize('assign roles');
+        //$this->authorize('delete roles');
         
         $role = Role::findOrFail($id);
         

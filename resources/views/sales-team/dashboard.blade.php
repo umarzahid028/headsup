@@ -1,14 +1,12 @@
-@extends('layouts.app')
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Sales Team Dashboard') }}
+            </h2>
+        </div>
+    </x-slot>
 
-@section('header')
-    <div class="flex justify-between items-center">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Sales Team Dashboard') }}
-        </h2>
-    </div>
-@endsection
-
-@section('content')
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Stats Section -->
@@ -132,4 +130,4 @@
             </div>
         </div>
     </div>
-@endsection 
+</x-app-layout> 
