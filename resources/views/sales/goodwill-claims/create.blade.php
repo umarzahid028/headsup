@@ -154,7 +154,8 @@
                         <div>
                             <x-input-label for="customer_signature" :value="__('Customer Signature')" class="text-base" />
                             <div class="mt-1 p-4 border border-gray-300 dark:border-gray-600 rounded-lg text-center text-gray-500">
-                                Signature will be captured in person
+                                <span class="block text-indigo-600 font-medium mb-2">Signature will be captured in person</span>
+                                <p class="text-sm">After creating this claim, you will be able to capture the customer's signature on a digital pad.</p>
                             </div>
                         </div>
                         <div>

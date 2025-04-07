@@ -13,6 +13,11 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        
+        <!-- Sortable.js for drag and drop functionality -->
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+        
+        @yield('styles')
     </head>
     <body class="font-sans antialiased">
         <div x-data="{ sidebarOpen: true }" class="min-h-screen bg-background">
@@ -53,7 +58,7 @@
                     <!-- Page Heading -->
                     @isset($header)
                         <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                            <div class="container mx-auto space-y-6 ">
+                            <div class="container mx-auto space-y-6 px-4">
                                 <div class="flex h-16 items-center justify-between">
                                     <!-- Left side - Header Title -->
                                     <div class="flex-1">
@@ -215,6 +220,7 @@
         
         <!-- Additional Scripts -->
         @stack('scripts')
+        @yield('scripts')
         <script>
             // Initialize notification listener
             document.addEventListener('DOMContentLoaded', function() {

@@ -59,12 +59,13 @@
                             </div>
                             <div class="w-full md:w-48">
                                 <label for="status" class="sr-only">Status</label>
-                                <x-shadcn.select name="status" id="status" placeholder="All Statuses">
+                                <select name="status" id="status" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    <option value="">All Statuses</option>
                                     <option value="available" {{ request('status') == 'available' ? 'selected' : '' }}>Available</option>
                                     <option value="sold" {{ request('status') == 'sold' ? 'selected' : '' }}>Sold</option>
                                     <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                                     <option value="in_transit" {{ request('status') == 'in_transit' ? 'selected' : '' }}>In Transit</option>
-                                </x-shadcn.select>
+                                </select>
                             </div>
                             <div>
                                 <x-shadcn.button type="submit" variant="default">
@@ -86,6 +87,9 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Image
+                                    </th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Stock #
                                     </th>
@@ -112,6 +116,9 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse ($vehicles as $vehicle)
                                     <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <img src="{{ $vehicle->image_url }}" alt="{{ $vehicle->stock_number }}" class="h-12 w-16 object-cover rounded">
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                             {{ $vehicle->stock_number }}
                                         </td>

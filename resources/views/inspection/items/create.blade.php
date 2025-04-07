@@ -47,15 +47,15 @@
                                     <option value="">Select a stage</option>
                                     @foreach($stages as $stage)
                                         @if(is_object($stage))
-                                            <option value="{{ $stage->id }}" {{ old('inspection_stage_id', $preSelectedStageId) == $stage->id ? 'selected' : '' }}>
+                                            <option value="{{ $stage->id }}" {{ old('inspection_stage_id', $stageId ?? null) == $stage->id ? 'selected' : '' }}>
                                                 {{ $stage->name }}
                                             </option>
                                         @elseif(is_array($stage) && isset($stage['id']))
-                                            <option value="{{ $stage['id'] }}" {{ old('inspection_stage_id', $preSelectedStageId) == $stage['id'] ? 'selected' : '' }}>
+                                            <option value="{{ $stage['id'] }}" {{ old('inspection_stage_id', $stageId ?? null) == $stage['id'] ? 'selected' : '' }}>
                                                 {{ $stage['name'] ?? 'Unknown Stage' }}
                                             </option>
                                         @else
-                                            <option value="{{ $stage }}" {{ old('inspection_stage_id', $preSelectedStageId) == $stage ? 'selected' : '' }}>
+                                            <option value="{{ $stage }}" {{ old('inspection_stage_id', $stageId ?? null) == $stage ? 'selected' : '' }}>
                                                 {{ $stage }}
                                             </option>
                                         @endif

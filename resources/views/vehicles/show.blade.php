@@ -26,6 +26,12 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Vehicle Image -->
+                        <div class="bg-white p-6 rounded-lg shadow-md flex justify-center items-center">
+                            <img src="{{ $vehicle->image_url }}" alt="{{ $vehicle->stock_number }}" 
+                                class="max-h-80 object-contain rounded-lg" id="mainImage">
+                        </div>
+                       
                         <!-- Basic Information -->
                         <div class="bg-white p-6 rounded-lg shadow-md">
                             <h3 class="text-lg font-semibold mb-4 pb-2 border-b">Basic Information</h3>
@@ -72,6 +78,52 @@
                                     <p class="text-sm font-medium text-gray-500">Price</p>
                                     <p class="mt-1">${{ number_format($vehicle->advertising_price, 2) }}</p>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Vehicle Gallery -->
+                        <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                            <h3 class="text-lg font-semibold mb-4 pb-2 border-b">Vehicle Gallery</h3>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                @if($vehicle->has_main_image)
+                                <div class="cursor-pointer group">
+                                    <div class="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
+                                        <img src="{{ $vehicle->image_url }}" alt="{{ $vehicle->stock_number }} Main" 
+                                            class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                            onclick="setMainImage('{{ $vehicle->image_url }}', '{{ $vehicle->stock_number }} Main')">
+                                        <div class="absolute inset-0 bg-black/5 group-hover:bg-black/20 transition-colors duration-300"></div>
+                                        <div class="absolute top-2 left-2">
+                                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-amber-100 text-amber-800">
+                                                Main
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
+                                
+                                @forelse($vehicle->images as $image)
+                                <div class="cursor-pointer group">
+                                    <div class="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
+                                        <img src="{{$image->image_url }}" alt="{{ $vehicle->stock_number }} Image {{ $loop->iteration }}" 
+                                            class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                            onclick="setMainImage('{{$image->image_url }}', '{{ $vehicle->stock_number }} Image {{ $loop->iteration }}')">
+                                        <div class="absolute inset-0 bg-black/5 group-hover:bg-black/20 transition-colors duration-300"></div>
+                                        @if($image->is_featured)
+                                        <div class="absolute top-2 left-2">
+                                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md bg-blue-100 text-blue-800">
+                                                Featured
+                                            </span>
+                                        </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                @empty
+                                @if(!$vehicle->has_main_image)
+                                <div class="md:col-span-4 text-center py-6 bg-gray-50 rounded-lg">
+                                    <p class="text-gray-500">No images available for this vehicle.</p>
+                                </div>
+                                @endif
+                                @endforelse
                             </div>
                         </div>
 
@@ -257,4 +309,19 @@
             </div>
         </div>
     </div>
+
+    @section('scripts')
+    <script>
+        function setMainImage(src, alt) {
+            const mainImage = document.getElementById('mainImage');
+            mainImage.src = src;
+            mainImage.alt = alt;
+            
+            // Smooth scroll to main image on mobile
+            if (window.innerWidth < 768) {
+                document.getElementById('mainImage').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    </script>
+    @endsection
 </x-app-layout> 

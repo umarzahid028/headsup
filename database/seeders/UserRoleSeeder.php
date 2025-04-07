@@ -30,20 +30,20 @@ class UserRoleSeeder extends Seeder
                 'email' => 'recon-manager@recon-manager.com',
                 'password' => 'recon-manager@recon-manager.com'
             ],
-            'Transporter' => [
-                'name' => 'Transporter',
-                'email' => 'transporter@transporter.com',
-                'password' => 'transporter@transporter.com'
+            'Sales Team' => [
+                'name' => 'Sales Team Member',
+                'email' => 'sales-team@sales-team.com',
+                'password' => 'sales-team@sales-team.com'
             ],
             'Vendor' => [
                 'name' => 'Vendor',
                 'email' => 'vendor@vendor.com',
                 'password' => 'vendor@vendor.com'
             ],
-            'Sales Team' => [
-                'name' => 'Sales Team',
-                'email' => 'sales-team@sales-team.com',
-                'password' => 'sales-team@sales-team.com'
+            'Transporter' => [
+                'name' => 'Transporter',
+                'email' => 'transporter@transporter.com',
+                'password' => 'transporter@transporter.com'
             ]
         ];
 

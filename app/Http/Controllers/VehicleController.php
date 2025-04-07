@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 
 class VehicleController extends Controller
 {
@@ -38,7 +39,7 @@ class VehicleController extends Controller
         $vehicles = Vehicle::query();
         
         // Apply search filters
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->input('search');
             $vehicles->where(function($query) use ($search) {
                 $query->where('stock_number', 'like', "%{$search}%")
@@ -49,7 +50,7 @@ class VehicleController extends Controller
         }
         
         // Apply status filter
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $vehicles->where('status', $request->input('status'));
         }
         
@@ -93,12 +94,52 @@ class VehicleController extends Controller
             'fuel_type' => 'nullable|string',
             'status' => 'nullable|string',
             'advertising_price' => 'nullable|numeric',
+            'vehicle_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'gallery_images' => 'nullable|array',
+            'gallery_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
         
         DB::beginTransaction();
         
         try {
-            $vehicle = Vehicle::create($validated);
+            $vehicleData = $validated;
+            
+            // Handle main image upload if present
+            if ($request->hasFile('vehicle_image')) {
+                $image = $request->file('vehicle_image');
+                $filename = $validated['stock_number'] . '_main_' . time() . '.' . $image->getClientOriginalExtension();
+                $path = $image->storeAs('vehicles', $filename, 'public');
+                $vehicleData['image_path'] = $path;
+            }
+            
+            // Remove vehicle_image from data array as it's not a column in the database
+            if (isset($vehicleData['vehicle_image'])) {
+                unset($vehicleData['vehicle_image']);
+            }
+            
+            // Remove gallery_images from data array
+            if (isset($vehicleData['gallery_images'])) {
+                unset($vehicleData['gallery_images']);
+            }
+            
+            // Create the vehicle
+            $vehicle = Vehicle::create($vehicleData);
+            
+            // Handle gallery images if present
+            if ($request->hasFile('gallery_images')) {
+                $sortOrder = 0;
+                foreach ($request->file('gallery_images') as $image) {
+                    $sortOrder++;
+                    $filename = $validated['stock_number'] . '_gallery_' . time() . '_' . $sortOrder . '.' . $image->getClientOriginalExtension();
+                    $path = $image->storeAs('vehicles/gallery', $filename, 'public');
+                    
+                    $vehicle->images()->create([
+                        'image_url' => 'vehicles/gallery/' . $filename,
+                        'sort_order' => $sortOrder,
+                        'is_featured' => ($sortOrder === 1 && !$vehicle->image_path), // Make featured if it's the first image and there's no main image
+                    ]);
+                }
+            }
             
             // Get users with Admin role
             $admins = User::role('Admin')->get();
@@ -125,10 +166,8 @@ class VehicleController extends Controller
             
             return redirect()->route('vehicles.index')
                 ->with('success', 'Vehicle created successfully');
-                
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error("Error creating vehicle: " . $e->getMessage());
             
             return redirect()->back()->withInput()
                 ->with('error', 'An error occurred while creating the vehicle: ' . $e->getMessage());
@@ -202,12 +241,57 @@ class VehicleController extends Controller
             'transmission' => 'nullable|string|max:255',
             'transmission_type' => 'nullable|string|max:255',
             'advertising_price' => 'nullable|numeric',
+            'vehicle_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'gallery_images' => 'nullable|array',
+            'gallery_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
         
         DB::beginTransaction();
         
         try {
-            $vehicle->update($validated);
+            $vehicleData = $validated;
+            
+            // Handle main image upload if present
+            if ($request->hasFile('vehicle_image')) {
+                // Remove old image if exists
+                if ($vehicle->image_path && Storage::disk('public')->exists($vehicle->image_path)) {
+                    Storage::disk('public')->delete($vehicle->image_path);
+                }
+                
+                $image = $request->file('vehicle_image');
+                $filename = $vehicleData['stock_number'] . '_main_' . time() . '.' . $image->getClientOriginalExtension();
+                $path = $image->storeAs('vehicles', $filename, 'public');
+                $vehicleData['image_path'] = $path;
+            }
+            
+            // Remove vehicle_image from data array as it's not a column in the database
+            if (isset($vehicleData['vehicle_image'])) {
+                unset($vehicleData['vehicle_image']);
+            }
+            
+            // Remove gallery_images from data array
+            if (isset($vehicleData['gallery_images'])) {
+                unset($vehicleData['gallery_images']);
+            }
+            
+            $vehicle->update($vehicleData);
+            
+            // Handle gallery images if present
+            if ($request->hasFile('gallery_images')) {
+                $sortOrder = $vehicle->images()->max('sort_order') ?? 0;
+                
+                foreach ($request->file('gallery_images') as $image) {
+                    $sortOrder++;
+                    $filename = $vehicleData['stock_number'] . '_gallery_' . time() . '_' . $sortOrder . '.' . $image->getClientOriginalExtension();
+                    $path = $image->storeAs('vehicles/gallery', $filename, 'public');
+                    
+                    $vehicle->images()->create([
+                        'image_url' => 'vehicles/gallery/' . $filename,
+                        'sort_order' => $sortOrder,
+                        'is_featured' => false, // Don't make newly added images featured during an update
+                    ]);
+                }
+            }
             
             DB::commit();
             
@@ -231,21 +315,185 @@ class VehicleController extends Controller
         
         $vehicle = Vehicle::findOrFail($id);
         
+        // Delete the image if exists
+        if ($vehicle->image_path && Storage::disk('public')->exists($vehicle->image_path)) {
+            Storage::disk('public')->delete($vehicle->image_path);
+        }
+        
+        // Delete the vehicle
+        $vehicle->delete();
+        
+        return redirect()->route('vehicles.index')
+            ->with('success', 'Vehicle deleted successfully');
+    }
+    
+    /**
+     * Upload additional images for a vehicle
+     */
+    public function uploadImages(Request $request, string $id)
+    {
+        $this->authorize('edit vehicles');
+        
+        $vehicle = Vehicle::findOrFail($id);
+        
+        $request->validate([
+            'images' => 'required|array',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
+        ]);
+        
         DB::beginTransaction();
         
         try {
-            $vehicle->delete();
+            $sortOrder = $vehicle->images()->max('sort_order') ?? 0;
+            
+            foreach ($request->file('images') as $image) {
+                $sortOrder++;
+                $filename = $vehicle->stock_number . '_gallery_' . time() . '_' . $sortOrder . '.' . $image->getClientOriginalExtension();
+                $path = $image->storeAs('vehicles/gallery', $filename, 'public');
+                
+                $vehicle->images()->create([
+                    'image_url' => 'vehicles/gallery/' . $filename,
+                    'sort_order' => $sortOrder,
+                    'is_featured' => false,
+                ]);
+            }
             
             DB::commit();
             
-            return redirect()->route('vehicles.index')
-                ->with('success', 'Vehicle deleted successfully');
+            return response()->json([
+                'success' => true, 
+                'message' => count($request->file('images')) . ' images uploaded successfully'
+            ]);
                 
         } catch (\Exception $e) {
             DB::rollBack();
             
-            return redirect()->back()
-                ->with('error', 'An error occurred while deleting the vehicle: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while uploading images: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Delete a vehicle image
+     */
+    public function deleteImage(Request $request, string $vehicleId, string $imageId)
+    {
+        $this->authorize('edit vehicles');
+        
+        $vehicle = Vehicle::findOrFail($vehicleId);
+        $image = $vehicle->images()->findOrFail($imageId);
+        
+        DB::beginTransaction();
+        
+        try {
+            // Delete the image file from storage
+            if (Storage::disk('public')->exists($image->image_url)) {
+                Storage::disk('public')->delete($image->image_url);
+            }
+            
+            // Delete the image record
+            $image->delete();
+            
+            // If this was the featured image, set a new featured image if available
+            if ($image->is_featured) {
+                $newFeatured = $vehicle->images()->first();
+                if ($newFeatured) {
+                    $newFeatured->update(['is_featured' => true]);
+                }
+            }
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Image deleted successfully'
+            ]);
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while deleting the image: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Update the order of vehicle images
+     */
+    public function updateImageOrder(Request $request, string $vehicleId)
+    {
+        $this->authorize('edit vehicles');
+        
+        $vehicle = Vehicle::findOrFail($vehicleId);
+        
+        $request->validate([
+            'images' => 'required|array',
+            'images.*.id' => 'required|exists:vehicle_images,id',
+            'images.*.sort_order' => 'required|integer|min:0',
+        ]);
+        
+        DB::beginTransaction();
+        
+        try {
+            foreach ($request->images as $imageData) {
+                $image = $vehicle->images()->findOrFail($imageData['id']);
+                $image->update(['sort_order' => $imageData['sort_order']]);
+            }
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Image order updated successfully'
+            ]);
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating image order: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Set a vehicle image as featured
+     */
+    public function setFeaturedImage(Request $request, string $vehicleId, string $imageId)
+    {
+        $this->authorize('edit vehicles');
+        
+        $vehicle = Vehicle::findOrFail($vehicleId);
+        $image = $vehicle->images()->findOrFail($imageId);
+        
+        DB::beginTransaction();
+        
+        try {
+            // Remove featured flag from all images of this vehicle
+            $vehicle->images()->update(['is_featured' => false]);
+            
+            // Set this image as featured
+            $image->update(['is_featured' => true]);
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Featured image updated successfully'
+            ]);
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while setting featured image: ' . $e->getMessage()
+            ], 500);
         }
     }
 } 

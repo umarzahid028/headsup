@@ -63,6 +63,25 @@
                                 @if($claim->customer_consent && $claim->customer_consent_date)
                                     <p><span class="font-medium">Consent Date:</span> {{ $claim->customer_consent_date->format('M d, Y') }}</p>
                                 @endif
+                                
+                                <!-- Customer Signature -->
+                                @if($claim->hasSignature())
+                                    <div class="mt-4">
+                                        <p><span class="font-medium">Signature:</span> Captured on {{ $claim->signature_date->format('M d, Y') }}</p>
+                                        <div class="mt-2 p-2 border border-gray-200 bg-white">
+                                            <img src="data:image/png;base64,{{ $claim->customer_signature }}" 
+                                                alt="Customer Signature" 
+                                                class="max-h-24 max-w-full" />
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="mt-4">
+                                        <a href="{{ route('sales.goodwill-claims.signature.show', $claim) }}" 
+                                            class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500">
+                                            Capture Signature In Person
+                                        </a>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 

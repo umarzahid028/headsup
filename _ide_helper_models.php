@@ -156,6 +156,9 @@ namespace App\Models{
  * @property string $requested_resolution
  * @property bool $customer_consent
  * @property \Illuminate\Support\Carbon|null $customer_consent_date
+ * @property string|null $customer_signature
+ * @property bool $signed_in_person
+ * @property \Illuminate\Support\Carbon|null $signature_date
  * @property string $status
  * @property int|null $approved_by_user_id
  * @property \Illuminate\Support\Carbon|null $approved_at
@@ -184,12 +187,15 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereCustomerEmail($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereCustomerName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereCustomerPhone($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereCustomerSignature($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereEstimatedCost($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereIssueDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereRequestedResolution($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereSalesIssueId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereSignatureDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereSignedInPerson($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GoodwillClaim whereVehicleId($value)
@@ -688,6 +694,7 @@ namespace App\Models{
  * @property bool $is_featured
  * @property bool $has_video
  * @property int|null $number_of_pics
+ * @property string|null $image_path
  * @property string|null $purchased_from
  * @property \Illuminate\Support\Carbon|null $purchase_date
  * @property string|null $transmission
@@ -704,6 +711,11 @@ namespace App\Models{
  * @property \Illuminate\Support\Carbon|null $deleted_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\GatePass> $gatePasses
  * @property-read int|null $gate_passes_count
+ * @property-read bool $has_main_image
+ * @property-read string $image_url
+ * @property-read array $image_urls
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VehicleImage> $images
+ * @property-read int|null $images_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Transport> $transports
  * @property-read int|null $transports_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VehicleInspection> $vehicleInspections
@@ -726,6 +738,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereFuelType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereHasVideo($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereImagePath($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereImportFile($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereInteriorColor($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereIsFeatured($value)
@@ -752,6 +765,36 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle withoutTrashed()
  */
 	class Vehicle extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
+ * 
+ *
+ * @property int $id
+ * @property int $vehicle_id
+ * @property string $image_url
+ * @property string|null $title
+ * @property string|null $description
+ * @property int $sort_order
+ * @property bool $is_featured
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Vehicle $vehicle
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleImage newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleImage newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleImage query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleImage whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleImage whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleImage whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleImage whereImageUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleImage whereIsFeatured($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleImage whereSortOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleImage whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleImage whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleImage whereVehicleId($value)
+ */
+	class VehicleImage extends \Eloquent {}
 }
 
 namespace App\Models{

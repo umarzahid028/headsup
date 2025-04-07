@@ -242,6 +242,10 @@ class VehicleImportService
         $vehicleData['import_file'] = $fileName;
         $vehicleData['processed_at'] = now();
         
+        // Extract additional images before saving the vehicle
+        $additionalImages = $vehicleData['additional_images'] ?? [];
+        unset($vehicleData['additional_images']);
+        
         // In dry run mode, just validate but don't save
         if ($this->dryRun) {
             return [
@@ -252,7 +256,7 @@ class VehicleImportService
         }
         
         // Start database transaction
-        return DB::transaction(function() use ($vehicleData, $fileName) {
+        return DB::transaction(function() use ($vehicleData, $fileName, $additionalImages) {
             // Check if vehicle already exists by stock_number or VIN
             $existingVehicle = Vehicle::where('stock_number', $vehicleData['stock_number'])
                 ->orWhere('vin', $vehicleData['vin'])
@@ -261,20 +265,42 @@ class VehicleImportService
             if ($existingVehicle) {
                 // Update existing vehicle
                 $existingVehicle->update($vehicleData);
-                return [
-                    'status' => 'skipped',
-                    'vehicle' => $existingVehicle,
-                    'message' => "Updated existing vehicle: {$vehicleData['stock_number']}",
-                ];
+                $vehicle = $existingVehicle;
+                $status = 'skipped';
+                $message = "Updated existing vehicle: {$vehicleData['stock_number']}";
+            } else {
+                // Create new vehicle
+                $vehicle = Vehicle::create($vehicleData);
+                $status = 'imported';
+                $message = "Imported new vehicle: {$vehicleData['stock_number']}";
             }
             
-            // Create new vehicle
-            $vehicle = Vehicle::create($vehicleData);
+            // Process additional images
+            if (!empty($additionalImages)) {
+                // Remove any existing images first (for updates)
+                if ($status === 'skipped') {
+                    $vehicle->images()->delete();
+                }
+                
+                // Add new images
+                foreach ($additionalImages as $index => $imageUrl) {
+                    // Only set the first image as featured if the vehicle doesn't have a main image
+                    $is_featured = ($index === 0 && empty($vehicle->image_path));
+                    
+                    $vehicle->images()->create([
+                        'image_url' => $imageUrl,
+                        'sort_order' => $index + 1,
+                        'is_featured' => $is_featured,
+                    ]);
+                }
+                
+                $this->log('info', "Added " . count($additionalImages) . " additional images for vehicle: {$vehicle->stock_number}");
+            }
             
             return [
-                'status' => 'imported',
+                'status' => $status,
                 'vehicle' => $vehicle,
-                'message' => "Imported new vehicle: {$vehicleData['stock_number']}",
+                'message' => $message,
             ];
         });
     }
@@ -289,7 +315,6 @@ class VehicleImportService
     {
         $mapped = [];
         
-        // Map fields with transformations if needed
         $mappings = [
             'stocknumber' => 'stock_number',
             'vin' => 'vin',
@@ -310,6 +335,8 @@ class VehicleImportService
             'isfeatured' => 'is_featured',
             'hasvideo' => 'has_video',
             'numberofpics' => 'number_of_pics',
+            'images' => 'image_urls',
+            'additionalimages' => 'additional_image_urls',
             'purchasedfrom' => 'purchased_from',
             'purchasedate' => 'purchase_date',
             'transmission' => 'transmission',
@@ -336,7 +363,137 @@ class VehicleImportService
             $mapped['has_video'] = $this->parseBoolean($data['hasvideo']);
         }
         
+        // Process the images
+        $this->processImagesData($mapped);
+        
         return $mapped;
+    }
+    
+    /**
+     * Process image data from the mapped fields
+     *
+     * @param array &$mapped The mapped vehicle data
+     * @return void
+     */
+    protected function processImagesData(array &$mapped): void
+    {
+        $stockNumber = $mapped['stock_number'] ?? 'unknown';
+        
+        // Initialize additional_images array 
+        $mapped['additional_images'] = [];
+        
+        // Process main image and additional images from the image_urls field
+        if (isset($mapped['image_urls']) && !empty($mapped['image_urls'])) {
+            // Check for different delimiters, prioritizing comma and space
+            $urls = [];
+            $delimiters = [',', ' ', '|', ';'];
+            
+            foreach ($delimiters as $delimiter) {
+                if (strpos($mapped['image_urls'], $delimiter) !== false) {
+                    $urls = array_map('trim', explode($delimiter, $mapped['image_urls']));
+                    // Filter out empty values
+                    $urls = array_filter($urls, fn($url) => !empty($url));
+                    if (count($urls) > 1) {
+                        $this->log('info', "Split image URLs using delimiter: '{$delimiter}'");
+                        break;
+                    }
+                }
+            }
+            
+            // If no delimiter found or no valid URLs after splitting, treat as single URL
+            if (empty($urls)) {
+                $urls = [trim($mapped['image_urls'])];
+            }
+            
+            // Use the first image as the main image in vehicles table
+            if (!empty($urls[0])) {
+                $mapped['image_path'] = $this->cleanImageUrl($urls[0]);
+                $this->log('info', "Stored main image URL for vehicle: {$stockNumber}");
+                
+                // Store additional images (if any) for the vehicle_images table
+                for ($i = 1; $i < count($urls); $i++) {
+                    if (!empty($urls[$i])) {
+                        $mapped['additional_images'][] = $this->cleanImageUrl($urls[$i]);
+                    }
+                }
+                
+                if (count($urls) > 1) {
+                    $this->log('info', "Found " . (count($urls) - 1) . " additional images in image_urls field for vehicle: {$stockNumber}");
+                }
+            } else {
+                $mapped['image_path'] = null;
+            }
+        } else {
+            $mapped['image_path'] = null;
+        }
+        
+        // Process additional images field (if it exists)
+        if (isset($mapped['additional_image_urls']) && !empty($mapped['additional_image_urls'])) {
+            // Parse additional images field, prioritizing comma and space
+            $additionalUrls = [];
+            $delimiters = [',', ' ', '|', ';'];
+            
+            foreach ($delimiters as $delimiter) {
+                if (strpos($mapped['additional_image_urls'], $delimiter) !== false) {
+                    $additionalUrls = array_map('trim', explode($delimiter, $mapped['additional_image_urls']));
+                    // Filter out empty values
+                    $additionalUrls = array_filter($additionalUrls, fn($url) => !empty($url));
+                    if (count($additionalUrls) > 1) {
+                        $this->log('info', "Split additional image URLs using delimiter: '{$delimiter}'");
+                        break;
+                    }
+                }
+            }
+            
+            // If no delimiter found or no valid URLs after splitting, treat as single URL
+            if (empty($additionalUrls)) {
+                $additionalUrls = [trim($mapped['additional_image_urls'])];
+            }
+            
+            // Add these images to the additional_images array
+            foreach ($additionalUrls as $url) {
+                if (!empty($url)) {
+                    $mapped['additional_images'][] = $this->cleanImageUrl($url);
+                }
+            }
+            
+            if (!empty($additionalUrls)) {
+                $this->log('info', "Found " . count($additionalUrls) . " images in additional_image_urls field for vehicle: {$stockNumber}");
+            }
+        }
+        
+        // Clean up temporary fields
+        unset($mapped['image_urls']);
+        unset($mapped['additional_image_urls']);
+        
+        // Log the total count of additional images
+        if (!empty($mapped['additional_images'])) {
+            $this->log('info', "Total of " . count($mapped['additional_images']) . " additional images will be stored in vehicle_images table for: {$stockNumber}");
+        }
+    }
+    
+    /**
+     * Clean and format an image URL
+     *
+     * @param string $url Raw image URL
+     * @return string Cleaned URL
+     */
+    protected function cleanImageUrl(string $url): string
+    {
+        // Basic URL cleaning
+        $url = trim($url);
+        $url = str_replace(' ', '%20', $url);
+        $url = trim($url, '"\'');
+        $url = str_replace('\\', '/', $url);
+        
+        // Add http:// if missing from URL
+        if (strpos($url, '//') === 0) {
+            $url = 'http:' . $url;
+        } elseif (strpos($url, 'http') !== 0 && !empty($url)) {
+            $url = 'http://' . $url;
+        }
+        
+        return $url;
     }
     
     /**
@@ -439,4 +596,6 @@ class VehicleImportService
         
         $this->log('info', "Sent notifications about new vehicle to " . $usersToNotify->count() . " users");
     }
+    
+   
 } 

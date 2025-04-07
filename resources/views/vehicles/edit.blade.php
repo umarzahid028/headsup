@@ -1,21 +1,30 @@
+@php
+    use Illuminate\Support\Facades\Storage;
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Edit Vehicle') }}
-            </h2>
-            <div class="flex space-x-2">
-                <a href="{{ route('vehicles.show', $vehicle) }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500 focus:bg-indigo-500 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
+            <div class="flex flex-col space-y-1">
+                <h2 class="font-semibold text-2xl text-gray-800 leading-tight flex items-center gap-2">
+                    {{ __('Edit Vehicle') }}
+                    <span class="text-sm font-normal bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                        {{ $vehicle->stock_number }}
+                    </span>
+                </h2>
+                <p class="text-sm text-gray-500">
+                    {{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }} {{ $vehicle->trim }}
+                </p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <a href="{{ route('vehicles.show', $vehicle) }}" 
+                   class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
+                    <x-heroicon-o-eye class="h-4 w-4 mr-2" />
                     {{ __('View Details') }}
                 </a>
-                <a href="{{ route('vehicles.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-500 focus:bg-gray-500 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
+                <a href="{{ route('vehicles.index') }}" 
+                   class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
+                    <x-heroicon-o-arrow-left class="h-4 w-4 mr-2" />
                     {{ __('Back to List') }}
                 </a>
             </div>
@@ -23,24 +32,36 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="container mx-auto space-y-6">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white shadow-sm sm:rounded-lg">
+                <div class="p-6">
                     @if ($errors->any())
-                        <div class="mb-4 p-4 bg-red-100 border border-red-200 text-red-700 rounded">
-                            <ul class="list-disc pl-5">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
+                        <div class="mb-6 rounded-lg bg-red-50 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <x-heroicon-m-x-circle class="h-5 w-5 text-red-400" />
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-red-800">
+                                        There {{ $errors->count() === 1 ? 'is' : 'are' }} {{ $errors->count() }} {{ Str::plural('error', $errors->count()) }} with your submission
+                                    </h3>
+                                    <div class="mt-2 text-sm text-red-700">
+                                        <ul class="list-disc space-y-1 pl-5">
+                                            @foreach ($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     @endif
-                    
-                    <form action="{{ route('vehicles.update', $vehicle) }}" method="POST">
+
+                    <form action="{{ route('vehicles.update', $vehicle->id) }}" method="POST" enctype="multipart/form-data" class="space-y-8">
                         @csrf
                         @method('PUT')
                         
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <!-- Basic Information -->
                             <div class="md:col-span-1 bg-white p-6 rounded-lg shadow-md">
                                 <h3 class="text-lg font-semibold mb-4 pb-2 border-b">Basic Information</h3>
@@ -201,7 +222,7 @@
                                 <div class="mb-4">
                                     <div class="flex items-start">
                                         <div class="flex items-center h-5">
-                                            <input type="checkbox" name="is_featured" id="is_featured" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded" value="1" {{ old('is_featured', $vehicle->is_featured) ? 'checked' : '' }}>
+                                            <input type="checkbox" name="is_featured" id="is_featured" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded" value="1" {{ $vehicle->is_featured ? 'checked' : '' }}>
                                         </div>
                                         <div class="ml-3 text-sm">
                                             <label for="is_featured" class="font-medium text-gray-700">Featured Vehicle</label>
@@ -209,19 +230,164 @@
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <!-- Submit Button -->
-                                <div class="mt-8 pt-5">
-                                    <div class="flex justify-end">
-                                        <x-shadcn.button 
-                                            type="submit" 
-                                            variant="default" 
-                                            class="mt-4"
-                                        >
-                                            Update Vehicle
-                                        </x-shadcn.button>
+                            </div>
+                        </div>
+                        
+                        <!-- Vehicle Images -->
+                        <div class="col-span-full mt-6">
+                            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                <div class="flex items-center justify-between mb-6 pb-2 border-b">
+                                    <div>
+                                        <h3 class="text-lg font-medium text-gray-900">Vehicle Images</h3>
+                                        <p class="mt-1 text-sm text-gray-500">Manage the main image and additional gallery images for this vehicle.</p>
+                                    </div>
+                                    <x-heroicon-o-photo class="h-5 w-5 text-gray-400" />
+                                </div>
+
+                                <div class="space-y-8">
+                                    <!-- Main Vehicle Image -->
+                                    <div>
+                                        <h4 class="text-base font-medium text-gray-900 mb-4">Main Vehicle Image</h4>
+                                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                            <!-- Current Image -->
+                                            <div>
+                                                <p class="text-sm text-gray-600 mb-2">Current main image:</p>
+                                                <div class="relative group">
+                                                    <img 
+                                                        src="{{ $vehicle->image_url }}" 
+                                                        alt="{{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }}" 
+                                                        class="w-full h-64 object-cover rounded-lg border border-gray-200"
+                                                    >
+                                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all rounded-lg flex items-center justify-center">
+                                                        <div class="hidden group-hover:flex space-x-2">
+                                                            <button type="button" class="p-2 bg-white rounded-full text-gray-700 hover:text-indigo-600 transition-colors" onclick="window.open('{{ $vehicle->image_url }}', '_blank')" title="View full size">
+                                                                <x-heroicon-o-eye class="h-5 w-5" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Upload New Image -->
+                                            <div>
+                                                <p class="text-sm text-gray-600 mb-2">Upload new main image:</p>
+                                                <div class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg" id="main_image_drop_zone">
+                                                    <div class="space-y-2 text-center">
+                                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4h-12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                                        </svg>
+                                                        <div class="flex text-sm text-gray-600 justify-center">
+                                                            <label for="vehicle_image" class="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                                                <span>Upload main image</span>
+                                                                <input id="vehicle_image" name="vehicle_image" type="file" class="sr-only" accept="image/*">
+                                                            </label>
+                                                            <p class="pl-1">or drag and drop</p>
+                                                        </div>
+                                                        <p class="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                                                    </div>
+                                                </div>
+                                                <div id="main_image_preview" class="mt-4 hidden">
+                                                    <div class="relative">
+                                                        <img src="" alt="New main image preview" class="w-full h-48 object-cover rounded-lg">
+                                                        <button type="button" onclick="removeMainImage()" class="absolute top-2 right-2 p-1.5 bg-white rounded-full text-gray-400 hover:text-red-500 transition-colors">
+                                                            <x-heroicon-o-x-mark class="h-5 w-5" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Gallery Images -->
+                                    <div>
+                                        <h4 class="text-base font-medium text-gray-900 mb-4">Gallery Images</h4>
+                                        
+                                        <!-- Current Gallery Images -->
+                                        <div class="mb-6">
+                                            <p class="text-sm text-gray-600 mb-3">Current gallery images:</p>
+                                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="image-gallery">
+                                                @forelse($vehicle->images()->orderBy('sort_order')->get() as $image)
+                                                <div class="relative group" data-image-id="{{ $image->id }}">
+                                                    <img 
+                                                        src="{{ $image->image_url }}" 
+                                                        alt="Gallery image" 
+                                                        class="w-full h-40 object-cover rounded-lg border border-gray-200 {{ $image->is_featured ? 'ring-2 ring-indigo-500' : '' }}"
+                                                    >
+                                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all rounded-lg flex items-center justify-center">
+                                                        <div class="hidden group-hover:flex space-x-2">
+                                                            <button type="button" onclick="window.open('{{ $image->image_url }}', '_blank')" class="p-1.5 bg-white rounded-full text-gray-700 hover:text-indigo-600 transition-colors" title="View full size">
+                                                                <x-heroicon-o-eye class="h-5 w-5" />
+                                                            </button>
+                                                            @if(!$image->is_featured)
+                                                            <button 
+                                                                type="button" 
+                                                                class="p-1.5 bg-white rounded-full text-gray-700 hover:text-indigo-600 transition-colors featured-toggle"
+                                                                title="Set as featured"
+                                                                data-image-id="{{ $image->id }}"
+                                                            >
+                                                                <x-heroicon-o-star class="h-5 w-5" />
+                                                            </button>
+                                                            @endif
+                                                            <button 
+                                                                type="button" 
+                                                                class="p-1.5 bg-white rounded-full text-gray-700 hover:text-red-600 transition-colors delete-image"
+                                                                title="Delete image"
+                                                                data-image-id="{{ $image->id }}"
+                                                            >
+                                                                <x-heroicon-o-trash class="h-5 w-5" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    @if($image->is_featured)
+                                                    <div class="absolute top-2 right-2 bg-indigo-500 text-white rounded-full p-1.5" title="Featured image">
+                                                        <x-heroicon-o-star class="h-4 w-4" />
+                                                    </div>
+                                                    @endif
+                                                </div>
+                                                @empty
+                                                <div class="col-span-full flex flex-col items-center justify-center py-8 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                                                    <x-heroicon-o-photo class="h-12 w-12 text-gray-400 mb-2" />
+                                                    <p>No additional images yet</p>
+                                                </div>
+                                                @endforelse
+                                            </div>
+                                        </div>
+
+                                        <!-- Upload Additional Images -->
+                                        <div>
+                                            <p class="text-sm text-gray-600 mb-3">Upload additional images:</p>
+                                            <div class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg" id="gallery_images_drop_zone">
+                                                <div class="space-y-2 text-center">
+                                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4h-12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                                    </svg>
+                                                    <div class="flex text-sm text-gray-600 justify-center">
+                                                        <label for="gallery_images" class="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                                            <span>Upload multiple images</span>
+                                                            <input id="gallery_images" name="gallery_images[]" type="file" class="sr-only" multiple accept="image/*">
+                                                        </label>
+                                                        <p class="pl-1">or drag and drop</p>
+                                                    </div>
+                                                    <p class="text-xs text-gray-500">PNG, JPG, GIF up to 5MB each</p>
+                                                </div>
+                                            </div>
+                                            <div id="gallery_images_preview" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 hidden"></div>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="mt-8 pt-5">
+                            <div class="flex justify-end">
+                                <x-shadcn.button 
+                                    type="submit" 
+                                    variant="default" 
+                                    class="mt-4"
+                                >
+                                    Update Vehicle
+                                </x-shadcn.button>
                             </div>
                         </div>
                     </form>
@@ -247,5 +413,262 @@
                 }
             });
         });
+
+        document.getElementById('vehicle_image').onchange = function(evt) {
+            const [file] = this.files;
+            if (file) {
+                const previewContainer = document.getElementById('image_preview_container');
+                const preview = document.getElementById('image_preview');
+                preview.src = URL.createObjectURL(file);
+                previewContainer.classList.remove('hidden');
+            }
+        }
     </script>
+
+    @section('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Status change handler
+            const statusSelect = document.getElementById('status');
+            const soldDateContainer = document.getElementById('sold_date_container');
+            const buyerNameContainer = document.getElementById('buyer_name_container');
+
+            function updateSoldFields() {
+                const isSold = statusSelect.value === 'sold';
+                soldDateContainer.style.display = isSold ? 'block' : 'none';
+                buyerNameContainer.style.display = isSold ? 'block' : 'none';
+                
+                if (isSold && !document.getElementById('sold_date').value) {
+                    document.getElementById('sold_date').value = new Date().toISOString().split('T')[0];
+                }
+            }
+
+            statusSelect.addEventListener('change', updateSoldFields);
+            updateSoldFields(); // Run on initial load
+
+            // Main image upload handling
+            const mainImageInput = document.getElementById('vehicle_image');
+            const mainImageDropZone = document.getElementById('main_image_drop_zone');
+            const mainImagePreview = document.getElementById('main_image_preview');
+            const mainImagePreviewImg = mainImagePreview.querySelector('img');
+
+            function handleMainImage(file) {
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        mainImagePreviewImg.src = e.target.result;
+                        mainImagePreview.classList.remove('hidden');
+                        mainImageDropZone.classList.add('hidden');
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+
+            function removeMainImage() {
+                mainImageInput.value = '';
+                mainImagePreview.classList.add('hidden');
+                mainImageDropZone.classList.remove('hidden');
+            }
+
+            mainImageInput.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    handleMainImage(this.files[0]);
+                }
+            });
+
+            // Gallery images upload handling
+            const galleryInput = document.getElementById('gallery_images');
+            const galleryDropZone = document.getElementById('gallery_images_drop_zone');
+            const galleryPreview = document.getElementById('gallery_images_preview');
+
+            function handleGalleryImages(files) {
+                if (files.length > 0) {
+                    galleryPreview.innerHTML = '';
+                    Array.from(files).forEach((file, index) => {
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                const previewDiv = document.createElement('div');
+                                previewDiv.className = 'relative group';
+                                previewDiv.innerHTML = `
+                                    <img src="${e.target.result}" alt="Gallery preview ${index + 1}" class="w-full h-40 object-cover rounded-lg">
+                                    <button type="button" onclick="removeGalleryImage(${index})" class="absolute top-2 right-2 p-1.5 bg-white rounded-full text-gray-400 hover:text-red-500 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                `;
+                                galleryPreview.appendChild(previewDiv);
+                            }
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                    galleryPreview.classList.remove('hidden');
+                    galleryDropZone.classList.add('hidden');
+                }
+            }
+
+            function removeGalleryImage(index) {
+                const dt = new DataTransfer();
+                const { files } = galleryInput;
+                
+                for (let i = 0; i < files.length; i++) {
+                    if (i !== index) {
+                        dt.items.add(files[i]);
+                    }
+                }
+                
+                galleryInput.files = dt.files;
+                if (galleryInput.files.length === 0) {
+                    galleryPreview.classList.add('hidden');
+                    galleryDropZone.classList.remove('hidden');
+                } else {
+                    handleGalleryImages(galleryInput.files);
+                }
+            }
+
+            galleryInput.addEventListener('change', function(e) {
+                if (this.files && this.files.length > 0) {
+                    handleGalleryImages(this.files);
+                }
+            });
+
+            // Drag and drop handling
+            [mainImageDropZone, galleryDropZone].forEach(dropZone => {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, preventDefaults, false);
+                });
+
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, highlight, false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, unhighlight, false);
+                });
+
+                function highlight(e) {
+                    dropZone.classList.add('border-indigo-600', 'border-2');
+                }
+
+                function unhighlight(e) {
+                    dropZone.classList.remove('border-indigo-600', 'border-2');
+                }
+            });
+
+            mainImageDropZone.addEventListener('drop', function(e) {
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    mainImageInput.files = e.dataTransfer.files;
+                    handleMainImage(file);
+                }
+            });
+
+            galleryDropZone.addEventListener('drop', function(e) {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    galleryInput.files = files;
+                    handleGalleryImages(files);
+                }
+            });
+
+            // Image gallery management
+            const deleteButtons = document.querySelectorAll('.delete-image');
+            const featureButtons = document.querySelectorAll('.featured-toggle');
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (confirm('Are you sure you want to delete this image?')) {
+                        const imageId = this.dataset.imageId;
+                        const imageCard = this.closest('[data-image-id]');
+                        
+                        fetch(`/vehicles/${vehicleId}/images/${imageId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Accept': 'application/json'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                imageCard.remove();
+                                if (document.querySelectorAll('#image-gallery > div').length === 0) {
+                                    document.getElementById('image-gallery').innerHTML = `
+                                        <div class="col-span-full flex flex-col items-center justify-center py-8 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                                            <svg class="h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <p>No additional images yet</p>
+                                        </div>
+                                    `;
+                                }
+                            } else {
+                                alert(data.message || 'Failed to delete image');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while deleting the image');
+                        });
+                    }
+                });
+            });
+
+            featureButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const imageId = this.dataset.imageId;
+                    const imageCard = this.closest('[data-image-id]');
+                    
+                    fetch(`/vehicles/${vehicleId}/images/${imageId}/feature`, {
+                        method: 'PATCH',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Remove featured status from all images
+                            document.querySelectorAll('.featured-badge').forEach(badge => badge.remove());
+                            document.querySelectorAll('[data-image-id]').forEach(card => {
+                                card.querySelector('img').classList.remove('ring-2', 'ring-indigo-500');
+                            });
+                            
+                            // Add featured status to the selected image
+                            const img = imageCard.querySelector('img');
+                            img.classList.add('ring-2', 'ring-indigo-500');
+                            const badge = document.createElement('div');
+                            badge.className = 'featured-badge absolute top-2 right-2 bg-indigo-500 text-white rounded-full p-1.5';
+                            badge.title = 'Featured image';
+                            badge.innerHTML = `
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                </svg>
+                            `;
+                            imageCard.appendChild(badge);
+                        } else {
+                            alert(data.message || 'Failed to set featured image');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while setting the featured image');
+                    });
+                });
+            });
+        });
+
+        window.removeGalleryImage = removeGalleryImage;
+        window.removeMainImage = removeMainImage;
+    </script>
+    @endsection
 </x-app-layout> 

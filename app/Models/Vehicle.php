@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Services\PlaceholderImageService;
+use Illuminate\Support\Facades\Storage;
 
 class Vehicle extends Model
 {
@@ -57,6 +59,8 @@ class Vehicle extends Model
         'is_featured',
         'has_video',
         'number_of_pics',
+        'image_path',
+        'has_placeholder_image',
         'purchased_from',
         'purchase_date',
         'transmission',
@@ -77,6 +81,7 @@ class Vehicle extends Model
         'sold_date' => 'date',
         'is_featured' => 'boolean',
         'has_video' => 'boolean',
+        'has_placeholder_image' => 'boolean',
         'year' => 'integer',
         'odometer' => 'integer',
         'number_of_leads' => 'integer',
@@ -110,6 +115,22 @@ class Vehicle extends Model
     }
 
     /**
+     * Get the images for the vehicle.
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(VehicleImage::class);
+    }
+
+    /**
+     * Get the featured images for the vehicle.
+     */
+    public function featuredImages()
+    {
+        return $this->images()->where('is_featured', true)->orderBy('sort_order');
+    }
+
+    /**
      * Scope for vehicles that are ready for sale
      */
     public function scopeReadyForSale($query)
@@ -131,5 +152,103 @@ class Vehicle extends Model
     public function markAsReadyForSale(): bool
     {
         return $this->update(['status' => self::STATUS_READY_FOR_SALE]);
+    }
+
+    /**
+     * Get the vehicle's image URL
+     */
+    public function getImageUrlAttribute(): string
+    {
+        // First try the direct image_path field
+        if ($this->image_path) {
+            // If it's already a full URL, return it directly
+            if (strpos($this->image_path, 'http') === 0) {
+                return $this->image_path;
+            } 
+            // If it's a local path, check if it exists in storage and return URL
+            elseif (Storage::disk('public')->exists($this->image_path)) {
+                return asset(Storage::url($this->image_path));
+            }
+        }
+        
+        // If no main image, check for a featured image in the gallery
+        $featuredImage = $this->images()->where('is_featured', true)->first();
+        if ($featuredImage) {
+            return $featuredImage->image_url;
+        }
+        
+        // If no featured image, get the first image in the gallery
+        $firstImage = $this->images()->orderBy('sort_order')->first();
+        if ($firstImage) {
+            return $firstImage->image_url;
+        }
+        
+        // Return a modern car placeholder with background, styling
+        return "data:image/svg+xml;base64," . base64_encode('
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+            <!-- Background Rectangle -->
+            <rect width="800" height="600" fill="#F3F4F6" rx="8" ry="8"/>
+            
+            <!-- Company Name or Logo Placeholder -->
+            <text x="400" y="100" font-family="Arial, sans-serif" font-size="36" text-anchor="middle" fill="#6B7280">Trevinos Auto</text>
+            
+            <!-- Car Icon -->
+            <g transform="translate(250, 150) scale(0.6)">
+                <path d="M135.2 117.4L109.1 192H402.9l-26.1-74.6C372.3 104.6 360.2 96 346.6 96H165.4c-13.6 0-25.7 8.6-30.2 21.4zM39.6 196.8L74.8 96.3C88.3 57.8 124.6 32 165.4 32H346.6c40.8 0 77.1 25.8 90.6 64.3l35.2 100.5c23.2 9.6 39.6 32.5 39.6 59.2V400v48c0 17.7-14.3 32-32 32H448c-17.7 0-32-14.3-32-32V400H96v48c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32V400 256c0-26.7 16.4-49.6 39.6-59.2zM128 288a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zm288 32a32 32 0 1 0 0-64 32 32 0 1 0 0 64z" fill="#9CA3AF"/>
+            </g>
+            
+            <!-- Text Label -->
+            <text x="400" y="380" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" fill="#6B7280">' . 
+            ($this->stock_number ? 'Stock # ' . $this->stock_number : 'No Image Available') . 
+            '</text>
+            
+            <!-- Additional Info -->
+            <text x="400" y="420" font-family="Arial, sans-serif" font-size="20" text-anchor="middle" fill="#9CA3AF">' . 
+            ($this->year && $this->make && $this->model ? $this->year . ' ' . $this->make . ' ' . $this->model : '') . 
+            '</text>
+        </svg>
+        ');
+    }
+    
+    /**
+     * Check if the vehicle has a main image
+     */
+    public function getHasMainImageAttribute(): bool
+    {
+        // Check if image_path is set and valid
+        if ($this->image_path) {
+            // If it's a URL, assume it's valid
+            if (strpos($this->image_path, 'http') === 0) {
+                return true;
+            }
+            // If it's a local path, check if it exists
+            elseif (Storage::disk('public')->exists($this->image_path)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get all the image URLs for this vehicle
+     */
+    public function getImageUrlsAttribute(): array
+    {
+        $urls = [];
+        
+        // Add main image if exists
+        if ($this->image_url) {
+            $urls[] = $this->image_url;
+        }
+        
+        // Add all additional images
+        foreach ($this->images()->orderBy('sort_order')->get() as $image) {
+            if ($image->image_url) {
+                $urls[] = $image->image_url;
+            }
+        }
+        
+        return $urls;
     }
 }

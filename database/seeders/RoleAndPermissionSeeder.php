@@ -240,6 +240,15 @@ class RoleAndPermissionSeeder extends Seeder
                 'view inspections',
                 'create inspections',
                 'edit inspections',
+            ],
+            'Transporter' => [
+                // Basic permissions for transporters
+                'view own',
+                'view vehicles',
+                'view transports',
+                'create transports',
+                'edit transports',
+                'view inspections',
             ]
         ];
 

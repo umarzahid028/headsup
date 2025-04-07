@@ -38,6 +38,12 @@ Route::middleware(['auth'])->group(function () {
     // Vehicle Management Routes
     Route::resource('vehicles', VehicleController::class);
     
+    // Vehicle Image Management Routes
+    Route::post('/vehicles/{id}/images', [VehicleController::class, 'uploadImages'])->name('vehicles.images.upload');
+    Route::delete('/vehicles/{vehicleId}/images/{imageId}', [VehicleController::class, 'deleteImage'])->name('vehicles.images.delete');
+    Route::patch('/vehicles/{vehicleId}/images/order', [VehicleController::class, 'updateImageOrder'])->name('vehicles.images.order');
+    Route::patch('/vehicles/{vehicleId}/images/{imageId}/feature', [VehicleController::class, 'setFeaturedImage'])->name('vehicles.images.feature');
+    
     // Transport Management Routes
     Route::resource('transports', TransportController::class);
     Route::get('/transports/batch/create', [TransportController::class, 'createBatch'])->name('transports.batch.create')
@@ -145,6 +151,12 @@ Route::middleware(['auth'])->group(function () {
         ]);
         Route::patch('goodwill-claims/{claim}/status', [GoodwillClaimController::class, 'updateStatus'])->name('sales.goodwill-claims.update-status');
         Route::patch('goodwill-claims/{claim}/consent', [GoodwillClaimController::class, 'updateConsent'])->name('sales.goodwill-claims.update-consent');
+        
+        // Signature capture routes
+        Route::get('goodwill-claims/{claim}/signature', [GoodwillClaimController::class, 'showSignatureForm'])
+            ->name('sales.goodwill-claims.signature.show');
+        Route::post('goodwill-claims/{claim}/signature', [GoodwillClaimController::class, 'storeSignature'])
+            ->name('sales.goodwill-claims.signature.store');
     });
 
     // Admin routes
@@ -213,5 +225,10 @@ Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function (
 });
 
 Route::delete('/repair-images/{repairImage}', [RepairImageController::class, 'destroy'])->name('repair-images.destroy');
+
+// Example Routes
+Route::get('/examples/icon-inputs', function () {
+    return view('examples.icon-inputs');
+})->middleware(['auth', 'verified'])->name('examples.icon-inputs');
 
 require __DIR__.'/auth.php';

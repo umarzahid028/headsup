@@ -22,6 +22,9 @@ class GoodwillClaim extends Model
         'requested_resolution',
         'customer_consent',
         'customer_consent_date',
+        'customer_signature',
+        'signed_in_person',
+        'signature_date',
         'status',
         'approved_by_user_id',
         'approved_at',
@@ -33,6 +36,8 @@ class GoodwillClaim extends Model
     protected $casts = [
         'customer_consent' => 'boolean',
         'customer_consent_date' => 'datetime',
+        'signed_in_person' => 'boolean',
+        'signature_date' => 'datetime',
         'approved_at' => 'datetime',
         'estimated_cost' => 'decimal:2',
         'actual_cost' => 'decimal:2',
@@ -92,5 +97,13 @@ class GoodwillClaim extends Model
     public function hasCustomerConsent(): bool
     {
         return $this->customer_consent && $this->customer_consent_date !== null;
+    }
+
+    /**
+     * Check if the claim has a customer signature.
+     */
+    public function hasSignature(): bool
+    {
+        return !empty($this->customer_signature) && $this->signature_date !== null;
     }
 } 

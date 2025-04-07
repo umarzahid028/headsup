@@ -155,4 +155,40 @@ class GoodwillClaimController extends Controller
         return redirect()->route('sales.goodwill-claims.show', $claim)
             ->with('success', 'Customer consent updated successfully.');
     }
+
+    /**
+     * Show the signature capture form.
+     */
+    public function showSignatureForm(GoodwillClaim $claim)
+    {
+        $claim->load(['vehicle', 'salesIssue', 'createdBy']);
+        return view('sales.goodwill-claims.capture-signature', compact('claim'));
+    }
+
+    /**
+     * Store the customer signature for the goodwill claim.
+     */
+    public function storeSignature(Request $request, GoodwillClaim $claim)
+    {
+        $validated = $request->validate([
+            'signature' => 'required|string',
+        ]);
+
+        // Remove data:image/png;base64, part if it exists
+        $signature = $validated['signature'];
+        if (strpos($signature, 'data:image/png;base64,') === 0) {
+            $signature = substr($signature, 22);
+        }
+
+        $claim->update([
+            'customer_signature' => $signature,
+            'signed_in_person' => true,
+            'signature_date' => now(),
+            'customer_consent' => true,
+            'customer_consent_date' => now(),
+        ]);
+
+        return redirect()->route('sales.goodwill-claims.show', $claim)
+            ->with('success', 'Customer signature captured successfully.');
+    }
 } 
