@@ -15,7 +15,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="container mx-auto space-y-6">
             <!-- Search Bar -->
             <div class="mb-6">
                 <form action="{{ route('inspection.inspections.index') }}" method="GET" class="flex gap-3">

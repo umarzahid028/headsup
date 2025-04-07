@@ -127,6 +127,29 @@ class TransportController extends Controller
     }
 
     /**
+     * Show the form for creating a new batch transport.
+     */
+    public function createBatch(): View
+    {
+        if (auth()->user()->hasRole('Transporter')) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        $this->authorize('create transports');
+        $vehicles = Vehicle::where('status', '!=', 'sold')
+                          ->where(function($query) {
+                              $query->whereNull('transport_status')
+                                    ->orWhere('transport_status', '!=', 'in_transit');
+                          })
+                          ->orderBy('stock_number')
+                          ->get();
+        $transporters = Transporter::where('is_active', true)
+                                 ->orderBy('name')
+                                 ->get();
+        return view('transports.batch.create', compact('vehicles', 'transporters'));
+    }
+
+    /**
      * Store a newly created transport in storage.
      */
     public function store(Request $request): RedirectResponse
