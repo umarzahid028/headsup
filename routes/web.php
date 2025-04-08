@@ -213,13 +213,14 @@ Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function (
     
     Route::get('/dashboard', [VendorDashboardController::class, 'index'])->name('dashboard');
     Route::get('/inspection-history', [VendorDashboardController::class, 'inspectionHistory'])->name('inspection-history');
+    
+    // Vendor Dashboard Controller
     Route::get('/inspections/{inspection}', [VendorDashboardController::class, 'showInspection'])->name('inspections.show');
     Route::post('/inspections/{inspection}/submit-estimate', [VendorDashboardController::class, 'submitEstimate'])->name('inspections.submit-estimate');
     Route::post('/inspections/{inspection}/update-status', [VendorDashboardController::class, 'updateServiceStatus'])->name('inspections.update-status');
 
-    // New Vendor Inspection Routes
-    Route::get('/assigned-inspections', [\App\Http\Controllers\Vendor\InspectionController::class, 'index'])->name('inspections.index');
-    Route::get('/assigned-inspections/{inspection}', [\App\Http\Controllers\Vendor\InspectionController::class, 'show'])->name('inspections.show');
+    // Vendor Inspection Controller Routes - Index route is what's referenced in the sidebar
+    Route::get('/inspections', [\App\Http\Controllers\Vendor\InspectionController::class, 'index'])->name('inspections.index');
     Route::patch('/inspection-items/{item}/update-status', [\App\Http\Controllers\Vendor\InspectionController::class, 'updateItemStatus'])->name('inspections.update-item');
     Route::post('/inspection-items/{item}/upload-images', [\App\Http\Controllers\Vendor\InspectionController::class, 'uploadImages'])->name('inspections.upload-images');
 });

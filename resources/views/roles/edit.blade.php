@@ -99,10 +99,10 @@
                                                             <input type="checkbox" 
                                                                 name="permissions[]" 
                                                                 id="permission_{{ $permission['id'] }}"
-                                                                value="{{ $permission['id'] }}" 
+                                                                value="{{ $permission['name'] }}" 
                                                                 class="peer sr-only" 
                                                                 data-resource="{{ $resource }}"
-                                                                {{ in_array($permission['id'], $rolePermissions) ? 'checked' : '' }}
+                                                                {{ in_array($permission['name'], $rolePermissions) ? 'checked' : '' }}
                                                                 {{ $role->name === 'admin' ? 'disabled' : '' }}>
                                                             <div class="w-4 h-4 rounded border border-gray-300 peer-focus:ring-2 peer-focus:ring-primary peer-checked:bg-primary peer-checked:border-primary peer-disabled:opacity-50 peer-disabled:bg-gray-200"></div>
                                                         </div>
@@ -127,8 +127,11 @@
 
                     <!-- Submit Button -->
                     <div class="flex justify-end pt-6">
-                        <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                        <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 shadow-sm"
                             {{ $role->name === 'admin' ? 'disabled' : '' }}>
+                            <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
                             Save Changes
                         </button>
                     </div>

@@ -41,7 +41,7 @@ class RoleController extends Controller
     private function groupPermissions($permissions, $role)
     {
         $groups = [];
-        $rolePermissions = $role->permissions->pluck('id')->toArray();
+        $rolePermissions = $role->permissions->pluck('name')->toArray();
         
         foreach ($permissions as $permission) {
             $parts = explode(' ', $permission->name);
@@ -56,7 +56,7 @@ class RoleController extends Controller
                 'id' => $permission->id,
                 'name' => $permission->name,
                 'action' => $action,
-                'checked' => in_array($permission->id, $rolePermissions)
+                'checked' => in_array($permission->name, $rolePermissions)
             ];
         }
         
@@ -74,7 +74,7 @@ class RoleController extends Controller
         $request->validate([
             'role' => 'required|exists:roles,name',
             'permissions' => 'nullable|array',
-            'permissions.*' => 'exists:permissions,id'
+            'permissions.*' => 'exists:permissions,name'
         ]);
 
         $role = Role::where('name', $request->role)->firstOrFail();

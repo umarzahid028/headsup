@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Inspection;
 use App\Models\SalesIssue;
 use App\Models\Activity;
+use App\Models\VehicleInspection;
+use App\Models\Vendor;
 
 class DashboardController extends Controller
 {
@@ -76,12 +78,211 @@ class DashboardController extends Controller
             ->groupBy('date')
             ->get();
 
+        // Get recent inspections
+        $recentInspections = VehicleInspection::with('vehicle')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // Get repair statistics
+        $repairStats = [
+            'needs_repair' => Vehicle::where('status', 'needs_repair')->count(),
+            'repair_assigned' => Vehicle::where('status', 'repair_assigned')->count(),
+            'total_cost' => VehicleInspection::sum('total_cost'),
+            'avg_repair_time' => $this->calculateAverageRepairTime()
+        ];
+
+        // Get sales team performance
+        $salesPerformance = $this->getSalesTeamPerformance();
+
+        // Get inventory aging data
+        $inventoryAging = $this->getInventoryAging();
+
+        // Get vendor performance metrics
+        $vendorPerformance = $this->getVendorPerformance();
+
         return view('dashboards.manager', compact(
             'salesData',
             'vehicleStats',
             'transportStats',
-            'estimatesData'
+            'estimatesData',
+            'recentInspections',
+            'repairStats',
+            'salesPerformance',
+            'inventoryAging',
+            'vendorPerformance'
         ));
+    }
+
+    /**
+     * Calculate the average repair time in days.
+     */
+    private function calculateAverageRepairTime(): int
+    {
+        $completedRepairs = VehicleInspection::whereNotNull('completed_date')
+            ->whereHas('itemResults', function($query) {
+                $query->where('requires_repair', true)
+                      ->where('repair_completed', true);
+            })
+            ->get();
+            
+        if ($completedRepairs->isEmpty()) {
+            return 0;
+        }
+        
+        $totalDays = 0;
+        $count = 0;
+        
+        foreach ($completedRepairs as $repair) {
+            $results = $repair->itemResults()
+                ->where('requires_repair', true)
+                ->where('repair_completed', true)
+                ->whereNotNull('completion_date')
+                ->get();
+                
+            foreach ($results as $result) {
+                $created = new Carbon($repair->created_at);
+                $completed = new Carbon($result->completion_date);
+                $days = $created->diffInDays($completed);
+                
+                $totalDays += $days;
+                $count++;
+            }
+        }
+        
+        return $count > 0 ? round($totalDays / $count) : 0;
+    }
+
+    /**
+     * Get sales team performance data.
+     */
+    private function getSalesTeamPerformance(): array
+    {
+        $thisMonth = Carbon::now()->startOfMonth();
+        
+        $salesData = DB::table('sales')
+            ->join('users', 'sales.user_id', '=', 'users.id')
+            ->where('sales.created_at', '>=', $thisMonth)
+            ->select(
+                'users.name',
+                DB::raw('COUNT(sales.id) as sales_count'),
+                DB::raw('SUM(sales.amount) as sales_amount')
+            )
+            ->groupBy('users.id', 'users.name')
+            ->orderByDesc('sales_amount')
+            ->limit(5)
+            ->get();
+            
+        return $salesData->map(function($item) {
+            return [
+                'name' => $item->name,
+                'sales_count' => $item->sales_count,
+                'sales_amount' => $item->sales_amount
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Get inventory aging data.
+     */
+    private function getInventoryAging(): array
+    {
+        $now = Carbon::now();
+        $days30 = $now->copy()->subDays(30);
+        $days60 = $now->copy()->subDays(60);
+        $days90 = $now->copy()->subDays(90);
+        
+        // Only count vehicles that are in stock or in recon
+        $vehicles = Vehicle::whereIn('status', ['in_stock', 'in_recon', 'ready', 'needs_repair', 'repair_assigned'])
+            ->get();
+            
+        $total = $vehicles->count();
+        $totalDays = 0;
+        
+        if ($total === 0) {
+            return [
+                '0_30' => 0,
+                '31_60' => 0,
+                '61_90' => 0,
+                '90_plus' => 0,
+                'avg_days' => 0
+            ];
+        }
+        
+        $aging = [
+            '0_30' => 0,
+            '31_60' => 0,
+            '61_90' => 0,
+            '90_plus' => 0
+        ];
+        
+        foreach ($vehicles as $vehicle) {
+            $created = new Carbon($vehicle->created_at);
+            $days = $created->diffInDays($now);
+            $totalDays += $days;
+            
+            if ($created->gt($days30)) {
+                $aging['0_30']++;
+            } elseif ($created->gt($days60)) {
+                $aging['31_60']++;
+            } elseif ($created->gt($days90)) {
+                $aging['61_90']++;
+            } else {
+                $aging['90_plus']++;
+            }
+        }
+        
+        $aging['avg_days'] = round($totalDays / $total);
+        
+        return $aging;
+    }
+
+    /**
+     * Get vendor performance metrics.
+     */
+    private function getVendorPerformance(): array
+    {
+        $vendors = Vendor::has('inspectionItemResults')
+            ->withCount('inspectionItemResults as total_jobs')
+            ->with(['inspectionItemResults' => function($query) {
+                $query->with('repairImages');
+            }])
+            ->get();
+            
+        return $vendors->map(function($vendor) {
+            $completedJobs = $vendor->inspectionItemResults->where('repair_completed', true)->count();
+            $totalJobs = $vendor->total_jobs;
+            $completionRate = $totalJobs > 0 ? round(($completedJobs / $totalJobs) * 100) : 0;
+            
+            $totalDays = 0;
+            $completedCount = 0;
+            $totalCost = 0;
+            
+            foreach ($vendor->inspectionItemResults as $result) {
+                $totalCost += $result->cost;
+                
+                if ($result->repair_completed && $result->completion_date) {
+                    $created = new Carbon($result->created_at);
+                    $completed = new Carbon($result->completion_date);
+                    $days = $created->diffInDays($completed);
+                    
+                    $totalDays += $days;
+                    $completedCount++;
+                }
+            }
+            
+            return [
+                'name' => $vendor->name,
+                'total_jobs' => $totalJobs,
+                'completion_rate' => $completionRate,
+                'avg_days' => $completedCount > 0 ? round($totalDays / $completedCount) : 0,
+                'total_cost' => $totalCost
+            ];
+        })
+        ->sortByDesc('total_jobs')
+        ->take(5)
+        ->values()
+        ->toArray();
     }
 
     /**

@@ -78,8 +78,9 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inspection Stages</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Overall Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inspection Stage</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inspection Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor Status</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
@@ -97,6 +98,14 @@
                                         $anyInProgress = $vehicleInspections->contains(function($insp) {
                                             return $insp->status === 'in_progress';
                                         });
+
+                                        // Get vendor status
+                                        $vendorStatus = $inspection->itemResults()
+                                            ->whereNotNull('vendor_id')
+                                            ->exists() ? ($inspection->itemResults()
+                                            ->whereNotNull('vendor_id')
+                                            ->where('repair_completed', true)
+                                            ->exists() ? 'completed' : 'assigned') : 'not_assigned';
                                     @endphp
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap">
@@ -108,38 +117,48 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4">
-                                            <div class="space-y-2">
-                                                @foreach($vehicleInspections->sortBy('inspectionStage.order') as $vehicleInspection)
-                                                    <div class="flex items-center justify-between">
-                                                        <span class="text-sm text-gray-900">{{ $vehicleInspection->inspectionStage->name }}</span>
-                                                        <span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                            {{ $vehicleInspection->status === 'completed' ? 'bg-green-100 text-green-800' : 
-                                                            ($vehicleInspection->status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 
-                                                            ($vehicleInspection->status === 'failed' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800')) }}">
-                                                            {{ ucfirst($vehicleInspection->status) }}
-                                                        </span>
-                                                    </div>
-                                                @endforeach
+                                            <div class="text-sm text-gray-900">
+                                                {{ $inspection->inspectionStage->name }}
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                {{ $allCompleted ? 'bg-green-100 text-green-800' : 
-                                                ($anyFailed ? 'bg-red-100 text-red-800' : 
-                                                ($anyInProgress ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')) }}">
-                                                {{ $allCompleted ? 'All Completed' : 
-                                                ($anyFailed ? 'Has Failed Stages' : 
-                                                ($anyInProgress ? 'In Progress' : 'Pending')) }}
+                                                {{ $inspection->status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                                ($inspection->status === 'failed' ? 'bg-red-100 text-red-800' : 
+                                                ($inspection->status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')) }}">
+                                                {{ ucfirst($inspection->status) }}
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                {{ $vendorStatus === 'completed' ? 'bg-green-100 text-green-800' : 
+                                                ($vendorStatus === 'assigned' ? 'bg-blue-100 text-blue-800' : 
+                                                'bg-gray-100 text-gray-800') }}">
+                                                {{ $vendorStatus === 'completed' ? 'Repairs Completed' : 
+                                                   ($vendorStatus === 'assigned' ? 'Assigned to Vendor' : 
+                                                   'Not Assigned') }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
+                                            <a href="{{ route('inspection.inspections.edit', $inspection) }}" 
+                                               class="text-blue-600 hover:text-blue-900">
+                                                <span class="inline-flex items-center">
+                                                    <x-heroicon-o-pencil-square class="w-4 h-4 mr-1" />
+                                                    Edit
+                                                </span>
+                                            </a>
                                             <a href="{{ route('vehicles.show', $vehicle) }}" 
-                                               class="text-indigo-600 hover:text-indigo-900">View Vehicle Details</a>
+                                               class="text-indigo-600 hover:text-indigo-900">
+                                                <span class="inline-flex items-center">
+                                                    <x-heroicon-o-eye class="w-4 h-4 mr-1" />
+                                                    View
+                                                </span>
+                                            </a>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                        <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                                             No inspections found
                                         </td>
                                     </tr>

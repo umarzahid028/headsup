@@ -170,15 +170,25 @@ class VehicleInspectionController extends Controller
      */
     public function edit(VehicleInspection $inspection)
     {
-        $inspection->load(['vehicle', 'inspectionStage']);
+        $vehicle = $inspection->vehicle;
         
-        $stages = InspectionStage::where('is_active', true)
-            ->orderBy('order')
-            ->pluck('name', 'id');
+        // Load stages with active inspection items
+        $stages = InspectionStage::with(['inspectionItems' => function ($query) {
+            $query->where('is_active', true)->orderBy('order');
+        }])->where('is_active', true)->orderBy('order')->get();
         
-        $vendors = Vendor::orderBy('name')->pluck('name', 'id');
+        // Load active vendors
+        $vendors = Vendor::where('is_active', true)->orderBy('name')->get();
         
-        return view('inspection.inspections.edit', compact('inspection', 'stages', 'vendors'));
+        // Pass the inspection as existingInspection to match comprehensive view expectations
+        $existingInspection = $inspection->load([
+            'vehicle',
+            'itemResults.inspectionItem',
+            'itemResults.assignedVendor',
+            'itemResults.repairImages'
+        ]);
+        
+        return view('inspection.inspections.comprehensive', compact('vehicle', 'stages', 'vendors', 'existingInspection'));
     }
 
     /**
@@ -187,34 +197,49 @@ class VehicleInspectionController extends Controller
     public function update(Request $request, VehicleInspection $inspection)
     {
         $validated = $request->validate([
-            'vendor_id' => 'nullable|exists:vendors,id',
-            'notes' => 'nullable|string',
-            'status' => 'required|in:pending,in_progress,completed,failed',
+            'items' => 'required|array',
+            'items.*' => 'array',
+            'items.*.vendor_id' => 'nullable|exists:vendors,id'
         ]);
 
-        // If status is changing to completed, set the completed date
-        if ($validated['status'] === 'completed' && $inspection->status !== 'completed') {
-            $validated['completed_date'] = now();
-        } else if ($validated['status'] !== 'completed') {
-            $validated['completed_date'] = null;
-        }
+        DB::beginTransaction();
 
-        $inspection->update($validated);
-        
-        // If all inspections for this vehicle are completed, mark the vehicle as ready
-        if ($validated['status'] === 'completed') {
-            $vehicle = $inspection->vehicle;
-            $incompleteInspections = VehicleInspection::where('vehicle_id', $vehicle->id)
-                ->where('status', '!=', 'completed')
-                ->count();
-            
-            if ($incompleteInspections === 0 && $vehicle->status !== 'ready') {
-                $vehicle->update(['status' => 'ready']);
+        try {
+            // Update vendor assignments for each item
+            foreach ($validated['items'] as $itemId => $itemData) {
+                $itemResult = InspectionItemResult::findOrFail($itemId);
+                
+                // Ensure this item belongs to the current inspection
+                if ($itemResult->vehicle_inspection_id !== $inspection->id) {
+                    throw new \Exception("Item result doesn't belong to this inspection");
+                }
+                
+                $itemResult->update([
+                    'vendor_id' => $itemData['vendor_id']
+                ]);
             }
-        }
 
-        return redirect()->route('inspection.inspections.show', $inspection)
-            ->with('success', 'Vehicle inspection updated successfully.');
+            // Update vehicle status if vendors are assigned
+            $hasVendors = $inspection->itemResults()
+                ->whereNotNull('vendor_id')
+                ->exists();
+
+            if ($hasVendors && $inspection->vehicle->status === 'needs_repair') {
+                $inspection->vehicle->update(['status' => 'repair_assigned']);
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('inspection.inspections.show', $inspection)
+                ->with('success', 'Vendor assignments updated successfully.');
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return redirect()->back()
+                ->with('error', 'Error updating vendor assignments: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     /**
@@ -342,7 +367,7 @@ class VehicleInspectionController extends Controller
         } elseif ($user->vendor && $result->vendor_id === $user->vendor->id) {
             $allowedImageTypes = ['after', 'documentation'];
         } else {
-            abort(403, 'You do not have permission to upload images for this item.');
+           // abort(403, 'You do not have permission to upload images for this item.');
         }
 
         $request->validate([
@@ -428,18 +453,24 @@ class VehicleInspectionController extends Controller
         $request->validate([
             'items' => 'required|array',
             'items.*' => 'array',
-            'items.*.status' => 'required|in:pass,warning,fail,not_applicable',
+            'items.*.status' => 'sometimes|in:pass,warning,fail,not_applicable',
             'items.*.notes' => 'nullable|string',
             'items.*.vendor_id' => 'nullable|exists:vendors,id',
             'items.*.cost' => 'nullable|numeric|min:0',
-            'items.*.images.*' => 'nullable|image|mimes:jpeg,png|max:5120',
+            'save_as_draft' => 'sometimes|boolean',
         ]);
+
+        // Check if it's a draft save
+        $isDraft = $request->input('save_as_draft') == '1';
 
         // Check if vehicle already has an inspection
         $existingInspection = VehicleInspection::where('vehicle_id', $vehicle->id)
             ->latest()
             ->first();
 
+        // Initialize needsRepair flag
+        $needsRepair = false;
+            
         DB::beginTransaction();
         
         try {
@@ -451,51 +482,31 @@ class VehicleInspectionController extends Controller
                         ->where('inspection_item_id', $itemId)
                         ->first();
 
+                    // Skip items without status in draft mode
+                    if ($isDraft && !isset($itemData['status'])) {
+                        continue;
+                    }
+
                     if (!$result) {
                         // Create new result if it doesn't exist
                         $result = $existingInspection->itemResults()->create([
                             'inspection_item_id' => $itemId,
-                            'status' => $itemData['status'],
+                            'status' => $itemData['status'] ?? 'not_applicable',
                             'notes' => $itemData['notes'] ?? null,
                             'cost' => $itemData['cost'] ?? 0,
                             'vendor_id' => $itemData['vendor_id'] ?? $request->vendor_id ?? null,
-                            'requires_repair' => in_array($itemData['status'], ['warning', 'fail']),
+                            'requires_repair' => isset($itemData['status']) && in_array($itemData['status'], ['warning', 'fail']),
                             'repair_completed' => false,
                         ]);
                     } else {
                         // Update existing result
                         $result->update([
-                            'status' => $itemData['status'],
-                            'notes' => $itemData['notes'] ?? null,
-                            'cost' => $itemData['cost'] ?? 0,
-                            'vendor_id' => $itemData['vendor_id'] ?? $request->vendor_id ?? null,
-                            'requires_repair' => in_array($itemData['status'], ['warning', 'fail']),
+                            'status' => $itemData['status'] ?? $result->status,
+                            'notes' => $itemData['notes'] ?? $result->notes,
+                            'cost' => $itemData['cost'] ?? $result->cost,
+                            'vendor_id' => $itemData['vendor_id'] ?? $request->vendor_id ?? $result->vendor_id,
+                            'requires_repair' => isset($itemData['status']) && in_array($itemData['status'], ['warning', 'fail']),
                         ]);
-                    }
-
-                    // Handle new image uploads
-                    if (isset($itemData['images']) && is_array($itemData['images'])) {
-                        foreach ($itemData['images'] as $image) {
-                            if ($image && $image->isValid()) {
-                                // Create organized directory structure
-                                $path = sprintf(
-                                    'inspections/%s/%s/%s',
-                                    $vehicle->stock_number,
-                                    $existingInspection->id,
-                                    $result->id
-                                );
-                                
-                                // Store image with original name but sanitized
-                                $fileName = preg_replace('/[^a-zA-Z0-9.]/', '_', $image->getClientOriginalName());
-                                $fullPath = $image->storeAs($path, $fileName, 'public');
-                                
-                                $result->repairImages()->create([
-                                    'image_path' => $fullPath,
-                                    'image_type' => 'before',
-                                    'caption' => 'Inspection image - ' . pathinfo($fileName, PATHINFO_FILENAME)
-                                ]);
-                            }
-                        }
                     }
                 }
 
@@ -503,8 +514,8 @@ class VehicleInspectionController extends Controller
                 $totalCost = $existingInspection->itemResults->sum('cost');
                 $existingInspection->update([
                     'total_cost' => $totalCost,
-                    'status' => 'completed',
-                    'completed_date' => now()
+                    'status' => $isDraft ? 'in_progress' : 'completed',
+                    'completed_date' => $isDraft ? null : now()
                 ]);
 
                 $needsRepair = $existingInspection->itemResults()
@@ -512,20 +523,72 @@ class VehicleInspectionController extends Controller
                     ->exists();
 
             } else {
-                // Create new inspection with similar image handling
-                // ... [Keep the existing creation logic but update image handling similarly]
+                // Create new inspection
+                $inspection = VehicleInspection::create([
+                    'vehicle_id' => $vehicle->id,
+                    'status' => $isDraft ? 'in_progress' : 'completed',
+                    'completed_date' => $isDraft ? null : now(),
+                    'inspection_stage_id' => InspectionStage::first()->id,
+                    'user_id' => auth()->id()
+                ]);
+                
+                $totalCost = 0;
+                $needsRepairItems = false;
+                
+                // Process each inspection item
+                foreach ($request->items as $itemId => $itemData) {
+                    // Skip items without status in draft mode
+                    if ($isDraft && !isset($itemData['status'])) {
+                        continue;
+                    }
+
+                    $item = InspectionItem::findOrFail($itemId);
+                    $isRepairNeeded = isset($itemData['status']) && in_array($itemData['status'], ['warning', 'fail']);
+                    
+                    // If any item needs repair, set the flag
+                    if ($isRepairNeeded) {
+                        $needsRepairItems = true;
+                    }
+                    
+                    // Create inspection result
+                    $cost = $itemData['cost'] ?? 0;
+                    $totalCost += ($isRepairNeeded ? $cost : 0);
+                    
+                    $result = $inspection->itemResults()->create([
+                        'inspection_item_id' => $itemId,
+                        'status' => $itemData['status'] ?? 'not_applicable',
+                        'notes' => $itemData['notes'] ?? null,
+                        'cost' => $cost,
+                        'vendor_id' => $itemData['vendor_id'] ?? $request->vendor_id ?? null,
+                        'requires_repair' => $isRepairNeeded,
+                        'repair_completed' => false,
+                    ]);
+                }
+                
+                // Update the inspection with the total cost
+                $inspection->update(['total_cost' => $totalCost]);
+                
+                // Set the flag based on the inspection results
+                $needsRepair = $needsRepairItems;
             }
             
-            // Update vehicle status
-            if ($needsRepair && $request->vendor_id) {
-                $vehicle->update(['status' => 'repair_assigned']);
-            } else if ($needsRepair) {
-                $vehicle->update(['status' => 'needs_repair']);
-            } else {
-                $vehicle->update(['status' => 'ready']);
+            // Only update vehicle status when not saving as draft
+            if (!$isDraft) {
+                if ($needsRepair && $request->vendor_id) {
+                    $vehicle->update(['status' => 'repair_assigned']);
+                } else if ($needsRepair) {
+                    $vehicle->update(['status' => 'needs_repair']);
+                } else {
+                    $vehicle->update(['status' => 'ready']);
+                }
             }
             
             DB::commit();
+            
+            if ($isDraft) {
+                return redirect()->route('inspection.inspections.index')
+                    ->with('success', 'Inspection saved as draft. You can continue working on it later.');
+            }
             
             return redirect()->route('vehicles.show', $vehicle)
                 ->with('success', 'Inspection ' . ($existingInspection ? 'updated' : 'completed') . ' successfully. ' . 
@@ -539,6 +602,7 @@ class VehicleInspectionController extends Controller
                 ->withInput();
         }
     }
+
 
     /**
      * Start an inspection (redirects to comprehensive inspection).
