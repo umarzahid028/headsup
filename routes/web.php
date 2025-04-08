@@ -165,6 +165,7 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/settings/csv', [App\Http\Controllers\Admin\SettingsController::class, 'updateCsvSettings'])->name('settings.update-csv-settings');
         // User management routes
         Route::resource('users', \App\Http\Controllers\UserController::class);
+        Route::post('users/{user}/verify', [\App\Http\Controllers\UserController::class, 'verify'])->name('users.verify');
         Route::resource('roles', \App\Http\Controllers\RoleController::class);
         Route::resource('permissions', \App\Http\Controllers\PermissionController::class);
         

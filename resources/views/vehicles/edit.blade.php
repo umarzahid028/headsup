@@ -3,17 +3,15 @@
 @endphp
 
 <x-app-layout>
+   
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <div class="flex flex-col space-y-1">
-                <h2 class="font-semibold text-2xl text-gray-800 leading-tight flex items-center gap-2">
+            <div>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     {{ __('Edit Vehicle') }}
-                    <span class="text-sm font-normal bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                        {{ $vehicle->stock_number }}
-                    </span>
                 </h2>
-                <p class="text-sm text-gray-500">
-                    {{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }} {{ $vehicle->trim }}
+                <p class="mt-1 text-sm text-gray-600">
+                    Update vehicle information and manage images
                 </p>
             </div>
             <div class="flex items-center space-x-3">
@@ -33,42 +31,51 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white shadow-sm sm:rounded-lg">
-                <div class="p-6">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                <form action="{{ route('vehicles.update', $vehicle->id) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+
                     @if ($errors->any())
-                        <div class="mb-6 rounded-lg bg-red-50 p-4">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <x-heroicon-m-x-circle class="h-5 w-5 text-red-400" />
-                                </div>
-                                <div class="ml-3">
-                                    <h3 class="text-sm font-medium text-red-800">
-                                        There {{ $errors->count() === 1 ? 'is' : 'are' }} {{ $errors->count() }} {{ Str::plural('error', $errors->count()) }} with your submission
-                                    </h3>
-                                    <div class="mt-2 text-sm text-red-700">
-                                        <ul class="list-disc space-y-1 pl-5">
-                                            @foreach ($errors->all() as $error)
-                                                <li>{{ $error }}</li>
-                                            @endforeach
-                                        </ul>
+                        <div class="mb-6">
+                            <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <x-heroicon-s-x-circle class="h-5 w-5 text-red-400" />
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-sm font-medium text-red-800">
+                                            There {{ $errors->count() === 1 ? 'is' : 'are' }} {{ $errors->count() }} {{ Str::plural('error', $errors->count()) }} with your submission
+                                        </h3>
+                                        <div class="mt-2 text-sm text-red-700">
+                                            <ul class="list-disc pl-5 space-y-1">
+                                                @foreach ($errors->all() as $error)
+                                                    <li>{{ $error }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     @endif
 
-                    <form action="{{ route('vehicles.update', $vehicle->id) }}" method="POST" enctype="multipart/form-data" class="space-y-8">
-                        @csrf
-                        @method('PUT')
-                        
+                    <div class="space-y-6">
+                        <!-- Form sections will be updated in the next chunks -->
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <!-- Basic Information -->
-                            <div class="md:col-span-1 bg-white p-6 rounded-lg shadow-md">
-                                <h3 class="text-lg font-semibold mb-4 pb-2 border-b">Basic Information</h3>
+                            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                <div class="flex items-center justify-between mb-4 pb-2 border-b">
+                                    <div>
+                                        <h3 class="text-lg font-medium text-gray-900">Basic Information</h3>
+                                        <p class="mt-1 text-sm text-gray-500">Enter the basic details of the vehicle</p>
+                                    </div>
+                                    <x-heroicon-o-document-text class="h-5 w-5 text-gray-400" />
+                                </div>
                                 
                                 <!-- Stock Number -->
                                 <div class="mb-4">
-                                    <label for="stock_number" class="block text-sm font-medium text-gray-700">Stock Number *</label>
+                                    <label for="stock_number" class="block text-sm font-medium text-gray-700">Stock Number</label>
                                     <x-shadcn.input 
                                         type="text" 
                                         name="stock_number" 
@@ -80,7 +87,7 @@
                                 
                                 <!-- VIN -->
                                 <div class="mb-4">
-                                    <label for="vin" class="block text-sm font-medium text-gray-700">VIN *</label>
+                                    <label for="vin" class="block text-sm font-medium text-gray-700">VIN</label>
                                     <x-shadcn.input 
                                         type="text" 
                                         name="vin" 
@@ -92,91 +99,158 @@
                                 
                                 <!-- Year -->
                                 <div class="mb-4">
-                                    <label for="year" class="block text-sm font-medium text-gray-700">Year *</label>
-                                    <input type="number" name="year" id="year" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('year', $vehicle->year) }}" min="1900" max="{{ date('Y') + 1 }}" required>
+                                    <label for="year" class="block text-sm font-medium text-gray-700">Year</label>
+                                    <x-shadcn.select name="year" id="year" required>
+                                        @for ($i = date('Y') + 1; $i >= 1900; $i--)
+                                            <option value="{{ $i }}" {{ old('year', $vehicle->year) == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                        @endfor
+                                    </x-shadcn.select>
                                 </div>
                                 
                                 <!-- Make -->
                                 <div class="mb-4">
-                                    <label for="make" class="block text-sm font-medium text-gray-700">Make *</label>
-                                    <input type="text" name="make" id="make" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('make', $vehicle->make) }}" required>
+                                    <label for="make" class="block text-sm font-medium text-gray-700">Make</label>
+                                    <x-shadcn.input 
+                                        type="text" 
+                                        name="make" 
+                                        id="make" 
+                                        :value="old('make', $vehicle->make)" 
+                                        required 
+                                    />
                                 </div>
                                 
                                 <!-- Model -->
                                 <div class="mb-4">
-                                    <label for="model" class="block text-sm font-medium text-gray-700">Model *</label>
-                                    <input type="text" name="model" id="model" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('model', $vehicle->model) }}" required>
+                                    <label for="model" class="block text-sm font-medium text-gray-700">Model</label>
+                                    <x-shadcn.input 
+                                        type="text" 
+                                        name="model" 
+                                        id="model" 
+                                        :value="old('model', $vehicle->model)" 
+                                        required 
+                                    />
                                 </div>
                                 
                                 <!-- Trim -->
                                 <div class="mb-4">
                                     <label for="trim" class="block text-sm font-medium text-gray-700">Trim</label>
-                                    <input type="text" name="trim" id="trim" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('trim', $vehicle->trim) }}">
+                                    <x-shadcn.input 
+                                        type="text" 
+                                        name="trim" 
+                                        id="trim" 
+                                        :value="old('trim', $vehicle->trim)" 
+                                    />
                                 </div>
                             </div>
                             
                             <!-- Vehicle Details -->
-                            <div class="md:col-span-1 bg-white p-6 rounded-lg shadow-md">
-                                <h3 class="text-lg font-semibold mb-4 pb-2 border-b">Vehicle Details</h3>
+                            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                <div class="flex items-center justify-between mb-4 pb-2 border-b">
+                                    <div>
+                                        <h3 class="text-lg font-medium text-gray-900">Vehicle Details</h3>
+                                        <p class="mt-1 text-sm text-gray-500">Specify the vehicle's features and specifications</p>
+                                    </div>
+                                    <x-heroicon-o-truck class="h-5 w-5 text-gray-400" />
+                                </div>
                                 
                                 <!-- Odometer -->
                                 <div class="mb-4">
                                     <label for="odometer" class="block text-sm font-medium text-gray-700">Odometer</label>
-                                    <input type="number" name="odometer" id="odometer" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('odometer', $vehicle->odometer) }}">
-                                </div>
-                                
-                                <!-- Exterior Color -->
-                                <div class="mb-4">
-                                    <label for="exterior_color" class="block text-sm font-medium text-gray-700">Exterior Color</label>
-                                    <input type="text" name="exterior_color" id="exterior_color" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('exterior_color', $vehicle->exterior_color) }}">
-                                </div>
-                                
-                                <!-- Interior Color -->
-                                <div class="mb-4">
-                                    <label for="interior_color" class="block text-sm font-medium text-gray-700">Interior Color</label>
-                                    <input type="text" name="interior_color" id="interior_color" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('interior_color', $vehicle->interior_color) }}">
+                                    <x-shadcn.input 
+                                        type="number" 
+                                        name="odometer" 
+                                        id="odometer" 
+                                        :value="old('odometer', $vehicle->odometer)" 
+                                    />
                                 </div>
                                 
                                 <!-- Body Type -->
                                 <div class="mb-4">
                                     <label for="body_type" class="block text-sm font-medium text-gray-700">Body Type</label>
-                                    <input type="text" name="body_type" id="body_type" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('body_type', $vehicle->body_type) }}">
+                                    <x-shadcn.input 
+                                        type="text" 
+                                        name="body_type" 
+                                        id="body_type" 
+                                        :value="old('body_type', $vehicle->body_type)" 
+                                    />
+                                </div>
+                                
+                                <!-- Exterior Color -->
+                                <div class="mb-4">
+                                    <label for="exterior_color" class="block text-sm font-medium text-gray-700">Exterior Color</label>
+                                    <x-shadcn.input 
+                                        type="text" 
+                                        name="exterior_color" 
+                                        id="exterior_color" 
+                                        :value="old('exterior_color', $vehicle->exterior_color)" 
+                                    />
+                                </div>
+                                
+                                <!-- Interior Color -->
+                                <div class="mb-4">
+                                    <label for="interior_color" class="block text-sm font-medium text-gray-700">Interior Color</label>
+                                    <x-shadcn.input 
+                                        type="text" 
+                                        name="interior_color" 
+                                        id="interior_color" 
+                                        :value="old('interior_color', $vehicle->interior_color)" 
+                                    />
                                 </div>
                                 
                                 <!-- Drive Train -->
                                 <div class="mb-4">
                                     <label for="drive_train" class="block text-sm font-medium text-gray-700">Drive Train</label>
-                                    <input type="text" name="drive_train" id="drive_train" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('drive_train', $vehicle->drive_train) }}">
+                                    <x-shadcn.input 
+                                        type="text" 
+                                        name="drive_train" 
+                                        id="drive_train" 
+                                        :value="old('drive_train', $vehicle->drive_train)" 
+                                    />
                                 </div>
                                 
                                 <!-- Engine -->
                                 <div class="mb-4">
                                     <label for="engine" class="block text-sm font-medium text-gray-700">Engine</label>
-                                    <input type="text" name="engine" id="engine" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('engine', $vehicle->engine) }}">
+                                    <x-shadcn.input 
+                                        type="text" 
+                                        name="engine" 
+                                        id="engine" 
+                                        :value="old('engine', $vehicle->engine)" 
+                                    />
                                 </div>
                                 
                                 <!-- Fuel Type -->
                                 <div class="mb-4">
                                     <label for="fuel_type" class="block text-sm font-medium text-gray-700">Fuel Type</label>
-                                    <input type="text" name="fuel_type" id="fuel_type" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('fuel_type', $vehicle->fuel_type) }}">
+                                    <x-shadcn.input 
+                                        type="text" 
+                                        name="fuel_type" 
+                                        id="fuel_type" 
+                                        :value="old('fuel_type', $vehicle->fuel_type)" 
+                                    />
                                 </div>
                                 
                                 <!-- Transmission -->
                                 <div class="mb-4">
                                     <label for="transmission" class="block text-sm font-medium text-gray-700">Transmission</label>
-                                    <input type="text" name="transmission" id="transmission" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('transmission', $vehicle->transmission) }}">
-                                </div>
-                                
-                                <!-- Transmission Type -->
-                                <div class="mb-4">
-                                    <label for="transmission_type" class="block text-sm font-medium text-gray-700">Transmission Type</label>
-                                    <input type="text" name="transmission_type" id="transmission_type" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('transmission_type', $vehicle->transmission_type) }}">
+                                    <x-shadcn.input 
+                                        type="text" 
+                                        name="transmission" 
+                                        id="transmission" 
+                                        :value="old('transmission', $vehicle->transmission)" 
+                                    />
                                 </div>
                             </div>
                             
                             <!-- Pricing & Status -->
-                            <div class="md:col-span-1 bg-white p-6 rounded-lg shadow-md">
-                                <h3 class="text-lg font-semibold mb-4 pb-2 border-b">Pricing & Status</h3>
+                            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                                <div class="flex items-center justify-between mb-4 pb-2 border-b">
+                                    <div>
+                                        <h3 class="text-lg font-medium text-gray-900">Pricing & Status</h3>
+                                        <p class="mt-1 text-sm text-gray-500">Set the vehicle's price and current status</p>
+                                    </div>
+                                    <x-heroicon-o-currency-dollar class="h-5 w-5 text-gray-400" />
+                                </div>
                                 
                                 <!-- Advertising Price -->
                                 <div class="mb-4">
@@ -185,14 +259,21 @@
                                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <span class="text-gray-500 sm:text-sm">$</span>
                                         </div>
-                                        <input type="number" name="advertising_price" id="advertising_price" class="pl-7 mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('advertising_price', $vehicle->advertising_price) }}" step="0.01">
+                                        <x-shadcn.input 
+                                            type="number" 
+                                            name="advertising_price" 
+                                            id="advertising_price" 
+                                            class="pl-7" 
+                                            :value="old('advertising_price', $vehicle->advertising_price)" 
+                                            step="0.01" 
+                                        />
                                     </div>
                                 </div>
                                 
                                 <!-- Status -->
                                 <div class="mb-4">
                                     <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                                    <x-shadcn.select name="status" id="status" placeholder="-- Select Status --">
+                                    <x-shadcn.select name="status" id="status">
                                         <option value="available" {{ old('status', $vehicle->status) == 'available' ? 'selected' : '' }}>Available</option>
                                         <option value="pending" {{ old('status', $vehicle->status) == 'pending' ? 'selected' : '' }}>Pending</option>
                                         <option value="sold" {{ old('status', $vehicle->status) == 'sold' ? 'selected' : '' }}>Sold</option>
@@ -203,26 +284,48 @@
                                 <!-- Date in Stock -->
                                 <div class="mb-4">
                                     <label for="date_in_stock" class="block text-sm font-medium text-gray-700">Date in Stock</label>
-                                    <input type="date" name="date_in_stock" id="date_in_stock" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('date_in_stock', $vehicle->date_in_stock ? $vehicle->date_in_stock->format('Y-m-d') : '') }}">
+                                    <x-shadcn.input 
+                                        type="date" 
+                                        name="date_in_stock" 
+                                        id="date_in_stock" 
+                                        :value="old('date_in_stock', $vehicle->date_in_stock ? $vehicle->date_in_stock->format('Y-m-d') : '')" 
+                                    />
                                 </div>
 
-                                <!-- Sold Date (only show if status is sold) -->
+                                <!-- Sold Date -->
                                 <div class="mb-4" id="sold_date_container" style="{{ old('status', $vehicle->status) == 'sold' ? 'display:block' : 'display:none' }}">
                                     <label for="sold_date" class="block text-sm font-medium text-gray-700">Sold Date</label>
-                                    <input type="date" name="sold_date" id="sold_date" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('sold_date', $vehicle->sold_date ? $vehicle->sold_date->format('Y-m-d') : '') }}">
+                                    <x-shadcn.input 
+                                        type="date" 
+                                        name="sold_date" 
+                                        id="sold_date" 
+                                        :value="old('sold_date', $vehicle->sold_date ? $vehicle->sold_date->format('Y-m-d') : '')" 
+                                    />
                                 </div>
                                 
-                                <!-- Buyer Name (only show if status is sold) -->
+                                <!-- Buyer Name -->
                                 <div class="mb-4" id="buyer_name_container" style="{{ old('status', $vehicle->status) == 'sold' ? 'display:block' : 'display:none' }}">
                                     <label for="buyer_name" class="block text-sm font-medium text-gray-700">Buyer Name</label>
-                                    <input type="text" name="buyer_name" id="buyer_name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="{{ old('buyer_name', $vehicle->buyer_name) }}">
+                                    <x-shadcn.input 
+                                        type="text" 
+                                        name="buyer_name" 
+                                        id="buyer_name" 
+                                        :value="old('buyer_name', $vehicle->buyer_name)" 
+                                    />
                                 </div>
                                 
                                 <!-- Featured -->
                                 <div class="mb-4">
                                     <div class="flex items-start">
                                         <div class="flex items-center h-5">
-                                            <input type="checkbox" name="is_featured" id="is_featured" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded" value="1" {{ $vehicle->is_featured ? 'checked' : '' }}>
+                                            <input 
+                                                type="checkbox" 
+                                                name="is_featured" 
+                                                id="is_featured" 
+                                                class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded" 
+                                                value="1" 
+                                                {{ $vehicle->is_featured ? 'checked' : '' }}
+                                            >
                                         </div>
                                         <div class="ml-3 text-sm">
                                             <label for="is_featured" class="font-medium text-gray-700">Featured Vehicle</label>
@@ -245,124 +348,146 @@
                                 </div>
 
                                 <div class="space-y-8">
-                                    <!-- Main Vehicle Image -->
-                                    <div>
-                                        <h4 class="text-base font-medium text-gray-900 mb-4">Main Vehicle Image</h4>
-                                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                            <!-- Current Image -->
-                                            <div>
-                                                <p class="text-sm text-gray-600 mb-2">Current main image:</p>
-                                                <div class="relative group">
-                                                    <img 
-                                                        src="{{ $vehicle->image_url }}" 
-                                                        alt="{{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }}" 
-                                                        class="w-full h-64 object-cover rounded-lg border border-gray-200"
-                                                    >
-                                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all rounded-lg flex items-center justify-center">
-                                                        <div class="hidden group-hover:flex space-x-2">
-                                                            <button type="button" class="p-2 bg-white rounded-full text-gray-700 hover:text-indigo-600 transition-colors" onclick="window.open('{{ $vehicle->image_url }}', '_blank')" title="View full size">
-                                                                <x-heroicon-o-eye class="h-5 w-5" />
+                                    <!-- Vehicle Image Upload -->
+                                    <div class="mt-6 border-t pt-4">
+                                        <h4 class="text-md font-medium text-gray-900 mb-2">Main Vehicle Image</h4>
+                                        
+                                        <div class="mb-3">
+                                            <!-- Current Vehicle Image -->
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <p class="text-sm text-gray-600 mb-1">Current main image:</p>
+                                                    <div class="relative group gallery-item" data-pswp-src="{{ $vehicle->image_url }}" data-pswp-width="2000" data-pswp-height="1500">
+                                                        <img 
+                                                            src="{{ $vehicle->image_url }}" 
+                                                            alt="{{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }}" 
+                                                            class="h-48 w-full object-contain rounded-md border border-gray-200"
+                                                        >
+                                                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all rounded-md flex items-center justify-center">
+                                                            <div class="hidden group-hover:flex space-x-2">
+                                                                <a href="{{ $vehicle->image_url }}" 
+                                                                   target="_blank"
+                                                                   class="p-1.5 bg-indigo-600 rounded-full text-white view-image"
+                                                                   title="View full size">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                    </svg>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p class="text-sm text-gray-600 mb-1">Upload new main image:</p>
+                                                    <div id="main_image_drop_zone" class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md h-48 transition-all hover:border-indigo-500">
+                                                        <div class="space-y-1 text-center">
+                                                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4h-12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                                            </svg>
+                                                            <div class="flex text-sm text-gray-600">
+                                                                <label for="vehicle_image" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                                                    <span>Upload main image</span>
+                                                                    <input id="vehicle_image" name="vehicle_image" type="file" class="sr-only" accept="image/*">
+                                                                </label>
+                                                                <p class="pl-1">or drag and drop</p>
+                                                            </div>
+                                                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                                                        </div>
+                                                    </div>
+                                                    <div id="main_image_preview" class="hidden mt-4">
+                                                        <div class="relative">
+                                                            <img src="#" alt="Main image preview" class="h-48 w-full object-contain rounded-md border border-gray-200">
+                                                            <button type="button" onclick="removeMainImage()" class="absolute top-2 right-2 p-1.5 bg-white rounded-full text-gray-400 hover:text-red-500 transition-colors">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                                </svg>
                                                             </button>
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Upload New Image -->
-                                            <div>
-                                                <p class="text-sm text-gray-600 mb-2">Upload new main image:</p>
-                                                <div class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg" id="main_image_drop_zone">
-                                                    <div class="space-y-2 text-center">
-                                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4h-12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                                        </svg>
-                                                        <div class="flex text-sm text-gray-600 justify-center">
-                                                            <label for="vehicle_image" class="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                                                                <span>Upload main image</span>
-                                                                <input id="vehicle_image" name="vehicle_image" type="file" class="sr-only" accept="image/*">
-                                                            </label>
-                                                            <p class="pl-1">or drag and drop</p>
-                                                        </div>
-                                                        <p class="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
-                                                    </div>
-                                                </div>
-                                                <div id="main_image_preview" class="mt-4 hidden">
-                                                    <div class="relative">
-                                                        <img src="" alt="New main image preview" class="w-full h-48 object-cover rounded-lg">
-                                                        <button type="button" onclick="removeMainImage()" class="absolute top-2 right-2 p-1.5 bg-white rounded-full text-gray-400 hover:text-red-500 transition-colors">
-                                                            <x-heroicon-o-x-mark class="h-5 w-5" />
-                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Gallery Images -->
-                                    <div>
-                                        <h4 class="text-base font-medium text-gray-900 mb-4">Gallery Images</h4>
+                                    <!-- Additional Vehicle Images -->
+                                    <div class="mt-8 border-t pt-4">
+                                        <h4 class="text-md font-medium text-gray-900 mb-2">Additional Vehicle Images</h4>
                                         
                                         <!-- Current Gallery Images -->
-                                        <div class="mb-6">
-                                            <p class="text-sm text-gray-600 mb-3">Current gallery images:</p>
+                                        <div class="mb-4" id="gallery-container">
+                                            <p class="text-sm text-gray-600 mb-2">Current gallery images:</p>
+                                            
                                             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="image-gallery">
                                                 @forelse($vehicle->images()->orderBy('sort_order')->get() as $image)
-                                                <div class="relative group" data-image-id="{{ $image->id }}">
+                                                <div class="relative group gallery-item" data-image-id="{{ $image->id }}" data-pswp-src="{{ $image->image_url }}" data-pswp-width="2000" data-pswp-height="1500">
                                                     <img 
                                                         src="{{ $image->image_url }}" 
                                                         alt="Gallery image" 
-                                                        class="w-full h-40 object-cover rounded-lg border border-gray-200 {{ $image->is_featured ? 'ring-2 ring-indigo-500' : '' }}"
+                                                        class="h-32 w-full object-cover rounded-md border border-gray-200 {{ $image->is_featured ? 'ring-2 ring-indigo-500' : '' }}"
                                                     >
-                                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all rounded-lg flex items-center justify-center">
+                                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all rounded-md flex items-center justify-center">
                                                         <div class="hidden group-hover:flex space-x-2">
-                                                            <button type="button" onclick="window.open('{{ $image->image_url }}', '_blank')" class="p-1.5 bg-white rounded-full text-gray-700 hover:text-indigo-600 transition-colors" title="View full size">
-                                                                <x-heroicon-o-eye class="h-5 w-5" />
-                                                            </button>
+                                                            <a href="{{ $image->image_url }}" 
+                                                               target="_blank"
+                                                               class="p-1.5 bg-indigo-600 rounded-full text-white view-image"
+                                                               title="View full size">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                </svg>
+                                                            </a>
                                                             @if(!$image->is_featured)
                                                             <button 
                                                                 type="button" 
-                                                                class="p-1.5 bg-white rounded-full text-gray-700 hover:text-indigo-600 transition-colors featured-toggle"
+                                                                class="p-1.5 bg-indigo-600 rounded-full text-white featured-toggle"
                                                                 title="Set as featured"
                                                                 data-image-id="{{ $image->id }}"
                                                             >
-                                                                <x-heroicon-o-star class="h-5 w-5" />
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                                                </svg>
                                                             </button>
                                                             @endif
                                                             <button 
                                                                 type="button" 
-                                                                class="p-1.5 bg-white rounded-full text-gray-700 hover:text-red-600 transition-colors delete-image"
+                                                                class="p-1.5 bg-red-600 rounded-full text-white delete-image"
                                                                 title="Delete image"
                                                                 data-image-id="{{ $image->id }}"
                                                             >
-                                                                <x-heroicon-o-trash class="h-5 w-5" />
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
                                                             </button>
                                                         </div>
                                                     </div>
                                                     @if($image->is_featured)
-                                                    <div class="absolute top-2 right-2 bg-indigo-500 text-white rounded-full p-1.5" title="Featured image">
-                                                        <x-heroicon-o-star class="h-4 w-4" />
+                                                    <div class="featured-badge absolute top-2 right-2 bg-indigo-500 text-white rounded-full px-2 py-1 text-xs" title="Featured image">
+                                                        Featured
                                                     </div>
                                                     @endif
                                                 </div>
                                                 @empty
                                                 <div class="col-span-full flex flex-col items-center justify-center py-8 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-                                                    <x-heroicon-o-photo class="h-12 w-12 text-gray-400 mb-2" />
+                                                    <svg class="h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
                                                     <p>No additional images yet</p>
                                                 </div>
                                                 @endforelse
                                             </div>
                                         </div>
-
+                                        
                                         <!-- Upload Additional Images -->
-                                        <div>
-                                            <p class="text-sm text-gray-600 mb-3">Upload additional images:</p>
-                                            <div class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg" id="gallery_images_drop_zone">
-                                                <div class="space-y-2 text-center">
+                                        <div class="mt-4">
+                                            <p class="text-sm text-gray-600 mb-2">Upload additional images:</p>
+                                            <div id="gallery_images_drop_zone" class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md transition-all hover:border-indigo-500">
+                                                <div class="space-y-1 text-center">
                                                     <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                                         <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4h-12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                                     </svg>
-                                                    <div class="flex text-sm text-gray-600 justify-center">
-                                                        <label for="gallery_images" class="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                                    <div class="flex text-sm text-gray-600">
+                                                        <label for="gallery_images" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
                                                             <span>Upload multiple images</span>
                                                             <input id="gallery_images" name="gallery_images[]" type="file" class="sr-only" multiple accept="image/*">
                                                         </label>
@@ -377,21 +502,24 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Submit Button -->
-                        <div class="mt-8 pt-5">
-                            <div class="flex justify-end">
-                                <x-shadcn.button 
-                                    type="submit" 
-                                    variant="default" 
-                                    class="mt-4"
-                                >
-                                    Update Vehicle
-                                </x-shadcn.button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+                    <!-- Form Actions -->
+                    <div class="mt-6 flex items-center justify-end gap-x-6 border-t border-gray-200 pt-4">
+                        <a href="{{ route('vehicles.index') }}" 
+                           class="inline-flex items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            <x-heroicon-o-x-mark class="h-4 w-4 mr-2" />
+                            Cancel
+                        </a>
+                        <button 
+                            type="submit" 
+                            class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                        >
+                            <x-heroicon-m-arrow-up-tray class="h-4 w-4 mr-2" />
+                            Update Vehicle
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -425,8 +553,13 @@
         }
     </script>
 
-    @section('scripts')
+    @push('scripts')
     <script>
+        // Define removeGalleryImage and removeMainImage in global scope
+        let removeGalleryImage;
+        let removeMainImage;
+        let galleryFiles = []; // Add this to track gallery files
+
         document.addEventListener('DOMContentLoaded', function() {
             // Status change handler
             const statusSelect = document.getElementById('status');
@@ -464,11 +597,11 @@
                 }
             }
 
-            function removeMainImage() {
+            removeMainImage = function() {
                 mainImageInput.value = '';
                 mainImagePreview.classList.add('hidden');
                 mainImageDropZone.classList.remove('hidden');
-            }
+            };
 
             mainImageInput.addEventListener('change', function(e) {
                 if (this.files && this.files[0]) {
@@ -483,8 +616,15 @@
 
             function handleGalleryImages(files) {
                 if (files.length > 0) {
+                    galleryFiles = Array.from(files); // Store files in our array
+                    updateGalleryPreview();
+                }
+            }
+
+            function updateGalleryPreview() {
+                if (galleryFiles.length > 0) {
                     galleryPreview.innerHTML = '';
-                    Array.from(files).forEach((file, index) => {
+                    galleryFiles.forEach((file, index) => {
                         if (file.type.startsWith('image/')) {
                             const reader = new FileReader();
                             reader.onload = function(e) {
@@ -505,27 +645,21 @@
                     });
                     galleryPreview.classList.remove('hidden');
                     galleryDropZone.classList.add('hidden');
-                }
-            }
-
-            function removeGalleryImage(index) {
-                const dt = new DataTransfer();
-                const { files } = galleryInput;
-                
-                for (let i = 0; i < files.length; i++) {
-                    if (i !== index) {
-                        dt.items.add(files[i]);
-                    }
-                }
-                
-                galleryInput.files = dt.files;
-                if (galleryInput.files.length === 0) {
+                } else {
                     galleryPreview.classList.add('hidden');
                     galleryDropZone.classList.remove('hidden');
-                } else {
-                    handleGalleryImages(galleryInput.files);
                 }
+
+                // Update the input's files
+                const dt = new DataTransfer();
+                galleryFiles.forEach(file => dt.items.add(file));
+                galleryInput.files = dt.files;
             }
+
+            removeGalleryImage = function(index) {
+                galleryFiles.splice(index, 1); // Remove the file at the specified index
+                updateGalleryPreview(); // Update the preview
+            };
 
             galleryInput.addEventListener('change', function(e) {
                 if (this.files && this.files.length > 0) {
@@ -562,6 +696,7 @@
             });
 
             mainImageDropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
                 const file = e.dataTransfer.files[0];
                 if (file && file.type.startsWith('image/')) {
                     mainImageInput.files = e.dataTransfer.files;
@@ -569,10 +704,11 @@
                 }
             });
 
+            // Drag and drop handling for gallery
             galleryDropZone.addEventListener('drop', function(e) {
+                e.preventDefault();
                 const files = e.dataTransfer.files;
                 if (files.length > 0) {
-                    galleryInput.files = files;
                     handleGalleryImages(files);
                 }
             });
@@ -647,13 +783,9 @@
                             const img = imageCard.querySelector('img');
                             img.classList.add('ring-2', 'ring-indigo-500');
                             const badge = document.createElement('div');
-                            badge.className = 'featured-badge absolute top-2 right-2 bg-indigo-500 text-white rounded-full p-1.5';
+                            badge.className = 'featured-badge absolute top-2 right-2 bg-indigo-500 text-white rounded-full px-2 py-1 text-xs';
                             badge.title = 'Featured image';
-                            badge.innerHTML = `
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                                </svg>
-                            `;
+                            badge.textContent = 'Featured';
                             imageCard.appendChild(badge);
                         } else {
                             alert(data.message || 'Failed to set featured image');
@@ -665,10 +797,11 @@
                     });
                 });
             });
-        });
 
-        window.removeGalleryImage = removeGalleryImage;
-        window.removeMainImage = removeMainImage;
+            // Make the functions available to the window object
+            window.removeGalleryImage = removeGalleryImage;
+            window.removeMainImage = removeMainImage;
+        });
     </script>
-    @endsection
+    @endpush
 </x-app-layout> 

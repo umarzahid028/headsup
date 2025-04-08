@@ -162,4 +162,22 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')
             ->with('success', 'User deleted successfully.');
     }
+
+    /**
+     * Verify the specified user's email.
+     */
+    public function verify(User $user)
+    {
+        $this->authorize('edit users');
+
+        if (!$user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
+            
+            return redirect()->back()
+                ->with('success', 'User email verified successfully.');
+        }
+
+        return redirect()->back()
+            ->with('info', 'User email is already verified.');
+    }
 }

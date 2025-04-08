@@ -97,7 +97,7 @@ class GoodwillClaimController extends Controller
         $claim = GoodwillClaim::create($validated);
 
         // Notify admins and managers
-        $managers = User::role(['admin', 'manager'])->get();
+        $managers = User::role(['Admin', 'Sales Manager'])->get();
         Notification::send($managers, new NewGoodwillClaimSubmitted($claim));
 
         return redirect()->route('sales.goodwill-claims.show', $claim)

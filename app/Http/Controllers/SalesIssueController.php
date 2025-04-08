@@ -93,7 +93,7 @@ class SalesIssueController extends Controller
         $issue = SalesIssue::create($validated);
 
         // Notify managers
-        $managers = User::role('manager')->get();
+        $managers = User::role('Sales Manager')->get();
         Notification::send($managers, new NewSalesIssueReported($issue));
 
         return redirect()->route('sales.issues.show', $issue)
