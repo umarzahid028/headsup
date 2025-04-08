@@ -109,7 +109,7 @@ class TransportController extends Controller
     public function create(): View
     {
         if (auth()->user()->hasRole('Transporter')) {
-            abort(403, 'Unauthorized action.');
+           abort(403, 'Unauthorized action.');
         }
         
         $this->authorize('create transports');
@@ -131,7 +131,7 @@ class TransportController extends Controller
      */
     public function createBatch(): View
     {
-        if (auth()->user()->hasRole('Transporter')) {
+        if (auth()->user()->hasRole('Transporters')) {
             abort(403, 'Unauthorized action.');
         }
         

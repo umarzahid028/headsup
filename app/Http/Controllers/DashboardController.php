@@ -11,6 +11,9 @@ use App\Models\Sale;
 use Carbon\Carbon;
 use App\Models\Estimate;
 use Illuminate\Support\Facades\DB;
+use App\Models\Inspection;
+use App\Models\SalesIssue;
+use App\Models\Activity;
 
 class DashboardController extends Controller
 {
@@ -299,6 +302,91 @@ class DashboardController extends Controller
             'transportStats',
             'salesData',
             'estimatesData'
+        ));
+    }
+
+    public function __invoke(Request $request)
+    {
+        // Get date range
+        $days = $request->get('days', 30);
+        $startDate = Carbon::now()->subDays($days);
+        $endDate = Carbon::now();
+
+        // Vehicle Statistics
+        $totalVehicles = Vehicle::count();
+        $lastMonthVehicles = Vehicle::where('created_at', '<', Carbon::now()->startOfMonth())->count();
+        $vehicleGrowth = $lastMonthVehicles > 0 
+            ? round((($totalVehicles - $lastMonthVehicles) / $lastMonthVehicles) * 100, 1)
+            : 0;
+
+        // Inspection Statistics
+        $activeInspections = Inspection::where('status', 'in_progress')->count();
+        $completedInspections = Inspection::where('status', 'completed')
+            ->whereDate('completed_at', Carbon::today())
+            ->count();
+
+        // Issues Statistics
+        $openIssues = SalesIssue::where('status', 'open')->count();
+        $resolvedIssues = SalesIssue::where('status', 'resolved')
+            ->whereBetween('resolved_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+            ->count();
+
+        // Revenue Statistics
+        $monthlyRevenue = DB::table('sales')
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->sum('amount');
+        
+        $lastMonthRevenue = DB::table('sales')
+            ->whereMonth('created_at', Carbon::now()->subMonth()->month)
+            ->sum('amount');
+        
+        $revenueGrowth = $lastMonthRevenue > 0 
+            ? round((($monthlyRevenue - $lastMonthRevenue) / $lastMonthRevenue) * 100, 1)
+            : 0;
+
+        // Vehicle Status Chart Data
+        $vehicleStatusData = Vehicle::selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        $vehicleStatusLabels = array_map(function($status) {
+            return ucfirst(str_replace('_', ' ', $status));
+        }, array_keys($vehicleStatusData));
+
+        // Revenue Chart Data
+        $revenueData = DB::table('sales')
+            ->select(DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'), DB::raw('SUM(amount) as total'))
+            ->whereBetween('created_at', [Carbon::now()->subMonths(5), Carbon::now()])
+            ->groupBy('month')
+            ->orderBy('month')
+            ->pluck('total', 'month')
+            ->toArray();
+
+        $revenueLabels = array_map(function($month) {
+            return Carbon::createFromFormat('Y-m', $month)->format('M Y');
+        }, array_keys($revenueData));
+
+        // Recent Activities
+        $recentActivities = Activity::with('user')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('dashboard', compact(
+            'totalVehicles',
+            'vehicleGrowth',
+            'activeInspections',
+            'completedInspections',
+            'openIssues',
+            'resolvedIssues',
+            'monthlyRevenue',
+            'revenueGrowth',
+            'vehicleStatusData',
+            'vehicleStatusLabels',
+            'revenueData',
+            'revenueLabels',
+            'recentActivities'
         ));
     }
 } 

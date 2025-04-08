@@ -121,7 +121,7 @@
                                                                                ($action === 'edit' ? 'bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-600/20' : 
                                                                                ($action === 'delete' ? 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/10' : 
                                                                                'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20'))) }}">
-                                                                            {{ explode(' ', $permission->name, 2)[1] }}
+                                                                            {{ explode(' ', $permission->name, 2)[1] ?? $permission->name }}
                                                                         </div>
                                                                     @endforeach
                                                                 </div>

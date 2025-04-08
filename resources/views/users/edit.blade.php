@@ -137,7 +137,7 @@
                                     @foreach($roles as $role)
                                         <option value="{{ $role->id }}" 
                                             {{ in_array($role->id, old('roles', $user->roles->pluck('id')->toArray())) ? 'selected' : '' }}>
-                                            {{ $role->name }}
+                                            {{ \App\Enums\Role::tryFrom($role->name)?->label() ?? $role->name }}
                                         </option>
                                     @endforeach
                                 </select>

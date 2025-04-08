@@ -26,9 +26,7 @@ Route::get('/', function () {
 Route::get('/track/{batchId}', [TransportController::class, 'trackBatch'])->name('transports.track');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', App\Http\Controllers\DashboardController::class)->name('dashboard');
     
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -166,7 +164,8 @@ Route::middleware(['auth'])->group(function () {
         // User management routes
         Route::resource('users', \App\Http\Controllers\UserController::class);
         Route::post('users/{user}/verify', [\App\Http\Controllers\UserController::class, 'verify'])->name('users.verify');
-        Route::resource('roles', \App\Http\Controllers\RoleController::class);
+        Route::get('roles', [\App\Http\Controllers\RoleController::class, 'index'])->name('roles.index');
+        Route::put('roles/update-permissions', [\App\Http\Controllers\RoleController::class, 'updatePermissions'])->name('roles.update-permissions');
         Route::resource('permissions', \App\Http\Controllers\PermissionController::class);
         
         Route::patch('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');

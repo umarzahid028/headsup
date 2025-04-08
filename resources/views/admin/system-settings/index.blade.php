@@ -46,6 +46,27 @@
                         </div>
                     </div>
 
+                    <!-- Vehicle Import Settings -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-medium">Vehicle Import Settings</h3>
+                        
+                        <!-- Vehicle Imports Path -->
+                        <div class="grid gap-2">
+                            <label for="vehicle_imports_path" class="text-sm font-medium leading-none">
+                                Vehicle Imports Directory
+                            </label>
+                            <input type="text" id="vehicle_imports_path" name="vehicle_imports_path" 
+                                value="{{ old('vehicle_imports_path', $settings->vehicle_imports_path) }}"
+                                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                            <p class="text-sm text-muted-foreground">
+                                The directory path where vehicle import CSV files will be read from.
+                            </p>
+                            @error('vehicle_imports_path')
+                                <p class="text-sm text-red-500">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
                     <!-- Localization Settings -->
                     <div class="space-y-4">
                         <h3 class="text-lg font-medium">Localization</h3>

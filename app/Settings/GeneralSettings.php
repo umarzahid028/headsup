@@ -19,6 +19,9 @@ class GeneralSettings extends Settings
     public bool $archive_processed_files;
     public string $file_pattern;
 
+    // Vehicle Import Settings
+    public string $vehicle_imports_path;
+
     public static function group(): string
     {
         return 'general';
@@ -39,6 +42,9 @@ class GeneralSettings extends Settings
             'auto_process_files' => false,
             'archive_processed_files' => true,
             'file_pattern' => '*.csv',
+
+            // Vehicle Import Settings
+            'vehicle_imports_path' => storage_path('app/vehicle-imports'),
         ];
     }
 } 
