@@ -28,9 +28,9 @@ class InspectionController extends Controller
         $assignedInspections = VehicleInspection::with(['vehicle', 'itemResults'])
             ->whereHas('itemResults', function ($query) use ($vendor) {
                 $query->where('vendor_id', $vendor->id)
+                    ->where('status', '!=', 'pass')
                     ->where(function($q) {
-                        $q->whereIn('status', ['pending', 'fail', 'warning'])
-                            ->orWhereNotNull('diagnostic_status')
+                        $q->whereIn('status', ['fail', 'warning', 'in_progress', 'diagnostic'])
                             ->orWhere('requires_repair', true);
                     });
             })
@@ -57,12 +57,19 @@ class InspectionController extends Controller
             abort(403);
         }
 
+        // Load only repair/replace items assigned to this vendor
         $inspection->load([
             'vehicle',
             'itemResults' => function ($query) use ($vendor) {
-                $query->where('vendor_id', $vendor->id);
+                $query->where('vendor_id', $vendor->id)
+                      ->where('status', '!=', 'pass')
+                      ->where(function($q) {
+                          $q->whereIn('status', ['warning', 'fail', 'in_progress', 'diagnostic', 'completed', 'cancelled'])
+                            ->orWhere('requires_repair', true);
+                      });
             },
-            'itemResults.inspectionItem'
+            'itemResults.inspectionItem',
+            'itemResults.repairImages'
         ]);
 
         return view('vendor.inspections.show', compact('inspection'));

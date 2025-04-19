@@ -47,25 +47,11 @@
                                                     $totalItems = $vendorItems->count();
                                                     $completedItems = $vendorItems->whereIn('status', ['completed', 'cancelled'])->count();
                                                 @endphp
-                                                <div class="text-sm text-gray-900">
+                                                <div class="text-sm font-medium text-gray-900">
                                                     {{ $completedItems }} / {{ $totalItems }} completed
                                                 </div>
-                                                <div class="mt-1 relative w-24 bg-gray-200 rounded-full h-2">
-                                                    <div class="absolute left-0 top-0 h-2 rounded-full bg-green-500" style="width: {{ $totalItems > 0 ? ($completedItems / $totalItems * 100) : 0 }}%"></div>
-                                                </div>
-                                                <div class="mt-2 text-xs text-gray-500 space-y-1">
-                                                    @foreach($vendorItems as $item)
-                                                        <div class="flex items-center">
-                                                            @if($item->status === 'completed')
-                                                                <span class="h-1.5 w-1.5 rounded-full bg-green-500 mr-2"></span>
-                                                            @elseif($item->status === 'cancelled')
-                                                                <span class="h-1.5 w-1.5 rounded-full bg-gray-500 mr-2"></span>
-                                                            @else
-                                                                <span class="h-1.5 w-1.5 rounded-full bg-yellow-500 mr-2"></span>
-                                                            @endif
-                                                            {{ $item->inspectionItem->name }}
-                                                        </div>
-                                                    @endforeach
+                                                <div class="mt-1 relative w-full max-w-xs bg-gray-200 rounded-full h-2.5">
+                                                    <div class="absolute left-0 top-0 h-2.5 rounded-full bg-green-500" style="width: {{ $totalItems > 0 ? ($completedItems / $totalItems * 100) : 0 }}%"></div>
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
