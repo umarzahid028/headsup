@@ -127,6 +127,7 @@ class InspectionController extends Controller
                     'completion_notes' => $validated['completion_notes'] ?? null,
                     'completed_at' => now(),
                     'repair_completed' => true,
+                    'requires_repair' => true, // Ensure requires_repair is set to true if completed
                 ];
             } else {
                 // For cancelled status
@@ -155,6 +156,12 @@ class InspectionController extends Controller
                     'status' => 'completed',
                     'completed_date' => now(),
                 ]);
+                
+                // Fix any inconsistent data - set all completed items to have repair_completed = true
+                $inspection->itemResults()
+                    ->where('vendor_id', $vendor->id)
+                    ->where('status', 'completed')
+                    ->update(['repair_completed' => true]);
             }
         }
 
