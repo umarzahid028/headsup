@@ -164,10 +164,10 @@ class InspectionController extends Controller
      * Upload images for an inspection item
      * 
      * @param \Illuminate\Http\Request $request
-     * @param \App\Models\InspectionItem $item
+     * @param int $item
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function uploadImages(Request $request, InspectionItem $item)
+    public function uploadImages(Request $request, $item)
     {
         $request->validate([
             'image_type' => 'required|in:before,after,documentation',
@@ -182,26 +182,34 @@ class InspectionController extends Controller
         $vendor = auth()->user()->vendor;
 
         // Find the inspection item result for this vendor
-        $itemResult = InspectionItemResult::where('inspection_item_id', $item->id)
+        $itemResult = InspectionItemResult::where('id', $item)
             ->where('vendor_id', $vendor->id)
             ->firstOrFail();
 
-        // Ensure this vendor has access to this inspection
-        if ($itemResult->vehicleInspection->vendor_id !== $vendor->id) {
-            abort(403, 'You do not have permission to modify this inspection.');
-        }
+        // The above query already ensures this vendor has access to this item
+        // so we don't need the additional permission check that was here
 
-        // Ensure item is in progress
-        if ($itemResult->status !== 'in_progress') {
+        // Ensure item is in progress or already started
+        if (!in_array($itemResult->status, ['in_progress', 'diagnostic'])) {
             return redirect()->back()->with('error', 'You can only upload images for items that are in progress.');
         }
 
         foreach ($request->file('images') as $image) {
-            $path = $image->store('inspection_images', 'public');
+            // Create organized directory structure
+            $path = sprintf(
+                'inspections/%s/%s/%s',
+                $itemResult->vehicleInspection->vehicle->stock_number,
+                $itemResult->vehicleInspection->id,
+                $itemResult->id
+            );
+            
+            // Store image with original name but sanitized
+            $fileName = preg_replace('/[^a-zA-Z0-9.]/', '_', $image->getClientOriginalName());
+            $fullPath = $image->storeAs($path, $fileName, 'public');
             
             RepairImage::create([
                 'inspection_item_result_id' => $itemResult->id,
-                'image_path' => $path,
+                'image_path' => $fullPath,
                 'image_type' => $request->image_type,
                 'caption' => $request->caption,
             ]);

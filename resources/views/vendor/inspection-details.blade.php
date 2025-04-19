@@ -52,9 +52,15 @@
                                 <div class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
                                     <div class="flex flex-col md:flex-row md:items-start md:justify-between">
                                         <div class="flex-grow">
-                                            <h4 class="text-base font-medium text-gray-900">{{ $item->name }}</h4>
-                                            @if($item->description)
-                                                <p class="mt-1 text-sm text-gray-500">{{ $item->description }}</p>
+                                            <h4 class="text-base font-medium text-gray-900">{{ $item->inspectionItem->name }}</h4>
+                                            @if($item->inspectionItem->description)
+                                                <p class="mt-1 text-sm text-gray-500">{{ $item->inspectionItem->description }}</p>
+                                            @endif
+                                            @if($item->notes)
+                                                <div class="mt-2">
+                                                    <span class="text-sm font-medium text-gray-500">Inspector Notes:</span>
+                                                    <p class="mt-1 text-sm text-gray-600">{{ $item->notes }}</p>
+                                                </div>
                                             @endif
                                         </div>
                                       
@@ -127,10 +133,68 @@
                                                 </div>
                                             </form>
                                             
+                                            <!-- Display uploaded images -->
+                                            @if($item->repairImages->count() > 0)
+                                                <div class="border-t border-gray-200 pt-4 mt-4">
+                                                    <h5 class="text-sm font-medium text-gray-700 mb-2">Uploaded Photos</h5>
+                                                    
+                                                    <!-- Before Images -->
+                                                    @if($item->repairImages->where('image_type', 'before')->count() > 0)
+                                                        <div class="mb-4">
+                                                            <h6 class="text-xs font-medium text-gray-500 mb-2">Before Repair</h6>
+                                                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                                                                @foreach($item->repairImages->where('image_type', 'before') as $image)
+                                                                    <a href="{{ Storage::url($image->image_path) }}" target="_blank" class="block">
+                                                                        <img src="{{ Storage::url($image->image_path) }}" alt="Before repair" class="object-cover h-24 w-full rounded-lg">
+                                                                        @if($image->caption)
+                                                                            <p class="text-xs text-gray-500 mt-1 truncate">{{ $image->caption }}</p>
+                                                                        @endif
+                                                                    </a>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                    
+                                                    <!-- After Images -->
+                                                    @if($item->repairImages->where('image_type', 'after')->count() > 0)
+                                                        <div class="mb-4">
+                                                            <h6 class="text-xs font-medium text-gray-500 mb-2">After Repair</h6>
+                                                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                                                                @foreach($item->repairImages->where('image_type', 'after') as $image)
+                                                                    <a href="{{ Storage::url($image->image_path) }}" target="_blank" class="block">
+                                                                        <img src="{{ Storage::url($image->image_path) }}" alt="After repair" class="object-cover h-24 w-full rounded-lg">
+                                                                        @if($image->caption)
+                                                                            <p class="text-xs text-gray-500 mt-1 truncate">{{ $image->caption }}</p>
+                                                                        @endif
+                                                                    </a>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                    
+                                                    <!-- Documentation Images -->
+                                                    @if($item->repairImages->where('image_type', 'documentation')->count() > 0)
+                                                        <div class="mb-4">
+                                                            <h6 class="text-xs font-medium text-gray-500 mb-2">Documentation</h6>
+                                                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                                                                @foreach($item->repairImages->where('image_type', 'documentation') as $image)
+                                                                    <a href="{{ Storage::url($image->image_path) }}" target="_blank" class="block">
+                                                                        <img src="{{ Storage::url($image->image_path) }}" alt="Documentation" class="object-cover h-24 w-full rounded-lg">
+                                                                        @if($image->caption)
+                                                                            <p class="text-xs text-gray-500 mt-1 truncate">{{ $image->caption }}</p>
+                                                                        @endif
+                                                                    </a>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                            
                                             <!-- Image Upload Form -->
                                             <div class="border-t border-gray-200 pt-4">
                                                 <h5 class="text-sm font-medium text-gray-700 mb-2">Upload Work Photos</h5>
-                                                <form action="{{ route('vendor.inspections.upload-images', $item) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                                                <form action="{{ route('vendor.inspections.upload-images', $item->id) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                                                     @csrf
                                                     
                                                     <div>
@@ -195,6 +259,62 @@
                                                 <div>
                                                     <span class="text-sm font-medium text-gray-500">Completion Notes:</span>
                                                     <p class="mt-1 text-sm text-gray-600">{{ $item->completion_notes }}</p>
+                                                </div>
+                                            @endif
+
+                                            <!-- Display repair images for completed/cancelled items -->
+                                            @if($item->repairImages->count() > 0)
+                                                <div class="mt-4">
+                                                    <span class="text-sm font-medium text-gray-500">Work Photos:</span>
+                                                    
+                                                    <!-- Display all types of images in tabs or sections -->
+                                                    @if($item->repairImages->where('image_type', 'before')->count() > 0)
+                                                        <div class="mt-2 mb-3">
+                                                            <h6 class="text-xs font-medium text-gray-500 mb-1">Before Repair</h6>
+                                                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                                                                @foreach($item->repairImages->where('image_type', 'before') as $image)
+                                                                    <a href="{{ Storage::url($image->image_path) }}" target="_blank" class="block">
+                                                                        <img src="{{ Storage::url($image->image_path) }}" alt="Before repair" class="object-cover h-24 w-full rounded-lg">
+                                                                        @if($image->caption)
+                                                                            <p class="text-xs text-gray-500 mt-1 truncate">{{ $image->caption }}</p>
+                                                                        @endif
+                                                                    </a>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                    
+                                                    @if($item->repairImages->where('image_type', 'after')->count() > 0)
+                                                        <div class="mt-2 mb-3">
+                                                            <h6 class="text-xs font-medium text-gray-500 mb-1">After Repair</h6>
+                                                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                                                                @foreach($item->repairImages->where('image_type', 'after') as $image)
+                                                                    <a href="{{ Storage::url($image->image_path) }}" target="_blank" class="block">
+                                                                        <img src="{{ Storage::url($image->image_path) }}" alt="After repair" class="object-cover h-24 w-full rounded-lg">
+                                                                        @if($image->caption)
+                                                                            <p class="text-xs text-gray-500 mt-1 truncate">{{ $image->caption }}</p>
+                                                                        @endif
+                                                                    </a>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                                    
+                                                    @if($item->repairImages->where('image_type', 'documentation')->count() > 0)
+                                                        <div class="mt-2 mb-3">
+                                                            <h6 class="text-xs font-medium text-gray-500 mb-1">Documentation</h6>
+                                                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                                                                @foreach($item->repairImages->where('image_type', 'documentation') as $image)
+                                                                    <a href="{{ Storage::url($image->image_path) }}" target="_blank" class="block">
+                                                                        <img src="{{ Storage::url($image->image_path) }}" alt="Documentation" class="object-cover h-24 w-full rounded-lg">
+                                                                        @if($image->caption)
+                                                                            <p class="text-xs text-gray-500 mt-1 truncate">{{ $image->caption }}</p>
+                                                                        @endif
+                                                                    </a>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             @endif
 
