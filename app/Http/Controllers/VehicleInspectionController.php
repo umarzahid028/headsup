@@ -199,25 +199,61 @@ class VehicleInspectionController extends Controller
         $validated = $request->validate([
             'items' => 'required|array',
             'items.*' => 'array',
-            'items.*.vendor_id' => 'nullable|exists:vendors,id'
+            'items.*.status' => 'sometimes|in:pass,warning,fail,not_applicable',
+            'items.*.notes' => 'nullable|string',
+            'items.*.vendor_id' => 'nullable|exists:vendors,id',
+            'items.*.cost' => 'nullable|numeric|min:0',
+            'save_as_draft' => 'sometimes|boolean'
         ]);
 
         DB::beginTransaction();
 
         try {
-            // Update vendor assignments for each item
+            $needsRepair = false;
+            $totalCost = 0;
+
             foreach ($validated['items'] as $itemId => $itemData) {
-                $itemResult = InspectionItemResult::findOrFail($itemId);
-                
-                // Ensure this item belongs to the current inspection
-                if ($itemResult->vehicle_inspection_id !== $inspection->id) {
-                    throw new \Exception("Item result doesn't belong to this inspection");
+                $result = $inspection->itemResults()
+                    ->where('inspection_item_id', $itemId)
+                    ->first();
+
+                if (!$result) {
+                    // Create new result if it doesn't exist
+                    $result = $inspection->itemResults()->create([
+                        'inspection_item_id' => $itemId,
+                        'status' => $itemData['status'] ?? 'not_applicable',
+                        'notes' => $itemData['notes'] ?? null,
+                        'cost' => $itemData['cost'] ?? 0,
+                        'vendor_id' => $itemData['vendor_id'] ?? null,
+                        'requires_repair' => isset($itemData['status']) && in_array($itemData['status'], ['warning', 'fail']),
+                        'repair_completed' => false,
+                    ]);
+                } else {
+                    // Update existing result
+                    $result->update([
+                        'status' => $itemData['status'] ?? $result->status,
+                        'notes' => $itemData['notes'] ?? $result->notes,
+                        'cost' => $itemData['cost'] ?? $result->cost,
+                        'vendor_id' => $itemData['vendor_id'] ?? $result->vendor_id,
+                        'requires_repair' => isset($itemData['status']) && in_array($itemData['status'], ['warning', 'fail']),
+                    ]);
                 }
-                
-                $itemResult->update([
-                    'vendor_id' => $itemData['vendor_id']
-                ]);
+
+                // Track if any items need repair
+                if ($result->requires_repair) {
+                    $needsRepair = true;
+                }
+
+                // Add to total cost if repair is needed
+                if ($result->requires_repair) {
+                    $totalCost += $result->cost;
+                }
             }
+
+            // Update inspection total cost
+            $inspection->update([
+                'total_cost' => $totalCost
+            ]);
 
             // Update vehicle status if vendors are assigned
             $hasVendors = $inspection->itemResults()
@@ -226,18 +262,20 @@ class VehicleInspectionController extends Controller
 
             if ($hasVendors && $inspection->vehicle->status === 'needs_repair') {
                 $inspection->vehicle->update(['status' => 'repair_assigned']);
+            } elseif ($needsRepair) {
+                $inspection->vehicle->update(['status' => 'needs_repair']);
             }
             
             DB::commit();
             
             return redirect()->route('inspection.inspections.show', $inspection)
-                ->with('success', 'Vendor assignments updated successfully.');
+                ->with('success', 'Inspection updated successfully.');
                 
         } catch (\Exception $e) {
             DB::rollBack();
             
             return redirect()->back()
-                ->with('error', 'Error updating vendor assignments: ' . $e->getMessage())
+                ->with('error', 'Error updating inspection: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -290,7 +328,8 @@ class VehicleInspectionController extends Controller
                     throw new \Exception("Item result doesn't belong to this inspection");
                 }
                 
-                // Set requires_repair based on status
+                // Set requires_repair based on status - only for sales manager statuses
+                // Repair = warning, Replace = fail
                 $itemData['requires_repair'] = in_array($itemData['status'], ['warning', 'fail']);
                 
                 // Update the item result
@@ -603,9 +642,126 @@ class VehicleInspectionController extends Controller
         }
     }
 
+    /**
+     * Update a comprehensive inspection for a vehicle.
+     */
+    public function comprehensiveUpdate(Request $request, Vehicle $vehicle)
+    {
+        $validated = $request->validate([
+            'items' => 'required|array',
+            'items.*' => 'array',
+            'items.*.status' => 'sometimes|in:pass,warning,fail,not_applicable',
+            'items.*.notes' => 'nullable|string',
+            'items.*.vendor_id' => 'nullable|exists:vendors,id',
+            'items.*.cost' => 'nullable|numeric|min:0',
+            'save_as_draft' => 'sometimes|boolean'
+        ]);
+
+        // Get the latest inspection for this vehicle
+        $inspection = $vehicle->vehicleInspections()->latest()->firstOrFail();
+        
+        DB::beginTransaction();
+
+        try {
+            $needsRepair = false;
+            $totalCost = 0;
+            $hasAssignedVendors = false;
+
+            foreach ($validated['items'] as $itemId => $itemData) {
+                $result = $inspection->itemResults()
+                    ->where('inspection_item_id', $itemId)
+                    ->first();
+
+                $isRepairNeeded = isset($itemData['status']) && in_array($itemData['status'], ['warning', 'fail']);
+                $vendorId = isset($itemData['vendor_id']) && !empty($itemData['vendor_id']) ? $itemData['vendor_id'] : null;
+
+                // If global vendor is set and item needs repair but has no specific vendor
+                if ($isRepairNeeded && !$vendorId && $request->vendor_id) {
+                    $vendorId = $request->vendor_id;
+                }
+
+                if (!$result) {
+                    // Create new result if it doesn't exist
+                    $result = $inspection->itemResults()->create([
+                        'inspection_item_id' => $itemId,
+                        'status' => $itemData['status'] ?? 'not_applicable',
+                        'notes' => $itemData['notes'] ?? null,
+                        'cost' => $itemData['cost'] ?? 0,
+                        'vendor_id' => $vendorId,
+                        'requires_repair' => $isRepairNeeded,
+                        'repair_completed' => false,
+                    ]);
+                } else {
+                    // Update existing result
+                    $result->update([
+                        'status' => $itemData['status'] ?? $result->status,
+                        'notes' => $itemData['notes'] ?? $result->notes,
+                        'cost' => $itemData['cost'] ?? $result->cost,
+                        'vendor_id' => $vendorId,
+                        'requires_repair' => $isRepairNeeded,
+                    ]);
+                }
+
+                // Track if any items need repair
+                if ($isRepairNeeded) {
+                    $needsRepair = true;
+                    if ($vendorId) {
+                        $hasAssignedVendors = true;
+                    }
+                }
+
+                // Add to total cost if repair is needed
+                if ($isRepairNeeded) {
+                    $totalCost += $itemData['cost'] ?? 0;
+                }
+
+                // Handle image uploads if present
+                if ($request->hasFile("items.{$itemId}.images")) {
+                    foreach ($request->file("items.{$itemId}.images") as $image) {
+                        $path = $image->store('repair-images', 'public');
+                        $result->repairImages()->create([
+                            'path' => $path,
+                            'original_name' => $image->getClientOriginalName()
+                        ]);
+                    }
+                }
+            }
+
+            // Update inspection status and total cost
+            $inspection->update([
+                'total_cost' => $totalCost,
+                'status' => $request->input('save_as_draft') ? 'in_progress' : 'completed',
+                'completed_at' => $request->input('save_as_draft') ? null : now()
+            ]);
+
+            // Update vehicle status when not saving as draft
+            if (!$request->input('save_as_draft')) {
+                if ($needsRepair && $hasAssignedVendors) {
+                    $vehicle->update(['status' => 'repair_assigned']);
+                } else if ($needsRepair) {
+                    $vehicle->update(['status' => 'needs_repair']);
+                } else {
+                    $vehicle->update(['status' => 'ready']);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('vehicles.show', $vehicle)
+                ->with('success', 'Inspection updated successfully. ' . 
+                    ($needsRepair ? 'Repair items have been ' . ($hasAssignedVendors ? 'assigned to vendors.' : 'identified.') : 'Vehicle is ready.'));
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to update inspection. ' . $e->getMessage());
+        }
+    }
 
     /**
-     * Start an inspection (redirects to comprehensive inspection).
+     * Start a new inspection for a vehicle.
      */
     public function startInspection(Vehicle $vehicle)
     {

@@ -241,6 +241,35 @@
                                         <option value="cancelled" {{ old('status', $transport->status) == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                                     </x-shadcn.select>
                                 </div>
+
+                                <!-- QR Code Section -->
+                                <div class="mb-4">
+                                    <div class="flex items-center justify-between">
+                                        <label class="block text-sm font-medium text-gray-700">QR Code for Batch Tracking</label>
+                                        @if($transport->qr_code_path)
+                                            <a href="{{ Storage::url($transport->qr_code_path) }}" 
+                                               target="_blank"
+                                               class="text-sm text-blue-600 hover:text-blue-800">
+                                                View Current QR Code
+                                            </a>
+                                        @endif
+                                    </div>
+                                    <div class="mt-2">
+                                        <label class="inline-flex items-center">
+                                            <input type="checkbox" 
+                                                   name="generate_qr" 
+                                                   value="1" 
+                                                   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                                   {{ old('generate_qr') ? 'checked' : '' }}>
+                                            <span class="ml-2 text-sm text-gray-600">Generate new QR code for batch tracking</span>
+                                        </label>
+                                    </div>
+                                    @if($transport->qr_code_path)
+                                        <p class="mt-1 text-xs text-gray-500">
+                                            Generating a new QR code will replace the existing one
+                                        </p>
+                                    @endif
+                                </div>
                                 
                                 <!-- Transporter Selection -->
                                 <div class="mb-4">

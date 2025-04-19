@@ -102,10 +102,16 @@
                                         // Get vendor status
                                         $vendorStatus = $inspection->itemResults()
                                             ->whereNotNull('vendor_id')
-                                            ->exists() ? ($inspection->itemResults()
+                                            ->where('vendor_id', '!=', '')
+                                            ->count() > 0 ? 'assigned' : 'not_assigned';
+                                            
+                                        // Check if repairs are completed
+                                        if ($vendorStatus === 'assigned' && $inspection->itemResults()
                                             ->whereNotNull('vendor_id')
                                             ->where('repair_completed', true)
-                                            ->exists() ? 'completed' : 'assigned') : 'not_assigned';
+                                            ->exists()) {
+                                                $vendorStatus = 'completed';
+                                            }
                                     @endphp
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap">

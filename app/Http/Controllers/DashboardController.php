@@ -27,7 +27,7 @@ class DashboardController extends Controller
     /**
      * Show the appropriate dashboard based on user role.
      */
-    public function index(): View
+    public function index()
     {
         
         if (auth()->user()->hasAnyRole(['Sales Manager', 'Recon Manager'])) {
@@ -35,7 +35,7 @@ class DashboardController extends Controller
         } elseif (auth()->user()->hasRole('Transporter')) {
             return $this->transporterDashboard();
         } elseif (auth()->user()->hasRole('Vendor')) {
-            return $this->vendorDashboard();
+            return redirect()->route('vendor.dashboard');        
         } elseif (auth()->user()->hasRole('Sales Team')) {
             return $this->salesTeamDashboard();
         }
@@ -345,27 +345,9 @@ class DashboardController extends Controller
     /**
      * Dashboard for Vendors.
      */
-    protected function vendorDashboard(): View
+    protected function vendorDashboard()
     {
-        $vendor_id = auth()->user()->vendor_id;
-        $thisMonth = Carbon::now()->startOfMonth();
-
-        // Get estimates statistics
-        $estimateStats = VendorEstimate::where('vendor_id', $vendor_id)
-            ->selectRaw('status, COUNT(*) as count')
-            ->groupBy('status')
-            ->get()
-            ->pluck('count', 'status')
-            ->toArray();
-
-        // Get monthly estimates data
-        $estimatesData = VendorEstimate::where('vendor_id', $vendor_id)
-            ->where('created_at', '>=', $thisMonth)
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as count, SUM(estimated_cost) as total')
-            ->groupBy('date')
-            ->get();
-
-        return view('dashboards.vendor', compact('estimateStats', 'estimatesData'));
+        return redirect()->route('vendor.dashboard');
     }
 
     /**
@@ -401,25 +383,8 @@ class DashboardController extends Controller
 
     public function vendor()
     {
-        // Get estimates statistics
-        $estimateStats = [
-            'pending' => Estimate::where('status', 'pending')->count(),
-            'approved' => Estimate::where('status', 'approved')->count(),
-            'rejected' => Estimate::where('status', 'rejected')->count(),
-        ];
-
-        // Get monthly estimates data for the last 12 months
-        $estimatesData = Estimate::select(
-            DB::raw('DATE_FORMAT(created_at, "%Y-%m") as date'),
-            DB::raw('COUNT(*) as count'),
-            DB::raw('SUM(estimated_cost) as total')
-        )
-            ->where('created_at', '>=', Carbon::now()->subMonths(12))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-
-        return view('dashboards.vendor', compact('estimateStats', 'estimatesData'));
+        // Redirect to the dedicated vendor dashboard controller
+        return redirect()->route('vendor.dashboard');
     }
 
     public function transporter()

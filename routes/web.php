@@ -105,6 +105,7 @@ Route::middleware(['auth'])->group(function () {
         // Comprehensive Inspection (all stages at once)
         Route::get('vehicles/{vehicle}/comprehensive', [\App\Http\Controllers\VehicleInspectionController::class, 'comprehensive'])->name('comprehensive.show');
         Route::post('vehicles/{vehicle}/comprehensive', [\App\Http\Controllers\VehicleInspectionController::class, 'comprehensiveStore'])->name('comprehensive.store');
+        Route::put('vehicles/{vehicle}/comprehensive', [\App\Http\Controllers\VehicleInspectionController::class, 'comprehensiveUpdate'])->name('comprehensive.update');
         
         // Inspection Results
         Route::resource('results', \App\Http\Controllers\InspectionItemResultController::class)->only(['store', 'update', 'destroy']);
@@ -200,7 +201,7 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('role:Admin,Manager,Transporter')
         ->name('dashboard.transporter');
     Route::get('/dashboard/vendor', [DashboardController::class, 'vendor'])
-        ->middleware('role:Admin,Manager,Vendor')
+    
         ->name('dashboard.vendor');
 });
 

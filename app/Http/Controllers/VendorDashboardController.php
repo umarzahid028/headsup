@@ -86,7 +86,8 @@ class VendorDashboardController extends Controller
             ->sortByDesc('date')
             ->take(10);
 
-        return view('vendor.dashboard', compact(
+        // Return the dashboard view with data
+        return view('dashboards.vendor', compact(
             'pendingInspections',
             'completedInspections',
             'stats',

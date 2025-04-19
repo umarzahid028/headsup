@@ -295,6 +295,7 @@ class TransportController extends Controller
             'additional_vehicle_ids.*' => 'exists:vehicles,id',
             'remove_vehicle_ids' => 'nullable|array',
             'remove_vehicle_ids.*' => 'exists:transports,id',
+            'generate_qr' => 'nullable|boolean',
         ]);
 
         DB::beginTransaction();
@@ -327,6 +328,21 @@ class TransportController extends Controller
                 $file = $request->file('gate_pass');
                 $path = $file->store('gate-passes', 'public');
                 $validated['gate_pass_path'] = $path;
+            }
+
+            // Handle QR code generation if requested
+            if ($request->generate_qr) {
+                // Delete old QR code if exists
+                if ($transport->qr_code_path) {
+                    Storage::disk('public')->delete($transport->qr_code_path);
+                }
+                
+                // Create full absolute URL for the tracking page
+                $qrUrl = url("/track/{$transport->batch_id}");
+                $qrPath = 'qrcodes/' . $transport->batch_id . '.png';
+                $qrCode = QrCode::format('png')->size(300)->generate($qrUrl);
+                Storage::disk('public')->put($qrPath, $qrCode);
+                $validated['qr_code_path'] = $qrPath;
             }
 
             // Update the transport record

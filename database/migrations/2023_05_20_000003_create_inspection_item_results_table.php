@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('vehicle_inspection_id')->constrained()->onDelete('cascade');
             $table->foreignId('inspection_item_id')->constrained();
-            $table->enum('status', ['pass', 'fail', 'warning', 'not_applicable'])->default('not_applicable');
+            $table->enum('status', ['pending', 'diagnostic', 'completed', 'cancelled'])->default('pending');
             $table->text('notes')->nullable();
             $table->decimal('repair_cost', 10, 2)->default(0);
             $table->boolean('requires_repair')->default(false);

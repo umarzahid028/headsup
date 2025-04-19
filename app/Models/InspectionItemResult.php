@@ -133,12 +133,55 @@ class InspectionItemResult extends Model
     public function getStatusLabel(): string
     {
         return match($this->status) {
-            'pass' => 'Status: Pass',
-            'warning' => 'Status: Repair',
-            'fail' => 'Status: Replace',
+            // Sales Manager statuses
+            'pass' => 'Pass',
+            'warning' => 'Repair',
+            'fail' => 'Replace',
             'not_applicable' => 'Not Applicable',
+            
+            // Vendor statuses
+            'in_progress' => 'In Progress',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled',
+            
             default => ucfirst($this->status),
         };
+    }
+
+    /**
+     * Get the status badge CSS classes.
+     */
+    public function getStatusBadgeClasses(): string
+    {
+        return match($this->status) {
+            // Sales Manager statuses
+            'pass' => 'bg-green-100 text-green-800',
+            'warning' => 'bg-yellow-100 text-yellow-800',
+            'fail' => 'bg-red-100 text-red-800',
+            
+            // Vendor statuses
+            'in_progress' => 'bg-blue-100 text-blue-800',
+            'completed' => 'bg-green-100 text-green-800',
+            'cancelled' => 'bg-gray-100 text-gray-800',
+            
+            default => 'bg-gray-100 text-gray-800',
+        };
+    }
+
+    /**
+     * Check if this item has a sales manager status.
+     */
+    public function hasSalesManagerStatus(): bool
+    {
+        return in_array($this->status, ['pass', 'warning', 'fail', 'not_applicable']);
+    }
+
+    /**
+     * Check if this item has a vendor status.
+     */
+    public function hasVendorStatus(): bool
+    {
+        return in_array($this->status, ['in_progress', 'completed', 'cancelled']);
     }
 
     /**

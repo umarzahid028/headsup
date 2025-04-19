@@ -86,12 +86,43 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Manager Inspection</h3>
                     <p class="mb-4 text-gray-700">First, complete your inspection below. After submitting, you'll be able to assign repairs to vendors.</p>
                 
-                    <form id="inspection-form" method="POST" action="{{ route('inspection.comprehensive.store', $vehicle) }}" class="space-y-4" enctype="multipart/form-data">
+                    <form id="inspection-form" method="POST" 
+                        action="{{ isset($existingInspection) 
+                            ? route('inspection.comprehensive.update', $vehicle) 
+                            : route('inspection.comprehensive.store', $vehicle) }}" 
+                        class="space-y-4" enctype="multipart/form-data">
                         @csrf
                         @if(isset($existingInspection))
                             @method('PUT')
                         @endif
                         <input type="hidden" name="save_as_draft" id="save_as_draft" value="0">
+                        
+                        <!-- Global Vendor Selection -->
+                        <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                <div class="col-span-2">
+                                    <label for="vendor_id" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Select Global Vendor
+                                    </label>
+                                    <select id="vendor_id" name="vendor_id" class="w-full text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                        <option value="">Select a vendor...</option>
+                                        @foreach($vendors as $vendor)
+                                            <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        Select a vendor here to use the "Assign Selected Vendor to All Items" button below.
+                                    </p>
+                                </div>
+                                
+                                <div>
+                                    <button type="button" id="batch-assign-vendor" class="w-full px-4 py-2 bg-green-600 text-white rounded-md shadow hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                                        <i class="fas fa-user-plus mr-2"></i> Assign Selected Vendor to All Items
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Stages Tabs -->
                         <div class="mb-6 border-b border-gray-200">
                             <div class="flex overflow-x-auto">
@@ -216,11 +247,10 @@
                                                     </div>
                                                     
                                                     <!-- Vendor field - conditionally shown -->
-                                                    @if($item->vendor_required)
                                                     <div id="vendor-field-{{ $item->id }}" class="w-full hidden">
                                                         <label for="vendor_{{ $item->id }}" class="block text-xs font-medium text-gray-700 mb-1">Select Vendor:</label>
                                                         <select id="vendor_{{ $item->id }}" name="items[{{ $item->id }}][vendor_id]" form="inspection-form"
-                                                            class="w-full text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm item-vendor-select">
+                                                            class="w-full text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm item-vendor-select select">
                                                             <option value="">Select vendor (optional)</option>
                                                             @foreach($vendors as $vendor)
                                                                 <option value="{{ $vendor->id }}" 
@@ -231,7 +261,6 @@
                                                             @endforeach
                                                         </select>
                                                     </div>
-                                                    @endif
                                                     
                                                     <!-- Cost field - conditionally shown -->
                                                     @if($item->cost_tracking)
@@ -274,30 +303,6 @@
                 <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
                     <span class="text-blue-600"><i class="fas fa-tools mr-2"></i>Vendor Assignment</span>
                 </h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label for="vendor_id" class="block text-sm font-medium text-gray-700 mb-1">
-                            Assign All Repairs to Vendor
-                        </label>
-                        <select id="vendor_id" name="vendor_id" form="inspection-form"
-                            class="block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                            <option value="">Select a vendor (optional)</option>
-                            @foreach($vendors as $vendor)
-                                <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
-                            @endforeach
-                        </select>
-                        <p class="mt-1 text-xs text-gray-500">
-                            This will assign all repair items to the selected vendor. You can also assign specific vendors to individual repair items below.
-                        </p>
-                    </div>
-                    
-                    <div class="flex items-end">
-                        <button type="button" id="batch-assign-vendor" class="px-4 py-2 bg-green-600 text-white rounded-md shadow hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                            <i class="fas fa-user-plus mr-2"></i> Assign Selected Vendor to All Items
-                        </button>
-                    </div>
-                </div>
                 
                 <div class="text-sm bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
                     <div class="flex">
@@ -345,200 +350,209 @@
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Add total cost calculation function
-            function updateTotalCost() {
-                let total = 0;
-                document.querySelectorAll('input[name$="[cost]"]').forEach(input => {
-                    const container = input.closest('.item-container');
-                    const statusInputs = container.querySelectorAll('input[type="radio"]');
-                    const selectedStatus = Array.from(statusInputs).find(input => input.checked)?.value;
-                    
-                    // Only add to total if status is warning or fail
-                    if (selectedStatus === 'warning' || selectedStatus === 'fail') {
-                        total += parseFloat(input.value || 0);
-                    }
+            // Stage navigation
+            const stages = document.querySelectorAll('.stage-content');
+            const stageTabs = document.querySelectorAll('.stage-tab');
+            const prevStageBtn = document.getElementById('prev-stage');
+            const nextStageBtn = document.getElementById('next-stage');
+            let currentStageIndex = 0;
+
+            function showStage(index) {
+                stages.forEach(stage => stage.classList.add('hidden'));
+                stageTabs.forEach(tab => {
+                    tab.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600');
+                    tab.classList.add('text-gray-500');
                 });
-                
-                // Update the display with formatted total
-                const formattedTotal = new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'USD'
-                }).format(total);
-                document.getElementById('estimated-total-cost').textContent = formattedTotal;
+
+                stages[index].classList.remove('hidden');
+                stageTabs[index].classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600');
+                stageTabs[index].classList.remove('text-gray-500');
+
+                // Update navigation buttons
+                prevStageBtn.disabled = index === 0;
+                nextStageBtn.disabled = index === stages.length - 1;
+
+                currentStageIndex = index;
             }
 
-            // Add event listeners for cost updates
+            // Stage tab click handlers
+            stageTabs.forEach((tab, index) => {
+                tab.addEventListener('click', () => showStage(index));
+            });
+
+            // Previous/Next stage button handlers
+            prevStageBtn.addEventListener('click', () => {
+                if (currentStageIndex > 0) {
+                    showStage(currentStageIndex - 1);
+                }
+            });
+
+            nextStageBtn.addEventListener('click', () => {
+                if (currentStageIndex < stages.length - 1) {
+                    showStage(currentStageIndex + 1);
+                }
+            });
+
+            // Initialize first stage
+            showStage(0);
+
+            // Handle status radio changes
+            const statusRadios = document.querySelectorAll('.item-status-radio');
+            statusRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const itemId = this.dataset.itemId;
+                    const vendorField = document.getElementById(`vendor-field-${itemId}`);
+                    const costField = document.getElementById(`cost-field-${itemId}`);
+                    const vendorSelect = vendorField ? vendorField.querySelector('select') : null;
+                    
+                    if (vendorField) {
+                        if (this.value === 'warning' || this.value === 'fail') {
+                            vendorField.classList.remove('hidden');
+                            // If there's a global vendor selected and no vendor is currently selected for this item
+                            const globalVendorId = document.getElementById('vendor_id').value;
+                            if (globalVendorId && vendorSelect && !vendorSelect.value) {
+                                vendorSelect.value = globalVendorId;
+                            }
+                        } else {
+                            vendorField.classList.add('hidden');
+                            if (vendorSelect) vendorSelect.value = '';
+                        }
+                    }
+                    
+                    if (costField) {
+                        if (this.value === 'warning' || this.value === 'fail') {
+                            costField.classList.remove('hidden');
+                        } else {
+                            costField.classList.add('hidden');
+                            const costInput = costField.querySelector('input[type="number"]');
+                            if (costInput) costInput.value = '';
+                        }
+                    }
+                    
+                    updateTotalCost();
+                });
+
+                // Trigger change event on page load for existing selections
+                if (radio.checked) {
+                    radio.dispatchEvent(new Event('change'));
+                }
+            });
+
+            // Handle batch vendor assignment
+            const batchAssignVendorBtn = document.getElementById('batch-assign-vendor');
+            const globalVendorSelect = document.getElementById('vendor_id');
+
+            batchAssignVendorBtn.addEventListener('click', function() {
+                const selectedVendorId = globalVendorSelect.value;
+                if (!selectedVendorId) {
+                    alert('Please select a vendor first.');
+                    return;
+                }
+
+                console.log('Starting vendor assignment process...');
+                console.log('Selected vendor ID:', selectedVendorId);
+                
+                let assignedCount = 0;
+                
+                // Find all items that need repair (marked as warning or fail)
+                document.querySelectorAll('.item-container').forEach(container => {
+                    // Find the item ID from the container
+                    const statusRadios = container.querySelectorAll('.item-status-radio');
+                    if (statusRadios.length === 0) {
+                        console.log('No status radios found in container');
+                        return;
+                    }
+                    
+                    // Get the item ID from the first radio
+                    const itemId = statusRadios[0].dataset.itemId;
+                    console.log('Processing item:', itemId);
+                    
+                    // Check if this item needs repair (warning or fail)
+                    const needsRepair = Array.from(statusRadios).some(radio => 
+                        radio.checked && (radio.value === 'warning' || radio.value === 'fail')
+                    );
+                    
+                    if (needsRepair) {
+                        console.log('Item needs repair:', itemId);
+                        
+                        // Find the vendor field and select element
+                        const vendorField = document.getElementById(`vendor-field-${itemId}`);
+                        console.log('Vendor field:', vendorField ? 'found' : 'not found');
+                        
+                        if (vendorField) {
+                            const vendorSelect = vendorField.querySelector('select');
+                            
+                            if (vendorSelect) {
+                                // Show the vendor field
+                                vendorField.classList.remove('hidden');
+                                
+                                // Set the vendor
+                                vendorSelect.value = selectedVendorId;
+                                assignedCount++;
+                                console.log('Vendor assigned to item:', itemId);
+                            } else {
+                                console.log('Vendor select not found for item:', itemId);
+                            }
+                        } else {
+                            console.log('Vendor field not found for item:', itemId);
+                        }
+                    } else {
+                        console.log('Item does not need repair:', itemId);
+                    }
+                });
+
+                // Show success message
+                const message = document.createElement('div');
+                message.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded z-50';
+                message.innerHTML = `
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>Vendor successfully assigned to ${assignedCount} item${assignedCount !== 1 ? 's' : ''}</span>
+                    </div>
+                `;
+                document.body.appendChild(message);
+                setTimeout(() => message.remove(), 3000);
+            });
+
+            // Handle save draft button
+            const saveDraftBtn = document.getElementById('save-draft');
+            const saveAsDraftInput = document.getElementById('save_as_draft');
+
+            saveDraftBtn.addEventListener('click', function() {
+                saveAsDraftInput.value = '1';
+                document.getElementById('inspection-form').submit();
+            });
+
+            // Calculate and update total cost
+            function updateTotalCost() {
+                const costInputs = document.querySelectorAll('input[name$="[cost]"]');
+                let total = 0;
+
+                costInputs.forEach(input => {
+                    const cost = parseFloat(input.value) || 0;
+                    if (!input.closest('div').classList.contains('hidden')) {
+                        total += cost;
+                    }
+                });
+
+                document.getElementById('estimated-total-cost').textContent = `$${total.toFixed(2)}`;
+            }
+
+            // Add event listeners for cost changes
             document.querySelectorAll('input[name$="[cost]"]').forEach(input => {
                 input.addEventListener('input', updateTotalCost);
             });
 
-            // Add event listeners for status changes to recalculate total
-            document.querySelectorAll('.item-status-radio').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    const itemId = this.dataset.itemId;
-                    const container = this.closest('.item-container');
-                    const vendorField = container.querySelector(`#vendor-field-${itemId}`);
-                    const costField = container.querySelector(`#cost-field-${itemId}`);
-                    
-                    // Remove error highlight if it exists
-                    container.classList.remove('error-highlight');
-                    
-                    // Show/hide vendor and cost fields based on status
-                    if (vendorField) {
-                        vendorField.classList.toggle('hidden', this.value === 'pass');
-                    }
-                    
-                    if (costField) {
-                        costField.classList.toggle('hidden', this.value === 'pass');
-                    }
-
-                    // Update total cost when status changes
-                    updateTotalCost();
-                });
-            });
-
             // Initial total cost calculation
             updateTotalCost();
-
-            // Handle tab switching
-            const tabs = document.querySelectorAll('.stage-tab');
-            const contents = document.querySelectorAll('.stage-content');
-            
-            // Add batch assign vendor functionality
-            const batchAssignVendorBtn = document.getElementById('batch-assign-vendor');
-            const globalVendorSelect = document.getElementById('vendor_id');
-            
-            if (batchAssignVendorBtn && globalVendorSelect) {
-                batchAssignVendorBtn.addEventListener('click', function() {
-                    const selectedVendorId = globalVendorSelect.value;
-                    if (!selectedVendorId) {
-                        alert('Please select a vendor first.');
-                        return;
-                    }
-                    
-                    // Counter for assigned items
-                    let assignedCount = 0;
-                    
-                    // Update all vendor selects for repair items
-                    document.querySelectorAll('.item-status-radio:checked').forEach(radio => {
-                        const itemId = radio.dataset.itemId;
-                        const status = radio.value;
-                        
-                        // Only apply to warning (repair) or fail (replace) items
-                        if (status === 'warning' || status === 'fail') {
-                            const container = radio.closest('.item-container');
-                            // Fix selectors to match the actual HTML structure
-                            const vendorSelect = container.querySelector(`select[name="items[${itemId}][vendor_id]"]`);
-                            
-                            // If we have a vendor select for this item
-                            if (vendorSelect) {
-                                // Make sure vendor field parent is visible
-                                if (vendorSelect.closest('div').classList.contains('hidden')) {
-                                    vendorSelect.closest('div').classList.remove('hidden');
-                                }
-                                // Set the vendor value
-                                vendorSelect.value = selectedVendorId;
-                                assignedCount++;
-                            }
-                        }
-                    });
-                    
-                    // Show a confirmation message
-                    if (assignedCount > 0) {
-                        alert(`Vendor has been assigned to ${assignedCount} repair item(s).`);
-                    } else {
-                        alert('No repair items found to assign. Make sure to mark items as "Repair" or "Replace" first.');
-                    }
-                });
-            }
-            
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const stageId = tab.dataset.stageId;
-                    
-                    // Update tab styles
-                    tabs.forEach(t => t.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600'));
-                    tab.classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600');
-                    
-                    // Show/hide content
-                    contents.forEach(content => {
-                        if (content.id === `stage-${stageId}`) {
-                            content.classList.remove('hidden');
-                        } else {
-                            content.classList.add('hidden');
-                        }
-                    });
-                });
-            });
-
-            // Handle form submission
-            const form = document.getElementById('inspection-form');
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                // Skip validation if saving as draft
-                if (document.getElementById('save_as_draft').value === '1') {
-                    form.submit();
-                    return;
-                }
-                
-                // Reset error states
-                const errorItems = document.querySelectorAll('.error-highlight');
-                errorItems.forEach(item => item.classList.remove('error-highlight'));
-                
-                let hasErrors = false;
-                let firstErrorTab = null;
-                
-                // Check each item container
-                document.querySelectorAll('.item-container').forEach(container => {
-                    const radios = container.querySelectorAll('input[type="radio"]');
-                    if (!radios.length) return; // Skip if no radio buttons found
-                    
-                    const itemId = radios[0].dataset.itemId; // Get itemId from first radio
-                    if (!itemId) return; // Skip if no itemId found
-                    
-                    const checked = Array.from(radios).some(radio => radio.checked);
-                    
-                    if (!checked) {
-                        container.classList.add('error-highlight');
-                        hasErrors = true;
-                        
-                        if (!firstErrorTab) {
-                            const stageContent = container.closest('.stage-content');
-                            if (stageContent) {
-                                firstErrorTab = stageContent.id.replace('stage-', '');
-                            }
-                        }
-                    }
-                });
-                
-                if (hasErrors) {
-                    // Switch to the first tab with errors
-                    if (firstErrorTab) {
-                        document.querySelector(`.stage-tab[data-stage-id="${firstErrorTab}"]`).click();
-                    }
-                    
-                    alert('Please complete all inspection items before submitting.');
-                    return;
-                }
-                
-                // Submit the form if no errors
-                form.submit();
-            });
-            
-            // Handle Save Draft button
-            const saveDraftBtn = document.getElementById('save-draft');
-            if (saveDraftBtn) {
-                saveDraftBtn.addEventListener('click', function() {
-                    const draftInput = document.getElementById('save_as_draft');
-                    draftInput.value = '1';
-                    form.submit();
-                });
-            }
         });
     </script>
-    
-    <style>
+    @endpush
+
+    @push('styles')
+    <style></style>
         .error-highlight {
             border-color: #ef4444;
             background-color: #fee2e2;

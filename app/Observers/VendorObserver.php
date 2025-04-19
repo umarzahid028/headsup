@@ -16,7 +16,20 @@ class VendorObserver
     public function created(Vendor $vendor): void
     {
         // Skip user creation if the user already exists
-        if (User::where('email', $vendor->email)->exists()) {
+        $user = User::where('email', $vendor->email)->first();
+        
+        if ($user) {
+            // Update the existing user with vendor role
+            $user->assignRole('Vendor');
+            
+            // Set the appropriate role enum value based on vendor type
+            if ($vendor->type) {
+                $user->role = $vendor->type->is_on_site ? 
+                    \App\Enums\Role::ONSITE_VENDOR : 
+                    \App\Enums\Role::OFFSITE_VENDOR;
+                $user->save();
+            }
+            
             return;
         }
 
@@ -28,6 +41,9 @@ class VendorObserver
             'name' => $vendor->contact_person ?? $vendor->name,
             'email' => $vendor->email,
             'password' => Hash::make($password),
+            'role' => $vendor->type && $vendor->type->is_on_site ? 
+                \App\Enums\Role::ONSITE_VENDOR : 
+                \App\Enums\Role::OFFSITE_VENDOR,
         ]);
 
         // Assign vendor role

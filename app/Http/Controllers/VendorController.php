@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Notifications\LoginCredentials;
 use Illuminate\Support\Facades\DB;
+use App\Enums\Role;
 
 class VendorController extends Controller
 {
@@ -99,16 +100,33 @@ class VendorController extends Controller
                 // If user exists, ensure they have the Vendor role
                 $user->assignRole('Vendor');
                 
-                // Update user's name if needed
+                // Set vendor role based on vendor type
+                $vendorType = null;
+                if (!empty($validated['type_id'])) {
+                    $vendorType = \App\Models\VendorType::find($validated['type_id']);
+                }
+                
                 $user->update([
-                    'name' => $validated['contact_person'] ?? $validated['name']
+                    'name' => $validated['contact_person'] ?? $validated['name'],
+                    'role' => $vendorType && $vendorType->is_on_site ? 
+                        \App\Enums\Role::ONSITE_VENDOR : 
+                        \App\Enums\Role::OFFSITE_VENDOR,
                 ]);
             } else {
+                // Get vendor type
+                $vendorType = null;
+                if (!empty($validated['type_id'])) {
+                    $vendorType = \App\Models\VendorType::find($validated['type_id']);
+                }
+                
                 // Create new user account
                 $user = User::create([
                     'name' => $validated['contact_person'] ?? $validated['name'],
                     'email' => $validated['email'],
                     'password' => Hash::make($password),
+                    'role' => $vendorType && $vendorType->is_on_site ? 
+                        \App\Enums\Role::ONSITE_VENDOR : 
+                        \App\Enums\Role::OFFSITE_VENDOR,
                 ]);
 
                 // Assign vendor role

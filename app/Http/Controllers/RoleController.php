@@ -74,7 +74,7 @@ class RoleController extends Controller
         $request->validate([
             'role' => 'required|exists:roles,name',
             'permissions' => 'nullable|array',
-            'permissions.*' => 'exists:permissions,name'
+            'permissions.*' => 'exists:permissions,id'
         ]);
 
         $role = Role::where('name', $request->role)->firstOrFail();
@@ -89,7 +89,10 @@ class RoleController extends Controller
         DB::beginTransaction();
         try {
             $permissions = $request->permissions ?? [];
-            $role->syncPermissions($permissions);
+            // Get permission instances by IDs
+            $permissionModels = Permission::whereIn('id', $permissions)->get();
+            $role->syncPermissions($permissionModels);
+            
             DB::commit();
             
             return redirect()

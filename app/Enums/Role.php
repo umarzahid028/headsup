@@ -6,6 +6,8 @@ enum Role: string
 {
     case ADMIN = 'Admin';
     case MANAGER = 'Manager';
+    case RECON_MANAGER = 'Recon Manager';
+    case VENDOR_MANAGER = 'Vendor';
     case SALES_MANAGER = 'Sales Manager';
     case ONSITE_VENDOR = 'On-Site Vendor';
     case OFFSITE_VENDOR = 'Off-Site Vendor';
@@ -14,7 +16,9 @@ enum Role: string
     {
         return match($this) {
             self::ADMIN => 'Administrator',
-            self::MANAGER => 'Recon Manager',
+            self::MANAGER => 'Manager',
+            self::RECON_MANAGER => 'Recon Manager',
+            self::VENDOR_MANAGER => 'Vendor',
             self::SALES_MANAGER => 'Sales Manager',
             self::ONSITE_VENDOR => 'On-Site Vendor',
             self::OFFSITE_VENDOR => 'Off-Site Vendor',

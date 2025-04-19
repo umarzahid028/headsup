@@ -57,153 +57,116 @@
                                                 <p class="mt-1 text-sm text-gray-500">{{ $item->description }}</p>
                                             @endif
                                         </div>
+                                      
                                         <div class="mt-2 md:mt-0 md:ml-4">
-                                            @if($item->status === 'diagnostic')
-                                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
-                                                    Diagnostic Required
-                                                </span>
-                                            @elseif($item->status === 'pending_approval')
-                                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                                                    Pending Approval
-                                                </span>
-                                            @elseif($item->status === 'completed')
-                                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                                                    Completed
-                                                </span>
-                                            @elseif($item->status === 'cancelled')
-                                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                                                    Cancelled
-                                                </span>
-                                            @else
-                                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                                                    In Progress
-                                                </span>
-                                            @endif
+                                            <span class="px-2 py-1 text-xs font-medium rounded-full {{ $item->getStatusBadgeClasses() }}">
+                                                {{ $item->getStatusLabel() }}
+                                            </span>
                                         </div>
                                     </div>
 
-                                    @if(in_array($item->status, ['pending', 'diagnostic']))
+                                    @if($item->status === 'warning' || $item->status === 'fail')
                                         <div class="mt-4">
-                                            @if(auth()->user()->isOffSiteVendor() && $item->status === 'diagnostic')
-                                                <!-- Off-Site Vendor Estimate Form -->
-                                                <form action="{{ route('vendor.inspections.submit-estimate', $inspection) }}" method="POST" class="space-y-4">
+                                            <!-- Start Work Button -->
+                                            <form action="{{ route('vendor.inspections.update-item', $item) }}" method="POST" class="mb-4">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="status" value="in_progress">
+                                                <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    Start Work
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @elseif(in_array($item->status, ['in_progress', 'diagnostic']))
+                                        <div class="mt-4 space-y-6">
+                                            <!-- Completion Form -->
+                                            <form action="{{ route('vendor.inspections.update-item', $item) }}" method="POST" class="space-y-4" enctype="multipart/form-data">
+                                                @csrf
+                                                @method('PATCH')
+                                                
+                                                <!-- Actual Cost Field -->
+                                                <div>
+                                                    <label for="actual_cost_{{ $item->id }}" class="block text-sm font-medium text-gray-700">
+                                                        Actual Cost <span class="text-red-500">*</span>
+                                                    </label>
+                                                    <div class="mt-1 relative rounded-md shadow-sm">
+                                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                            <span class="text-gray-500 sm:text-sm">$</span>
+                                                        </div>
+                                                        <input type="number" step="0.01" min="0" name="actual_cost" id="actual_cost_{{ $item->id }}"
+                                                            class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
+                                                            placeholder="0.00" required>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Completion Notes -->
+                                                <div>
+                                                    <label for="completion_notes_{{ $item->id }}" class="block text-sm font-medium text-gray-700">
+                                                        Completion Notes <span class="text-red-500">*</span>
+                                                    </label>
+                                                    <div class="mt-1">
+                                                        <textarea id="completion_notes_{{ $item->id }}" name="completion_notes" rows="3"
+                                                            class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                                            placeholder="Enter detailed notes about the work performed..." required></textarea>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Submit Buttons -->
+                                                <div class="flex space-x-3">
+                                                    <button type="submit" name="status" value="completed" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                                        Mark as Completed
+                                                    </button>
+                                                    
+                                                    <button type="submit" name="status" value="cancelled" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                                        Cancel Work
+                                                    </button>
+                                                </div>
+                                            </form>
+                                            
+                                            <!-- Image Upload Form -->
+                                            <div class="border-t border-gray-200 pt-4">
+                                                <h5 class="text-sm font-medium text-gray-700 mb-2">Upload Work Photos</h5>
+                                                <form action="{{ route('vendor.inspections.upload-images', $item) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                                                     @csrf
-                                                    <input type="hidden" name="items[{{ $loop->index }}][id]" value="{{ $item->id }}">
                                                     
                                                     <div>
-                                                        <label for="cost_{{ $item->id }}" class="block text-sm font-medium text-gray-700">Estimated Cost</label>
-                                                        <div class="mt-1 relative rounded-md shadow-sm">
-                                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                                <span class="text-gray-500 sm:text-sm">$</span>
-                                                            </div>
-                                                            <input type="number" step="0.01" min="0" name="items[{{ $loop->index }}][estimated_cost]" id="cost_{{ $item->id }}"
-                                                                class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md @error('items.' . $loop->index . '.estimated_cost') border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500 @enderror"
-                                                                placeholder="0.00" required
-                                                                value="{{ old('items.' . $loop->index . '.estimated_cost') }}">
-                                                        </div>
-                                                        @error('items.' . $loop->index . '.estimated_cost')
-                                                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                                        @enderror
+                                                        <label for="image_type_{{ $item->id }}" class="block text-sm font-medium text-gray-700">Image Type</label>
+                                                        <select id="image_type_{{ $item->id }}" name="image_type" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                                            <option value="before">Before Repair</option>
+                                                            <option value="after">After Repair</option>
+                                                            <option value="documentation">Documentation</option>
+                                                        </select>
                                                     </div>
-
-                                                    <div>
-                                                        <label for="notes_{{ $item->id }}" class="block text-sm font-medium text-gray-700">Diagnostic Notes</label>
-                                                        <div class="mt-1">
-                                                            <textarea id="notes_{{ $item->id }}" name="items[{{ $loop->index }}][notes]" rows="3"
-                                                                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md @error('items.' . $loop->index . '.notes') border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500 @enderror"
-                                                                placeholder="Enter diagnostic findings and repair recommendations..." required>{{ old('items.' . $loop->index . '.notes') }}</textarea>
-                                                        </div>
-                                                        @error('items.' . $loop->index . '.notes')
-                                                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                                        @enderror
-                                                    </div>
-
-                                                    <div class="flex justify-end">
-                                                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                                            Submit Estimate for Approval
-                                                        </button>
-                                                    </div>
-                                                </form>
-                                            @elseif(auth()->user()->isOnSiteVendor() || (!auth()->user()->isOffSiteVendor() && $item->status !== 'diagnostic'))
-                                                <!-- On-Site Vendor Work Completion Form -->
-                                                <form action="{{ route('vendor.inspections.update-status', $inspection) }}" method="POST" class="space-y-4" enctype="multipart/form-data">
-                                                    @csrf
-                                                    <input type="hidden" name="items[{{ $loop->index }}][id]" value="{{ $item->id }}">
                                                     
                                                     <div>
-                                                        <label class="block text-sm font-medium text-gray-700">Status Update</label>
-                                                        <div class="mt-2 space-x-4">
-                                                            <label class="inline-flex items-center">
-                                                                <input type="radio" name="items[{{ $loop->index }}][status]" value="completed" class="form-radio text-indigo-600" required
-                                                                    {{ old('items.' . $loop->index . '.status') === 'completed' ? 'checked' : '' }}>
-                                                                <span class="ml-2 text-sm text-gray-700">Complete</span>
-                                                            </label>
-                                                            <label class="inline-flex items-center">
-                                                                <input type="radio" name="items[{{ $loop->index }}][status]" value="cancelled" class="form-radio text-red-600"
-                                                                    {{ old('items.' . $loop->index . '.status') === 'cancelled' ? 'checked' : '' }}>
-                                                                <span class="ml-2 text-sm text-gray-700">Cancel</span>
-                                                            </label>
-                                                        </div>
-                                                        @error('items.' . $loop->index . '.status')
-                                                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                                        @enderror
+                                                        <label for="images_{{ $item->id }}" class="block text-sm font-medium text-gray-700">Images</label>
+                                                        <input type="file" name="images[]" id="images_{{ $item->id }}" multiple
+                                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                                            accept="image/*" onchange="showFileNames(this)">
+                                                        <p class="mt-1 text-xs text-gray-500">Upload photos to document your work (JPG or PNG, max 5MB each)</p>
                                                     </div>
-
-                                                    @if(auth()->user()->isOnSiteVendor())
-                                                        <div>
-                                                            <label for="actual_cost_{{ $item->id }}" class="block text-sm font-medium text-gray-700">
-                                                                Actual Cost <span class="text-red-500">*</span>
-                                                            </label>
-                                                            <div class="mt-1 relative rounded-md shadow-sm">
-                                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                                    <span class="text-gray-500 sm:text-sm">$</span>
-                                                                </div>
-                                                                <input type="number" step="0.01" min="0" name="items[{{ $loop->index }}][actual_cost]" id="actual_cost_{{ $item->id }}"
-                                                                    class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md @error('items.' . $loop->index . '.actual_cost') border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500 @enderror"
-                                                                    placeholder="0.00" required
-                                                                    value="{{ old('items.' . $loop->index . '.actual_cost') }}">
-                                                            </div>
-                                                            @error('items.' . $loop->index . '.actual_cost')
-                                                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                                            @enderror
-                                                            <p class="mt-1 text-xs text-gray-500">As an on-site vendor, you must enter the actual cost of the work performed.</p>
-                                                        </div>
-                                                    @endif
-
+                                                    
+                                                    <div id="file-list-{{ $item->id }}"></div>
+                                                    
                                                     <div>
-                                                        <label for="completion_notes_{{ $item->id }}" class="block text-sm font-medium text-gray-700">
-                                                            Completion Notes <span class="text-red-500">*</span>
-                                                        </label>
-                                                        <div class="mt-1">
-                                                            <textarea id="completion_notes_{{ $item->id }}" name="items[{{ $loop->index }}][completion_notes]" rows="3"
-                                                                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md @error('items.' . $loop->index . '.completion_notes') border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500 @enderror"
-                                                                placeholder="Enter detailed notes about the work performed..." required>{{ old('items.' . $loop->index . '.completion_notes') }}</textarea>
-                                                        </div>
-                                                        @error('items.' . $loop->index . '.completion_notes')
-                                                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                                        @enderror
+                                                        <label for="caption_{{ $item->id }}" class="block text-sm font-medium text-gray-700">Caption (Optional)</label>
+                                                        <input type="text" name="caption" id="caption_{{ $item->id }}" 
+                                                            class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                                                            placeholder="Describe what this image shows">
                                                     </div>
-
-                                                    <div>
-                                                        <label class="block text-sm font-medium text-gray-700">Photos</label>
-                                                        <div class="mt-1">
-                                                            <input type="file" name="items[{{ $loop->index }}][photos][]" multiple
-                                                                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                                                                accept="image/*">
-                                                        </div>
-                                                        <p class="mt-1 text-xs text-gray-500">Upload photos of the completed work (recommended)</p>
-                                                        @error('items.' . $loop->index . '.photos')
-                                                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                                        @enderror
-                                                    </div>
-
-                                                    <div class="flex justify-end">
-                                                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                                            {{ auth()->user()->isOnSiteVendor() ? 'Complete Work & Submit Cost' : 'Update Status' }}
-                                                        </button>
-                                                    </div>
+                                                    
+                                                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        </svg>
+                                                        Upload Images
+                                                    </button>
                                                 </form>
-                                            @endif
+                                            </div>
                                         </div>
                                     @else
                                         <div class="mt-4 space-y-4">
@@ -264,4 +227,37 @@
             </div>
         </div>
     </div>
-</x-app-layout> 
+</x-app-layout>
+
+@push('scripts')
+<script>
+function showFileNames(input) {
+    // Extract the item ID from the input ID
+    const itemId = input.id.split('_')[1];
+    
+    // Create a file list div if it doesn't exist
+    let filesDiv = document.getElementById('file-list-' + itemId);
+    if (!filesDiv) {
+        filesDiv = document.createElement('div');
+        filesDiv.id = 'file-list-' + itemId;
+        filesDiv.className = 'mt-2 text-xs text-gray-600';
+        input.parentNode.appendChild(filesDiv);
+    } else {
+        filesDiv.innerHTML = '';
+    }
+    
+    if (input.files.length > 0) {
+        const fileList = document.createElement('ul');
+        fileList.className = 'list-disc pl-5';
+        
+        Array.from(input.files).forEach(file => {
+            const li = document.createElement('li');
+            li.textContent = file.name;
+            fileList.appendChild(li);
+        });
+        
+        filesDiv.appendChild(fileList);
+    }
+}
+</script>
+@endpush 
