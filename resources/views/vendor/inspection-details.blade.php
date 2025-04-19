@@ -49,7 +49,7 @@
                     @else
                         <div class="space-y-6">
                             @foreach($inspection->inspectionItems as $item)
-                                <div class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
+                                <div id="item-{{ $item->id }}" class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
                                     <div class="flex flex-col md:flex-row md:items-start md:justify-between">
                                         <div class="flex-grow">
                                             <h4 class="text-base font-medium text-gray-900">{{ $item->inspectionItem->name }}</h4>
@@ -74,7 +74,7 @@
                                     @if($item->status === 'warning' || $item->status === 'fail')
                                         <div class="mt-4">
                                             <!-- Start Work Button -->
-                                            <form action="{{ route('vendor.inspections.update-item', $item) }}" method="POST" class="mb-4">
+                                            <form action="{{ route('vendor.inspections.update-item', $item) }}#item-{{ $item->id }}" method="POST" class="mb-4">
                                                 @csrf
                                                 @method('PATCH')
                                                 <input type="hidden" name="status" value="in_progress">
@@ -90,7 +90,7 @@
                                     @elseif(in_array($item->status, ['in_progress', 'diagnostic']))
                                         <div class="mt-4 space-y-6">
                                             <!-- Completion Form -->
-                                            <form action="{{ route('vendor.inspections.update-item', $item) }}" method="POST" class="space-y-4" enctype="multipart/form-data">
+                                            <form action="{{ route('vendor.inspections.update-item', $item) }}#item-{{ $item->id }}" method="POST" class="space-y-4" enctype="multipart/form-data">
                                                 @csrf
                                                 @method('PATCH')
                                                 
@@ -194,7 +194,7 @@
                                             <!-- Image Upload Form -->
                                             <div class="border-t border-gray-200 pt-4">
                                                 <h5 class="text-sm font-medium text-gray-700 mb-2">Upload Work Photos</h5>
-                                                <form action="{{ route('vendor.inspections.upload-images', $item->id) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                                                <form action="{{ route('vendor.inspections.upload-images', $item->id) }}#item-{{ $item->id }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                                                     @csrf
                                                     
                                                     <div>
@@ -379,5 +379,18 @@ function showFileNames(input) {
         filesDiv.appendChild(fileList);
     }
 }
+
+// Scroll to the anchor on page load if a hash is present
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.location.hash) {
+        const element = document.querySelector(window.location.hash);
+        if (element) {
+            // Add a slight delay to ensure the page is fully loaded
+            setTimeout(() => {
+                element.scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
+    }
+});
 </script>
 @endpush 
