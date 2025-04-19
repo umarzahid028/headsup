@@ -43,7 +43,7 @@
                                             </td>
                                             <td class="px-6 py-4">
                                                 @php
-                                                    $vendorItems = $inspection->itemResults;
+                                                    $vendorItems = $inspection->itemResults->where('status', '!=', 'pass');
                                                     $totalItems = $vendorItems->count();
                                                     $completedItems = $vendorItems->whereIn('status', ['completed', 'cancelled'])->count();
                                                 @endphp
@@ -56,10 +56,11 @@
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 @php
-                                                    $allCompleted = $vendorItems->every(function($item) {
+                                                    $filteredItems = $vendorItems;
+                                                    $allCompleted = $filteredItems->every(function($item) {
                                                         return in_array($item->status, ['completed', 'cancelled']);
                                                     });
-                                                    $allCancelled = $vendorItems->every(function($item) {
+                                                    $allCancelled = $filteredItems->every(function($item) {
                                                         return $item->status === 'cancelled';
                                                     });
                                                 @endphp
