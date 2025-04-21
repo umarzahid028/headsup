@@ -137,12 +137,12 @@ class DashboardController extends Controller
             $results = $repair->itemResults()
                 ->where('requires_repair', true)
                 ->where('repair_completed', true)
-                ->whereNotNull('completion_date')
+                ->whereNotNull('completed_at')
                 ->get();
                 
             foreach ($results as $result) {
                 $created = new Carbon($repair->created_at);
-                $completed = new Carbon($result->completion_date);
+                $completed = new Carbon($result->completed_at);
                 $days = $created->diffInDays($completed);
                 
                 $totalDays += $days;
@@ -261,9 +261,9 @@ class DashboardController extends Controller
             foreach ($vendor->inspectionItemResults as $result) {
                 $totalCost += $result->cost;
                 
-                if ($result->repair_completed && $result->completion_date) {
+                if ($result->repair_completed && $result->completed_at) {
                     $created = new Carbon($result->created_at);
-                    $completed = new Carbon($result->completion_date);
+                    $completed = new Carbon($result->completed_at);
                     $days = $created->diffInDays($completed);
                     
                     $totalDays += $days;

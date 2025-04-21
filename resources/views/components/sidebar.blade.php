@@ -166,6 +166,12 @@
                         <x-heroicon-o-users class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
                         <span class="flex-1">Sales Team</span>
                     </a>
+
+                    <!-- Sales Assignments -->
+                    <a href="{{ route('sales-assignments.index') }}" class="{{ request()->routeIs('sales-assignments.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
+                        <x-heroicon-o-user-plus class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                        <span class="flex-1">Assigned to Sales</span>
+                    </a>
                     @endhasanyrole
 
                     <!-- Sales Issues -->

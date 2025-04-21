@@ -162,6 +162,18 @@ class InspectionController extends Controller
                     ->where('vendor_id', $vendor->id)
                     ->where('status', 'completed')
                     ->update(['repair_completed' => true]);
+                
+                // Check if all repairs are completed for the vehicle
+                $vehicle = $inspection->vehicle;
+                $needsRepairItems = $inspection->itemResults()
+                    ->where('requires_repair', true)
+                    ->where('repair_completed', false)
+                    ->count();
+                
+                if ($needsRepairItems === 0) {
+                    // All repairs are completed, update vehicle status
+                    $vehicle->update(['status' => \App\Models\Vehicle::STATUS_REPAIRS_COMPLETED]);
+                }
             }
         }
 

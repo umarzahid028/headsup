@@ -230,8 +230,36 @@
                                 <div class="text-sm text-gray-500">
                                     @if($vehicle->transport_status !== 'delivered')
                                         Vehicle must be delivered by transporter to start an inspection
-                                    @elseif($vehicle->status === 'ready')
-                                        Vehicle has completed all inspections
+                                    @elseif($vehicle->status === 'ready' || $vehicle->status === \App\Models\Vehicle::STATUS_REPAIRS_COMPLETED)
+                                        @if($vehicle->status === \App\Models\Vehicle::STATUS_REPAIRS_COMPLETED)
+                                            Vehicle has completed all repairs
+                                        @else
+                                            Vehicle has completed all inspections
+                                        @endif
+
+                                        @hasanyrole('Admin|Sales Manager|Recon Manager')
+                                            @php
+                                                $latestInspection = $vehicle->vehicleInspections()->where('status', 'completed')->latest()->first();
+                                                $needsRepairItems = 0;
+                                                
+                                                if ($latestInspection) {
+                                                    $needsRepairItems = $latestInspection->itemResults()
+                                                        ->where('requires_repair', true)
+                                                        ->where('repair_completed', false)
+                                                        ->count();
+                                                }
+                                            @endphp
+                                            
+                                            @if($latestInspection && $needsRepairItems === 0)
+                                                <form action="{{ route('inspection.inspections.assign-to-sales', $latestInspection) }}" method="POST" class="inline ml-4">
+                                                    @csrf
+                                                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 active:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                                        <x-heroicon-o-user-plus class="h-4 w-4 mr-1" />
+                                                        Assign to Sales Team
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        @endhasanyrole
                                     @else
                                         Vehicle is not ready for inspection
                                     @endif

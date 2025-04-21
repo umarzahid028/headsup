@@ -802,6 +802,42 @@ class VehicleInspectionController extends Controller
             ->with('success', 'Inspection marked as completed successfully.');
     }
 
+    /**
+     * Add a method after markComplete to assign to sales team
+     * We'll place this after markComplete and before handleInspectionItem
+     */
+    public function assignToSales(VehicleInspection $inspection)
+    {
+        // Check if inspection is completed
+        if ($inspection->status !== 'completed') {
+            return redirect()->back()->with('error', 'Vehicle inspection must be completed before assigning to sales team.');
+        }
+        
+        // Check if all repairs are completed
+        $needsRepairItems = $inspection->itemResults()
+            ->where('requires_repair', true)
+            ->where('repair_completed', false)
+            ->count();
+            
+        if ($needsRepairItems > 0) {
+            return redirect()->back()->with('error', 'All repairs must be completed before assigning to sales team.');
+        }
+        
+        // Update vehicle status to ready
+        $vehicle = $inspection->vehicle;
+        
+        // Only update status if it's not already repairs_completed
+        if ($vehicle->status !== Vehicle::STATUS_REPAIRS_COMPLETED) {
+            $vehicle->update([
+                'status' => Vehicle::STATUS_READY
+            ]);
+        }
+        
+        // Redirect to sales assignment create page
+        return redirect()->route('sales-assignments.create', $vehicle)
+            ->with('success', 'Vehicle is ready for sales team assignment.');
+    }
+
     protected function handleInspectionItem($inspection, $itemId, $itemData)
     {
         $result = $inspection->itemResults()->updateOrCreate(
@@ -844,7 +880,7 @@ class VehicleInspectionController extends Controller
             $result->update([
                 'repair_completed' => true,
                 'completion_notes' => $itemData['completion_notes'] ?? null,
-                'completion_date' => now(),
+                'completed_at' => now(),
             ]);
 
             // Handle repair completion images

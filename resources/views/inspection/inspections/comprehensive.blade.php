@@ -99,7 +99,7 @@
                         
                         <!-- Global Vendor Selection -->
                         <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                                 <div class="col-span-2">
                                     <label for="vendor_id" class="block text-sm font-medium text-gray-700 mb-1">
                                         Select Global Vendor

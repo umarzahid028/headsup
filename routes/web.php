@@ -107,6 +107,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('vehicles/{vehicle}/comprehensive', [\App\Http\Controllers\VehicleInspectionController::class, 'comprehensiveStore'])->name('comprehensive.store');
         Route::put('vehicles/{vehicle}/comprehensive', [\App\Http\Controllers\VehicleInspectionController::class, 'comprehensiveUpdate'])->name('comprehensive.update');
         
+        // Assign to Sales Team after inspection is completed
+        Route::post('inspections/{inspection}/assign-to-sales', [\App\Http\Controllers\VehicleInspectionController::class, 'assignToSales'])->name('inspection.inspections.assign-to-sales');
+        
         // Inspection Results
         Route::resource('results', \App\Http\Controllers\InspectionItemResultController::class)->only(['store', 'update', 'destroy']);
         Route::patch('/results/{result}/assign-vendor', [\App\Http\Controllers\InspectionItemResultController::class, 'assignVendor'])->name('results.assign-vendor');
@@ -180,6 +183,10 @@ Route::middleware(['auth'])->group(function () {
    
     });
 
+    // Sales Assignment Routes
+    Route::resource('sales-assignments', \App\Http\Controllers\SalesAssignmentController::class)->except(['edit', 'update']);
+
+
     // Notification Routes
     Route::get('/notifications', function () {
         return view('notifications.index', [
@@ -203,6 +210,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard/vendor', [DashboardController::class, 'vendor'])
     
         ->name('dashboard.vendor');
+
 });
 
 // Vendor Routes

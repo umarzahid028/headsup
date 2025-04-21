@@ -686,6 +686,9 @@ namespace App\Models{
  * @property string|null $interior_color
  * @property int|null $number_of_leads
  * @property string|null $status
+ * @property int|null $sales_team_id
+ * @property int|null $assigned_for_sale_by
+ * @property \Illuminate\Support\Carbon|null $assigned_for_sale_at
  * @property string|null $transport_status
  * @property string|null $body_type
  * @property string|null $drive_train
@@ -709,6 +712,7 @@ namespace App\Models{
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \App\Models\User|null $assignedBy
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\GatePass> $gatePasses
  * @property-read int|null $gate_passes_count
  * @property-read bool $has_main_image
@@ -716,16 +720,21 @@ namespace App\Models{
  * @property-read array $image_urls
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VehicleImage> $images
  * @property-read int|null $images_count
+ * @property-read \App\Models\User|null $salesTeam
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Transport> $transports
  * @property-read int|null $transports_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VehicleInspection> $vehicleInspections
  * @property-read int|null $vehicle_inspections_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle assignedToSales()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle readyForSale()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle readyForSalesAssignment()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereAdvertisingPrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereAssignedForSaleAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereAssignedForSaleBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereBodyType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereBuyerName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereCreatedAt($value)
@@ -750,6 +759,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereProcessedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle wherePurchaseDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle wherePurchasedFrom($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereSalesTeamId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereSoldDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereStockNumber($value)

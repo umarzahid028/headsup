@@ -134,9 +134,10 @@
                                                 {{ $vehicle->status == 'sold' ? 'bg-red-100 text-red-800' : '' }}
                                                 {{ $vehicle->status == 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
                                                 {{ $vehicle->status == 'in_transit' ? 'bg-blue-100 text-blue-800' : '' }}
-                                                {{ !in_array($vehicle->status, ['available', 'sold', 'pending', 'in_transit']) ? 'bg-gray-100 text-gray-800' : '' }}
+                                                {{ $vehicle->status == \App\Models\Vehicle::STATUS_REPAIRS_COMPLETED ? 'bg-purple-100 text-purple-800' : '' }}
+                                                {{ !in_array($vehicle->status, ['available', 'sold', 'pending', 'in_transit', \App\Models\Vehicle::STATUS_REPAIRS_COMPLETED]) ? 'bg-gray-100 text-gray-800' : '' }}
                                             ">
-                                                {{ ucfirst($vehicle->status ?? 'Unknown') }}
+                                                {{ $vehicle->status == \App\Models\Vehicle::STATUS_REPAIRS_COMPLETED ? 'Repairs Completed' : ucfirst($vehicle->status ?? 'Unknown') }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -153,6 +154,27 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                     </svg>
                                                 </a>
+                                                
+                                                @if(($vehicle->status === 'ready' || $vehicle->status === \App\Models\Vehicle::STATUS_REPAIRS_COMPLETED) && auth()->user()->hasAnyRole(['Admin', 'Sales Manager', 'Recon Manager']))
+                                                    @php
+                                                        $latestInspection = $vehicle->vehicleInspections()->where('status', 'completed')->latest()->first();
+                                                        $needsRepairItems = 0;
+                                                        
+                                                        if ($latestInspection) {
+                                                            $needsRepairItems = $latestInspection->itemResults()
+                                                                ->where('requires_repair', true)
+                                                                ->where('repair_completed', false)
+                                                                ->count();
+                                                        }
+                                                    @endphp
+                                                    
+                                                    @if($latestInspection && $needsRepairItems === 0)
+                                                        <a href="{{ route('sales-assignments.create', $vehicle) }}" class="text-green-600 hover:text-green-900" title="Assign to Sales Team">
+                                                            <x-heroicon-o-user-plus class="h-5 w-5" />
+                                                        </a>
+                                                    @endif
+                                                @endif
+                                                
                                                 <a href="{{ route('vehicles.edit', $vehicle) }}" class="text-yellow-600 hover:text-yellow-900">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

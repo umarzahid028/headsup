@@ -21,6 +21,11 @@ class Vehicle extends Model
     const STATUS_READY_FOR_SALE = 'Ready for Sale';
     const STATUS_IN_PROGRESS = 'In Progress';
     const STATUS_SOLD = 'Sold';
+    const STATUS_READY = 'ready';
+    const STATUS_NEEDS_REPAIR = 'needs_repair';
+    const STATUS_REPAIR_ASSIGNED = 'repair_assigned';
+    const STATUS_REPAIRS_COMPLETED = 'repairs_completed';
+    const STATUS_ASSIGNED_TO_SALES = 'assigned_to_sales';
 
     protected static function boot()
     {
@@ -73,6 +78,9 @@ class Vehicle extends Model
         'import_file',
         'processed_at',
         'transport_status',
+        'sales_team_id',
+        'assigned_for_sale_by',
+        'assigned_for_sale_at',
     ];
 
     protected $casts = [
@@ -88,6 +96,7 @@ class Vehicle extends Model
         'number_of_pics' => 'integer',
         'advertising_price' => 'decimal:2',
         'processed_at' => 'datetime',
+        'assigned_for_sale_at' => 'datetime',
     ];
 
     /**
@@ -250,5 +259,59 @@ class Vehicle extends Model
         }
         
         return $urls;
+    }
+
+    /**
+     * Get the sales team member assigned to this vehicle.
+     */
+    public function salesTeam(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sales_team_id');
+    }
+
+    /**
+     * Get the user who assigned this vehicle to sales team.
+     */
+    public function assignedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_for_sale_by');
+    }
+
+    /**
+     * Check if the vehicle has been assigned to sales team.
+     */
+    public function isAssignedToSales(): bool
+    {
+        return $this->status === self::STATUS_ASSIGNED_TO_SALES 
+            && $this->sales_team_id !== null;
+    }
+
+    /**
+     * Assign the vehicle to a sales team member.
+     */
+    public function assignToSalesTeam(int $salesTeamId, int $assignedById): bool
+    {
+        return $this->update([
+            'status' => self::STATUS_ASSIGNED_TO_SALES,
+            'sales_team_id' => $salesTeamId,
+            'assigned_for_sale_by' => $assignedById,
+            'assigned_for_sale_at' => now(),
+        ]);
+    }
+
+    /**
+     * Get all vehicles that are ready to be assigned to sales.
+     */
+    public function scopeReadyForSalesAssignment($query)
+    {
+        return $query->where('status', self::STATUS_READY);
+    }
+
+    /**
+     * Get all vehicles assigned to sales.
+     */
+    public function scopeAssignedToSales($query)
+    {
+        return $query->where('status', self::STATUS_ASSIGNED_TO_SALES);
     }
 }
