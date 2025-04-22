@@ -123,7 +123,7 @@
                                             @if($batchData->status === 'pending' || $batchData->status === 'in_transit')
                                                 <option value="picked_up">Mark Selected as Picked Up</option>
                                             @endif
-                                            @if($batchData->status === 'in_transit')
+                                            @if($batchData->status === 'in_transit' || $batchData->status === 'picked_up')
                                                 <option value="delivered">Mark Selected as Delivered</option>
                                             @endif
                                         </select>
@@ -186,7 +186,7 @@
                                     <tr>
                                         @if(auth()->user()->hasRole('Transporter'))
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                @if($transport->status === 'pending' || $transport->status === 'in_transit')
+                                                @if($transport->status === 'pending' || $transport->status === 'in_transit' || $transport->status === 'picked_up')
                                                     <input type="checkbox" name="transport_ids[]" value="{{ $transport->id }}" 
                                                         class="transport-checkbox rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                                                         @if($transport->status === 'delivered') disabled @endif>

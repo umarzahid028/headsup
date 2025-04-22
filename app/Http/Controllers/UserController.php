@@ -78,6 +78,12 @@ class UserController extends Controller
             'roles.*' => ['exists:roles,id'],
         ]);
         
+        // Double-check if the email already exists to prevent race conditions
+        if (User::where('email', $request->input('email'))->exists()) {
+            return redirect()->back()->withInput()
+                ->with('error', 'A user with this email already exists.');
+        }
+        
         DB::beginTransaction();
         
         try {
@@ -98,6 +104,17 @@ class UserController extends Controller
             return redirect()->route('admin.users.index')
                 ->with('success', 'User created successfully');
                 
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            
+            // Check specifically for duplicate entry error
+            if ($e->errorInfo[1] == 1062) {
+                return redirect()->back()->withInput()
+                    ->with('error', 'A user with this email already exists.');
+            }
+            
+            return redirect()->back()->withInput()
+                ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
         } catch (\Exception $e) {
             DB::rollBack();
             

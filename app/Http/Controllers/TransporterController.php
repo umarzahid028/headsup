@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Notifications\LoginCredentials;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class TransporterController extends Controller
 {
@@ -65,33 +66,57 @@ class TransporterController extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
+        // Double-check if a user with this email already exists
+        if (User::where('email', $validated['email'])->exists()) {
+            return redirect()->back()->withInput()
+                ->with('error', 'A user with this email already exists.');
+        }
+
         // Set is_active to true if not provided
         if (!isset($validated['is_active'])) {
             $validated['is_active'] = true;
         }
-
-        // Store the password before creating the transporter
+        
+        // Store the password before removing it from the transporter data
         $password = $validated['password'];
-        unset($validated['password']); // Remove password from transporter data
-
-        // Create the transporter
-        $transporter = Transporter::create($validated);
-
-        // Create the user account manually since we have a password
-        $user = User::create([
-            'name' => $validated['contact_person'] ?? $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($password),
-        ]);
-
-        // Assign transporter role
-        $user->assignRole('Transporter');
-
-        // Send welcome notification without password since user set it themselves
-        $user->notify(new LoginCredentials('(your chosen password)', 'Transporter'));
-
-        return redirect()->route('transporters.index')
-                         ->with('success', 'Transporter created successfully.');
+        
+        try {
+            DB::beginTransaction();
+            
+            // Create the transporter - the observer will create the user automatically
+            $transporter = Transporter::create($validated);
+            
+            // Update the user's password since they provided a custom one
+            $user = User::where('email', $validated['email'])->first();
+            if ($user) {
+                $user->password = Hash::make($password);
+                $user->save();
+                
+                // No need to send notification since user set their own password
+                // We could send a custom "welcome" notification here if needed
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('transporters.index')
+                ->with('success', 'Transporter created successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            
+            // Check specifically for duplicate entry error
+            if ($e->errorInfo[1] == 1062) {
+                return redirect()->back()->withInput()
+                    ->with('error', 'A user with this email already exists.');
+            }
+            
+            return redirect()->back()->withInput()
+                ->with('error', 'An error occurred while creating the transporter: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return redirect()->back()->withInput()
+                ->with('error', 'An error occurred while creating the transporter: ' . $e->getMessage());
+        }
     }
 
     /**

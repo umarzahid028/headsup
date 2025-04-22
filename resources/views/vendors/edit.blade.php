@@ -134,7 +134,7 @@
                             </div>
 
                             <!-- Password -->
-                            <div>
+                            <div class="password-fields">
                                 <x-input-label for="password" :value="__('New Password')" />
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -147,7 +147,7 @@
                             </div>
 
                             <!-- Password Confirmation -->
-                            <div>
+                            <div class="password-fields">
                                 <x-input-label for="password_confirmation" :value="__('Confirm New Password')" />
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -197,4 +197,38 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const typeSelector = document.getElementById('type_id');
+            const passwordFields = document.querySelectorAll('.password-fields');
+            
+            // Function to check if password fields should be shown
+            function checkPasswordFields() {
+                const selectedOption = typeSelector.options[typeSelector.selectedIndex];
+                
+                if (!selectedOption.value) {
+                    // No type selected, show password fields by default
+                    showPasswordFields(true);
+                    return;
+                }
+                
+                const isOnSite = selectedOption.getAttribute('data-is-onsite') === '1';
+                // Check vendor type - show password only for on-site vendors
+                showPasswordFields(isOnSite);
+            }
+            
+            function showPasswordFields(show) {
+                passwordFields.forEach(field => {
+                    field.style.display = show ? 'block' : 'none';
+                });
+            }
+            
+            // Run on page load
+            checkPasswordFields();
+            
+            // Run whenever vendor type changes
+            typeSelector.addEventListener('change', checkPasswordFields);
+        });
+    </script>
 </x-app-layout> 

@@ -36,6 +36,7 @@
                             <div class="flex items-center mt-2">
                                 <input id="has_system_access" name="has_system_access" type="checkbox" value="1" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" {{ old('has_system_access', $vendorType->has_system_access) ? 'checked' : '' }}>
                                 <label for="has_system_access" class="ml-2 block text-sm text-gray-900">Has System Access</label>
+                                <p class="ml-2 text-xs text-gray-500">(On-site vendors always have system access)</p>
                             </div>
                             <div class="flex items-center mt-2">
                                 <input id="is_active" name="is_active" type="checkbox" value="1" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" {{ old('is_active', $vendorType->is_active) ? 'checked' : '' }}>
@@ -56,4 +57,29 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const isOnSiteCheckbox = document.getElementById('is_on_site');
+            const hasSystemAccessCheckbox = document.getElementById('has_system_access');
+            
+            // Function to update system access based on on-site status
+            function updateSystemAccess() {
+                if (isOnSiteCheckbox.checked) {
+                    // On-site vendors must have system access
+                    hasSystemAccessCheckbox.checked = true;
+                    hasSystemAccessCheckbox.disabled = true;
+                } else {
+                    // Off-site vendors can optionally have system access
+                    hasSystemAccessCheckbox.disabled = false;
+                }
+            }
+            
+            // Run on page load
+            updateSystemAccess();
+            
+            // Listen for changes to the on-site checkbox
+            isOnSiteCheckbox.addEventListener('change', updateSystemAccess);
+        });
+    </script>
 </x-app-layout> 

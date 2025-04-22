@@ -35,16 +35,30 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        try {
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
 
-        event(new Registered($user));
+            event(new Registered($user));
 
-        Auth::login($user);
+            Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+            return redirect(route('dashboard', absolute: false));
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Check specifically for duplicate entry error
+            if ($e->errorInfo[1] == 1062) {
+                return redirect()->back()->withInput()
+                    ->withErrors(['email' => 'A user with this email already exists.']);
+            }
+            
+            return redirect()->back()->withInput()
+                ->withErrors(['error' => 'An error occurred during registration. Please try again.']);
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()
+                ->withErrors(['error' => 'An unexpected error occurred. Please try again.']);
+        }
     }
 }

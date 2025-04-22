@@ -18,14 +18,46 @@ class Vehicle extends Model
     /**
      * Vehicle status constants
      */
+    const STATUS_AVAILABLE = 'Available';
+
+    const STATUS_TRANSPORT_PENDING = 'Transport Pending';
+    const STATUS_TRANSPORT_IN_TRANSIT = 'Transport In Transit';
+    const STATUS_TRANSPORT_IN_PROGRESS = 'Transport In Progress';
+    const STATUS_TRANSPORT_DELIVERED = 'Transport Delivered';
+    const STATUS_TRANSPORT_COMPLETED = 'Transport Completed';
+    const STATUS_TRANSPORT_CANCELLED = 'Transport Cancelled';
+
+    const STATUS_INSPECTION_PENDING = 'Inspection Started';
+    const STATUS_INSPECTION_IN_PROGRESS = 'Inspection In Progress';
+    const STATUS_INSPECTION_COMPLETED = 'Inspection Completed';
+    const STATUS_INSPECTION_CANCELLED = 'Inspection Cancelled';
+
+    const STATUS_REPAIR_PENDING = 'Vendor Assigned';
+    const STATUS_REPAIR_IN_PROGRESS = 'Repair In Progress';
+    const STATUS_REPAIR_COMPLETED = 'Repair Completed';
+    const STATUS_REPAIR_CANCELLED = 'Repair Cancelled';
+
+
     const STATUS_READY_FOR_SALE = 'Ready for Sale';
-    const STATUS_IN_PROGRESS = 'In Progress';
+    const STATUS_READY_FOR_SALE_ASSIGNED = 'Ready for Sale Assigned';
     const STATUS_SOLD = 'Sold';
-    const STATUS_READY = 'ready';
-    const STATUS_NEEDS_REPAIR = 'needs_repair';
-    const STATUS_REPAIR_ASSIGNED = 'repair_assigned';
-    const STATUS_REPAIRS_COMPLETED = 'repairs_completed';
-    const STATUS_ASSIGNED_TO_SALES = 'assigned_to_sales';
+
+    const STATUS_GOODWILL_CLAIMS = 'Goodwill Claims';
+    const STATUS_GOODWILL_CLAIMS_ASSIGNED = 'Goodwill Claims Assigned';
+    const STATUS_GOODWILL_CLAIMS_COMPLETED = 'Goodwill Claims Completed';
+
+    const STATUS_ARCHIVE = 'Archive';
+
+    /**
+     * Status Category Constants
+     */
+    const CATEGORY_AVAILABLE = 'available';
+    const CATEGORY_TRANSPORT = 'transport';
+    const CATEGORY_INSPECTION = 'inspection';
+    const CATEGORY_REPAIR = 'repair';
+    const CATEGORY_SALES = 'sales';
+    const CATEGORY_GOODWILL = 'goodwill_claims';
+    const CATEGORY_ARCHIVE = 'archive';
 
     protected static function boot()
     {
@@ -40,6 +72,13 @@ class Vehicle extends Model
                               $q->where('transporter_id', auth()->user()->transporter_id);
                           });
                 });
+            }
+        });
+        
+        // Set default status to "Available" for new vehicles
+        static::creating(function (Vehicle $vehicle) {
+            if (empty($vehicle->status)) {
+                $vehicle->status = self::STATUS_AVAILABLE;
             }
         });
     }
@@ -313,5 +352,252 @@ class Vehicle extends Model
     public function scopeAssignedToSales($query)
     {
         return $query->where('status', self::STATUS_ASSIGNED_TO_SALES);
+    }
+
+    /**
+     * Check if the vehicle is in a transport-related status
+     */
+    public function isInTransportProcess(): bool
+    {
+        $transportStatuses = [
+            self::STATUS_TRANSPORT_PENDING,
+            self::STATUS_TRANSPORT_IN_TRANSIT,
+            self::STATUS_TRANSPORT_IN_PROGRESS,
+            self::STATUS_TRANSPORT_DELIVERED,
+        ];
+
+        return in_array($this->status, $transportStatuses);
+    }
+
+    /**
+     * Check if the vehicle is in an inspection-related status
+     */
+    public function isInInspectionProcess(): bool
+    {
+        $inspectionStatuses = [
+            self::STATUS_INSPECTION_PENDING,
+            self::STATUS_INSPECTION_IN_PROGRESS,
+        ];
+
+        return in_array($this->status, $inspectionStatuses);
+    }
+
+    /**
+     * Check if the vehicle is in a repair-related status
+     */
+    public function isInRepairProcess(): bool
+    {
+        $repairStatuses = [
+            self::STATUS_REPAIR_PENDING,
+            self::STATUS_REPAIR_IN_PROGRESS,
+        ];
+
+        return in_array($this->status, $repairStatuses);
+    }
+
+    /**
+     * Check if the vehicle is in a sales-related status
+     */
+    public function isInSalesProcess(): bool
+    {
+        $salesStatuses = [
+            self::STATUS_READY_FOR_SALE,
+            self::STATUS_READY_FOR_SALE_ASSIGNED,
+        ];
+
+        return in_array($this->status, $salesStatuses);
+    }
+
+    /**
+     * Check if the vehicle is in a goodwill claims-related status
+     */
+    public function isInGoodwillClaimsProcess(): bool
+    {
+        $goodwillStatuses = [
+            self::STATUS_GOODWILL_CLAIMS,
+            self::STATUS_GOODWILL_CLAIMS_ASSIGNED,
+        ];
+
+        return in_array($this->status, $goodwillStatuses);
+    }
+
+    /**
+     * Check if the vehicle is available
+     */
+    public function isAvailable(): bool
+    {
+        return $this->status === self::STATUS_AVAILABLE;
+    }
+
+    /**
+     * Check if the vehicle is sold
+     */
+    public function isSold(): bool
+    {
+        return $this->status === self::STATUS_SOLD;
+    }
+
+    /**
+     * Check if the vehicle is archived
+     */
+    public function isArchived(): bool
+    {
+        return $this->status === self::STATUS_ARCHIVE;
+    }
+
+    /**
+     * Update vehicle status
+     */
+    public function updateStatus(string $newStatus): bool
+    {
+        return app(\App\Services\VehicleStatusService::class)->updateStatus($this, $newStatus);
+    }
+
+    /**
+     * Get status category
+     */
+    public function getStatusCategory(): ?string
+    {
+        return app(\App\Services\VehicleStatusService::class)->getStatusCategory($this->status);
+    }
+
+    /**
+     * Get available status transitions
+     */
+    public function getAvailableStatusTransitions(): array
+    {
+        return app(\App\Services\VehicleStatusService::class)->getAvailableTransitions($this->status);
+    }
+
+    /**
+     * Scope for available vehicles
+     */
+    public function scopeAvailable($query)
+    {
+        return $query->where('status', self::STATUS_AVAILABLE);
+    }
+
+    /**
+     * Scope for transport process vehicles
+     */
+    public function scopeInTransportProcess($query)
+    {
+        return $query->whereIn('status', [
+            self::STATUS_TRANSPORT_PENDING,
+            self::STATUS_TRANSPORT_IN_TRANSIT,
+            self::STATUS_TRANSPORT_IN_PROGRESS,
+            self::STATUS_TRANSPORT_DELIVERED,
+        ]);
+    }
+
+    /**
+     * Scope for inspection process vehicles
+     */
+    public function scopeInInspectionProcess($query)
+    {
+        return $query->whereIn('status', [
+            self::STATUS_INSPECTION_PENDING,
+            self::STATUS_INSPECTION_IN_PROGRESS,
+        ]);
+    }
+
+    /**
+     * Scope for repair process vehicles
+     */
+    public function scopeInRepairProcess($query)
+    {
+        return $query->whereIn('status', [
+            self::STATUS_REPAIR_PENDING,
+            self::STATUS_REPAIR_IN_PROGRESS,
+        ]);
+    }
+
+    /**
+     * Scope for sales process vehicles
+     */
+    public function scopeInSalesProcess($query)
+    {
+        return $query->whereIn('status', [
+            self::STATUS_READY_FOR_SALE,
+            self::STATUS_READY_FOR_SALE_ASSIGNED,
+        ]);
+    }
+
+    /**
+     * Scope for goodwill claims process vehicles
+     */
+    public function scopeInGoodwillClaimsProcess($query)
+    {
+        return $query->whereIn('status', [
+            self::STATUS_GOODWILL_CLAIMS,
+            self::STATUS_GOODWILL_CLAIMS_ASSIGNED,
+        ]);
+    }
+
+    /**
+     * Scope for sold vehicles
+     */
+    public function scopeSold($query)
+    {
+        return $query->where('status', self::STATUS_SOLD);
+    }
+
+    /**
+     * Scope for archived vehicles
+     */
+    public function scopeArchived($query)
+    {
+        return $query->where('status', self::STATUS_ARCHIVE);
+    }
+
+    /**
+     * Scope for vehicles by status category
+     */
+    public function scopeByStatusCategory($query, string $category)
+    {
+        $statusService = app(\App\Services\VehicleStatusService::class);
+        $statuses = [];
+        
+        foreach ($statusService->getAllStatuses() as $status) {
+            if ($statusService->getStatusCategory($status) === $category) {
+                $statuses[] = $status;
+            }
+        }
+        
+        return $query->whereIn('status', $statuses);
+    }
+
+    /**
+     * Get the vehicle reads for the vehicle.
+     */
+    public function vehicleReads(): HasMany
+    {
+        return $this->hasMany(VehicleRead::class);
+    }
+
+    /**
+     * Check if vehicle has been read by the specified user.
+     */
+    public function isReadByUser($userId = null): bool
+    {
+        $userId = $userId ?? auth()->id();
+        
+        return $this->vehicleReads()
+            ->where('user_id', $userId)
+            ->exists();
+    }
+
+    /**
+     * Mark this vehicle as read by a user.
+     */
+    public function markAsRead($userId = null): void
+    {
+        $userId = $userId ?? auth()->id();
+        
+        if (!$this->isReadByUser($userId)) {
+            $this->vehicleReads()->create([
+                'user_id' => $userId
+            ]);
+        }
     }
 }

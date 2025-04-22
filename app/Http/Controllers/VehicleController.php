@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Vehicle;
 use App\Models\User;
 use App\Notifications\NewVehicleArrival;
+use App\Events\NewVehicleEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class VehicleController extends Controller
 {
@@ -49,15 +51,78 @@ class VehicleController extends Controller
             });
         }
         
+        // Filter for unread vehicles
+        if ($request->has('unread') && $request->input('unread') === 'true') {
+            $vehicles->whereDoesntHave('vehicleReads', function($query) {
+                $query->where('user_id', auth()->id());
+            });
+        }
+        
         // Apply status filter
         if ($request->filled('status')) {
             $vehicles->where('status', $request->input('status'));
         }
         
+        // Apply category filter
+        if ($request->filled('category')) {
+            $category = $request->input('category');
+            $vehicles->byStatusCategory($category);
+        }
+        
+        // Filter by specific common statuses
+        if ($request->has('filter')) {
+            $filter = $request->input('filter');
+            
+            switch ($filter) {
+                case 'available':
+                    $vehicles->available();
+                    break;
+                case 'transport':
+                    $vehicles->inTransportProcess();
+                    break;
+                case 'inspection':
+                    $vehicles->inInspectionProcess();
+                    break;
+                case 'repair':
+                    $vehicles->inRepairProcess();
+                    break;
+                case 'sales':
+                    $vehicles->inSalesProcess();
+                    break;
+                case 'sold':
+                    $vehicles->sold();
+                    break;
+                case 'goodwill':
+                    $vehicles->inGoodwillClaimsProcess();
+                    break;
+                case 'archive':
+                    $vehicles->archived();
+                    break;
+            }
+        }
+        
         // Note: The global scope in Vehicle model will automatically filter for transporters
         $vehicles = $vehicles->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
         
-        return view('vehicles.index', compact('vehicles'));
+        // Get all status values for filter dropdown
+        $statusOptions = app(\App\Services\VehicleStatusService::class)->getAllStatuses();
+        $categoryOptions = [
+            Vehicle::CATEGORY_AVAILABLE => 'Available',
+            Vehicle::CATEGORY_TRANSPORT => 'Transport',
+            Vehicle::CATEGORY_INSPECTION => 'Inspection',
+            Vehicle::CATEGORY_REPAIR => 'Repair',
+            Vehicle::CATEGORY_SALES => 'Sales',
+            Vehicle::CATEGORY_GOODWILL => 'Goodwill Claims',
+            Vehicle::CATEGORY_ARCHIVE => 'Archive',
+        ];
+        
+        // Get the newly created vehicle ID from session (if exists)
+        $newVehicleId = session('new_vehicle_id');
+        
+        // Get the updated vehicle ID from session (if exists)
+        $updatedVehicleId = session('updated_vehicle_id');
+        
+        return view('vehicles.index', compact('vehicles', 'statusOptions', 'categoryOptions', 'newVehicleId', 'updatedVehicleId'));
     }
 
     /**
@@ -103,6 +168,11 @@ class VehicleController extends Controller
         
         try {
             $vehicleData = $validated;
+            
+            // Set default status to "Available" if not provided
+            if (!isset($vehicleData['status']) || empty($vehicleData['status'])) {
+                $vehicleData['status'] = Vehicle::STATUS_AVAILABLE;
+            }
             
             // Handle main image upload if present
             if ($request->hasFile('vehicle_image')) {
@@ -164,6 +234,16 @@ class VehicleController extends Controller
             
             DB::commit();
             
+            // Store the new vehicle ID in the session
+            session()->flash('new_vehicle_id', $vehicle->id);
+            
+            // Broadcast new vehicle event for real-time notification
+            Log::info('Dispatching NewVehicleEvent for newly created vehicle', [
+                'vehicle_id' => $vehicle->id,
+                'stock_number' => $vehicle->stock_number,
+            ]);
+            broadcast(new NewVehicleEvent(1, [$vehicle->id]))->toOthers();
+            
             return redirect()->route('vehicles.index')
                 ->with('success', 'Vehicle created successfully');
         } catch (\Exception $e) {
@@ -184,20 +264,19 @@ class VehicleController extends Controller
         // For transporters, verify they have access to this vehicle
         if (auth()->user()->hasRole('Transporter')) {
             $hasAccess = $vehicle->transports()
-                ->where(function($query) {
-                    $query->where('transporter_id', auth()->user()->transporter_id)
-                        ->orWhereHas('batch', function($q) {
-                            $q->where('transporter_id', auth()->user()->transporter_id);
-                        });
+                ->where('transporter_id', auth()->user()->transporter_id)
+                ->orWhereHas('batch', function ($query) {
+                    $query->where('transporter_id', auth()->user()->transporter_id);
                 })
                 ->exists();
-                
+            
             if (!$hasAccess) {
-                abort(403, 'Unauthorized access to this vehicle.');
+                abort(403, 'You do not have access to this vehicle');
             }
-        } else {
-            $this->authorize('view vehicles');
         }
+        
+        // Mark this vehicle as read by the current user
+        $vehicle->markAsRead();
         
         return view('vehicles.show', compact('vehicle'));
     }
@@ -294,6 +373,16 @@ class VehicleController extends Controller
             }
             
             DB::commit();
+            
+            // Store the updated vehicle ID in the session
+            session()->flash('updated_vehicle_id', $vehicle->id);
+            
+            // Broadcast vehicle update event for real-time notification
+            Log::info('Dispatching NewVehicleEvent for updated vehicle', [
+                'vehicle_id' => $vehicle->id,
+                'stock_number' => $vehicle->stock_number,
+            ]);
+            broadcast(new NewVehicleEvent(1, [$vehicle->id], 'update'))->toOthers();
             
             return redirect()->route('vehicles.index')
                 ->with('success', 'Vehicle updated successfully');

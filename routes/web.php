@@ -12,8 +12,10 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\VendorDashboardController;
 use App\Http\Controllers\RepairImageController;
+use App\Http\Controllers\VehicleStatusController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\DB;
 
 // Register Broadcasting Routes
 Broadcast::routes(['middleware' => ['web', 'auth']]);
@@ -35,6 +37,12 @@ Route::middleware(['auth'])->group(function () {
     
     // Vehicle Management Routes
     Route::resource('vehicles', VehicleController::class);
+    
+    // Vehicle Status Management Routes
+    Route::get('/vehicles/{vehicle}/statuses', [VehicleStatusController::class, 'getAvailableStatuses'])->name('vehicles.statuses');
+    Route::post('/vehicles/{vehicle}/status', [VehicleStatusController::class, 'updateStatus'])->name('vehicles.update-status');
+    Route::get('/vehicles-by-status', [VehicleStatusController::class, 'getVehiclesByStatus'])->name('vehicles.by-status');
+    Route::get('/vehicles-by-category', [VehicleStatusController::class, 'getVehiclesByCategory'])->name('vehicles.by-category');
     
     // Vehicle Image Management Routes
     Route::post('/vehicles/{id}/images', [VehicleController::class, 'uploadImages'])->name('vehicles.images.upload');
@@ -240,5 +248,17 @@ Route::delete('/repair-images/{repairImage}', [RepairImageController::class, 'de
 Route::get('/examples/icon-inputs', function () {
     return view('examples.icon-inputs');
 })->middleware(['auth', 'verified'])->name('examples.icon-inputs');
+
+// Test route for vehicle import notification (remove in production)
+Route::get('/test-vehicle-import-notification', function () {
+    broadcast(new \App\Events\NewVehiclesImported([
+        'new_count' => 2,
+        'modified_count' => 3,
+        'message' => 'Test notification: 2 new vehicles, 3 modified vehicles',
+        'timestamp' => now()->timestamp
+    ]))->toOthers();
+    
+    return 'Broadcast sent. Check the browser console and notification sound.';
+});
 
 require __DIR__.'/auth.php';

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Notifications\NewVehicleImported;
+use App\Events\NewVehicleEvent;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
@@ -116,6 +117,8 @@ class VehicleImportService
         $imported = 0;
         $skipped = 0;
         $errors = 0;
+        $newVehicles = [];
+        $modifiedVehicles = [];
         
         // Open the CSV file
         $handle = fopen($filePath, 'r');
@@ -173,9 +176,16 @@ class VehicleImportService
                     $imported++;
                     $this->log('info', "Imported vehicle: {$result['message']}");
                     
-                    // Add to notification queue if it's a new vehicle
+                    // Add to notification queue if it's a new vehicle or modified vehicle
                     if ($shouldSendNotifications && !$this->dryRun) {
                         $vehiclesToNotify[] = $result['vehicle'];
+                    }
+                    
+                    // Track if it's a new or modified vehicle
+                    if ($result['is_new']) {
+                        $newVehicles[] = $result['vehicle'];
+                    } else {
+                        $modifiedVehicles[] = $result['vehicle'];
                     }
                 } elseif ($result['status'] === 'skipped') {
                     $skipped++;
@@ -202,6 +212,15 @@ class VehicleImportService
                     $this->log('error', "Error sending notifications for vehicle {$vehicle->stock_number}: " . $e->getMessage());
                 }
             }
+            
+            // Broadcast event for new vehicles to trigger sound notification
+            if (!empty($newVehicles)) {
+                $newVehicleIds = collect($newVehicles)->pluck('id')->toArray();
+                $newVehicleCount = count($newVehicleIds);
+                
+                $this->log('info', "Broadcasting NewVehicleEvent for {$newVehicleCount} new vehicles");
+                broadcast(new NewVehicleEvent($newVehicleCount, $newVehicleIds))->toOthers();
+            }
         }
         
         return [
@@ -210,6 +229,8 @@ class VehicleImportService
             'imported' => $imported,
             'skipped' => $skipped,
             'errors' => $errors,
+            'new_vehicles' => $newVehicles,
+            'modified_vehicles' => $modifiedVehicles,
         ];
     }
     
@@ -250,59 +271,81 @@ class VehicleImportService
         if ($this->dryRun) {
             return [
                 'status' => 'imported',
-                'vehicle' => new Vehicle($vehicleData),
-                'message' => "Would import vehicle: {$vehicleData['stock_number']} (dry run)",
+                'message' => "Dry run: {$vehicleData['year']} {$vehicleData['make']} {$vehicleData['model']} VIN: {$vehicleData['vin']} Stock: {$vehicleData['stock_number']}",
+                'vehicle' => new \App\Models\Vehicle($vehicleData),
+                'is_new' => true
             ];
         }
         
-        // Start database transaction
-        return DB::transaction(function() use ($vehicleData, $fileName, $additionalImages) {
-            // Check if vehicle already exists by stock_number or VIN
-            $existingVehicle = Vehicle::where('stock_number', $vehicleData['stock_number'])
-                ->orWhere('vin', $vehicleData['vin'])
-                ->first();
+        // Try to find existing vehicle by stock_number and/or VIN
+        $existingVehicle = \App\Models\Vehicle::where('stock_number', $vehicleData['stock_number'])
+                                            ->orWhere('vin', $vehicleData['vin'])
+                                            ->first();
+        
+        $isNew = false;
+        $wasModified = false;
+        $modifiedFields = [];
+        
+        if ($existingVehicle) {
+            // Check if there are changes to the vehicle data
+            foreach ($vehicleData as $key => $value) {
+                // Skip the import file and processed_at fields
+                if (in_array($key, ['import_file', 'processed_at'])) {
+                    continue;
+                }
                 
-            if ($existingVehicle) {
-                // Update existing vehicle
-                $existingVehicle->update($vehicleData);
-                $vehicle = $existingVehicle;
-                $status = 'skipped';
-                $message = "Updated existing vehicle: {$vehicleData['stock_number']}";
+                // Compare with existing values
+                if ($existingVehicle->{$key} != $value) {
+                    $modifiedFields[$key] = [
+                        'old' => $existingVehicle->{$key},
+                        'new' => $value
+                    ];
+                }
+            }
+            
+            $wasModified = !empty($modifiedFields);
+            
+            // Update existing vehicle
+            if ($wasModified) {
+                $existingVehicle->fill($vehicleData);
+                $existingVehicle->save();
+                
+                $result = [
+                    'status' => 'imported',
+                    'message' => "Updated: {$existingVehicle->year} {$existingVehicle->make} {$existingVehicle->model} VIN: {$existingVehicle->vin} Stock: {$existingVehicle->stock_number}",
+                    'vehicle' => $existingVehicle,
+                    'is_new' => false,
+                    'modified_fields' => $modifiedFields
+                ];
             } else {
-                // Create new vehicle
-                $vehicle = Vehicle::create($vehicleData);
-                $status = 'imported';
-                $message = "Imported new vehicle: {$vehicleData['stock_number']}";
+                // Skip if no changes
+                return [
+                    'status' => 'skipped',
+                    'message' => "No changes: {$existingVehicle->year} {$existingVehicle->make} {$existingVehicle->model} VIN: {$existingVehicle->vin} Stock: {$existingVehicle->stock_number}",
+                    'vehicle' => $existingVehicle,
+                    'is_new' => false
+                ];
             }
+        } else {
+            // Create new vehicle
+            $vehicle = new \App\Models\Vehicle($vehicleData);
+            $vehicle->save();
+            $isNew = true;
             
-            // Process additional images
-            if (!empty($additionalImages)) {
-                // Remove any existing images first (for updates)
-                if ($status === 'skipped') {
-                    $vehicle->images()->delete();
-                }
-                
-                // Add new images
-                foreach ($additionalImages as $index => $imageUrl) {
-                    // Only set the first image as featured if the vehicle doesn't have a main image
-                    $is_featured = ($index === 0 && empty($vehicle->image_path));
-                    
-                    $vehicle->images()->create([
-                        'image_url' => $imageUrl,
-                        'sort_order' => $index + 1,
-                        'is_featured' => $is_featured,
-                    ]);
-                }
-                
-                $this->log('info', "Added " . count($additionalImages) . " additional images for vehicle: {$vehicle->stock_number}");
-            }
-            
-            return [
-                'status' => $status,
+            $result = [
+                'status' => 'imported',
+                'message' => "New: {$vehicle->year} {$vehicle->make} {$vehicle->model} VIN: {$vehicle->vin} Stock: {$vehicle->stock_number}",
                 'vehicle' => $vehicle,
-                'message' => $message,
+                'is_new' => true
             ];
-        });
+        }
+        
+        // Process additional images if any
+        if (!empty($additionalImages) && isset($result['vehicle'])) {
+            $this->processAdditionalImages($result['vehicle'], $additionalImages);
+        }
+        
+        return $result;
     }
     
     /**
@@ -595,6 +638,37 @@ class VehicleImportService
         }
         
         $this->log('info', "Sent notifications about new vehicle to " . $usersToNotify->count() . " users");
+    }
+    
+    /**
+     * Process additional images for a vehicle
+     *
+     * @param \App\Models\Vehicle $vehicle The vehicle to add images to
+     * @param array $images Array of image URLs
+     * @return void
+     */
+    protected function processAdditionalImages(\App\Models\Vehicle $vehicle, array $images): void
+    {
+        if (empty($images)) {
+            return;
+        }
+        
+        // Remove any existing images first (for updates)
+        $vehicle->images()->delete();
+        
+        // Add new images
+        foreach ($images as $index => $imageUrl) {
+            // Only set the first image as featured if the vehicle doesn't have a main image
+            $is_featured = ($index === 0 && empty($vehicle->image_path));
+            
+            $vehicle->images()->create([
+                'image_url' => $imageUrl,
+                'sort_order' => $index + 1,
+                'is_featured' => $is_featured,
+            ]);
+        }
+        
+        $this->log('info', "Added " . count($images) . " additional images for vehicle: {$vehicle->stock_number}");
     }
     
    

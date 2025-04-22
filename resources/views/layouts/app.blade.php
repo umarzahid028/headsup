@@ -218,15 +218,59 @@
             </div>
         </div>
         
+        <!-- Sound initialization elements -->
+        <div id="sound-init-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2" style="display: none;">
+            <button id="init-sound-btn" class="bg-primary text-white p-2 rounded-full shadow-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                <span class="sr-only">Initialize Sound</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.465a5 5 0 001.06-7.89l5.415-5.415a1 1 0 00-1.414-1.414L6.464 9.88a7 7 0 002.12 11.382l.293.16a1 1 0 001.414-1.414l-3.879-3.89a3 3 0 01-.626-3.314L4.21 14.216a1 1 0 101.414 1.414l-.04-.04z" />
+                </svg>
+            </button>
+            
+            @role('Admin')
+            <button id="test-sound-btn" class="bg-blue-500 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <span class="sr-only">Test Sound</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.465a5 5 0 001.06-7.89l5.415-5.415a1 1 0 00-1.414-1.414L6.464 9.88a7 7 0 002.12 11.382l.293.16a1 1 0 001.414-1.414l-3.879-3.89a3 3 0 01-.626-3.314L4.21 14.216a1 1 0 101.414 1.414l-.04-.04z" />
+                </svg>
+            </button>
+            @endrole
+        </div>
+
         <!-- Additional Scripts -->
         @stack('scripts')
         @yield('scripts')
         <script>
             // Initialize notification listener
             document.addEventListener('DOMContentLoaded', function() {
-                if (window.NotificationListener) {
-                    new NotificationListener({{ auth()->id() }});
+                // Only initialize for authenticated users
+                @auth
+                try {
+                    // Initialize sound system first to ensure it's ready
+                    if (window.VehicleImportNotification && typeof window.VehicleImportNotification.initAudio === 'function') {
+                        console.log('Attempting to initialize audio context');
+                    }
+                    
+                    // Show sound initialization button immediately for better UX
+                    const soundInitContainer = document.getElementById('sound-init-container');
+                    if (soundInitContainer) {
+                        soundInitContainer.style.display = 'flex';
+                    }
+                    
+                    // Initialize notification listener
+                    if (window.NotificationListener) {
+                        console.log('Initializing NotificationListener');
+                        const listener = new NotificationListener({{ auth()->id() }});
+                        
+                        // Store the listener instance globally for debugging
+                        window.notificationListenerInstance = listener;
+                    } else {
+                        console.warn('NotificationListener is not available on the window object');
+                    }
+                } catch (error) {
+                    console.error('Error initializing NotificationListener:', error);
                 }
+                @endauth
 
                 // Toggle notifications dropdown
                 const notificationsButton = document.getElementById('notifications-menu-button');
@@ -245,6 +289,61 @@
                         userDropdown.classList.toggle('hidden');
                     });
                 }
+
+                // Initialize sound buttons
+                const soundInitContainer = document.getElementById('sound-init-container');
+                const initSoundBtn = document.getElementById('init-sound-btn');
+                const testSoundBtn = document.getElementById('test-sound-btn');
+                
+                // Initialize sound on click
+                if (initSoundBtn) {
+                    initSoundBtn.addEventListener('click', function() {
+                        // Try to initialize audio context
+                        if (window.VehicleImportNotification && window.VehicleImportNotification.initAudio) {
+                            window.VehicleImportNotification.initAudio();
+                        }
+                        
+                        // Test the sound
+                        if (window.testVehicleNotificationSound) {
+                            window.testVehicleNotificationSound();
+                            
+                            // Don't hide button to allow multiple initializations if needed
+                            // soundInitContainer.style.display = 'none';
+                            
+                            // Add data attribute to track that it was initialized
+                            initSoundBtn.setAttribute('data-initialized', 'true');
+                            
+                            // Change color to indicate it's been initialized
+                            initSoundBtn.classList.remove('bg-primary');
+                            initSoundBtn.classList.add('bg-green-500');
+                        }
+                    });
+                }
+                
+                // Test sound button for admins
+                if (testSoundBtn) {
+                    testSoundBtn.addEventListener('click', function() {
+                        if (window.testVehicleNotificationSound) {
+                            window.testVehicleNotificationSound();
+                        }
+                    });
+                }
+
+                // Pre-load notification sound on any user interaction
+                const preloadSound = function() {
+                    if (window.VehicleImportNotification && window.VehicleImportNotification.initAudio) {
+                        window.VehicleImportNotification.initAudio();
+                        console.log('Audio context initialized via user interaction');
+                    }
+                    
+                    // Remove this event listener after first user interaction
+                    document.removeEventListener('click', preloadSound);
+                    document.removeEventListener('touchstart', preloadSound);
+                };
+                
+                // Add event listeners for first user interaction
+                document.addEventListener('click', preloadSound);
+                document.addEventListener('touchstart', preloadSound);
 
                 // Close dropdowns when clicking outside
                 document.addEventListener('click', (event) => {

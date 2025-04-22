@@ -644,6 +644,8 @@ namespace App\Models{
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Sanctum\PersonalAccessToken> $tokens
  * @property-read int|null $tokens_count
  * @property-read \App\Models\Transporter|null $transporter
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VehicleRead> $vehicleReads
+ * @property-read int|null $vehicle_reads_count
  * @property-read \App\Models\Vendor|null $vendor
  * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
@@ -725,13 +727,24 @@ namespace App\Models{
  * @property-read int|null $transports_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VehicleInspection> $vehicleInspections
  * @property-read int|null $vehicle_inspections_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VehicleRead> $vehicleReads
+ * @property-read int|null $vehicle_reads_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle archived()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle assignedToSales()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle available()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle byStatusCategory(string $category)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle inGoodwillClaimsProcess()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle inInspectionProcess()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle inRepairProcess()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle inSalesProcess()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle inTransportProcess()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle readyForSale()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle readyForSalesAssignment()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle sold()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereAdvertisingPrice($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereAssignedForSaleAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Vehicle whereAssignedForSaleBy($value)
@@ -850,6 +863,29 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleInspection whereVendorId($value)
  */
 	class VehicleInspection extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
+ * 
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property int $vehicle_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User $user
+ * @property-read \App\Models\Vehicle $vehicle
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleRead newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleRead newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleRead query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleRead whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleRead whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleRead whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleRead whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|VehicleRead whereVehicleId($value)
+ */
+	class VehicleRead extends \Eloquent {}
 }
 
 namespace App\Models{

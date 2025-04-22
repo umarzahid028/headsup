@@ -28,6 +28,7 @@ class User extends Authenticatable
         'role',
         'vendor_type',
         'is_active',
+        'transporter_id',
     ];
 
     /**
@@ -105,5 +106,35 @@ class User extends Authenticatable
     public function isOffSiteVendor(): bool
     {
         return $this->role === Role::OFFSITE_VENDOR;
+    }
+
+    /**
+     * Check if the user has system access.
+     * For vendors, this depends on their vendor type settings.
+     */
+    public function hasSystemAccess(): bool
+    {
+        // Non-vendor users automatically have access
+        if (!$this->isVendor()) {
+            return true;
+        }
+        
+        // For vendors, check the vendor type's has_system_access setting
+        return $this->vendor && $this->vendor->type && $this->vendor->type->has_system_access;
+    }
+
+    public function vehicleReads(): HasMany
+    {
+        return $this->hasMany(VehicleRead::class);
+    }
+    
+    /**
+     * Check if user has read the specified vehicle.
+     */
+    public function hasReadVehicle($vehicleId): bool
+    {
+        return $this->vehicleReads()
+            ->where('vehicle_id', $vehicleId)
+            ->exists();
     }
 }

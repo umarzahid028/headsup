@@ -27,8 +27,16 @@ class VendorMiddleware
 
         $user = auth()->user();
         
+        // Check if user is a vendor
         if (!$user->role || !($user->role instanceof Role) || !$user->role->isVendor()) {
             abort(403, 'Unauthorized. Vendor access only.');
+        }
+
+        // Check if vendor has system access based on their vendor type
+        if (!$user->hasSystemAccess()) {
+            auth()->logout();
+            return redirect()->route('login')
+                ->with('error', 'Your vendor account does not have system access. Please contact the administrator.');
         }
 
         return $next($request);

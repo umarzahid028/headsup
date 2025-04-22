@@ -118,11 +118,11 @@ class SalesAssignmentController extends Controller
             
             // Check if vehicle is ready for assignment
             $validStatuses = [
-                Vehicle::STATUS_READY, 
-                Vehicle::STATUS_REPAIRS_COMPLETED,
-                Vehicle::STATUS_READY_FOR_SALE, // Also accept "Ready for Sale"
-                'Ready for Sale', // Also accept literal string as fallback
-                'repairs_completed' // String literal as fallback
+                    Vehicle::STATUS_READY, 
+                    Vehicle::STATUS_REPAIRS_COMPLETED,
+                    Vehicle::STATUS_READY_FOR_SALE, // Also accept "Ready for Sale"
+                    'Ready for Sale', // Also accept literal string as fallback
+                    'repairs_completed' // String literal as fallback
             ];
           
             if (!in_array($vehicle->status, $validStatuses)) {

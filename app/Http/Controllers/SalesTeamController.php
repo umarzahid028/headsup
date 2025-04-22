@@ -47,20 +47,21 @@ class SalesTeamController extends Controller
     {
         $data = $request->validated();
         
+        // Check if a user with this email already exists
+        if (User::where('email', $data['email'])->exists()) {
+            return redirect()->back()->withInput()
+                ->with('error', 'A user with this email already exists.');
+        }
+        
         DB::beginTransaction();
         
         try {
-            // Check if user already exists
-            if (User::where('email', $data['email'])->exists()) {
-                throw new \Exception('A user with this email already exists.');
-            }
-
             // Handle photo upload
             if ($request->hasFile('photo')) {
                 $data['photo_path'] = $request->file('photo')->store('sales-team-photos', 'public');
             }
 
-            // If no password is provided, generate one
+            // Handle password - if not provided, generate one
             if (empty($data['password'])) {
                 $plainPassword = Str::random(10);
                 session(['generated_password' => $plainPassword]);
@@ -101,6 +102,22 @@ class SalesTeamController extends Controller
             return redirect()->route('sales-team.index')
                 ->with('success', 'Team member added successfully.');
                 
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            
+            // Delete uploaded photo if exists
+            if (isset($data['photo_path'])) {
+                Storage::disk('public')->delete($data['photo_path']);
+            }
+            
+            // Check specifically for duplicate entry error
+            if ($e->errorInfo[1] == 1062) {
+                return redirect()->back()->withInput()
+                    ->with('error', 'A user with this email already exists.');
+            }
+            
+            return redirect()->back()->withInput()
+                ->with('error', 'An error occurred while creating the team member: ' . $e->getMessage());
         } catch (\Exception $e) {
             DB::rollBack();
             

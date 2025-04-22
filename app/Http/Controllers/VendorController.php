@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Notifications\LoginCredentials;
 use Illuminate\Support\Facades\DB;
 use App\Enums\Role;
+use Illuminate\Support\Str;
 
 class VendorController extends Controller
 {
@@ -66,7 +67,19 @@ class VendorController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        // Get vendor type to determine if password is required
+        $vendorType = null;
+        $isOffSite = false;
+        $hasSystemAccess = false;
+        
+        if (!empty($request->input('type_id'))) {
+            $vendorType = VendorType::find($request->input('type_id'));
+            $isOffSite = $vendorType && !$vendorType->is_on_site;
+            $hasSystemAccess = $vendorType && $vendorType->has_system_access;
+        }
+        
+        // Define base validation rules
+        $validationRules = [
             'name' => 'required|string|max:255',
             'contact_person' => 'nullable|string|max:255',
             'email' => 'required|email|max:255',
@@ -77,63 +90,68 @@ class VendorController extends Controller
             'type_id' => 'nullable|exists:vendor_types,id',
             'notes' => 'nullable|string',
             'is_active' => 'nullable|boolean',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+        ];
+        
+        // Only require password for vendors with system access
+        if ($hasSystemAccess) {
+            $validationRules['password'] = 'required|string|min:8|confirmed';
+        }
+        
+        $validated = $request->validate($validationRules);
         
         // Set is_active default if not provided
         $validated['is_active'] = $validated['is_active'] ?? true;
         
         // Store the password before creating the vendor
-        $password = $validated['password'];
-        unset($validated['password']); // Remove password from vendor data
-
+        $password = $request->input('password');
+        
         DB::beginTransaction();
         
         try {
             // Create the vendor
             $vendor = Vendor::create($validated);
 
-            // Check if user already exists
-            $user = User::where('email', $validated['email'])->first();
+            // Get vendor type
+            $vendorType = null;
+            if (!empty($validated['type_id'])) {
+                $vendorType = VendorType::find($validated['type_id']);
+            }
 
-            if ($user) {
-                // If user exists, ensure they have the Vendor role
-                $user->assignRole('Vendor');
-                
-                // Set vendor role based on vendor type
-                $vendorType = null;
-                if (!empty($validated['type_id'])) {
-                    $vendorType = \App\Models\VendorType::find($validated['type_id']);
+            // Only create or update user account if vendor has system access
+            if ($vendorType && $vendorType->has_system_access) {
+                // Check if user already exists
+                $user = User::where('email', $validated['email'])->first();
+
+                if ($user) {
+                    // If user exists, ensure they have the Vendor role
+                    $user->assignRole('Vendor');
+                    
+                    // Set vendor role based on vendor type
+                    $user->update([
+                        'name' => $validated['contact_person'] ?? $validated['name'],
+                        'role' => $vendorType && $vendorType->is_on_site ? 
+                            Role::ONSITE_VENDOR : 
+                            Role::OFFSITE_VENDOR,
+                        'is_active' => $validated['is_active'] && ($vendorType ? $vendorType->has_system_access : false),
+                    ]);
+                } else {
+                    // Create new user account
+                    $user = User::create([
+                        'name' => $validated['contact_person'] ?? $validated['name'],
+                        'email' => $validated['email'],
+                        'password' => Hash::make($password),
+                        'role' => $vendorType && $vendorType->is_on_site ? 
+                            Role::ONSITE_VENDOR : 
+                            Role::OFFSITE_VENDOR,
+                        'is_active' => $validated['is_active'] && ($vendorType ? $vendorType->has_system_access : false),
+                    ]);
+
+                    // Assign vendor role
+                    $user->assignRole('Vendor');
+
+                    // Send welcome notification
+                    $user->notify(new LoginCredentials('(your chosen password)', 'Vendor'));
                 }
-                
-                $user->update([
-                    'name' => $validated['contact_person'] ?? $validated['name'],
-                    'role' => $vendorType && $vendorType->is_on_site ? 
-                        \App\Enums\Role::ONSITE_VENDOR : 
-                        \App\Enums\Role::OFFSITE_VENDOR,
-                ]);
-            } else {
-                // Get vendor type
-                $vendorType = null;
-                if (!empty($validated['type_id'])) {
-                    $vendorType = \App\Models\VendorType::find($validated['type_id']);
-                }
-                
-                // Create new user account
-                $user = User::create([
-                    'name' => $validated['contact_person'] ?? $validated['name'],
-                    'email' => $validated['email'],
-                    'password' => Hash::make($password),
-                    'role' => $vendorType && $vendorType->is_on_site ? 
-                        \App\Enums\Role::ONSITE_VENDOR : 
-                        \App\Enums\Role::OFFSITE_VENDOR,
-                ]);
-
-                // Assign vendor role
-                $user->assignRole('Vendor');
-
-                // Send welcome notification
-                $user->notify(new LoginCredentials('(your chosen password)', 'Vendor'));
             }
             
             DB::commit();
@@ -141,6 +159,18 @@ class VendorController extends Controller
             return redirect()->route('vendors.index')
                 ->with('success', 'Vendor created successfully.');
                 
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            
+            // Check specifically for duplicate entry error
+            if ($e->errorInfo[1] == 1062) {
+                return redirect()->back()->withInput()
+                    ->with('error', 'A user with this email already exists.');
+            }
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'An error occurred while creating the vendor: ' . $e->getMessage());
         } catch (\Exception $e) {
             DB::rollBack();
             
@@ -189,14 +219,26 @@ class VendorController extends Controller
      */
     public function update(Request $request, Vendor $vendor)
     {
-        $validated = $request->validate([
+        // Get vendor type to determine if password is required
+        $vendorType = null;
+        $isOffSite = false;
+        $hasSystemAccess = false;
+        
+        if (!empty($request->input('type_id'))) {
+            $vendorType = VendorType::find($request->input('type_id'));
+            $isOffSite = $vendorType && !$vendorType->is_on_site;
+            $hasSystemAccess = $vendorType && $vendorType->has_system_access;
+        }
+        
+        // Define base validation rules
+        $validationRules = [
             'name' => 'required|string|max:255',
             'contact_person' => 'nullable|string|max:255',
             'email' => [
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('users')->ignore($vendor->user->id),
+                $vendor->user ? Rule::unique('users')->ignore($vendor->user->id) : 'unique:users',
             ],
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
@@ -205,8 +247,14 @@ class VendorController extends Controller
             'type_id' => 'nullable|exists:vendor_types,id',
             'notes' => 'nullable|string',
             'is_active' => 'nullable|boolean',
-            'password' => 'nullable|string|min:8|confirmed',
-        ]);
+        ];
+        
+        // Only require password validation if provided or if this is a new user with system access
+        if ($request->filled('password') && $hasSystemAccess) {
+            $validationRules['password'] = 'string|min:8|confirmed';
+        }
+        
+        $validated = $request->validate($validationRules);
         
         // Set is_active default if not provided
         $validated['is_active'] = $validated['is_active'] ?? false;
@@ -218,19 +266,44 @@ class VendorController extends Controller
             // Update vendor
             $vendor->update($validated);
             
-            // Update associated user account
-            $userUpdate = [
-                'name' => $validated['contact_person'] ?? $validated['name'],
-                'email' => $validated['email'],
-            ];
-            
-            // Only update password if provided
-            if (!empty($validated['password'])) {
-                $userUpdate['password'] = Hash::make($validated['password']);
+            // Get vendor type
+            $vendorType = null;
+            if (!empty($validated['type_id'])) {
+                $vendorType = VendorType::find($validated['type_id']);
             }
             
-            // Update the user
-            $vendor->user()->update($userUpdate);
+            // Only create or update user account if vendor has system access
+            if ($vendorType && $vendorType->has_system_access) {
+                // Update associated user account
+                $userUpdate = [
+                    'name' => $validated['contact_person'] ?? $validated['name'],
+                    'email' => $validated['email'],
+                    'role' => $vendorType && $vendorType->is_on_site ? 
+                        Role::ONSITE_VENDOR : 
+                        Role::OFFSITE_VENDOR,
+                    'is_active' => $validated['is_active'] && ($vendorType ? $vendorType->has_system_access : false),
+                ];
+                
+                // Only update password if provided
+                if ($request->filled('password')) {
+                    $userUpdate['password'] = Hash::make($request->input('password'));
+                }
+                
+                // Update or create the user
+                if ($vendor->user) {
+                    $vendor->user()->update($userUpdate);
+                } else {
+                    // Create new user if doesn't exist but now has system access
+                    $userUpdate['password'] = Hash::make($request->input('password') ?? Str::random(12));
+                    $user = User::create($userUpdate);
+                    $user->assignRole('Vendor');
+                }
+            } else if ($vendor->user) {
+                // If vendor no longer has system access but has a user account, deactivate it
+                $vendor->user()->update([
+                    'is_active' => false
+                ]);
+            }
             
             DB::commit();
             

@@ -63,14 +63,23 @@
                                 <div>
                                     <p class="text-sm font-medium text-gray-500">Status</p>
                                     <p class="mt-1">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            {{ $vehicle->status == 'available' ? 'bg-green-100 text-green-800' : '' }}
-                                            {{ $vehicle->status == 'sold' ? 'bg-red-100 text-red-800' : '' }}
-                                            {{ $vehicle->status == 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                            {{ $vehicle->status == 'in_transit' ? 'bg-blue-100 text-blue-800' : '' }}
-                                            {{ !in_array($vehicle->status, ['available', 'sold', 'pending', 'in_transit']) ? 'bg-gray-100 text-gray-800' : '' }}
-                                        ">
-                                            {{ ucfirst($vehicle->status ?? 'Unknown') }}
+                                        <span class="px-2 py-1 text-xs leading-5 font-semibold rounded-full 
+                                            @if (in_array($vehicle->status, [$vehicle::STATUS_SOLD, $vehicle::STATUS_ARCHIVE]))
+                                                bg-gray-500 text-white
+                                            @elseif (in_array($vehicle->status, [$vehicle::STATUS_TRANSPORT_CANCELLED, $vehicle::STATUS_INSPECTION_CANCELLED, $vehicle::STATUS_REPAIR_CANCELLED]))
+                                                bg-red-500 text-white
+                                            @elseif (in_array($vehicle->status, [$vehicle::STATUS_TRANSPORT_COMPLETED, $vehicle::STATUS_INSPECTION_COMPLETED, $vehicle::STATUS_REPAIR_COMPLETED, $vehicle::STATUS_GOODWILL_CLAIMS_COMPLETED]))
+                                                bg-green-500 text-white
+                                            @elseif (in_array($vehicle->status, [$vehicle::STATUS_READY_FOR_SALE, $vehicle::STATUS_READY_FOR_SALE_ASSIGNED]))
+                                                bg-blue-500 text-white
+                                            @elseif (in_array($vehicle->status, [$vehicle::STATUS_TRANSPORT_IN_PROGRESS, $vehicle::STATUS_INSPECTION_IN_PROGRESS, $vehicle::STATUS_REPAIR_IN_PROGRESS, $vehicle::STATUS_TRANSPORT_IN_TRANSIT]))
+                                                bg-yellow-500 text-white
+                                            @elseif ($vehicle->status === $vehicle::STATUS_AVAILABLE)
+                                                bg-indigo-500 text-white
+                                            @else
+                                                bg-purple-500 text-white
+                                            @endif">
+                                            {{ $vehicle->status }}
                                         </span>
                                     </p>
                                 </div>
@@ -125,6 +134,11 @@
                                 @endif
                                 @endforelse
                             </div>
+                        </div>
+
+                        <!-- Vehicle Status Manager -->
+                        <div class="md:col-span-2">
+                            <x-vehicle-status-manager :vehicle="$vehicle" />
                         </div>
 
                         <!-- Additional Details -->
@@ -230,8 +244,8 @@
                                 <div class="text-sm text-gray-500">
                                     @if($vehicle->transport_status !== 'delivered')
                                         Vehicle must be delivered by transporter to start an inspection
-                                    @elseif($vehicle->status === 'ready' || $vehicle->status === \App\Models\Vehicle::STATUS_REPAIRS_COMPLETED)
-                                        @if($vehicle->status === \App\Models\Vehicle::STATUS_REPAIRS_COMPLETED)
+                                    @elseif($vehicle->status === 'ready' || $vehicle->status === \App\Models\Vehicle::STATUS_REPAIR_COMPLETED)
+                                        @if($vehicle->status === \App\Models\Vehicle::STATUS_REPAIR_COMPLETED)
                                             Vehicle has completed all repairs
                                         @else
                                             Vehicle has completed all inspections

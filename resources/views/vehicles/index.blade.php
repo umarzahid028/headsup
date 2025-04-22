@@ -19,6 +19,143 @@
         </div>
     </x-slot>
 
+    @push('scripts')
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script>
+        // Initialize Pusher to listen for real-time events
+        const enableRealtime = () => {
+            console.log('Initializing Pusher with key: {{ env('PUSHER_APP_KEY') }}, cluster: {{ env('PUSHER_APP_CLUSTER') }}');
+            
+            // Enable Pusher logging - uncomment to debug
+            Pusher.logToConsole = true;
+            
+            const pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
+                cluster: '{{ env('PUSHER_APP_CLUSTER') }}',
+                forceTLS: true,
+                enabledTransports: ['ws', 'wss']
+            });
+            
+            pusher.connection.bind('connected', function() {
+                console.log('Successfully connected to Pusher');
+            });
+            
+            pusher.connection.bind('error', function(err) {
+                console.error('Pusher connection error:', err);
+            });
+            
+            // Subscribe to the vehicles channel
+            const channel = pusher.subscribe('vehicles');
+            
+            channel.bind('pusher:subscription_succeeded', function() {
+                console.log('Successfully subscribed to vehicles channel');
+            });
+            
+            channel.bind('pusher:subscription_error', function(error) {
+                console.error('Error subscribing to vehicles channel:', error);
+            });
+            
+            // Listen for vehicle.created events
+            channel.bind('vehicle.created', function(data) {
+                console.log('New vehicles notification received', data);
+                
+                // Play notification sound
+                playNotificationSound();
+                
+                // Show notification toast
+                showNotification(data.vehicleCount);
+                
+                // Update the badge in the sidebar if present
+                const sidebarBadge = document.querySelector('.sidebar-vehicle-badge');
+                if (sidebarBadge) {
+                    const currentCount = parseInt(sidebarBadge.textContent || '0');
+                    sidebarBadge.textContent = currentCount + data.vehicleCount;
+                    sidebarBadge.classList.remove('hidden');
+                }
+                
+                // Refresh the page if we're on the vehicles list
+                if (window.location.pathname.includes('/vehicles') && !window.location.pathname.includes('/vehicles/')) {
+                    // Wait 3 seconds before refreshing to allow the notification to be seen
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                }
+            });
+        };
+        
+        // Function to play notification sound
+        const playNotificationSound = () => {
+            console.log('Attempting to play notification sound');
+            const audio = new Audio('/sounds/notification.mp3');
+            audio.volume = 0.5;
+            audio.play()
+                .then(() => console.log('Sound played successfully'))
+                .catch(e => console.error('Sound playback error:', e));
+        };
+        
+        // Function to show notification toast
+        const showNotification = (vehicleCount) => {
+            const notification = document.createElement('div');
+            notification.className = 'fixed bottom-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded shadow-lg z-50';
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <div class="py-1"><svg class="h-6 w-6 text-yellow-500 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg></div>
+                    <div>
+                        <p class="font-bold">${vehicleCount} new vehicle${vehicleCount > 1 ? 's' : ''} added!</p>
+                        <p class="text-sm">Click to view</p>
+                    </div>
+                    <button class="ml-4" onclick="this.parentNode.parentNode.remove();">×</button>
+                </div>
+            `;
+            
+            // Make the notification clickable to go to the vehicles list
+            notification.addEventListener('click', (e) => {
+                if (e.target.tagName !== 'BUTTON') {
+                    window.location.href = '{{ route('vehicles.index') }}?unread=true';
+                }
+            });
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 10 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 10000);
+        };
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Enable real-time notifications
+            enableRealtime();
+            
+            // Check if notification should play (only for new vehicles and not already played)
+            const newVehiclesCount = {{ isset($newVehicleCount) ? $newVehicleCount : 0 }};
+            const soundPlayed = sessionStorage.getItem('vehicle_notification_played');
+            
+            if (newVehiclesCount > 0 && !soundPlayed) {
+                // Play notification sound on first user interaction
+                const playSound = () => {
+                    playNotificationSound();
+                    // Mark as played in this session
+                    sessionStorage.setItem('vehicle_notification_played', 'true');
+                    // Remove event listeners after playing
+                    document.removeEventListener('click', playSound);
+                };
+                
+                // Add event listener for first user interaction
+                document.addEventListener('click', playSound, { once: true });
+                
+                // Show a notification about new vehicles
+                if (newVehiclesCount > 0) {
+                    showNotification(newVehiclesCount);
+                }
+            }
+        });
+    </script>
+    @endpush
+
     <div class="py-12">
         <div class="container mx-auto space-y-6">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -57,21 +194,51 @@
                                     />
                                 </div>
                             </div>
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" name="unread" value="true" id="unread" class="rounded text-indigo-600 focus:ring-indigo-500 h-4 w-4" {{ request('unread') === 'true' ? 'checked' : '' }}>
+                                <label for="unread" class="text-sm text-gray-700">Show only unread</label>
+                            </div>
                             <div class="w-full md:w-48">
                                 <label for="status" class="sr-only">Status</label>
                                 <select name="status" id="status" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                                     <option value="">All Statuses</option>
-                                    <option value="available" {{ request('status') == 'available' ? 'selected' : '' }}>Available</option>
-                                    <option value="sold" {{ request('status') == 'sold' ? 'selected' : '' }}>Sold</option>
-                                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="in_transit" {{ request('status') == 'in_transit' ? 'selected' : '' }}>In Transit</option>
+                                    @foreach($statusOptions as $status)
+                                        <option value="{{ $status }}" {{ request('status') == $status ? 'selected' : '' }}>
+                                            {{ $status }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="w-full md:w-48">
+                                <label for="category" class="sr-only">Category</label>
+                                <select name="category" id="category" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    <option value="">All Categories</option>
+                                    @foreach($categoryOptions as $value => $label)
+                                        <option value="{{ $value }}" {{ request('category') == $value ? 'selected' : '' }}>
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="w-full md:w-48">
+                                <label for="filter" class="sr-only">Quick Filters</label>
+                                <select name="filter" id="filter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                    <option value="">Quick Filters</option>
+                                    <option value="available" {{ request('filter') == 'available' ? 'selected' : '' }}>Available</option>
+                                    <option value="transport" {{ request('filter') == 'transport' ? 'selected' : '' }}>In Transport</option>
+                                    <option value="inspection" {{ request('filter') == 'inspection' ? 'selected' : '' }}>In Inspection</option>
+                                    <option value="repair" {{ request('filter') == 'repair' ? 'selected' : '' }}>In Repair</option>
+                                    <option value="sales" {{ request('filter') == 'sales' ? 'selected' : '' }}>In Sales</option>
+                                    <option value="sold" {{ request('filter') == 'sold' ? 'selected' : '' }}>Sold</option>
+                                    <option value="goodwill" {{ request('filter') == 'goodwill' ? 'selected' : '' }}>Goodwill Claims</option>
+                                    <option value="archive" {{ request('filter') == 'archive' ? 'selected' : '' }}>Archived</option>
                                 </select>
                             </div>
                             <div>
                                 <x-shadcn.button type="submit" variant="default">
                                     Filter
                                 </x-shadcn.button>
-                                @if(request('search') || request('status'))
+                                @if(request('search') || request('status') || request('category') || request('filter'))
                                     <a href="{{ route('vehicles.index') }}" class="ml-2">
                                         <x-shadcn.button type="button" variant="outline">
                                             Clear
@@ -81,6 +248,30 @@
                             </div>
                         </form>
                     </div>
+
+                    <!-- Row Highlighting Legend -->
+                    @if(isset($newVehicleId) || isset($updatedVehicleId))
+                    <div class="flex gap-4 mb-4 text-sm">
+                        @if(isset($newVehicleId))
+                        <div class="flex items-center">
+                            <span class="w-4 h-4 mr-2 bg-green-50 border border-green-200"></span>
+                            <span>Newly added vehicle</span>
+                        </div>
+                        @endif
+                        
+                        @if(isset($updatedVehicleId))
+                        <div class="flex items-center">
+                            <span class="w-4 h-4 mr-2 bg-yellow-50 border border-yellow-200"></span>
+                            <span>Recently updated vehicle</span>
+                        </div>
+                        @endif
+                        
+                        <div class="flex items-center">
+                            <span class="w-4 h-4 mr-2 bg-yellow-100 border border-yellow-300"></span>
+                            <span>Unread vehicle</span>
+                        </div>
+                    </div>
+                    @endif
 
                     <!-- Vehicles Table -->
                     <div class="overflow-x-auto">
@@ -115,12 +306,22 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse ($vehicles as $vehicle)
-                                    <tr>
+                                    <tr class="
+                                        @if(isset($newVehicleId) && $vehicle->id == $newVehicleId) bg-green-50 
+                                        @elseif(isset($updatedVehicleId) && $vehicle->id == $updatedVehicleId) bg-yellow-50
+                                        @elseif(!$vehicle->isReadByUser()) bg-yellow-100
+                                        @endif
+                                        hover:bg-gray-50
+                                    ">
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <img src="{{ $vehicle->image_url }}" alt="{{ $vehicle->stock_number }}" class="h-12 w-16 object-cover rounded">
+                                            <a href="{{ route('vehicles.show', $vehicle) }}" class="block">
+                                                <img src="{{ $vehicle->image_url }}" alt="{{ $vehicle->stock_number }}" class="h-12 w-16 object-cover rounded hover:opacity-80 transition-opacity">
+                                            </a>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {{ $vehicle->stock_number }}
+                                            <a href="{{ route('vehicles.show', $vehicle) }}" class="hover:text-indigo-600 hover:underline">
+                                                {{ $vehicle->stock_number }}
+                                            </a>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {{ $vehicle->year }} {{ $vehicle->make }} {{ $vehicle->model }} {{ $vehicle->trim }}
@@ -129,15 +330,23 @@
                                             {{ $vehicle->vin }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                {{ $vehicle->status == 'available' ? 'bg-green-100 text-green-800' : '' }}
-                                                {{ $vehicle->status == 'sold' ? 'bg-red-100 text-red-800' : '' }}
-                                                {{ $vehicle->status == 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
-                                                {{ $vehicle->status == 'in_transit' ? 'bg-blue-100 text-blue-800' : '' }}
-                                                {{ $vehicle->status == \App\Models\Vehicle::STATUS_REPAIRS_COMPLETED ? 'bg-purple-100 text-purple-800' : '' }}
-                                                {{ !in_array($vehicle->status, ['available', 'sold', 'pending', 'in_transit', \App\Models\Vehicle::STATUS_REPAIRS_COMPLETED]) ? 'bg-gray-100 text-gray-800' : '' }}
-                                            ">
-                                                {{ $vehicle->status == \App\Models\Vehicle::STATUS_REPAIRS_COMPLETED ? 'Repairs Completed' : ucfirst($vehicle->status ?? 'Unknown') }}
+                                            <span class="px-2 py-1 text-xs leading-5 font-semibold rounded-full 
+                                                @if (in_array($vehicle->status, [$vehicle::STATUS_SOLD, $vehicle::STATUS_ARCHIVE]))
+                                                    bg-gray-500 text-white
+                                                @elseif (in_array($vehicle->status, [$vehicle::STATUS_TRANSPORT_CANCELLED, $vehicle::STATUS_INSPECTION_CANCELLED, $vehicle::STATUS_REPAIR_CANCELLED]))
+                                                    bg-red-500 text-white
+                                                @elseif (in_array($vehicle->status, [$vehicle::STATUS_TRANSPORT_COMPLETED, $vehicle::STATUS_INSPECTION_COMPLETED, $vehicle::STATUS_REPAIR_COMPLETED, $vehicle::STATUS_GOODWILL_CLAIMS_COMPLETED]))
+                                                    bg-green-500 text-white
+                                                @elseif (in_array($vehicle->status, [$vehicle::STATUS_READY_FOR_SALE, $vehicle::STATUS_READY_FOR_SALE_ASSIGNED]))
+                                                    bg-blue-500 text-white
+                                                @elseif (in_array($vehicle->status, [$vehicle::STATUS_TRANSPORT_IN_PROGRESS, $vehicle::STATUS_INSPECTION_IN_PROGRESS, $vehicle::STATUS_REPAIR_IN_PROGRESS, $vehicle::STATUS_TRANSPORT_IN_TRANSIT]))
+                                                    bg-yellow-500 text-white
+                                                @elseif ($vehicle->status === $vehicle::STATUS_AVAILABLE)
+                                                    bg-indigo-500 text-white
+                                                @else
+                                                    bg-purple-500 text-white
+                                                @endif">
+                                                {{ $vehicle->status }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -155,7 +364,7 @@
                                                     </svg>
                                                 </a>
                                                 
-                                                @if(($vehicle->status === 'ready' || $vehicle->status === \App\Models\Vehicle::STATUS_REPAIRS_COMPLETED) && auth()->user()->hasAnyRole(['Admin', 'Sales Manager', 'Recon Manager']))
+                                                @if(($vehicle->status === 'ready' || $vehicle->status === \App\Models\Vehicle::STATUS_REPAIR_COMPLETED) && auth()->user()->hasAnyRole(['Admin', 'Sales Manager', 'Recon Manager']))
                                                     @php
                                                         $latestInspection = $vehicle->vehicleInspections()->where('status', 'completed')->latest()->first();
                                                         $needsRepairItems = 0;

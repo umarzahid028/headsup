@@ -6,6 +6,8 @@ use App\Services\VehicleImportService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use App\Events\NewVehiclesImported;
+use App\Events\NewVehicleEvent;
 
 class ImportVehiclesCsv extends Command
 {
@@ -81,6 +83,8 @@ class ImportVehiclesCsv extends Command
         $totalImported = 0;
         $totalSkipped = 0;
         $totalErrors = 0;
+        $totalNew = 0;
+        $totalModified = 0;
         
         // Configure the service
         $importService->setDebug($debug);
@@ -115,17 +119,31 @@ class ImportVehiclesCsv extends Command
             }
         });
         
+        $newVehicles = [];
+        $modifiedVehicles = [];
+        
         foreach ($files as $filePath) {
             $fileName = basename($filePath);
             $this->info("Processing file: {$fileName}");
             
             try {
-                // Process the file
+                // Process the file (directly, without queueing)
                 $result = $importService->processCsvFile($filePath, $sendNotifications);
                 
                 // Log the result
                 if ($result['success']) {
                     $this->info("Processed {$fileName}: {$result['imported']} imported, {$result['skipped']} skipped, {$result['errors']} errors.");
+                    
+                    // Track new and modified vehicles
+                    if (isset($result['new_vehicles']) && count($result['new_vehicles']) > 0) {
+                        $totalNew += count($result['new_vehicles']);
+                        $newVehicles = array_merge($newVehicles, $result['new_vehicles']);
+                    }
+                    
+                    if (isset($result['modified_vehicles']) && count($result['modified_vehicles']) > 0) {
+                        $totalModified += count($result['modified_vehicles']);
+                        $modifiedVehicles = array_merge($modifiedVehicles, $result['modified_vehicles']);
+                    }
                     
                     // Archive file if requested
                     if ($shouldArchive && !$dryRun) {
@@ -151,6 +169,52 @@ class ImportVehiclesCsv extends Command
         }
         
         $this->info("Import complete. Total: {$totalImported} imported, {$totalSkipped} skipped, {$totalErrors} errors.");
+        $this->info("New vehicles: {$totalNew}, Modified vehicles: {$totalModified}");
+        
+        // Trigger real-time notification if there are new or modified vehicles
+        if (($totalNew > 0 || $totalModified > 0) && !$dryRun) {
+            try {
+                $this->info("Broadcasting notification for new/modified vehicles...");
+                
+                // Create event data
+                $eventData = [
+                    'new_count' => $totalNew,
+                    'modified_count' => $totalModified,
+                    'new_vehicles' => $newVehicles,
+                    'modified_vehicles' => $modifiedVehicles,
+                    'message' => "Import complete: {$totalNew} new vehicles, {$totalModified} modified vehicles",
+                    'timestamp' => now()->timestamp,
+                    'source' => 'command-line'
+                ];
+                
+                // Try both broadcast methods to ensure it works in all environments
+                $event = new NewVehiclesImported($eventData);
+                
+                // Method 1: Direct broadcast
+                broadcast($event)->toOthers();
+                
+                // Method 2: Event helper (for compatibility)
+                event($event);
+                
+                // Also trigger the NewVehicleEvent for sound notification compatibility
+                if ($totalNew > 0) {
+                    // Get an array of vehicle IDs
+                    $vehicleIds = collect($newVehicles)->pluck('id')->toArray();
+                    broadcast(new NewVehicleEvent($totalNew, $vehicleIds))->toOthers();
+                    $this->info("Broadcast NewVehicleEvent for sound notification");
+                }
+                
+                $this->info("Broadcast completed successfully.");
+                
+                // For debugging, write to the log file as well
+                Log::info("Vehicle import notification broadcast", $eventData);
+            } catch (\Exception $e) {
+                $this->error("Error broadcasting notification: " . $e->getMessage());
+                if ($debug) {
+                    $this->comment("Trace: " . $e->getTraceAsString());
+                }
+            }
+        }
         
         if ($dryRun) {
             $this->comment("This was a dry run - no data was saved to the database.");

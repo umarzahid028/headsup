@@ -319,18 +319,19 @@
                                             required
                                         >
                                             <option value="">Select Status</option>
-                                            <option value="available" {{ old('status') == 'available' ? 'selected' : '' }}>
-                                                Available
+                                            <option value="{{ \App\Models\Vehicle::STATUS_AVAILABLE }}" {{ old('status', \App\Models\Vehicle::STATUS_AVAILABLE) == \App\Models\Vehicle::STATUS_AVAILABLE ? 'selected' : '' }}>
+                                                {{ \App\Models\Vehicle::STATUS_AVAILABLE }}
                                             </option>
-                                            <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>
-                                                Pending
-                                            </option>
-                                            <option value="sold" {{ old('status') == 'sold' ? 'selected' : '' }}>
-                                                Sold
-                                            </option>
-                                            <option value="in_transit" {{ old('status') == 'in_transit' ? 'selected' : '' }}>
-                                                In Transit
-                                            </option>
+                                            @foreach([
+                                                \App\Models\Vehicle::STATUS_TRANSPORT_PENDING,
+                                                \App\Models\Vehicle::STATUS_TRANSPORT_IN_TRANSIT,
+                                                \App\Models\Vehicle::STATUS_READY_FOR_SALE,
+                                                \App\Models\Vehicle::STATUS_SOLD
+                                            ] as $status)
+                                                <option value="{{ $status }}" {{ old('status') == $status ? 'selected' : '' }}>
+                                                    {{ $status }}
+                                                </option>
+                                            @endforeach
                                         </x-shadcn.select>
                                     </div>
 

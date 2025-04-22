@@ -104,7 +104,7 @@ class TransportController extends Controller
     }
 
     /**
-     * Show the form for creating a new transport.
+     * Show the form for creating a new resource.
      */
     public function create(): View
     {
@@ -113,13 +113,20 @@ class TransportController extends Controller
         }
         
         $this->authorize('create transports');
+        
+        // Get vehicles that are not sold and either have no transport or their transport is cancelled
         $vehicles = Vehicle::where('status', '!=', 'sold')
                           ->where(function($query) {
-                              $query->whereNull('transport_status')
-                                    ->orWhere('transport_status', '!=', 'in_transit');
+                              $query->whereDoesntHave('transports', function($q) {
+                                        $q->where('status', '!=', 'cancelled');
+                                    })
+                                    ->orWhereHas('transports', function($q) {
+                                        $q->where('status', 'cancelled');
+                                    });
                           })
                           ->orderBy('stock_number')
                           ->get();
+                          
         $transporters = Transporter::where('is_active', true)
                                  ->orderBy('name')
                                  ->get();
@@ -136,13 +143,20 @@ class TransportController extends Controller
         }
         
         $this->authorize('create transports');
+        
+        // Get vehicles that are not sold and either have no transport or their transport is cancelled
         $vehicles = Vehicle::where('status', '!=', 'sold')
                           ->where(function($query) {
-                              $query->whereNull('transport_status')
-                                    ->orWhere('transport_status', '!=', 'in_transit');
+                              $query->whereDoesntHave('transports', function($q) {
+                                        $q->where('status', '!=', 'cancelled');
+                                    })
+                                    ->orWhereHas('transports', function($q) {
+                                        $q->where('status', 'cancelled');
+                                    });
                           })
                           ->orderBy('stock_number')
                           ->get();
+                          
         $transporters = Transporter::where('is_active', true)
                                  ->orderBy('name')
                                  ->get();
@@ -258,7 +272,7 @@ class TransportController extends Controller
             abort(403, 'Unauthorized action.');
         }
         
-        $this->authorize('edit transports');
+    //    $this->authorize('edit transports');
         $vehicles = Vehicle::where('status', '!=', 'sold')
                           ->orderBy('stock_number')
                           ->get();
@@ -277,7 +291,7 @@ class TransportController extends Controller
             abort(403, 'Unauthorized action.');
         }
         
-        $this->authorize('edit transports');
+       // $this->authorize('edit transports');
         $validated = $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
             'transporter_id' => 'nullable|exists:transporters,id',

@@ -274,10 +274,11 @@
                                 <div class="mb-4">
                                     <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
                                     <x-shadcn.select name="status" id="status">
-                                        <option value="available" {{ old('status', $vehicle->status) == 'available' ? 'selected' : '' }}>Available</option>
-                                        <option value="pending" {{ old('status', $vehicle->status) == 'pending' ? 'selected' : '' }}>Pending</option>
-                                        <option value="sold" {{ old('status', $vehicle->status) == 'sold' ? 'selected' : '' }}>Sold</option>
-                                        <option value="in_transit" {{ old('status', $vehicle->status) == 'in_transit' ? 'selected' : '' }}>In Transit</option>
+                                        @foreach(app(\App\Services\VehicleStatusService::class)->getAllStatuses() as $status)
+                                            <option value="{{ $status }}" {{ old('status', $vehicle->status) == $status ? 'selected' : '' }}>
+                                                {{ $status }}
+                                            </option>
+                                        @endforeach
                                     </x-shadcn.select>
                                 </div>
                                 
