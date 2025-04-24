@@ -83,9 +83,7 @@
             <!-- Manager Inspection Section -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6 text-gray-900">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Manager Inspection</h3>
-                    <p class="mb-4 text-gray-700">First, complete your inspection below. After submitting, you'll be able to assign repairs to vendors.</p>
-                
+                    
                     <form id="inspection-form" method="POST" 
                         action="{{ isset($existingInspection) 
                             ? route('inspection.comprehensive.update', $vehicle) 
@@ -100,26 +98,8 @@
                         <!-- Global Vendor Selection -->
                         <div class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                                <div class="col-span-2">
-                                    <label for="vendor_id" class="block text-sm font-medium text-gray-700 mb-1">
-                                        Select Global Vendor
-                                    </label>
-                                    <select id="vendor_id" name="vendor_id" class="w-full text-sm border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                                        <option value="">Select a vendor...</option>
-                                        @foreach($vendors as $vendor)
-                                            <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <p class="mt-1 text-xs text-gray-500">
-                                        Select a vendor here to use the "Assign Selected Vendor to All Items" button below.
-                                    </p>
-                                </div>
-                                
-                                <div>
-                                    <button type="button" id="batch-assign-vendor" class="w-full px-4 py-2 bg-green-600 text-white rounded-md shadow hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                                        <i class="fas fa-user-plus mr-2"></i> Assign Selected Vendor to All Items
-                                    </button>
-                                </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Manager Inspection</h3>
+
                             </div>
                         </div>
 
@@ -290,15 +270,7 @@
 
             <!-- Vendor Assignment Section -->
             <div class="mt-8 p-4 bg-white border border-gray-200 rounded-lg shadow">
-                <!-- Estimated Total Cost Display -->
-                <div class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-lg font-medium text-gray-900">
-                            <span class="text-blue-600"><i class="fas fa-calculator mr-2"></i>Estimated Total Cost</span>
-                        </h3>
-                        <div class="text-2xl font-bold text-gray-900" id="estimated-total-cost">$0.00</div>
-                    </div>
-                </div>
+               
 
                 <h3 class="text-lg font-medium text-gray-900 border-b pb-2 mb-4">
                     <span class="text-blue-600"><i class="fas fa-tools mr-2"></i>Vendor Assignment</span>
@@ -340,7 +312,7 @@
                     </button>
                     <button type="submit" form="inspection-form" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
                         <x-heroicon-o-check-circle class="h-4 w-4 mr-1" />
-                        Complete Inspection & Assign Vendors
+                       Save & Assign Vendors
                     </button>
                 </div>
             </div>
