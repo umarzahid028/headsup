@@ -904,4 +904,39 @@ class VehicleInspectionController extends Controller
 
         return $result;
     }
+
+    /**
+     * Mark a vehicle as ready for sale after inspection
+     *
+     * @param Request $request
+     * @param VehicleInspection $inspection
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function markAsReadyForSale(VehicleInspection $inspection)
+    {
+        // Check if user has permission
+        if (!Auth::user()->hasRole(['Admin', 'Sales Manager'])) {
+            return redirect()->back()->with('error', 'You do not have permission to perform this action.');
+        }
+
+        $vehicle = $inspection->vehicle;
+
+        // Update the vehicle status
+        $success = $vehicle->markAsReadyForSale();
+
+        if ($success) {
+            // Log the status change
+            \Log::info("Vehicle marked as ready for sale", [
+                'vehicle_id' => $vehicle->id,
+                'inspection_id' => $inspection->id,
+                'from_status' => $vehicle->getOriginal('status'),
+                'to_status' => Vehicle::STATUS_READY_FOR_SALE,
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->back()->with('success', "Vehicle marked as Ready for Sale successfully.");
+        }
+
+        return redirect()->back()->with('error', 'Failed to update vehicle status.');
+    }
 } 

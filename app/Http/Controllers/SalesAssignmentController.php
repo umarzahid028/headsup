@@ -27,7 +27,7 @@ class SalesAssignmentController extends Controller
     public function index()
     {
         // Get vehicles that are ready for sales assignment (repaired and ready)
-        $readyVehicles = Vehicle::whereIn('status', [Vehicle::STATUS_READY, Vehicle::STATUS_REPAIRS_COMPLETED])
+        $readyVehicles = Vehicle::whereIn('status', ["Ready for Sale", "Repairs Completed"])
             ->whereHas('vehicleInspections', function($query) {
                 $query->where('status', 'completed');
             })
@@ -38,7 +38,7 @@ class SalesAssignmentController extends Controller
             ->paginate(10);
         
         // Get vehicles already assigned to sales
-        $assignedVehicles = Vehicle::where('status', Vehicle::STATUS_ASSIGNED_TO_SALES)
+        $assignedVehicles = Vehicle::where('status', "Assigned to Sales")
             ->with(['salesTeam', 'assignedBy'])
             ->orderBy('assigned_for_sale_at', 'desc')
             ->paginate(10);
@@ -59,7 +59,7 @@ class SalesAssignmentController extends Controller
             $vehicle = Vehicle::where('vin', '1G1FD1RS9G0120133')->first();
             // Check if vehicle is ready for assignment - accept both constants and the actual value
             $validStatuses = [
-                Vehicle::STATUS_READY, 
+                Vehicle::STATUS_READY_FOR_SALE, 
                 Vehicle::STATUS_REPAIRS_COMPLETED,
                 Vehicle::STATUS_READY_FOR_SALE, // Also accept "Ready for Sale"`
             ];
@@ -118,7 +118,7 @@ class SalesAssignmentController extends Controller
             
             // Check if vehicle is ready for assignment
             $validStatuses = [
-                    Vehicle::STATUS_READY, 
+                    Vehicle::STATUS_READY_FOR_SALE, 
                     Vehicle::STATUS_REPAIRS_COMPLETED,
                     Vehicle::STATUS_READY_FOR_SALE, // Also accept "Ready for Sale"
                     'Ready for Sale', // Also accept literal string as fallback
@@ -218,7 +218,7 @@ class SalesAssignmentController extends Controller
         
         // Reset the vehicle status to ready
         $vehicle->update([
-            'status' => Vehicle::STATUS_READY,
+            'status' => Vehicle::STATUS_READY_FOR_SALE,
             'sales_team_id' => null,
             'assigned_for_sale_by' => null,
             'assigned_for_sale_at' => null,
@@ -233,7 +233,7 @@ class SalesAssignmentController extends Controller
      */
     public function debug()
     {
-        $readyVehicles = Vehicle::whereIn('status', [Vehicle::STATUS_READY, Vehicle::STATUS_REPAIRS_COMPLETED])
+        $readyVehicles = Vehicle::whereIn('status', [Vehicle::STATUS_READY_FOR_SALE, Vehicle::STATUS_REPAIRS_COMPLETED])
             ->whereHas('vehicleInspections', function($query) {
                 $query->where('status', 'completed');
             })
@@ -249,20 +249,15 @@ class SalesAssignmentController extends Controller
                     'id' => $vehicle->id,
                     'stock_number' => $vehicle->stock_number,
                     'status' => $vehicle->status,
-                    'make' => $vehicle->make,
-                    'model' => $vehicle->model,
-                    'routes' => [
-                        'create' => route('sales-assignments.create', $vehicle),
-                        'debug' => url('/debug-sales-assignment-create/' . $vehicle->id)
-                    ]
+                    'inspections' => $vehicle->vehicleInspections->map(function($inspection) {
+                        return [
+                            'id' => $inspection->id,
+                            'status' => $inspection->status,
+                            'completed_date' => $inspection->completed_date,
+                        ];
+                    }),
                 ];
             }),
-            'sales_team_members' => User::role('Sales Team')->get(['id', 'name', 'email']),
-            'route_list' => [
-                'index' => route('sales-assignments.index'),
-                'create' => 'Use vehicle-specific links above',
-                'store' => route('sales-assignments.store', 1) // Example
-            ]
         ];
         
         return response()->json($data);

@@ -111,9 +111,9 @@
 
                                         $status = $inspection->itemResults()
                                             ->where('vendor_id', $inspection->itemResults()->first()->vendor_id)
-                                            ->where('status', 'completed')
-                                            ->count() > 0 ? 'completed' : 'in_progress';
-                                        
+                                            ->whereIn('status', ['completed', 'cancelled'])
+                                            ->count() > 0 ? 'in_progress' : 'completed';
+                    
                                         /*
                                         if ($vendorStatus === 'assigned' && $inspection->itemResults()
                                         
@@ -182,6 +182,18 @@
                                                     View
                                                 </span>
                                             </a>
+                                            
+                                            @if(Auth::user()->hasRole(['Admin', 'Sales Manager']) && $inspection->status === 'completed' && $vehicle->status !== 'Ready for Sale')
+                                                <form method="POST" action="{{ route('inspection.inspections.mark-ready-for-sale', $inspection) }}" class="inline-block">
+                                                    @csrf
+                                                    <button type="submit" class="text-green-600 hover:text-green-900" onclick="return confirm('Are you sure you want to mark this vehicle as Ready for Sale?')">
+                                                        <span class="inline-flex items-center">
+                                                            <x-heroicon-o-check-badge class="w-4 h-4 mr-1" />
+                                                            Ready for Sale
+                                                        </span>
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty

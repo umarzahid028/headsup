@@ -109,6 +109,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('inspections/images/{image}', [\App\Http\Controllers\VehicleInspectionController::class, 'deleteImage'])->name('inspections.delete-image');
         Route::post('vehicles/{vehicle}/start-inspection', [\App\Http\Controllers\VehicleInspectionController::class, 'startInspection'])->name('vehicles.start-inspection');
         Route::patch('inspections/{inspection}/complete', [\App\Http\Controllers\VehicleInspectionController::class, 'markComplete'])->name('inspections.complete');
+        Route::post('inspections/{inspection}/mark-ready-for-sale', [\App\Http\Controllers\VehicleInspectionController::class, 'markAsReadyForSale'])->name('inspections.mark-ready-for-sale');
         
         // Comprehensive Inspection (all stages at once)
         Route::get('vehicles/{vehicle}/comprehensive', [\App\Http\Controllers\VehicleInspectionController::class, 'comprehensive'])->name('comprehensive.show');
