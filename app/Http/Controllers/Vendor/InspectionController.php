@@ -18,6 +18,7 @@ class InspectionController extends Controller
      */
     public function index(): View
     {
+        
         $user = auth()->user();
         $vendor = $user->vendor;
         
@@ -25,13 +26,15 @@ class InspectionController extends Controller
             abort(403, 'No vendor profile found for this user.');
         }
         
-        $assignedInspections = VehicleInspection::with(['vehicle', 'itemResults'])
-            ->whereHas('itemResults', function ($query) use ($vendor) {
+        $assignedInspections = VehicleInspection::with(['vehicle', 'inspectionItems'])
+            ->whereHas('inspectionItems', function ($query) use ($vendor) {
                 $query->where('vendor_id', $vendor->id);
+                
             })
+
             ->orderBy('created_at', 'desc')
             ->get();
-
+        //    dd($assignedInspections);
         return view('vendor.inspections.index', compact('assignedInspections'));
     }
 

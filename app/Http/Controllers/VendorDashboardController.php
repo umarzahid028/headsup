@@ -10,6 +10,7 @@ class VendorDashboardController extends Controller
 {
     public function index(): View
     {
+     
         $user = auth()->user();
         $vendor = $user->vendor;
         
@@ -98,6 +99,7 @@ class VendorDashboardController extends Controller
 
     public function inspectionHistory(): View
     {
+        
         $user = auth()->user();
         $vendor = $user->vendor;
         
@@ -139,22 +141,22 @@ class VendorDashboardController extends Controller
         if (!$inspection->itemResults()->where('vendor_id', $vendor->id)->exists()) {
             abort(403);
         }
-
-        // Load only items that are assigned to the vendor and need repair/replacement (warning/fail)
+  
         $inspection->load([
             'vehicle', 
             'itemResults' => function ($query) use ($vendor) {
+                // Only load item results assigned to this vendor
                 $query->where('vendor_id', $vendor->id)
-                      ->where('status', '!=', 'pass')
+                      // Only include items that need attention (not passing or requiring repair)
                       ->where(function($q) {
-                          $q->whereIn('status', ['warning', 'fail', 'in_progress', 'diagnostic', 'completed', 'cancelled'])
+                          $q->where('status', '!=', 'pass')
                             ->orWhere('requires_repair', true);
                       });
             },
             'itemResults.inspectionItem',
             'itemResults.repairImages'
         ]);
-
+      
         return view('vendor.inspection-details', compact('inspection'));
     }
 

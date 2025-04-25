@@ -346,7 +346,7 @@
                                                 @else
                                                     bg-purple-500 text-white
                                                 @endif">
-                                                {{ $vehicle->status }}
+                                                {{ ucfirst(str_replace('_', ' ', $vehicle->status)) }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

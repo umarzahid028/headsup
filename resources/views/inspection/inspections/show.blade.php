@@ -98,7 +98,7 @@
                                 ($inspection->status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 
                                 ($inspection->status === 'failed' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800')) 
                             }}">
-                                {{ ucfirst($inspection->status) }}
+                                {{ ucfirst(str_replace('_', ' ', $inspection->status)) }}
                             </span>
                         </div>
                     </div>
@@ -114,8 +114,8 @@
                         <h3 class="text-lg font-medium text-gray-900 mb-2">Inspection Progress</h3>
                         <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
                             @php
-                                $completedItems = $inspection->itemResults->whereIn('status', ['pass', 'warning', 'fail'])->count();
-                                $totalItems = $inspection->inspectionStage->inspectionItems->count();
+                                $totalItems = $inspection->itemResults->whereIn('status', ['completed', 'warning', 'fail'])->count();
+                                $completedItems = $inspection->itemResults->whereIn('status', ['completed'])->count();
                                 $progress = $totalItems > 0 ? ($completedItems / $totalItems) * 100 : 0;
                             @endphp
                             <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ $progress }}%"></div>
@@ -193,7 +193,13 @@
                                                 ($result->status === 'warning' ? 'bg-yellow-100 text-yellow-800' : 
                                                 ($result->status === 'fail' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800')) 
                                             }}">
-                                                {{ ucfirst($result->status) }}
+                                            @if($result->status  == 'warning')
+                                                Repair
+                                            @elseif($result->status  == 'fail')
+                                                Replace
+                                            @else
+                                                {{ $result->status  }}
+                                            @endif
                                             </span>
                                             @if($result->repair_completed)
                                                 <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -203,7 +209,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900">
-                                                {{ $result->assignedVendor ? $result->assignedVendor->name : 'Not Assigned' }}
+                                                {{ $result->assignedVendor ? $result->assignedVendor->name : 'Not Assigned' }} ({{ $result->assignedVendor->type->name ?? "N/A" }})
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
@@ -244,25 +250,7 @@
                                                 <span class="text-sm text-gray-500">No images</span>
                                             @endif
                                             
-                                            @can('edit vehicles')
-                                                <form action="{{ route('inspection.inspections.upload-images', $result->id) }}" 
-                                                      method="POST" 
-                                                      enctype="multipart/form-data" 
-                                                      class="mt-2">
-                                                    @csrf
-                                                    <div class="flex items-center space-x-2">
-                                                        <input type="file" 
-                                                               name="images[]" 
-                                                               accept="image/*" 
-                                                               multiple 
-                                                               class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                                                        <button type="submit" 
-                                                                class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                                            Upload
-                                                        </button>
-                                                    </div>
-                                                </form>
-                                            @endcan
+                                          
                                         </td>
                                     </tr>
                                 @endforeach

@@ -26,6 +26,7 @@ class VehicleInspectionController extends Controller
      */
     public function index(Request $request)
     {
+       
         $query = VehicleInspection::with([
             'vehicle.vehicleInspections.inspectionStage',
             'inspectionStage',

@@ -81,6 +81,7 @@
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inspection Stage</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inspection Status</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
@@ -106,12 +107,23 @@
                                             ->count() > 0 ? 'assigned' : 'not_assigned';
                                             
                                         // Check if repairs are completed
+
+
+                                        $status = $inspection->itemResults()
+                                            ->where('vendor_id', $inspection->itemResults()->first()->vendor_id)
+                                            ->where('status', 'completed')
+                                            ->count() > 0 ? 'completed' : 'in_progress';
+                                        
+                                        /*
                                         if ($vendorStatus === 'assigned' && $inspection->itemResults()
+                                        
                                             ->whereNotNull('vendor_id')
                                             ->where('repair_completed', true)
                                             ->exists()) {
+                                                dd( );
                                                 $vendorStatus = 'completed';
                                             }
+                                        */
                                     @endphp
                                     <tr>
                                         <td class="px-6 py-4 whitespace-nowrap">
@@ -140,9 +152,19 @@
                                                 {{ $vendorStatus === 'completed' ? 'bg-green-100 text-green-800' : 
                                                 ($vendorStatus === 'assigned' ? 'bg-blue-100 text-blue-800' : 
                                                 'bg-gray-100 text-gray-800') }}">
+                                                
                                                 {{ $vendorStatus === 'completed' ? 'Repairs Completed' : 
                                                    ($vendorStatus === 'assigned' ? 'Assigned to Vendor' : 
                                                    'Not Assigned') }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                {{ $status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                                ($status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 
+                                                'bg-gray-100 text-gray-800') }}">
+                                                
+                                                {{ucfirst(str_replace('_', ' ', $status))}}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">

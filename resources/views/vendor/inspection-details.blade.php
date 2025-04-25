@@ -49,6 +49,8 @@
                     @else
                         <div class="space-y-6">
                             @foreach($inspection->inspectionItems as $item)
+                            @if($item->status !== 'pass' and $item->vendor_id === Auth::user()->vendor->id)
+                        
                                 <div id="item-{{ $item->id }}" class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
                                     <div class="flex flex-col md:flex-row md:items-start md:justify-between">
                                         <div class="flex-grow">
@@ -340,6 +342,7 @@
                                         </div>
                                     @endif
                                 </div>
+                            @endif
                             @endforeach
                         </div>
                     @endif
