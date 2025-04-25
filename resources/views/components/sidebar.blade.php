@@ -80,7 +80,7 @@
                 @endrole
 
                 @if(!auth()->user()->hasRole('Vendor') && !auth()->user()->hasRole('Transporter'))
-                    @hasanyrole('Admin|Sales Manager|Recon Manager')
+                    @hasanyrole('Admin|Sales Manager')
                     <!-- Vehicle Management Section -->
                     <div class="pt-2">
                         <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -141,6 +141,9 @@
                                 </span>
                             @endif
                         </a>
+
+                        <!-- Offsite Vendor Inspections (for Recon Manager only) -->
+                      
                     </div>
 
                     <!-- Inspection Configuration -->
@@ -179,6 +182,27 @@
                     </div>
                     @endhasanyrole
                 @endif
+
+                @hasrole('Recon Manager')
+                        <a href="{{ route('recon.offsite-inspections.index') }}" class="{{ request()->routeIs('recon.offsite-inspections.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
+                            <x-heroicon-o-building-storefront class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                            <span class="flex-1">Off-Site Vendor </span>
+                            @php
+                                $offsiteInspectionsCount = \App\Models\InspectionItemResult::whereHas('assignedVendor', function($query) {
+                                    $query->whereHas('type', function($q) {
+                                        $q->where('is_on_site', false);
+                                    });
+                                })
+                                ->where('repair_completed', false)
+                                ->count();
+                            @endphp
+                            @if($offsiteInspectionsCount > 0)
+                                <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                    {{ $offsiteInspectionsCount }}
+                                </span>
+                            @endif
+                        </a>
+                        @endhasrole
 
                 <!-- Sales Management Section -->
                 @canany(['view sales issues', 'view goodwill claims'])

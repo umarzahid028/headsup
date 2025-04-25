@@ -261,4 +261,18 @@ Route::get('/test-vehicle-import-notification', function () {
     return 'Broadcast sent. Check the browser console and notification sound.';
 });
 
+// Recon Manager Off-Site Vendor Inspection Routes
+Route::prefix('recon')->name('recon.')->middleware(['auth', 'role:Recon Manager'])->group(function () {
+    Route::get('offsite-inspections', [\App\Http\Controllers\Recon\OffsiteInspectionController::class, 'index'])
+        ->name('offsite-inspections.index');
+    Route::get('offsite-inspections/{vehicle}', [\App\Http\Controllers\Recon\OffsiteInspectionController::class, 'show'])
+        ->name('offsite-inspections.show');
+    Route::patch('offsite-inspections/items/{item}/update-status', [\App\Http\Controllers\Recon\OffsiteInspectionController::class, 'updateItemStatus'])
+        ->name('offsite-inspections.update-status');
+    Route::post('offsite-inspections/items/{item}/upload-images', [\App\Http\Controllers\Recon\OffsiteInspectionController::class, 'uploadImages'])
+        ->name('offsite-inspections.upload-images');
+    Route::delete('offsite-inspections/images/{repairImage}', [\App\Http\Controllers\Recon\OffsiteInspectionController::class, 'deleteImage'])
+        ->name('offsite-inspections.delete-image');
+});
+
 require __DIR__.'/auth.php';
