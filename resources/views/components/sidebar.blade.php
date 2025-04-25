@@ -194,6 +194,7 @@
                                     });
                                 })
                                 ->where('repair_completed', false)
+                                ->where('status', '!=', 'cancelled')
                                 ->count();
                             @endphp
                             @if($offsiteInspectionsCount > 0)

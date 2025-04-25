@@ -63,7 +63,7 @@
                                         Items
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Status
+                                        Completion Status
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Assigned Vendor
@@ -148,8 +148,8 @@
                                                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
                                                             @foreach($item->repairImages as $image)
                                                                 <div class="relative group">
-                                                                    <a href="{{ Storage::url($image->file_path) }}" target="_blank" class="block">
-                                                                        <img src="{{ Storage::url($image->file_path) }}" alt="Repair Image" class="w-full h-24 object-cover rounded border border-gray-200">
+                                                                    <a href="{{ Storage::url($image->image_path) }}" target="_blank" class="block">
+                                                                        <img src="{{ Storage::url($image->image_path) }}" alt="Repair Image" class="w-full h-24 object-cover rounded border border-gray-200">
                                                                     </a>
                                                                     <form action="{{ route('recon.offsite-inspections.delete-image', $image) }}" method="POST" class="absolute top-1 right-1 hidden group-hover:block">
                                                                         @csrf

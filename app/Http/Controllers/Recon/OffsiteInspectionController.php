@@ -41,14 +41,13 @@ class OffsiteInspectionController extends Controller
                     $q->where('is_on_site', false);
                 });
             })
-            ->where('requires_repair', true)
-            ->where('repair_completed', false)
+            
             ->latest()
             ->paginate(15);
 
         // Group by vehicle for better display organization
         $itemsByVehicle = $offsiteInspectionItems->groupBy('vehicleInspection.vehicle_id');
-        
+       
         return view('recon.offsite-inspections.index', compact('offsiteInspectionItems', 'itemsByVehicle'));
     }
 
@@ -156,7 +155,7 @@ class OffsiteInspectionController extends Controller
             
             $repairImage = RepairImage::create([
                 'inspection_item_result_id' => $item->id,
-                'file_path' => $path,
+                'image_path' => $path,
                 'caption' => 'Repair image uploaded by Recon Manager',
                 'uploaded_by' => auth()->id(),
             ]);
@@ -177,7 +176,7 @@ class OffsiteInspectionController extends Controller
         }
         
         try {
-            Storage::disk('public')->delete($repairImage->file_path);
+            Storage::disk('public')->delete($repairImage->image_path);
             $repairImage->delete();
             
             return redirect()->back()->with('success', 'Image deleted successfully.');

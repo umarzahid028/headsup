@@ -39,10 +39,12 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @foreach($itemsByVehicle as $vehicleId => $items)
                                     @php
+                                        $vendor = $items->first()->assignedVendor;
                                         $vehicle = $items->first()->vehicleInspection->vehicle;
-                                        $vendors = $items->pluck('assignedVendor')->unique('id');
-                                        
-                                        $completedCount = $items->where('status', 'completed')->count();
+                                       
+                                        // Count items that are either completed or cancelled
+                                        $completedCount = $items->whereIn('status', ['completed', 'cancelled'])->count();
+
                                         $totalCount = $items->count();
                                         $percentComplete = $totalCount > 0 ? ($completedCount / $totalCount) * 100 : 0;
                                         
@@ -64,7 +66,7 @@
                                             <div class="text-sm text-gray-900">
                                                 {{ $completedCount }} / {{ $totalCount }} completed
                                             </div>
-                                            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                                            <div class="w-44 bg-gray-200 rounded-full h-2.5 mt-2">
                                                 <div class="bg-green-600 h-2.5 rounded-full" style="width: {{ $percentComplete }}%"></div>
                                             </div>
                                             <div class="text-xs text-gray-500 mt-1">{{ number_format($percentComplete) }}%</div>
@@ -72,15 +74,15 @@
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @if($percentComplete == 100)
                                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                    Completed
+                                                    All Complete
                                                 </span>
                                             @elseif($percentComplete > 0)
                                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                    In Progress
+                                                    In Progress ({{ $completedCount }}/{{ $totalCount }})
                                                 </span>
                                             @else
                                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                    Pending
+                                                    Pending (0/{{ $totalCount }})
                                                 </span>
                                             @endif
                                         </td>
