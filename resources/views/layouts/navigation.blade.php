@@ -45,6 +45,7 @@
                         @endif
                     </x-nav-link>
                     @endcan
+
                 </div>
             </div>
 

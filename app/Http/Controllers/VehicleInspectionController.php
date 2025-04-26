@@ -796,7 +796,7 @@ class VehicleInspectionController extends Controller
             ->count();
         
         if ($pendingInspections === 0) {
-            $vehicle->update(['status' => 'ready']);
+            $vehicle->update(['status' => Vehicle::STATUS_READY_FOR_SALE]);
         }
         
         return redirect()->route('inspection.inspections.index')
@@ -809,34 +809,58 @@ class VehicleInspectionController extends Controller
      */
     public function assignToSales(VehicleInspection $inspection)
     {
-        // Check if inspection is completed
-        if ($inspection->status !== 'completed') {
-            return redirect()->back()->with('error', 'Vehicle inspection must be completed before assigning to sales team.');
-        }
-        
-        // Check if all repairs are completed
-        $needsRepairItems = $inspection->itemResults()
-            ->where('requires_repair', true)
-            ->where('repair_completed', false)
-            ->count();
+        try {
+            // Check if inspection is completed
+            if ($inspection->status !== 'completed') {
+                return redirect()->back()->with('error', 'Vehicle inspection must be completed before assigning to sales team.');
+            }
             
-        if ($needsRepairItems > 0) {
-            return redirect()->back()->with('error', 'All repairs must be completed before assigning to sales team.');
-        }
-        
-        // Update vehicle status to ready
-        $vehicle = $inspection->vehicle;
-        
-        // Only update status if it's not already repairs_completed
-        if ($vehicle->status !== Vehicle::STATUS_REPAIRS_COMPLETED) {
-            $vehicle->update([
-                'status' => Vehicle::STATUS_READY
+            // Check if all repairs are completed
+            $needsRepairItems = $inspection->itemResults()
+                ->where('requires_repair', true)
+                ->where('repair_completed', false)
+                ->count();
+                
+            if ($needsRepairItems > 0) {
+                return redirect()->back()->with('error', 'All repairs must be completed before assigning to sales team.');
+            }
+            
+            // Get the vehicle from the inspection
+            $vehicle = $inspection->vehicle;
+            
+            // Verify we have a valid vehicle
+            if (!$vehicle || !$vehicle->id) {
+                \Log::error('Invalid vehicle in assignToSales method', [
+                    'inspection_id' => $inspection->id,
+                    'vehicle' => $vehicle
+                ]);
+                return redirect()->back()->with('error', 'Could not find the vehicle associated with this inspection.');
+            }
+            
+            // Only update status if it's not already repairs_completed
+            if ($vehicle->status !== Vehicle::STATUS_REPAIRS_COMPLETED) {
+                $vehicle->update([
+                    'status' => Vehicle::STATUS_READY_FOR_SALE
+                ]);
+            }
+            
+            \Log::info('Assigning vehicle to sales', [
+                'vehicle_id' => $vehicle->id,
+                'vehicle_status' => $vehicle->status
             ]);
+            
+            // Redirect to sales assignment create page with the vehicle ID directly in the URL
+            return redirect()->route('sales-assignments.create', $vehicle->id)
+                ->with('success', 'Vehicle is ready for sales team assignment.');
+        } catch (\Exception $e) {
+            \Log::error('Error in assignToSales method', [
+                'inspection_id' => $inspection->id ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()->with('error', 'An error occurred: ' . $e->getMessage());
         }
-        
-        // Redirect to sales assignment create page
-        return redirect()->route('sales-assignments.create', $vehicle)
-            ->with('success', 'Vehicle is ready for sales team assignment.');
     }
 
     protected function handleInspectionItem($inspection, $itemId, $itemData)

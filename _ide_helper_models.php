@@ -722,6 +722,7 @@ namespace App\Models{
  * @property-read array $image_urls
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VehicleImage> $images
  * @property-read int|null $images_count
+ * @property-read \App\Models\Sale|null $sale
  * @property-read \App\Models\User|null $salesTeam
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Transport> $transports
  * @property-read int|null $transports_count

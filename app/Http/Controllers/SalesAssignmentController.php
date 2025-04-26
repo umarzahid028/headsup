@@ -27,7 +27,7 @@ class SalesAssignmentController extends Controller
     public function index()
     {
         // Get vehicles that are ready for sales assignment (repaired and ready)
-        $readyVehicles = Vehicle::whereIn('status', ["Ready for Sale", "Repairs Completed"])
+        $readyVehicles = Vehicle::whereIn('status', [Vehicle::STATUS_READY_FOR_SALE, Vehicle::STATUS_REPAIRS_COMPLETED])
             ->whereHas('vehicleInspections', function($query) {
                 $query->where('status', 'completed');
             })
@@ -38,13 +38,18 @@ class SalesAssignmentController extends Controller
             ->paginate(10);
         
         // Get vehicles already assigned to sales
-        $assignedVehicles = Vehicle::where('status', "Assigned to Sales")
+        $assignedVehicles = Vehicle::where('status', Vehicle::STATUS_ASSIGNED_TO_SALES)
             ->with(['salesTeam', 'assignedBy'])
             ->orderBy('assigned_for_sale_at', 'desc')
             ->paginate(10);
             
         // Get sales team members (users with Sales Team role)
         $salesTeamMembers = User::role('Sales Team')->orderBy('name')->get();
+        
+        // Check if we have any sales team members
+        if ($salesTeamMembers->isEmpty() && $readyVehicles->isNotEmpty()) {
+            session()->flash('warning', 'No sales team members are available. Please add sales team members before assigning vehicles.');
+        }
             
         return view('sales-assignments.index', compact('readyVehicles', 'assignedVehicles', 'salesTeamMembers'));
     }
@@ -52,46 +57,79 @@ class SalesAssignmentController extends Controller
     /**
      * Show the form for assigning a vehicle to sales team.
      */
-    public function create(Vehicle $vehicle)
+    public function create(Request $request, $vehicleId = null)
     {
+       
         try {
-           
-            $vehicle = Vehicle::where('vin', '1G1FD1RS9G0120133')->first();
-            // Check if vehicle is ready for assignment - accept both constants and the actual value
+            // Check if we're receiving a direct vehicle ID parameter
+            if ($vehicleId ) {
+                $vehicle = Vehicle::findOrFail($vehicleId);
+                
+            }
+            // Otherwise, check if a 'vehicle' parameter was passed in the request
+            else if ($request->has('vehicle') && ($request->vehicle)) {
+                $vehicle = Vehicle::findOrFail($request->vehicle);
+            }
+            // Fallback for any other ways the vehicle might be passed
+            else {
+                $vehicle = $request->vehicle instanceof Vehicle ? $request->vehicle : null;
+            }
+            
+            // First verify that we have a valid vehicle with an ID
+            if (!$vehicle || !$vehicle->id) {
+              
+                return redirect()->route('sales-assignments.index')
+                    ->with('error', 'Invalid vehicle. Please try again with a valid vehicle.');
+            }
+
+            // Check if the vehicle exists and is in a status that can be assigned to sales
+            if (!$vehicle || !in_array($vehicle->status, [
+                Vehicle::STATUS_READY_FOR_SALE,
+            ])) {
+                return redirect()->route('sales-assignments.index')
+                    ->with('error', 'Invalid vehicle. Please try again with a valid vehicle.');
+            }
+
+            // Check that the vehicle has a status
+            if (!$vehicle->status) {
+                
+                $reloadedVehicle = Vehicle::find($vehicle->id);
+                if (!$reloadedVehicle || !$reloadedVehicle->status) {
+                    return redirect()->route('sales-assignments.index')
+                        ->with('error', 'Vehicle has no status assigned. Please ensure the vehicle record is complete.');
+                }
+                
+                // If we found a status on reload, use the reloaded vehicle
+                $vehicle = $reloadedVehicle;
+            }
+
+            // Now check if vehicle is ready for assignment using our new hasStatus method
             $validStatuses = [
                 Vehicle::STATUS_READY_FOR_SALE, 
-                Vehicle::STATUS_REPAIRS_COMPLETED,
-                Vehicle::STATUS_READY_FOR_SALE, // Also accept "Ready for Sale"`
+                Vehicle::STATUS_REPAIRS_COMPLETED
             ];
-          
             
-            // if (!in_array($vehicle->status, $validStatuses)) {
-            //     \Log::warning('Vehicle not ready for sales assignment', [
-            //         'vehicle_id' => $vehicle->id, 
-            //         'status' => $vehicle->status,
-            //         'valid_statuses' => $validStatuses
-            //     ]);
-            //     return redirect()->route('sales-assignments.index')
-            //         ->with('error', 'This vehicle is not ready for sales assignment.');
-            // }
+            if (!$vehicle->hasStatus($validStatuses)) {
+                return redirect()->route('sales-assignments.index')
+                    ->with('error', "This vehicle is not ready for sales assignment. Current status: {$vehicle->status}");
+            }
             
-            // Check if the vehicle has completed inspections
+            // Get completed inspection
             $completedInspection = $vehicle->vehicleInspections()
                 ->where('status', 'completed')
                 ->latest()
                 ->first();
                 
-            // if (!$completedInspection) {
-            //     \Log::warning('Vehicle does not have completed inspection', ['vehicle_id' => $vehicle->id]);
-            //     return redirect()->route('sales-assignments.index')
-            //         ->with('error', 'This vehicle does not have a completed inspection.');
-            // }
+            // Check if the vehicle has completed inspections
+            if (!$completedInspection) {
+                return redirect()->route('sales-assignments.index')
+                    ->with('error', 'This vehicle does not have a completed inspection.');
+            }
             
             // Get sales team members
             $salesTeamMembers = User::role('Sales Team')->orderBy('name')->get();
             
             if ($salesTeamMembers->isEmpty()) {
-            
                 return redirect()->route('sales-assignments.index')
                     ->with('error', 'No sales team members available for assignment.');
             }
@@ -109,30 +147,31 @@ class SalesAssignmentController extends Controller
     public function store(Request $request, Vehicle $vehicle)
     {
         try {
+            
+            
             // Validate request
             $validated = $request->validate([
                 'sales_team_id' => 'required|exists:users,id',
                 'notes' => 'nullable|string|max:500',
             ]);
-            $vehicle = Vehicle::where('vin', '1G1FD1RS9G0120133')->first();
+            
+            // Verify the vehicle exists and has a status
+            if (!$vehicle || !$vehicle->id || !$vehicle->status) {
+               
+                return redirect()->route('sales-assignments.index')
+                    ->with('error', 'Invalid vehicle or missing vehicle status. Please try again.');
+            }
             
             // Check if vehicle is ready for assignment
             $validStatuses = [
-                    Vehicle::STATUS_READY_FOR_SALE, 
-                    Vehicle::STATUS_REPAIRS_COMPLETED,
-                    Vehicle::STATUS_READY_FOR_SALE, // Also accept "Ready for Sale"
-                    'Ready for Sale', // Also accept literal string as fallback
-                    'repairs_completed' // String literal as fallback
+                Vehicle::STATUS_READY_FOR_SALE, 
+                Vehicle::STATUS_REPAIRS_COMPLETED
             ];
           
-            if (!in_array($vehicle->status, $validStatuses)) {
-                \Log::warning('Vehicle not ready for sales assignment in store method', [
-                    'vehicle_id' => $vehicle->id, 
-                    'status' => $vehicle->status,
-                    'valid_statuses' => $validStatuses
-                ]);
+            if (!$vehicle->hasStatus($validStatuses)) {
+                
                 return redirect()->route('sales-assignments.index')
-                    ->with('error', 'This vehicle is not ready for sales assignment.');
+                    ->with('error', "This vehicle is not ready for sales assignment. Current status: {$vehicle->status}");
             }
             
             // Check if the selected user has Sales Team role
@@ -153,33 +192,22 @@ class SalesAssignmentController extends Controller
                     // You can implement notes functionality here if needed
                     // Example: $vehicle->notes()->create(['content' => $validated['notes'], 'user_id' => Auth::id()]);
                 }
+
+                
                 
                 DB::commit();
                 
-                // Send notification to sales team member (optional)
-                // $salesTeamMember->notify(new VehicleAssignedToSales($vehicle));
-                
+           
                 return redirect()->route('sales-assignments.index')
                     ->with('success', "Vehicle {$vehicle->stock_number} assigned to {$salesTeamMember->name} successfully.");
                     
             } catch (\Exception $e) {
                 DB::rollBack();
-                \Log::error('Failed to assign vehicle to sales team', [
-                    'vehicle_id' => $vehicle->id,
-                    'sales_team_id' => $salesTeamMember->id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
                 
                 return redirect()->route('sales-assignments.create', $vehicle)
                     ->with('error', 'Failed to assign vehicle to sales team: ' . $e->getMessage());
             }
         } catch (\Exception $e) {
-            \Log::error('Error in sales assignment store method', [
-                'vehicle_id' => $vehicle->id ?? null,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             
             return redirect()->route('sales-assignments.index')
                 ->with('error', 'An error occurred: ' . $e->getMessage());
@@ -192,7 +220,7 @@ class SalesAssignmentController extends Controller
     public function show(Vehicle $vehicle)
     {
         // Check if vehicle is assigned to sales
-        if ($vehicle->status !== Vehicle::STATUS_ASSIGNED_TO_SALES) {
+        if ($vehicle->status !== "Assigned to Sales") {
             return redirect()->route('sales-assignments.index')
                 ->with('error', 'This vehicle is not assigned to sales.');
         }
@@ -211,7 +239,7 @@ class SalesAssignmentController extends Controller
     public function destroy(Vehicle $vehicle)
     {
         // Check if vehicle is assigned to sales
-        if ($vehicle->status !== Vehicle::STATUS_ASSIGNED_TO_SALES) {
+        if ($vehicle->status !== "Assigned to Sales") {
             return redirect()->route('sales-assignments.index')
                 ->with('error', 'This vehicle is not assigned to sales.');
         }

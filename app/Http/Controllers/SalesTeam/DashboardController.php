@@ -31,4 +31,5 @@ class DashboardController extends Controller
 
         return view('sales-team.dashboard', compact('readyVehicles', 'stats'));
     }
+    
 } 

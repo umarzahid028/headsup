@@ -36,10 +36,12 @@ class Vehicle extends Model
     const STATUS_REPAIR_IN_PROGRESS = 'Repair In Progress';
     const STATUS_REPAIR_COMPLETED = 'Repair Completed';
     const STATUS_REPAIR_CANCELLED = 'Repair Cancelled';
+    const STATUS_REPAIRS_COMPLETED = 'Repairs Completed';
 
 
     const STATUS_READY_FOR_SALE = 'Ready for Sale';
     const STATUS_READY_FOR_SALE_ASSIGNED = 'Ready for Sale Assigned';
+    const STATUS_ASSIGNED_TO_SALES = 'Assigned to Sales';
     const STATUS_SOLD = 'Sold';
 
     const STATUS_GOODWILL_CLAIMS = 'Goodwill Claims';
@@ -343,7 +345,7 @@ class Vehicle extends Model
      */
     public function scopeReadyForSalesAssignment($query)
     {
-        return $query->where('status', self::STATUS_READY);
+        return $query->where('status', self::STATUS_READY_FOR_SALE);
     }
 
     /**
@@ -599,5 +601,51 @@ class Vehicle extends Model
                 'user_id' => $userId
             ]);
         }
+    }
+
+    /**
+     * Helper method to normalize status values for consistent comparison
+     *
+     * @param string $status The status to normalize
+     * @return string The normalized status constant
+     */
+    public static function normalizeStatus($status)
+    {
+        // Map of common status strings to their constant values
+        $statusMap = [
+            'ready for sale' => self::STATUS_READY_FOR_SALE,
+            'repairs completed' => self::STATUS_REPAIRS_COMPLETED,
+            'repair completed' => self::STATUS_REPAIR_COMPLETED,
+            'assigned to sales' => self::STATUS_ASSIGNED_TO_SALES,
+        ];
+
+        // Convert to lowercase for case-insensitive comparison
+        $lowerStatus = strtolower($status);
+        
+        // Return mapped constant if it exists, otherwise return original
+        return $statusMap[$lowerStatus] ?? $status;
+    }
+
+    /**
+     * Check if vehicle status matches one of the provided statuses
+     *
+     * @param array|string $validStatuses One or more valid statuses to check against
+     * @return bool Whether the vehicle's status matches any of the valid statuses
+     */
+    public function hasStatus($validStatuses)
+    {
+        if (!is_array($validStatuses)) {
+            $validStatuses = [$validStatuses];
+        }
+        
+        // Normalize both the vehicle's status and the valid statuses for comparison
+        $normalizedStatus = self::normalizeStatus($this->status);
+        $normalizedValidStatuses = array_map([self::class, 'normalizeStatus'], $validStatuses);
+        
+        return in_array($normalizedStatus, $normalizedValidStatuses);
+    }
+    public function sale()
+    {
+        return $this->hasOne(Sale::class);
     }
 }

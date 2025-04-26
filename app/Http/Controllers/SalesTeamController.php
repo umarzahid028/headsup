@@ -72,7 +72,7 @@ class SalesTeamController extends Controller
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
-                'password' => $data['password'], // Will be hashed by User model
+                'password' => Hash::make($data['password']), // Will be hashed by User model
                 'phone' => $data['phone'] ?? null,
             ]);
 
@@ -168,12 +168,35 @@ class SalesTeamController extends Controller
                 $data['photo_path'] = $request->file('photo')->store('sales-team-photos', 'public');
             }
 
-            // Remove empty password from data
-            if (empty($data['password'])) {
-                unset($data['password']);
+            // First update the sales team record
+            $salesTeam->update([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'phone' => $data['phone'] ?? $salesTeam->phone,
+                'position' => $data['position'],
+                'bio' => $data['bio'] ?? $salesTeam->bio,
+                'photo_path' => $data['photo_path'] ?? $salesTeam->photo_path,
+                'is_active' => $data['is_active'] ?? $salesTeam->is_active,
+                'manager_id' => $data['manager_id'] ?? $salesTeam->manager_id,
+            ]);
+            
+            // Find and update the corresponding user
+            $user = User::where('email', $salesTeam->getOriginal('email'))->first();
+            
+            if ($user) {
+                $userUpdateData = [
+                    'name' => $data['name'],
+                    'email' => $data['email'],
+                    'phone' => $data['phone'] ?? $user->phone,
+                ];
+                
+                // Only update password if provided
+                if (!empty($data['password'])) {
+                    $userUpdateData['password'] = Hash::make($data['password']);
+                }
+                
+                $user->update($userUpdateData);
             }
-
-            $salesTeam->update($data);
             
             DB::commit();
             

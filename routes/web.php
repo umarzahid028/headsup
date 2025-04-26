@@ -135,7 +135,6 @@ Route::middleware(['auth'])->group(function () {
         // Sales Team Routes
         Route::resource('sales-team', App\Http\Controllers\SalesTeamController::class);
         Route::patch('sales-team/{salesTeam}/toggle-active', [App\Http\Controllers\SalesTeamController::class, 'toggleActive'])->name('sales-team.toggle-active');
-        Route::get('sales-team-test-flow', [App\Http\Controllers\SalesTeamController::class, 'testCreateFlow'])->name('sales-team.test-flow');
 
         // Sales Issues Routes
         Route::resource('issues', SalesIssueController::class)->names([
@@ -193,7 +192,9 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Sales Assignment Routes
-    Route::resource('sales-assignments', \App\Http\Controllers\SalesAssignmentController::class)->except(['edit', 'update']);
+    Route::get('sales-assignments/create/{vehicle}', [\App\Http\Controllers\SalesAssignmentController::class, 'create'])->name('sales-assignments.create');
+    Route::post('sales-assignments/{vehicle}', [\App\Http\Controllers\SalesAssignmentController::class, 'store'])->name('sales-assignments.store');
+    Route::resource('sales-assignments', \App\Http\Controllers\SalesAssignmentController::class)->except(['edit', 'update', 'create', 'store']);
 
 
     // Notification Routes
@@ -274,6 +275,16 @@ Route::prefix('recon')->name('recon.')->middleware(['auth', 'role:Recon Manager'
         ->name('offsite-inspections.upload-images');
     Route::delete('offsite-inspections/images/{repairImage}', [\App\Http\Controllers\Recon\OffsiteInspectionController::class, 'deleteImage'])
         ->name('offsite-inspections.delete-image');
+});
+
+Route::middleware(['auth', 'role:Sales Team'])->prefix('sales-team')->name('sales-team.')->group(function () {
+    // Vehicles routes
+    Route::get('/vehicles', [App\Http\Controllers\SalesTeam\VehicleController::class, 'index'])->name('vehicles.index');
+    
+    // Sales routes
+    Route::get('/sales/create', [App\Http\Controllers\SalesTeam\SaleController::class, 'create'])->name('sales.create');
+    Route::post('/sales-store', [App\Http\Controllers\SalesTeam\SaleController::class, 'store'])->name('sales.store');
+    Route::get('/sales', [App\Http\Controllers\SalesTeam\SaleController::class, 'index'])->name('sales.index');
 });
 
 require __DIR__.'/auth.php';

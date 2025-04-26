@@ -220,10 +220,7 @@
                     </a>
 
                     <!-- Sales Assignments -->
-                    <a href="{{ route('sales-assignments.index') }}" class="{{ request()->routeIs('sales-assignments.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
-                        <x-heroicon-o-user-plus class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
-                        <span class="flex-1">Assigned to Sales</span>
-                    </a>
+                    
                     @endhasanyrole
 
                     <!-- Sales Issues -->
@@ -253,6 +250,22 @@
                     @endcan
                 </div>
                 @endcanany
+
+                @if(auth()->user()->hasRole('Sales Team'))
+                <div class="pt-5">
+                    <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Sales Management
+                    </p>
+                    <a href="{{ route('sales-team.vehicles.index') }}" class="{{ request()->routeIs('sales-team.vehicles.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
+                        <x-heroicon-o-truck class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                        <span class="flex-1">Assigned Vehicles</span>
+                    </a>
+                    <a href="{{ route('sales-team.sales.create') }}" class="{{ request()->routeIs('sales-team.sales.create') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
+                        <x-heroicon-o-currency-dollar class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
+                        <span class="flex-1">Create New Sale</span>
+                    </a>
+                </div>
+                @endif
 
                 <!-- Administration Section -->
                 @canany(['view users', 'assign roles'])

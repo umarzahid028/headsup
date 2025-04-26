@@ -8,6 +8,7 @@ enum Role: string
     case MANAGER = 'Manager';
     case RECON_MANAGER = 'Recon Manager';
     case VENDOR_MANAGER = 'Vendor';
+    case SALES_TEAM = 'Sales Team';
     case TRANSPORTER = 'Transporter';
     case SALES_MANAGER = 'Sales Manager';
     case ONSITE_VENDOR = 'On-Site Vendor';
@@ -22,6 +23,7 @@ enum Role: string
             self::TRANSPORTER => 'Transporter',
             self::VENDOR_MANAGER => 'Vendor',
             self::SALES_MANAGER => 'Sales Manager',
+            self::SALES_TEAM => 'Sales Team',
             self::ONSITE_VENDOR => 'On-Site Vendor',
             self::OFFSITE_VENDOR => 'Off-Site Vendor',
         };
