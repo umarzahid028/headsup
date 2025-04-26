@@ -61,7 +61,9 @@ class GoodwillClaimController extends Controller
         // Get all active vehicles for the dropdown
         $vehicles = Vehicle::orderBy('stock_number')
             ->select('id', 'stock_number', 'year', 'make', 'model')
+            ->where('status', 'Sold')
             ->get();
+           
 
         return view('sales.goodwill-claims.create', [
             'vehicles' => $vehicles,
@@ -100,7 +102,8 @@ class GoodwillClaimController extends Controller
         $managers = User::role(['Admin', 'Sales Manager'])->get();
         Notification::send($managers, new NewGoodwillClaimSubmitted($claim));
 
-        return redirect()->route('sales.goodwill-claims.show', $claim)
+        //goodwill-claims/{claim}/signature
+        return redirect()->route('sales.goodwill-claims.show',  $claim->id.'/signature')
             ->with('success', 'Goodwill claim submitted successfully.');
     }
 
@@ -110,6 +113,7 @@ class GoodwillClaimController extends Controller
     public function show(GoodwillClaim $claim)
     {
         $claim->load(['vehicle', 'salesIssue', 'createdBy', 'approvedBy']);
+
         return view('sales.goodwill-claims.show', compact('claim'));
     }
 
@@ -134,7 +138,7 @@ class GoodwillClaimController extends Controller
             'approved_at' => in_array($validated['status'], ['approved', 'rejected']) ? now() : null,
         ]);
 
-        return redirect()->route('sales.goodwill-claims.show', $claim)
+        return redirect()->route('sales.goodwill-claims.show', ['goodwill_claim' => $claim])
             ->with('success', 'Claim status updated successfully.');
     }
 
@@ -152,7 +156,7 @@ class GoodwillClaimController extends Controller
             'customer_consent_date' => $validated['customer_consent'] ? now() : null,
         ]);
 
-        return redirect()->route('sales.goodwill-claims.show', $claim)
+        return redirect()->route('sales.goodwill-claims.show', ['goodwill_claim' => $claim])
             ->with('success', 'Customer consent updated successfully.');
     }
 
@@ -188,7 +192,7 @@ class GoodwillClaimController extends Controller
             'customer_consent_date' => now(),
         ]);
 
-        return redirect()->route('sales.goodwill-claims.show', $claim)
+        return redirect()->route('sales.goodwill-claims.show', ['goodwill_claim' => $claim])
             ->with('success', 'Customer signature captured successfully.');
     }
 } 

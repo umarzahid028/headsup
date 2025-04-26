@@ -10,6 +10,9 @@ Alpine.start();
 import { NotificationListener } from "./components/NotificationListener.js";
 import * as VehicleImportNotification from "./vehicles-import-notification.js";
 
+// Import signature pad initialization
+import "./signature-pad-init.js";
+
 // Make NotificationListener available globally
 window.NotificationListener = NotificationListener;
 

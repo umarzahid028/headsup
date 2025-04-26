@@ -163,10 +163,8 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('goodwill-claims/{claim}/consent', [GoodwillClaimController::class, 'updateConsent'])->name('sales.goodwill-claims.update-consent');
         
         // Signature capture routes
-        Route::get('goodwill-claims/{claim}/signature', [GoodwillClaimController::class, 'showSignatureForm'])
-            ->name('sales.goodwill-claims.signature.show');
-        Route::post('goodwill-claims/{claim}/signature', [GoodwillClaimController::class, 'storeSignature'])
-            ->name('sales.goodwill-claims.signature.store');
+        Route::get('goodwill-claims/{claim}/signature', [GoodwillClaimController::class, 'showSignatureForm'])->name('sales.goodwill-claims.signature.show');
+        Route::post('goodwill-claims/{claim}/signature', [GoodwillClaimController::class, 'storeSignature'])->name('sales.goodwill-claims.signature.store');
     });
 
     // Admin routes

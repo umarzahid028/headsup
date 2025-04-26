@@ -6,7 +6,7 @@
             </h2>
             <div class="flex space-x-4">
                 @if($claim->status === 'pending')
-                    <form action="{{ route('sales.goodwill-claims.update-status', $claim) }}" method="POST" class="flex space-x-4">
+                    <form action="{{ route('sales.goodwill-claims.update-status', ['goodwill_claim' => $claim]) }}" method="POST" class="flex space-x-4">
                         @csrf
                         @method('PATCH')
                         <div>
@@ -76,9 +76,9 @@
                                     </div>
                                 @else
                                     <div class="mt-4">
-                                        <a href="{{ route('sales.goodwill-claims.signature.show', $claim) }}" 
-                                            class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-500">
-                                            Capture Signature In Person
+                                        <a href="{{ route('sales.goodwill-claims.signature.show',  $claim->id.'/signature') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                            <x-heroicon-o-pencil-square class="h-4 w-4 mr-1.5" />
+                                            Capture Customer Signature
                                         </a>
                                     </div>
                                 @endif

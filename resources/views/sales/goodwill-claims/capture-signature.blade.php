@@ -4,14 +4,14 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Capture Customer Signature') }}
             </h2>
-            <a href="{{ route('sales.goodwill-claims.show', $claim) }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
+            <a href="{{ route('sales.goodwill-claims.show', $claim->id.'/signature') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700">
                 {{ __('Back to Claim') }}
             </a>
         </div>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-full mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     <div class="mb-6 space-y-6">
@@ -54,21 +54,26 @@
                             <h3 class="text-lg font-semibold mb-4">Signature Capture</h3>
                             <p class="text-sm text-gray-500 mb-4">Please have the customer sign below:</p>
                             
-                            <form id="signatureForm" action="{{ route('sales.goodwill-claims.signature.store', $claim) }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="signature" id="signature" required>
+                            <form id="signatureForm" action="{{ route('sales.goodwill-claims.signature.store', $claim->id) }}" method="POST">
+                                @csrf   
                                 
-                                <div class="border border-gray-300 rounded-lg p-2 mb-4">
-                                    <div id="signature-pad" class="w-full h-64 border border-gray-200 touch-none"></div>
-                                </div>
+                                <x-signature-pad 
+                                    name="signature"
+                                    id="customer-signature"
+                                    label="Customer Signature"
+                                    required="true"
+                                    height="240"
+                                    helpText="Please have the customer sign in the box below"
+                                    showColorPicker="true"
+                                />
                                 
-                                <div class="flex justify-between items-center">
-                                    <button type="button" id="clearButton" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">
-                                        Clear Signature
-                                    </button>
+                                <div class="flex justify-end mt-6">
+                                    <a href="{{ route('sales.goodwill-claims.show', $claim->id) }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 mr-4">
+                                        Cancel
+                                    </a>
                                     
-                                    <button type="submit" id="saveButton" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" disabled>
-                                        Save Signature
+                                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                        Submit Signature
                                     </button>
                                 </div>
                             </form>
@@ -80,61 +85,6 @@
     </div>
 
     @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const canvas = document.getElementById('signature-pad');
-            const signatureInput = document.getElementById('signature');
-            const clearButton = document.getElementById('clearButton');
-            const saveButton = document.getElementById('saveButton');
-            const signatureForm = document.getElementById('signatureForm');
-            
-            // Initialize SignaturePad
-            const signaturePad = new SignaturePad(canvas, {
-                backgroundColor: 'rgb(255, 255, 255)',
-                penColor: 'rgb(0, 0, 0)'
-            });
-            
-            // Resize canvas for better display
-            function resizeCanvas() {
-                const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                canvas.width = canvas.offsetWidth * ratio;
-                canvas.height = canvas.offsetHeight * ratio;
-                canvas.getContext("2d").scale(ratio, ratio);
-                signaturePad.clear(); // Otherwise the canvas gets cleared
-            }
-            
-            // Set canvas initial size
-            resizeCanvas();
-            
-            // Add event listeners
-            window.addEventListener('resize', resizeCanvas);
-            
-            // Clear the signature pad
-            clearButton.addEventListener('click', function() {
-                signaturePad.clear();
-                saveButton.disabled = true;
-            });
-            
-            // Enable save button when signature is being drawn
-            signaturePad.addEventListener('beginStroke', function() {
-                saveButton.disabled = false;
-            });
-            
-            // Handle form submission
-            signatureForm.addEventListener('submit', function(e) {
-                if (signaturePad.isEmpty()) {
-                    e.preventDefault();
-                    alert('Please provide a signature first.');
-                    return false;
-                }
-                
-                // Get signature as data URL and store in hidden input
-                const dataURL = signaturePad.toDataURL('image/png');
-                signatureInput.value = dataURL;
-                return true;
-            });
-        });
-    </script>
+    <!-- Our component already includes the required scripts and initialization -->
     @endpush
 </x-app-layout> 

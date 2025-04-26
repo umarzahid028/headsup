@@ -83,7 +83,7 @@
                                     <option value="">None</option>
                                     @if($salesIssue)
                                         <option value="{{ $salesIssue->id }}" selected>
-                                            Issue #{{ $salesIssue->id }} - {{ Str::limit($salesIssue->title, 40) }}
+                                            Issue #{{ $salesIssue->id }} - ({{ ucfirst($salesIssue->issue_type) }}) - {{ Str::limit($salesIssue->description, 40) }}
                                         </option>
                                     @endif
                                 </select>
