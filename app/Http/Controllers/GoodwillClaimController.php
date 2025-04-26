@@ -110,8 +110,9 @@ class GoodwillClaimController extends Controller
     /**
      * Display the specified goodwill claim.
      */
-    public function show(GoodwillClaim $claim)
+    public function show($id)
     {
+        $claim = GoodwillClaim::findOrFail($id);
         $claim->load(['vehicle', 'salesIssue', 'createdBy', 'approvedBy']);
 
         return view('sales.goodwill-claims.show', compact('claim'));
@@ -122,18 +123,16 @@ class GoodwillClaimController extends Controller
      */
     public function updateStatus(Request $request, GoodwillClaim $claim)
     {
+     
         $validated = $request->validate([
             'status' => 'required|in:pending,approved,rejected',
-            'approval_notes' => 'required_unless:status,pending|nullable|string',
             'estimated_cost' => 'required_if:status,approved|nullable|numeric|min:0',
-            'actual_cost' => 'nullable|numeric|min:0',
         ]);
+        
 
         $claim->update([
             'status' => $validated['status'],
-            'approval_notes' => $validated['approval_notes'],
             'estimated_cost' => $validated['estimated_cost'],
-            'actual_cost' => $validated['actual_cost'],
             'approved_by_user_id' => Auth::id(),
             'approved_at' => in_array($validated['status'], ['approved', 'rejected']) ? now() : null,
         ]);

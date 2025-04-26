@@ -206,25 +206,22 @@
                         @endhasrole
 
                 <!-- Sales Management Section -->
-                @canany(['view sales issues', 'view goodwill claims'])
+           
+                @hasanyrole('Recon Manager|Sales Manager |Admin')
                 <div class="pt-5">
                     <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         Sales Management
                     </p>
 
                     <!-- Sales Team -->
-                    @hasanyrole('Admin|Sales Manager|Recon Manager')
+                    
                     <a href="{{ route('sales-team.index') }}" class="{{ request()->routeIs('sales-team.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
                         <x-heroicon-o-users class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
                         <span class="flex-1">Sales Team</span>
                     </a>
 
                     <!-- Sales Assignments -->
-                    
-                    @endhasanyrole
 
-                    <!-- Sales Issues -->
-                    @can('view sales issues')
                     <a href="{{ route('sales.issues.index') }}" class="{{ request()->routeIs('sales.issues.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 mt-1 text-sm font-medium rounded-md">
                         <x-heroicon-o-exclamation-triangle class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
                         <span class="flex-1">Sales Issues</span>
@@ -234,10 +231,8 @@
                             </span>
                         @endif
                     </a>
-                    @endcan
-
-                    <!-- Goodwill Claims -->
-                    @can('view goodwill claims')
+                    
+                
                     <a href="{{ route('sales.goodwill-claims.index') }}" class="{{ request()->routeIs('sales.goodwill-claims.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                         <x-heroicon-o-document-text class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" />
                         <span class="flex-1">Goodwill Claims</span>
@@ -247,7 +242,7 @@
                             </span>
                         @endif
                     </a>
-                    @endcan
+                    
                 </div>
                 @endcanany
 
