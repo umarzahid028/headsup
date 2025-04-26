@@ -16,6 +16,8 @@ use App\Models\SalesIssue;
 use App\Models\Activity;
 use App\Models\VehicleInspection;
 use App\Models\Vendor;
+use App\Models\InspectionItemResult;
+use App\Models\User;
 
 class DashboardController extends Controller
 {
@@ -25,22 +27,103 @@ class DashboardController extends Controller
     }
 
     /**
-     * Show the appropriate dashboard based on user role.
+     * Show the application dashboard.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
      */
     public function index()
     {
+        // Get current month and last month dates
+        $now = Carbon::now();
+        $currentMonth = $now->format('Y-m');
+        $lastMonth = $now->copy()->subMonth()->format('Y-m');
         
-        if (auth()->user()->hasAnyRole(['Sales Manager', 'Recon Manager'])) {
-            return $this->managerDashboard();
-        } elseif (auth()->user()->hasRole('Transporter')) {
-            return $this->transporterDashboard();
-        } elseif (auth()->user()->hasRole('Vendor')) {
-            return redirect()->route('vendor.dashboard');        
-        } elseif (auth()->user()->hasRole('Sales Team')) {
-            return $this->salesTeamDashboard();
+        // Total vehicles and growth rate
+        $totalVehicles = Vehicle::count();
+        $lastMonthVehicleCount = Vehicle::where('created_at', '<', $now->copy()->startOfMonth())->count();
+        $vehicleGrowth = $lastMonthVehicleCount > 0
+            ? round((($totalVehicles - $lastMonthVehicleCount) / $lastMonthVehicleCount) * 100, 1)
+            : 0;
+            
+        // Inspection metrics
+        $activeInspections = VehicleInspection::where('status', '!=', 'completed')->count();
+        $completedInspections = VehicleInspection::where('status', 'completed')->count();
+        
+        // Open issues metrics
+        $openIssues = SalesIssue::where('status', 'open')->count();
+        $resolvedIssues = SalesIssue::where('status', 'resolved')->count();
+        
+        // Monthly revenue
+        $monthlyRevenue = Sale::whereYear('created_at', $now->year)
+            ->whereMonth('created_at', $now->month)
+            ->sum('amount');
+            
+        $lastMonthRevenue = Sale::whereYear('created_at', $now->copy()->subMonth()->year)
+            ->whereMonth('created_at', $now->copy()->subMonth()->month)
+            ->sum('amount');
+        
+        // Vehicle status distribution for chart
+        $vehicleStatusChart = Vehicle::select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->toArray();
+            
+        // Revenue chart - last 6 months
+        $revenueChart = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = $now->copy()->subMonths($i);
+            $revenue = Sale::whereYear('created_at', $month->year)
+                ->whereMonth('created_at', $month->month)
+                ->sum('amount');
+            
+            $revenueChart[$month->format('M Y')] = $revenue;
         }
-
-        return view('dashboard');
+        
+        // Recent activities
+        $recentActivities = Activity::with('user')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+            
+        // Calculate repair metrics
+        $repairsNeeded = InspectionItemResult::where('requires_repair', true)->count();
+        $repairsCompleted = InspectionItemResult::where('requires_repair', true)
+            ->where('repair_completed', true)
+            ->count();
+        
+        $repairCompletionRate = $repairsNeeded > 0 
+            ? round(($repairsCompleted / $repairsNeeded) * 100) 
+            : 0;
+            
+        // Top performing sales staff if relevant
+        $topSalesStaff = null;
+        if (class_exists('App\Models\SalesTeam')) {
+            $topSalesStaff = DB::table('sales')
+                ->join('users', 'sales.user_id', '=', 'users.id')
+                ->select('users.name', DB::raw('COUNT(*) as sales_count'), DB::raw('SUM(amount) as total_sales'))
+                ->whereYear('sales.created_at', $now->year)
+                ->whereMonth('sales.created_at', $now->month)
+                ->groupBy('users.id', 'users.name')
+                ->orderBy('total_sales', 'desc')
+                ->limit(3)
+                ->get();
+        }
+        
+        return view('dashboard', compact(
+            'totalVehicles',
+            'vehicleGrowth',
+            'activeInspections',
+            'completedInspections',
+            'openIssues',
+            'resolvedIssues',
+            'monthlyRevenue',
+            'lastMonthRevenue',
+            'vehicleStatusChart',
+            'revenueChart',
+            'recentActivities',
+            'repairCompletionRate',
+            'topSalesStaff'
+        ));
     }
 
     /**

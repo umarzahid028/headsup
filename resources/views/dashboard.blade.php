@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="container mx-auto space-y-6 py-6">
+        <div class="container mx-auto space-y-6 py-6 px-4">
             <!-- Stats Grid -->
             <div class="grid gap-6 mb-8 md:grid-cols-2 xl:grid-cols-4">
                 <!-- Total Vehicles Card -->

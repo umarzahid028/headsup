@@ -15,6 +15,19 @@ namespace App\Models{
 /**
  * 
  *
+ * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $subject
+ * @property-read \App\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Activity newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Activity newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Activity query()
+ */
+	class Activity extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
+ * 
+ *
  * @property int $id
  * @property string $batch_number
  * @property string|null $name
