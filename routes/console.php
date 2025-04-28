@@ -5,4 +5,4 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
   
 
-Schedule::command('import:vehicles-csv --archive')->everyMinute();
+Schedule::command('import:vehicles-csv --archive')->everyMinute()->appendOutputTo(storage_path('logs/import-vehicles-csv.log'));
