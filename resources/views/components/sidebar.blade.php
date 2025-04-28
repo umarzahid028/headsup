@@ -207,7 +207,7 @@
 
                 <!-- Sales Management Section -->
            
-                @hasanyrole('Recon Manager|Sales Manager |Admin')
+                @hasanyrole('Recon Manager|Sales Manager|Admin')
                 <div class="pt-5">
                     <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                         Sales Management
