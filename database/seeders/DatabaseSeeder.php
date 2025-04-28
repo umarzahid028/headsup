@@ -16,14 +16,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Use firstOrCreate instead of create to avoid duplicates
-        User::firstOrCreate(
-            ['email' => 'test@example.com'],
-            [
-                'name' => 'Test User',
-                'password' => Hash::make('password'),
-                'email_verified_at' => now()
-            ]
-        );
+       
 
         // Seed roles and permissions
         $this->call(RoleAndPermissionSeeder::class);
