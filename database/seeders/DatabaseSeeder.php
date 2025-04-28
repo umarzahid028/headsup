@@ -15,10 +15,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Use firstOrCreate instead of create to avoid duplicates
        
-
-        // Seed roles and permissions
         $this->call(RoleAndPermissionSeeder::class);
         
         // Seed users with specific roles
@@ -26,15 +23,15 @@ class DatabaseSeeder extends Seeder
 
         $this->call([        
             PermissionSeeder::class,
-            TransporterSeeder::class,
+           // TransporterSeeder::class,
         ]);
 
         // Inspection & Repair Seeders
-        $this->call([
-            VendorTypeSeeder::class,
-            VendorSeeder::class,
-            InspectionStageSeeder::class,
-            InspectionItemSeeder::class,
-        ]);
+        // $this->call([
+        //     VendorTypeSeeder::class,
+        //     VendorSeeder::class,
+        //     InspectionStageSeeder::class,
+        //     InspectionItemSeeder::class,
+        // ]);
     }
 }

@@ -96,6 +96,9 @@ class RoleAndPermissionSeeder extends Seeder
             'reject goodwill claims',
 
             // Additional Features
+            'view timeline',
+            'add timeline entries',
+            'manage timeline',
             'view tags',
             'create tags',
             'edit tags',
@@ -108,7 +111,12 @@ class RoleAndPermissionSeeder extends Seeder
             'upload photos',
             'delete photos',
             'manage photos',
-          
+            'view checklists',
+            'create checklists',
+            'edit checklists',
+            'delete checklists',
+            'complete checklists',
+            'manage checklists',
             'view notifications',
             'manage notifications',
             'manage notification settings',
