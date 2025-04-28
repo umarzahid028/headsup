@@ -36,6 +36,7 @@ class ImportVehiclesCsv extends Command
      */
     public function handle(VehicleImportService $importService)
     {
+      
         // Get command options
         $specificFile = $this->option('file');
         $sendNotifications = !$this->option('no-notifications');
@@ -45,6 +46,8 @@ class ImportVehiclesCsv extends Command
         
         // Determine directory path
         $directory = $this->option('directory') ?: storage_path('app/vehicle-imports');
+        
+        Log::info("Importing vehicles from CSV files in directory: {$directory}");
         
         // Ensure directory exists
         if (!File::exists($directory)) {

@@ -28,13 +28,7 @@ class VendorTypeSeeder extends Seeder
                 'has_system_access' => false,
                 'is_active' => true,
             ],
-            [
-                'name' => 'Preferred Partner',
-                'description' => 'Off-site vendor with limited system access',
-                'is_on_site' => false,
-                'has_system_access' => true,
-                'is_active' => true,
-            ],
+           
         ];
         
         foreach ($vendorTypes as $type) {
