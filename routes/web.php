@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\VendorDashboardController;
 use App\Http\Controllers\RepairImageController;
 use App\Http\Controllers\VehicleStatusController;
+use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\DB;
@@ -284,5 +285,7 @@ Route::middleware(['auth', 'role:Sales Team'])->prefix('sales-team')->name('sale
     Route::post('/sales-store', [App\Http\Controllers\SalesTeam\SaleController::class, 'store'])->name('sales.store');
     Route::get('/sales', [App\Http\Controllers\SalesTeam\SaleController::class, 'index'])->name('sales.index');
 });
+
+Route::get('/test', [TestController::class, 'test']);
 
 require __DIR__.'/auth.php';

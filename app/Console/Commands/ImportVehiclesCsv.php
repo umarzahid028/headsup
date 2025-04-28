@@ -203,6 +203,7 @@ class ImportVehiclesCsv extends Command
                 if ($totalNew > 0) {
                     // Get an array of vehicle IDs
                     $vehicleIds = collect($newVehicles)->pluck('id')->toArray();
+                    // Only send one event with all vehicle IDs, not one per vehicle
                     broadcast(new NewVehicleEvent($totalNew, $vehicleIds))->toOthers();
                     $this->info("Broadcast NewVehicleEvent for sound notification");
                 }

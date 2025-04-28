@@ -203,23 +203,25 @@ class VehicleImportService
         
         fclose($handle);
         
-        // Send notifications for all successfully imported vehicles
+        // Send a single notification for all vehicles instead of individual ones
         if (!empty($vehiclesToNotify) && $shouldSendNotifications && !$this->dryRun) {
-            foreach ($vehiclesToNotify as $vehicle) {
-                try {
-                    $this->sendNotifications($vehicle, $fileName);
-                } catch (\Exception $e) {
-                    $this->log('error', "Error sending notifications for vehicle {$vehicle->stock_number}: " . $e->getMessage());
-                }
-            }
-            
-            // Broadcast event for new vehicles to trigger sound notification
-            if (!empty($newVehicles)) {
-                $newVehicleIds = collect($newVehicles)->pluck('id')->toArray();
-                $newVehicleCount = count($newVehicleIds);
+            try {
+                // Instead of sending individual notifications, send a batch notification
+                $this->log('info', "Sending batch notification for " . count($vehiclesToNotify) . " vehicles");
+
+                // Instead of per-vehicle notification, we'll have the Command handle this
+                // through the NewVehiclesImported event
                 
-                $this->log('info', "Broadcasting NewVehicleEvent for {$newVehicleCount} new vehicles");
-                broadcast(new NewVehicleEvent($newVehicleCount, $newVehicleIds))->toOthers();
+                // Broadcast event for new vehicles to trigger sound notification
+                if (!empty($newVehicles)) {
+                    $newVehicleIds = collect($newVehicles)->pluck('id')->toArray();
+                    $newVehicleCount = count($newVehicleIds);
+                    
+                    $this->log('info', "Broadcasting NewVehicleEvent for {$newVehicleCount} new vehicles");
+                    broadcast(new NewVehicleEvent($newVehicleCount, $newVehicleIds))->toOthers();
+                }
+            } catch (\Exception $e) {
+                $this->log('error', "Error sending batch notifications: " . $e->getMessage());
             }
         }
         
@@ -604,40 +606,39 @@ class VehicleImportService
     }
     
     /**
-     * Send notifications to roles
+     * Send notifications for a single vehicle
+     * This method is kept for backward compatibility but no longer called for individual vehicles
      *
-     * @param Vehicle $vehicle The imported vehicle
-     * @param string $fileName The import file name
+     * @param Vehicle $vehicle
+     * @param string $fileName
      * @return void
      */
     protected function sendNotifications(Vehicle $vehicle, string $fileName): void
     {
-        // Get users with Admin role
-        $admins = User::role('Admin')->get();
+        // Get all users with vehicle notification permissions
+        $notifiableUsers = User::permission('receive_vehicle_notifications')->get();
         
-        // Get users with Sales Manager role
-        $salesManagers = User::role('Sales Manager')->get();
-            
-        // Get users with Recon Manager role
-        $reconManagers = User::role('Recon Manager')->get();
-            
-        // Combine all users
-        $usersToNotify = $admins->merge($salesManagers)->merge($reconManagers);
-        
-        if ($usersToNotify->isEmpty()) {
-            $this->log('warning', "No Admins, Sales or Recon Managers found to notify about imported vehicle");
+        if ($notifiableUsers->isEmpty()) {
+            $this->log('info', "No users to notify for vehicle {$vehicle->stock_number}");
             return;
         }
         
-        // Create notification
-        $notification = new NewVehicleImported($vehicle, $fileName);
+        $notificationData = [
+            'vehicle_id' => $vehicle->id,
+            'stock_number' => $vehicle->stock_number,
+            'vin' => $vehicle->vin,
+            'year' => $vehicle->year,
+            'make' => $vehicle->make,
+            'model' => $vehicle->model,
+            'price' => $vehicle->advertising_price,
+            'image_url' => $vehicle->image_path,
+            'import_source' => $fileName,
+        ];
         
-        // Send notification to each user directly
-        foreach ($usersToNotify as $user) {
-            $user->notify($notification);
-        }
+        // Send to each user with appropriate permissions
+        Notification::send($notifiableUsers, new NewVehicleImported($notificationData));
         
-        $this->log('info', "Sent notifications about new vehicle to " . $usersToNotify->count() . " users");
+        $this->log('info', "Sent notifications to " . $notifiableUsers->count() . " users for vehicle {$vehicle->stock_number}");
     }
     
     /**
