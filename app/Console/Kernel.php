@@ -12,16 +12,10 @@ class Kernel extends ConsoleKernel
      * 
      */
 
-    protected $commands = [
-        ImportVehiclesCsv::class,
-    ];
 
     protected function schedule(Schedule $schedule): void
     {
-        // Run the vehicle import every hour, archive processed files
-        $schedule->command('import:vehicles-csv --archive')
-                ->everyFiveMinutes()
-                ->appendOutputTo(storage_path('logs/vehicle-import.log'));
+       
     }
 
     /**

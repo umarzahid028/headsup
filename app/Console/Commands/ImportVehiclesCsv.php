@@ -36,7 +36,7 @@ class ImportVehiclesCsv extends Command
      */
     public function handle(VehicleImportService $importService)
     {
-        Log::info("Importing vehicles from CSV files in directory:test");
+        Log::info("Importing vehicles from CSV files in directory:");
         // Get command options
         $specificFile = $this->option('file');
         $sendNotifications = !$this->option('no-notifications');
