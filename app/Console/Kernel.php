@@ -9,7 +9,13 @@ class Kernel extends ConsoleKernel
 {
     /**
      * Define the application's command schedule.
+     * 
      */
+
+    protected $commands = [
+        ImportVehiclesCsv::class,
+    ];
+
     protected function schedule(Schedule $schedule): void
     {
         // Run the vehicle import every hour, archive processed files
