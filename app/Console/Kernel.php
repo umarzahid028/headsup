@@ -14,7 +14,7 @@ class Kernel extends ConsoleKernel
     {
         // Run the vehicle import every hour, archive processed files
         $schedule->command('import:vehicles-csv --archive')
-                ->hourly()
+                ->everyFiveMinutes()
                 ->appendOutputTo(storage_path('logs/vehicle-import.log'));
     }
 
