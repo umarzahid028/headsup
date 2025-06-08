@@ -137,4 +137,15 @@ class User extends Authenticatable
             ->where('vehicle_id', $vehicleId)
             ->exists();
     }
+
+    //Queue Model
+public function queues()
+{
+    return $this->hasMany(Queue::class);
 }
+public function latestQueue()
+{
+    return $this->hasOne(Queue::class)->latestOfMany();
+}
+}
+

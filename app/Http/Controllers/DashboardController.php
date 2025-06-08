@@ -2,22 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\View\View;
-use App\Models\Transport;
-use App\Models\Vehicle;
-use App\Models\VendorEstimate;
-use App\Models\Sale;
 use Carbon\Carbon;
+use App\Models\Sale;
+use App\Models\User;
+use App\Models\Queue;
+use App\Models\Token;
+use App\Models\Vendor;
+use App\Models\Vehicle;
+use App\Models\Activity;
 use App\Models\Estimate;
-use Illuminate\Support\Facades\DB;
+use App\Models\Transport;
+use Illuminate\View\View;
 use App\Models\Inspection;
 use App\Models\SalesIssue;
-use App\Models\Activity;
+use Illuminate\Http\Request;
+use App\Models\VendorEstimate;
 use App\Models\VehicleInspection;
-use App\Models\Vendor;
+use Illuminate\Support\Facades\DB;
 use App\Models\InspectionItemResult;
-use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -33,6 +36,13 @@ class DashboardController extends Controller
      */
     public function index()
     {
+   
+
+    $user = auth()->user();
+
+    if ($user->hasRole('Sales person')) {
+        return redirect()->route('sales.perosn');
+    }
         // Get current month and last month dates
         $now = Carbon::now();
         $currentMonth = $now->format('Y-m');
@@ -638,4 +648,30 @@ class DashboardController extends Controller
             'recentActivities'
         ));
     }
-} 
+
+
+
+
+//Sales perosn
+public function salesdashboard()
+{
+    $user = Auth::user();
+
+    $isCheckedIn = Queue::where('user_id', $user->id)
+                        ->where('is_checked_in', true)
+                        ->exists();
+
+    $token = null;
+
+    if ($isCheckedIn) {
+        $token = Token::with('salesperson')
+            ->where('user_id', $user->id)
+            ->where('status', 'assigned')
+            ->latest('created_at')
+            ->first();
+    }
+
+    return view('sales-person-dashboard.dashboard', compact('token'));
+}
+
+}

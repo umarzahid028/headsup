@@ -16,38 +16,28 @@ class UserRoleSeeder extends Seeder
     {
         $roles = [
             'Admin' => [
-                'name' => 'Admin User',
+                'name' => 'Admin',
                 'email' => 'admin@admin.com',
                 'password' => 'admin@admin.com'
             ],
             'Sales Manager' => [
                 'name' => 'Sales Manager',
-                'email' => 'sales-manager@sales-manager.com',
-                'password' => 'sales-manager@sales-manager.com'
+                'email' => 'salesmanager@salesmanager.com',
+                'password' => 'salesmanager@salesmanager.com'
             ],
-            'Recon Manager' => [
-                'name' => 'Recon Manager',
-                'email' => 'recon-manager@recon-manager.com',
-                'password' => 'recon-manager@recon-manager.com'
-            ],
-            'Sales Team' => [
-                'name' => 'Sales Team Member',
-                'email' => 'sales-team@sales-team.com',
-                'password' => 'sales-team@sales-team.com'
-            ],
-            'Vendor' => [
-                'name' => 'Vendor',
-                'email' => 'vendor@vendor.com',
-                'password' => 'vendor@vendor.com'
-            ],
-            'Transporter' => [
-                'name' => 'Transporter',
-                'email' => 'transporter@transporter.com',
-                'password' => 'transporter@transporter.com'
+            'Sales person' => [
+                'name' => 'Sales person',
+                'email' => 'salesperson@salesperson.com',
+                'password' => 'salesperson@salesperson.com',
+                'counter_number' => '1',
             ]
         ];
 
-        foreach ($roles as $role => $userData) {
+        foreach ($roles as $roleName => $userData) {
+            // Ensure role exists
+            $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+
+            // Create or fetch user
             $user = User::firstOrCreate(
                 ['email' => $userData['email']],
                 [
@@ -57,8 +47,12 @@ class UserRoleSeeder extends Seeder
                 ]
             );
 
-            $user->assignRole($role);
-            $this->command->info("Created user for role {$role}: {$userData['email']}");
+            // Assign role if not already assigned
+            if (!$user->hasRole($roleName)) {
+                $user->assignRole($roleName);
+            }
+
+            $this->command->info("✅ Created user and assigned role '{$roleName}': {$userData['email']}");
         }
     }
-} 
+}

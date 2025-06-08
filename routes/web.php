@@ -1,22 +1,25 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\TestController;
+use App\Http\Controllers\TokenController;
+use Illuminate\Support\Facades\Broadcast;
+use App\Http\Controllers\QueuesController;
+use App\Http\Controllers\StatusController;
+use App\Http\Controllers\VendorController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VehicleController;
-use App\Http\Controllers\TransportController;
-use App\Http\Controllers\TransporterController;
-use App\Http\Controllers\VendorController;
-use App\Http\Controllers\SalesIssueController;
-use App\Http\Controllers\GoodwillClaimController;
-use App\Http\Controllers\VendorTypeController;
-use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\VendorDashboardController;
+use App\Http\Controllers\TransportController;
+use App\Http\Controllers\SalesIssueController;
+use App\Http\Controllers\VendorTypeController;
 use App\Http\Controllers\RepairImageController;
+use App\Http\Controllers\TransporterController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\GoodwillClaimController;
 use App\Http\Controllers\VehicleStatusController;
-use App\Http\Controllers\TestController;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Broadcast;
-use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\VendorDashboardController;
 
 // Register Broadcasting Routes
 Broadcast::routes(['middleware' => ['web', 'auth']]);
@@ -288,4 +291,40 @@ Route::middleware(['auth', 'role:Sales Team'])->prefix('sales-team')->name('sale
 
 Route::get('/test', [TestController::class, 'test']);
 
+//Queues Routes
+Route::get('/sales-person', [DashboardController::class, 'salesdashboard'])->name('sales.perosn');
+Route::post('/sales-person', [QueuesController::class, 'dashboardstore'])->name('sales.perosn.store');
+
+//Sales person status
+Route::get('/status', [StatusController::class, 'showStatus']);
+
+//Tokens Routes
+Route::get('/tokens', [TokenController::class, 'showTokensPage'])->name('tokens.page');  
+// Ye blade page dikhaega (salesperson ya customer dono ke liye public ya middleware lagao apni marzi se)
+
+// Token generate karne ke liye (POST request, public ya auth middleware laga sakte ho)
+Route::post('/tokens/generate', [TokenController::class, 'generateToken'])->name('tokens.generate');
+
+// Active tokens ke liye API (AJAX se call hoga, auth & role middleware lagao)
+Route::middleware(['auth', 'role:Sales person'])->group(function () {
+  Route::get('/tokens/active', [TokenController::class, 'activeTokens'])->name('tokens.active');
+    Route::post('/tokens/{token}/complete', [TokenController::class, 'completeToken'])->name('tokens.complete');
+   
+    
+});
+Route::post('/check-in', [TokenController::class, 'checkIn'])->middleware('auth');
+
+//Active Token auto refresh
+// Route for fetching the current assigned token (latest one)
+Route::get('/tokens/current-assigned', function () {
+    $token = \App\Models\Token::with('salesperson')
+        ->where('status', 'assigned')
+        ->latest('created_at')
+        ->first();
+
+    return view('partials.current-token', compact('token'));
+});
+
+//Token History
+Route::get('token/history', [TokenController::class,'tokenhistory'])->name('token.history.view');
 require __DIR__.'/auth.php';

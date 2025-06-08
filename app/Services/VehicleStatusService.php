@@ -19,34 +19,34 @@ class VehicleStatusService
             Vehicle::STATUS_AVAILABLE,
             
             // Transport statuses
-            Vehicle::STATUS_TRANSPORT_PENDING,
-            Vehicle::STATUS_TRANSPORT_IN_TRANSIT,
-            Vehicle::STATUS_TRANSPORT_IN_PROGRESS,
-            Vehicle::STATUS_TRANSPORT_DELIVERED,
-            Vehicle::STATUS_TRANSPORT_COMPLETED,
-            Vehicle::STATUS_TRANSPORT_CANCELLED,
+            // Vehicle::STATUS_TRANSPORT_PENDING,
+            // Vehicle::STATUS_TRANSPORT_IN_TRANSIT,
+            // Vehicle::STATUS_TRANSPORT_IN_PROGRESS,
+            // Vehicle::STATUS_TRANSPORT_DELIVERED,
+            // Vehicle::STATUS_TRANSPORT_COMPLETED,
+            // Vehicle::STATUS_TRANSPORT_CANCELLED,
             
             // Inspection statuses
-            Vehicle::STATUS_INSPECTION_PENDING,
-            Vehicle::STATUS_INSPECTION_IN_PROGRESS,
-            Vehicle::STATUS_INSPECTION_COMPLETED,
-            Vehicle::STATUS_INSPECTION_CANCELLED,
+            // Vehicle::STATUS_INSPECTION_PENDING,
+            // Vehicle::STATUS_INSPECTION_IN_PROGRESS,
+            // Vehicle::STATUS_INSPECTION_COMPLETED,
+            // Vehicle::STATUS_INSPECTION_CANCELLED,
             
             // Repair statuses
-            Vehicle::STATUS_REPAIR_PENDING,
-            Vehicle::STATUS_REPAIR_IN_PROGRESS,
-            Vehicle::STATUS_REPAIR_COMPLETED,
-            Vehicle::STATUS_REPAIR_CANCELLED,
+            // Vehicle::STATUS_REPAIR_PENDING,
+            // Vehicle::STATUS_REPAIR_IN_PROGRESS,
+            // Vehicle::STATUS_REPAIR_COMPLETED,
+            // Vehicle::STATUS_REPAIR_CANCELLED,
             
             // Sales statuses
-            Vehicle::STATUS_READY_FOR_SALE,
-            Vehicle::STATUS_READY_FOR_SALE_ASSIGNED,
+            // Vehicle::STATUS_READY_FOR_SALE,
+            // Vehicle::STATUS_READY_FOR_SALE_ASSIGNED,
             Vehicle::STATUS_SOLD,
             
             // Goodwill claims statuses
-            Vehicle::STATUS_GOODWILL_CLAIMS,
-            Vehicle::STATUS_GOODWILL_CLAIMS_ASSIGNED,
-            Vehicle::STATUS_GOODWILL_CLAIMS_COMPLETED,
+            // Vehicle::STATUS_GOODWILL_CLAIMS,
+            // Vehicle::STATUS_GOODWILL_CLAIMS_ASSIGNED,
+            // Vehicle::STATUS_GOODWILL_CLAIMS_COMPLETED,
             
             // Archive status
             Vehicle::STATUS_ARCHIVE

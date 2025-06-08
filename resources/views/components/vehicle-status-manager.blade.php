@@ -1,7 +1,7 @@
 @props(['vehicle'])
 
-<div class="bg-white shadow overflow-hidden sm:rounded-lg p-4 mb-5">
-    <div class="flex justify-between items-center mb-4">
+<!-- <div class="bg-white shadow overflow-hidden sm:rounded-lg p-4 mb-5"> -->
+    <!-- <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-medium text-gray-900">Vehicle Status</h3>
         <div class="text-sm font-medium text-gray-500">Current Status: 
             <span class="px-2 py-1 rounded 
@@ -23,27 +23,27 @@
                 {{ $vehicle->status }}
             </span>
         </div>
-    </div>
+    </div> -->
 
-    <div>
+    <!-- <div>
         <form id="vehicle-status-form" action="{{ route('vehicles.update-status', $vehicle) }}" method="POST">
             @csrf
             <div class="grid grid-cols-1 gap-4">
                 <div>
                     <label for="status" class="block text-sm font-medium text-gray-700">Update Status</label>
                     <select id="status" name="status" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                        <option value="">Select new status</option>
+                        <option value="">Select new status</option> -->
                         <!-- Status options will be loaded via JavaScript -->
-                    </select>
-                </div>
+                    <!-- </select>
+                </div> -->
 
                 <!-- Additional fields for specific status changes -->
-                <div id="sales-team-section" class="hidden">
+                <!-- <div id="sales-team-section" class="hidden">
                     <label for="sales_team_id" class="block text-sm font-medium text-gray-700">Assign to Sales Team Member</label>
                     <select id="sales_team_id" name="sales_team_id" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                        <option value="">Select sales team member</option>
+                        <option value="">Select sales team member</option> -->
                         <!-- Sales team options will be loaded via AJAX if needed -->
-                    </select>
+                    <!-- </select>
                 </div>
 
                 <div>
@@ -59,7 +59,7 @@
             </div>
         </form>
     </div>
-</div>
+</div> -->
 
 @push('scripts')
 <script>
