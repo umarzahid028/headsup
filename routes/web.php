@@ -33,27 +33,27 @@ Route::get('/track/{batchId}', [TransportController::class, 'trackBatch'])->name
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', App\Http\Controllers\DashboardController::class)->name('dashboard');
-    
+
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
+
     // Vehicle Management Routes
     Route::resource('vehicles', VehicleController::class);
-    
+
     // Vehicle Status Management Routes
     Route::get('/vehicles/{vehicle}/statuses', [VehicleStatusController::class, 'getAvailableStatuses'])->name('vehicles.statuses');
     Route::post('/vehicles/{vehicle}/status', [VehicleStatusController::class, 'updateStatus'])->name('vehicles.update-status');
     Route::get('/vehicles-by-status', [VehicleStatusController::class, 'getVehiclesByStatus'])->name('vehicles.by-status');
     Route::get('/vehicles-by-category', [VehicleStatusController::class, 'getVehiclesByCategory'])->name('vehicles.by-category');
-    
+
     // Vehicle Image Management Routes
     Route::post('/vehicles/{id}/images', [VehicleController::class, 'uploadImages'])->name('vehicles.images.upload');
     Route::delete('/vehicles/{vehicleId}/images/{imageId}', [VehicleController::class, 'deleteImage'])->name('vehicles.images.delete');
     Route::patch('/vehicles/{vehicleId}/images/order', [VehicleController::class, 'updateImageOrder'])->name('vehicles.images.order');
     Route::patch('/vehicles/{vehicleId}/images/{imageId}/feature', [VehicleController::class, 'setFeaturedImage'])->name('vehicles.images.feature');
-    
+
     // Transport Management Routes
     Route::resource('transports', TransportController::class);
     Route::get('/transports/batch/create', [TransportController::class, 'createBatch'])->name('transports.batch.create')
@@ -63,46 +63,46 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/transports/batch/{batchId}/acknowledge', [TransportController::class, 'acknowledgeBatch'])
         ->name('transports.batch.acknowledge')
         ->middleware(['auth']);
-    
+
     // Transport status update routes
     Route::post('/transports/{transport}/update-status', [TransportController::class, 'updateTransportStatus'])
         ->name('transports.update-status');
     Route::post('/transports/batch/{batchId}/update-status', [TransportController::class, 'updateBatchStatus'])
         ->name('transports.batch.update-status');
-    
+
     // Transporter Management Routes
     Route::resource('transporters', TransporterController::class);
-    
+
     // Vendor Management Routes
     Route::resource('vendors', VendorController::class);
     Route::patch('vendors/{vendor}/toggle-active', [VendorController::class, 'toggleActive'])->name('vendors.toggle-active');
     Route::resource('vendor-types', VendorTypeController::class)->except(['show', 'destroy']);
     Route::patch('vendor-types/{vendorType}/toggle-active', [VendorTypeController::class, 'toggleActive'])->name('vendor-types.toggle-active');
 
-    
+
     // Vendor Estimates
     Route::post('/vendor-estimates', [\App\Http\Controllers\VendorEstimateController::class, 'store'])->name('vendor-estimates.store');
     Route::patch('/vendor-estimates/{estimate}/approve', [\App\Http\Controllers\VendorEstimateController::class, 'approve'])
         ->name('vendor-estimates.approve');
-        //->middleware('approve.estimates');
+    //->middleware('approve.estimates');
     Route::patch('/vendor-estimates/{estimate}/reject', [\App\Http\Controllers\VendorEstimateController::class, 'reject'])
         ->name('vendor-estimates.reject');
-        //->middleware('approve.estimates');
+    //->middleware('approve.estimates');
     Route::get('/vendor-estimates/pending', [\App\Http\Controllers\VendorEstimateController::class, 'pendingEstimates'])
         ->name('vendor-estimates.pending');
-        //->middleware('approve.estimates');
-    
+    //->middleware('approve.estimates');
+
     // Inspection & Repair Routes
     Route::prefix('inspection')->name('inspection.')->middleware(['auth'])->group(function () {
         // Inspection Stages
         Route::resource('stages', \App\Http\Controllers\InspectionStageController::class);
         Route::post('stages/reorder', [\App\Http\Controllers\InspectionStageController::class, 'reorder'])->name('stages.reorder');
         Route::patch('stages/{stage}/toggle-active', [\App\Http\Controllers\InspectionStageController::class, 'toggleActive'])->name('stages.toggle-active');
-        
+
         // Inspection Items
         Route::resource('items', \App\Http\Controllers\InspectionItemController::class);
         Route::patch('items/{item}/toggle-active', [\App\Http\Controllers\InspectionItemController::class, 'toggleActive'])->name('items.toggle-active');
-        
+
         // Vehicle Inspections
         Route::resource('inspections', \App\Http\Controllers\VehicleInspectionController::class)
             ->except(['store']);
@@ -114,15 +114,15 @@ Route::middleware(['auth'])->group(function () {
         Route::post('vehicles/{vehicle}/start-inspection', [\App\Http\Controllers\VehicleInspectionController::class, 'startInspection'])->name('vehicles.start-inspection');
         Route::patch('inspections/{inspection}/complete', [\App\Http\Controllers\VehicleInspectionController::class, 'markComplete'])->name('inspections.complete');
         Route::post('inspections/{inspection}/mark-ready-for-sale', [\App\Http\Controllers\VehicleInspectionController::class, 'markAsReadyForSale'])->name('inspections.mark-ready-for-sale');
-        
+
         // Comprehensive Inspection (all stages at once)
         Route::get('vehicles/{vehicle}/comprehensive', [\App\Http\Controllers\VehicleInspectionController::class, 'comprehensive'])->name('comprehensive.show');
         Route::post('vehicles/{vehicle}/comprehensive', [\App\Http\Controllers\VehicleInspectionController::class, 'comprehensiveStore'])->name('comprehensive.store');
         Route::put('vehicles/{vehicle}/comprehensive', [\App\Http\Controllers\VehicleInspectionController::class, 'comprehensiveUpdate'])->name('comprehensive.update');
-        
+
         // Assign to Sales Team after inspection is completed
         Route::post('inspections/{inspection}/assign-to-sales', [\App\Http\Controllers\VehicleInspectionController::class, 'assignToSales'])->name('inspection.inspections.assign-to-sales');
-        
+
         // Inspection Results
         Route::resource('results', \App\Http\Controllers\InspectionItemResultController::class)->only(['store', 'update', 'destroy']);
         Route::patch('/results/{result}/assign-vendor', [\App\Http\Controllers\InspectionItemResultController::class, 'assignVendor'])->name('results.assign-vendor');
@@ -165,7 +165,7 @@ Route::middleware(['auth'])->group(function () {
         ]);
         Route::patch('goodwill-claims/{claim}/status', [GoodwillClaimController::class, 'updateStatus'])->name('sales.goodwill-claims.update-status');
         Route::patch('goodwill-claims/{claim}/consent', [GoodwillClaimController::class, 'updateConsent'])->name('sales.goodwill-claims.update-consent');
-        
+
         // Signature capture routes
         Route::get('goodwill-claims/{claim}/signature', [GoodwillClaimController::class, 'showSignatureForm'])->name('sales.goodwill-claims.signature.show');
         Route::post('goodwill-claims/{claim}/signature', [GoodwillClaimController::class, 'storeSignature'])->name('sales.goodwill-claims.signature.store');
@@ -181,16 +181,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('roles', [\App\Http\Controllers\RoleController::class, 'index'])->name('roles.index');
         Route::put('roles/update-permissions', [\App\Http\Controllers\RoleController::class, 'updatePermissions'])->name('roles.update-permissions');
         Route::resource('permissions', \App\Http\Controllers\PermissionController::class);
-        
+
         Route::patch('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
-    
+
         // Activity Log
         Route::get('activity-log', [\App\Http\Controllers\Admin\ActivityLogController::class, 'index'])->name('activity-log.index');
 
-        
+
         Route::get('system-settings', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'index'])->name('system-settings.index');
         Route::patch('system-settings', [\App\Http\Controllers\Admin\SystemSettingsController::class, 'update'])->name('system-settings.update');
-   
     });
 
     // Sales Assignment Routes
@@ -220,21 +219,20 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('role:Admin,Manager,Transporter')
         ->name('dashboard.transporter');
     Route::get('/dashboard/vendor', [DashboardController::class, 'vendor'])
-    
-        ->name('dashboard.vendor');
 
+        ->name('dashboard.vendor');
 });
 
 // Vendor Routes
 Route::middleware(['auth'])->prefix('vendor')->name('vendor.')->group(function () {
     // Redirect base vendor URL to vendor dashboard
-    Route::get('/', function() {
+    Route::get('/', function () {
         return redirect()->route('vendor.dashboard');
     });
-    
+
     Route::get('/dashboard', [VendorDashboardController::class, 'index'])->name('dashboard');
     Route::get('/inspection-history', [VendorDashboardController::class, 'inspectionHistory'])->name('inspection-history');
-    
+
     // Vendor Dashboard Controller
     Route::get('/inspections/{inspection}', [VendorDashboardController::class, 'showInspection'])->name('inspections.show');
     Route::post('/inspections/{inspection}/submit-estimate', [VendorDashboardController::class, 'submitEstimate'])->name('inspections.submit-estimate');
@@ -261,7 +259,7 @@ Route::get('/test-vehicle-import-notification', function () {
         'message' => 'Test notification: 2 new vehicles, 3 modified vehicles',
         'timestamp' => now()->timestamp
     ]))->toOthers();
-    
+
     return 'Broadcast sent. Check the browser console and notification sound.';
 });
 
@@ -282,7 +280,7 @@ Route::prefix('recon')->name('recon.')->middleware(['auth', 'role:Recon Manager'
 Route::middleware(['auth', 'role:Sales Team'])->prefix('sales-team')->name('sales-team.')->group(function () {
     // Vehicles routes
     Route::get('/vehicles', [App\Http\Controllers\SalesTeam\VehicleController::class, 'index'])->name('vehicles.index');
-    
+
     // Sales routes
     Route::get('/sales/create', [App\Http\Controllers\SalesTeam\SaleController::class, 'create'])->name('sales.create');
     Route::post('/sales-store', [App\Http\Controllers\SalesTeam\SaleController::class, 'store'])->name('sales.store');
@@ -299,7 +297,7 @@ Route::post('/sales-person', [QueuesController::class, 'dashboardstore'])->name(
 Route::get('/status', [StatusController::class, 'showStatus']);
 
 //Tokens Routes
-Route::get('/tokens', [TokenController::class, 'showTokensPage'])->name('tokens.page');  
+Route::get('/tokens', [TokenController::class, 'showTokensPage'])->name('tokens.page');
 // Ye blade page dikhaega (salesperson ya customer dono ke liye public ya middleware lagao apni marzi se)
 
 // Token generate karne ke liye (POST request, public ya auth middleware laga sakte ho)
@@ -307,10 +305,10 @@ Route::post('/tokens/generate', [TokenController::class, 'generateToken'])->name
 
 // Active tokens ke liye API (AJAX se call hoga, auth & role middleware lagao)
 Route::middleware(['auth', 'role:Sales person'])->group(function () {
-  Route::get('/tokens/active', [TokenController::class, 'activeTokens'])->name('tokens.active');
+    Route::get('/tokens/active', [TokenController::class, 'activeTokens'])->name('tokens.active');
     Route::post('/tokens/{token}/complete', [TokenController::class, 'completeToken'])->name('tokens.complete');
-   
-    
+    // routes/web.php
+    Route::post('/tokens/{token}/skip', [TokenController::class, 'skip'])->name('tokens.skip');
 });
 Route::post('/check-in', [TokenController::class, 'checkIn'])->middleware('auth');
 
@@ -326,5 +324,5 @@ Route::get('/tokens/current-assigned', function () {
 });
 
 //Token History
-Route::get('token/history', [TokenController::class,'tokenhistory'])->name('token.history.view');
-require __DIR__.'/auth.php';
+Route::get('token/history', [TokenController::class, 'tokenhistory'])->name('token.history.view');
+require __DIR__ . '/auth.php';

@@ -92,6 +92,7 @@ public function activeTokens(Request $request)
     ]);
 }
 
+
     public function checkIn(Request $request)
     {
         $userId = auth()->id();
@@ -141,7 +142,21 @@ public function activeTokens(Request $request)
         ]);
     }
 
-    // Naya method for creating pending token on checkout
+    //skip tokken
+    // TokenController.php
+public function skip(Request $request, Token $token)
+{
+    // Your logic to mark token as skipped
+    $token->status = 'skipped';
+    $token->save();
+
+    return response()->json([
+        'status' => 'success',
+        'message' => "Token {$token->serial_number} has been skipped."
+    ]);
+}
+
+
     public function createPendingTokenOnCheckout($userId)
     {
         \Log::info("createPendingTokenOnCheckout called for user: $userId");
@@ -200,19 +215,23 @@ public function activeTokens(Request $request)
         ]);
     }
 
-    public function tokenhistory()
-    {
-        $user = Auth::user();
+public function tokenhistory()
+{
+    $user = Auth::user();
 
-        if ($user->hasRole('Sales person')) {
-            $tokens = Token::where('user_id', $user->id)
-                ->where('status', 'completed')
-                ->orderBy('serial_number')
-                ->get();
+    if ($user->hasRole('Sales person')) {
+        $now = Carbon::now();
+        $cutoff = $now->subHours(24); // 24 ghantay ka filter
 
-            return view('tokens-history.tokens-history', compact('tokens'));
-        }
+        $tokens = Token::where('user_id', $user->id)
+            ->whereIn('status', ['completed', 'skipped'])
+            ->where('updated_at', '>=', $cutoff) // 24-hour filter
+            ->orderBy('serial_number')
+            ->get();
 
-        abort(403);
+        return view('tokens-history.tokens-history', compact('tokens'));
     }
+
+    abort(403);
+}
 }
