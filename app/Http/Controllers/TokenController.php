@@ -93,6 +93,40 @@ public function activeTokens(Request $request)
 }
 
 
+//Current Token
+ public function currentAssignedToken(Request $request)
+    {
+        $userId = Auth::id();
+
+        // Check if user is checked in
+        $isCheckedIn = \App\Models\Queue::where('user_id', $userId)
+                        ->where('is_checked_in', true)
+                        ->exists();
+
+        if (!$isCheckedIn) {
+            return response()->json(['token' => null]);
+        }
+
+        // Get latest assigned token for this user
+        $token = Token::with('salesperson')
+            ->where('user_id', $userId)
+            ->where('status', 'assigned')
+            ->latest('created_at')
+            ->first();
+
+        if (!$token) {
+            return response()->json(['token' => null]);
+        }
+
+        return response()->json([
+            'token' => [
+                'serial_number' => $token->serial_number,
+                'counter_number' => $token->salesperson->counter_number ?? 'N/A',
+                'status' => $token->status,
+            ]
+        ]);
+    }
+    
     public function checkIn(Request $request)
     {
         $userId = auth()->id();

@@ -6,7 +6,6 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
-use App\Models\Vehicle;
 use App\Models\SalesTeam;
 use App\Observers\VehicleObserver;
 use App\Observers\SalesTeamObserver;
@@ -23,15 +22,6 @@ class EventServiceProvider extends ServiceProvider
             SendEmailVerificationNotification::class,
         ],
     ];
-
-    /**
-     * Register any events for your application.
-     */
-    public function boot(): void
-    {
-        Vehicle::observe(VehicleObserver::class);
-        SalesTeam::observe(SalesTeamObserver::class);
-    }
 
     /**
      * Determine if events and listeners should be automatically discovered.

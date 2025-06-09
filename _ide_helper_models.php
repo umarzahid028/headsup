@@ -32,7 +32,6 @@ namespace App\Models{
  * @property string $batch_number
  * @property string|null $name
  * @property string $status
- * @property int|null $transporter_id
  * @property \Illuminate\Support\Carbon|null $scheduled_pickup_date
  * @property \Illuminate\Support\Carbon|null $scheduled_delivery_date
  * @property \Illuminate\Support\Carbon|null $pickup_date
@@ -46,8 +45,7 @@ namespace App\Models{
  * @property-read int|null $gate_passes_count
  * @property-read string $full_name
  * @property-read int $vehicle_count
- * @property-read \App\Models\Transporter|null $transporter
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Transport> $transports
+ * @property-read \Illuminate\Database\Eloquent\Collection<int,
  * @property-read int|null $transports_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Vehicle> $vehicles
  * @property-read int|null $vehicles_count

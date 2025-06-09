@@ -73,18 +73,6 @@
                                                 <button type="button" class="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" id="notifications-menu-button">
                                                     <span class="sr-only">View notifications</span>
                                                     <x-heroicon-o-bell class="h-6 w-6" />
-                                                    @php
-                                                        $unreadCount = auth()->user()->unreadNotifications()->count();
-                                                    @endphp
-                                                    @if($unreadCount > 0)
-                                                        <span id="notification-counter" class="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
-                                                            {{ $unreadCount }}
-                                                        </span>
-                                                    @else
-                                                        <span id="notification-counter" class="hidden absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
-                                                            0
-                                                        </span>
-                                                    @endif
                                                 </button>
 
                                                 <!-- Notifications Dropdown Panel -->
@@ -92,40 +80,8 @@
                                                     <div class="px-4 py-2 border-b border-gray-100">
                                                         <h3 class="text-sm font-semibold">Notifications</h3>
                                                     </div>
-                                                    <div id="notifications-list" class="max-h-96 overflow-y-auto">
-                                                        @foreach(auth()->user()->notifications()->latest()->take(5)->get() as $notification)
-                                                            <a href="{{ $notification->data['url'] ?? '#' }}" class="block px-4 py-2 hover:bg-gray-100 {{ $notification->read_at ? 'opacity-50' : '' }}">
-                                                                <div class="flex items-start">
-                                                                    <div class="flex-1">
-                                                                        <p class="text-sm font-medium text-gray-900">{{ $notification->data['message'] ?? 'Notification' }}</p>
-                                                                        <p class="text-xs text-gray-500">{{ $notification->created_at->diffForHumans() }}</p>
-                                                                    </div>
-                                                                    @if(!$notification->read_at)
-                                                                        <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">New</span>
-                                                                    @endif
-                                                                </div>
-                                                            </a>
-                                                        @endforeach
-                                                    </div>
-                                                    @if(auth()->user()->notifications->count() > 0)
-                                                        <div class="px-4 py-2 border-t border-gray-100">
-                                                            <div class="flex justify-between items-center">
-                                                                <a href="{{ route('notifications.index') }}" class="text-sm text-primary hover:text-primary-dark">View all</a>
-                                                                @if($unreadCount > 0)
-                                                                    <form action="{{ route('notifications.mark-all-read') }}" method="POST" class="flex items-center">
-                                                                        @csrf
-                                                                        <button type="submit" class="text-sm text-gray-500 hover:text-gray-700">
-                                                                            Mark all as read
-                                                                        </button>
-                                                                    </form>
-                                                                @endif
-                                                            </div>
-                                                        </div>
-                                                    @else
-                                                        <div class="px-4 py-2 text-sm text-gray-500 text-center">
-                                                            No notifications
-                                                        </div>
-                                                    @endif
+                                                    
+                                                  
                                                 </div>
                                             </div>
 

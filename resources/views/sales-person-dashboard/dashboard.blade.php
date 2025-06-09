@@ -85,7 +85,7 @@
   <h3 class="text-2xl font-bold text-gray-800 mb-2">Customer Sales Form</h3>
   <p class="text-gray-500 mb-6">Fill out the details below to log a customer sales interaction.</p>
 
-  <form method="POST" action="" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+  <form id="salesForm" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-8">
     @csrf
 
     <!-- Left Column -->
@@ -302,44 +302,45 @@
     setInterval(fetchCurrentToken, 5000);
   </script>
 
-  <script>
-    const announceButton = document.getElementById('announceButton');
+<script>
+  async function fetchCurrentUserToken() {
+  try {
+    const response = await fetch('/token/current', {
+      headers: { 'Accept': 'application/json' },
+      cache: 'no-store'
+    });
+    const data = await response.json();
 
-    function speak(text) {
-      if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US';
-        speechSynthesis.speak(utterance);
-      } else {
-        alert('Speech not supported in this browser.');
-      }
+    if (data.token) {
+      const tokenNumber = String(data.token.serial_number).padStart(3, '0');
+      const counterNumber = data.token.counter_number;
+
+      const announcement = `Token number ${tokenNumber}, please proceed to counter number ${counterNumber}`;
+      speak(announcement);
+    } else {
+      speak("You currently have no assigned tokens.");
     }
+  } catch (error) {
+    console.error('Error fetching current token:', error);
+    speak("Error fetching your token information.");
+  }
+}
 
-    async function fetchLatestAssignedToken() {
-      try {
-        const response = await fetch('/tokens/active', {
-          headers: { 'Accept': 'application/json' }
-        });
-        const data = await response.json();
+function speak(text) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel(); // cancel previous
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    speechSynthesis.speak(utterance);
+  } else {
+    alert('Speech not supported in this browser.');
+  }
+}
 
-        if (data.active && data.active.length > 0) {
-          const latestToken = data.active[0];
-          const tokenNumber = String(latestToken.serial_number).padStart(3, '0');
-          const counterNumber = latestToken.counter_number;
+const announceButton = document.getElementById('announceButton');
+announceButton.addEventListener('click', fetchCurrentUserToken);
 
-          const announcement = `Token number ${tokenNumber}, please proceed to counter number ${counterNumber}`;
-          speak(announcement);
-        } else {
-          speak("There are no active tokens at the moment.");
-        }
-      } catch (error) {
-        console.error('Error fetching token:', error);
-        speak("Error fetching token information.");
-      }
-    }
-
-    announceButton.addEventListener('click', fetchLatestAssignedToken);
-  </script>
+</script>
 
   <!-- skip tokken -->
 <script>
@@ -395,6 +396,65 @@
   });
 </script>
 
+<!-- customer form -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.getElementById('salesForm').addEventListener('submit', async function(e) {
+    e.preventDefault(); // Stop default form submission
+
+    const form = e.target;
+    const formData = new FormData(form);
+
+    // 🔄 Show processing alert
+    Swal.fire({
+        title: 'Processing...',
+        text: 'Please wait while we save your data.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    try {
+        const response = await fetch("{{ route('customer.sales.store') }}", {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: result.message || 'Form submitted successfully',
+                timer: 3000,
+                showConfirmButton: false
+            });
+
+            form.reset(); // Optionally reset form
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: result.message || 'Something went wrong!',
+            });
+        }
+
+    } catch (err) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Request failed. Please try again.'
+        });
+    }
+});
+</script>
 
   @endpush
 </x-app-layout>

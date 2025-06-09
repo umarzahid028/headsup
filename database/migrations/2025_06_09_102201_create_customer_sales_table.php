@@ -11,16 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('vendors', function (Blueprint $table) {
+        Schema::create('customer_sales', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('contact_person')->nullable();
-            $table->string('email')->nullable();
-            $table->string('phone')->nullable();
-            $table->string('address')->nullable();
-            $table->enum('type', ['mechanical', 'body_shop', 'detail', 'tire', 'upholstery', 'glass', 'other'])->default('other');
-            $table->boolean('is_active')->default(true);
+            $table->string('email');
+            $table->string('phone');
+            $table->string('interest')->nullable();
             $table->text('notes')->nullable();
+            $table->json('process')->nullable(); // stores array of sales process steps
+            $table->json('disposition')->nullable(); // stores array of disposition reasons
             $table->timestamps();
         });
     }
@@ -30,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('vendors');
+        Schema::dropIfExists('customer_sales');
     }
-}; 
+};

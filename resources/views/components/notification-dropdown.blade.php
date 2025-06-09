@@ -53,60 +53,6 @@ switch ($width) {
                     @endif
                 </div>
 
-                <div class="space-y-4 max-h-[400px] overflow-y-auto">
-                    @forelse(auth()->user()->notifications()->take(5)->get() as $notification)
-                        <div @class([
-                            'flex items-start space-x-4 p-3 rounded-lg transition-colors',
-                            'bg-muted/50' => !$notification->read_at,
-                            'hover:bg-muted/30' => true
-                        ])>
-                            <div class="flex-shrink-0">
-                                @if($notification->type === 'App\Notifications\NewTransportAssigned')
-                                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
-                                        <x-heroicon-o-truck class="w-4 h-4 text-primary"/>
-                                    </span>
-                                @endif
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-start justify-between">
-                                    <p class="text-sm font-medium text-foreground">
-                                        {{ $notification->data['message'] }}
-                                    </p>
-                                    <p class="ml-2 text-xs text-muted-foreground whitespace-nowrap">
-                                        {{ $notification->created_at->diffForHumans() }}
-                                    </p>
-                                </div>
-                                <p class="mt-1 text-sm text-muted-foreground">
-                                    {{ $notification->data['vehicle'] }}
-                                </p>
-                                <p class="mt-1 text-xs text-muted-foreground">
-                                    {{ $notification->data['origin'] }} → {{ $notification->data['destination'] }}
-                                </p>
-                                <div class="mt-2">
-                                    <a href="{{ $notification->data['link'] }}" 
-                                       class="text-sm font-medium text-primary hover:underline">
-                                        View Details
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center py-4">
-                            <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-muted mb-4">
-                                <x-heroicon-o-bell class="w-6 h-6 text-muted-foreground"/>
-                            </div>
-                            <p class="text-sm text-muted-foreground">No notifications</p>
-                        </div>
-                    @endforelse
-
-                    @if(auth()->user()->notifications->count() > 5)
-                        <div class="text-center pt-2">
-                            <a href="{{ route('notifications.index') }}" class="text-sm text-primary hover:underline">
-                                View all notifications
-                            </a>
-                        </div>
-                    @endif
-                </div>
             </div>
         </div>
     </div>
