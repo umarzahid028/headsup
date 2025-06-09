@@ -2,25 +2,14 @@
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TestController;
 use App\Http\Controllers\TokenController;
 use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\QueuesController;
 use App\Http\Controllers\StatusController;
-use App\Http\Controllers\VendorController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\VehicleController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\TransportController;
-use App\Http\Controllers\SalesIssueController;
-use App\Http\Controllers\VendorTypeController;
-use App\Http\Controllers\RepairImageController;
-use App\Http\Controllers\TransporterController;
+use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\CustomerSaleController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\GoodwillClaimController;
-use App\Http\Controllers\VehicleStatusController;
-use App\Http\Controllers\VendorDashboardController;
 
 // Register Broadcasting Routes
 Broadcast::routes(['middleware' => ['web', 'auth']]);
@@ -98,7 +87,29 @@ Route::get('/tokens/current-assigned', function () {
     return view('partials.current-token', compact('token'));
 })->middleware(['auth', 'web']);  // ensure auth middleware laga ho
 
+//Appoinments
+Route::middleware(['auth'])->group(function () {
 
+    // Both Sales Manager and Sales Person
+    Route::middleware('role:Sales Manager|Sales person')->group(function () {
+        Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointment.records');
+    });
+
+    // Only Sales Manager
+    Route::middleware('role:Sales Manager')->group(function () {
+        Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointment.create');
+        Route::post('/appointments', [AppointmentController::class, 'store']);
+    });
+
+    // Only Sales Person
+    Route::middleware('role:Sales person')->group(function () {
+        Route::post('/appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
+    });
+
+});
+//Appointment form routes
+Route::get('appointment/form', [AppointmentController::class,'appointmentform'])->name('appointment.form');
+Route::post('/appointment-sales', [AppointmentController::class, 'appointmentstore'])->name('customer.appointment.store');
 //Token History
 Route::get('token/history', [TokenController::class, 'tokenhistory'])->name('token.history.view');
 //Customer Sales

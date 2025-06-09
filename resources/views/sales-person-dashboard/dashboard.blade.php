@@ -165,7 +165,7 @@
 
     <!-- Submit Button -->
     <div class="md:col-span-2 text-right mt-6">
-      <button type="submit"
+      <button type="submit" style="background-color: #111827;"
         class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-xl transition duration-200">
         Submit
       </button>
