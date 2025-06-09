@@ -144,18 +144,44 @@ public function activeTokens(Request $request)
 
     //skip tokken
     // TokenController.php
-public function skip(Request $request, Token $token)
+public function skip(Request $request, $tokenId)
 {
-    // Your logic to mark token as skipped
-    $token->status = 'skipped';
-    $token->save();
+    $token = Token::findOrFail($tokenId);
+
+    // Ensure only assigned tokens can be skipped
+    if ($token->status !== 'assigned') {
+        return response()->json(['message' => 'Only assigned tokens can be skipped'], 422);
+    }
+
+    // Mark token as skipped
+    $token->update([
+        'status' => 'skipped',
+        'skipped_at' => \Carbon\Carbon::now(),
+    ]);
+
+    $salespersonId = $token->user_id;
+
+    // Assign next pending token to the same salesperson
+    $pendingToken = Token::where('status', 'pending')->orderBy('serial_number')->first();
+
+    if ($pendingToken) {
+        $pendingToken->update([
+            'user_id' => $salespersonId,
+            'status' => 'assigned',
+            'assigned_at' => \Carbon\Carbon::now(),
+        ]);
+
+        return response()->json([
+            'message' => "Token skipped. Token {$pendingToken->serial_number} assigned to salesperson.",
+            'status' => 'success'
+        ]);
+    }
 
     return response()->json([
-        'status' => 'success',
-        'message' => "Token {$token->serial_number} has been skipped."
+        'message' => 'Token skipped. No pending tokens available for assignment.',
+        'status' => 'success'
     ]);
 }
-
 
     public function createPendingTokenOnCheckout($userId)
     {
