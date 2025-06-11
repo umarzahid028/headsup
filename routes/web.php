@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\TokenController;
 use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\QueuesController;
@@ -9,7 +10,9 @@ use App\Http\Controllers\StatusController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\CreatePersonController;
 use App\Http\Controllers\CustomerSaleController;
+use App\Http\Controllers\SalesDashboardController;
 
 // Register Broadcasting Routes
 Broadcast::routes(['middleware' => ['web', 'auth']]);
@@ -29,21 +32,20 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-        
-    // Admin routes
-    Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
-        Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
-        Route::patch('/settings/csv', [App\Http\Controllers\Admin\SettingsController::class, 'updateCsvSettings'])->name('settings.update-csv-settings');
-        // User management routes
-        Route::resource('users', \App\Http\Controllers\UserController::class);
-        Route::post('users/{user}/verify', [\App\Http\Controllers\UserController::class, 'verify'])->name('users.verify');
-        Route::get('roles', [\App\Http\Controllers\RoleController::class, 'index'])->name('roles.index');
-        Route::put('roles/update-permissions', [\App\Http\Controllers\RoleController::class, 'updatePermissions'])->name('roles.update-permissions');
-        Route::resource('permissions', \App\Http\Controllers\PermissionController::class);
 
-        Route::patch('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+// Admin routes
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+    Route::get('/settings', [App\Http\Controllers\Admin\SettingsController::class, 'index'])->name('settings.index');
+    Route::patch('/settings/csv', [App\Http\Controllers\Admin\SettingsController::class, 'updateCsvSettings'])->name('settings.update-csv-settings');
+    // User management routes
+    Route::resource('users', \App\Http\Controllers\UserController::class);
+    Route::post('users/{user}/verify', [\App\Http\Controllers\UserController::class, 'verify'])->name('users.verify');
+    Route::get('roles', [\App\Http\Controllers\RoleController::class, 'index'])->name('roles.index');
+    Route::put('roles/update-permissions', [\App\Http\Controllers\RoleController::class, 'updatePermissions'])->name('roles.update-permissions');
+    Route::resource('permissions', \App\Http\Controllers\PermissionController::class);
 
-    });
+    Route::patch('settings', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('settings.update');
+});
 
 //Queues Routes
 Route::get('/sales-person', [DashboardController::class, 'salesdashboard'])->name('sales.perosn');
@@ -54,9 +56,7 @@ Route::get('/status', [StatusController::class, 'showStatus']);
 
 //Tokens Routes
 Route::get('/tokens', [TokenController::class, 'showTokensPage'])->name('tokens.page');
-// Ye blade page dikhaega (salesperson ya customer dono ke liye public ya middleware lagao apni marzi se)
 
-// Token generate karne ke liye (POST request, public ya auth middleware laga sakte ho)
 Route::post('/tokens/generate', [TokenController::class, 'generateToken'])->name('tokens.generate');
 
 // Active tokens ke liye API (AJAX se call hoga, auth & role middleware lagao)
@@ -105,13 +105,19 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:Sales person')->group(function () {
         Route::post('/appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
     });
-
 });
 //Appointment form routes
-Route::get('appointment/form', [AppointmentController::class,'appointmentform'])->name('appointment.form');
+Route::get('appointment/form', [AppointmentController::class, 'appointmentform'])->name('appointment.form');
 Route::post('/appointment-sales', [AppointmentController::class, 'appointmentstore'])->name('customer.appointment.store');
 //Token History
 Route::get('token/history', [TokenController::class, 'tokenhistory'])->name('token.history.view');
 //Customer Sales
 Route::post('/customer-sales', [CustomerSaleController::class, 'store'])->name('customer.sales.store');
+
+//Create Sale perosn
+Route::get('create/saleperson', [UserController::class, 'create'])->name('create.saleperson')->middleware('role:Admin|Sales Manager');
+Route::post('create/saleperson', [UserController::class, 'store'])->name('store.saleperson');
+
+//Activity Records
+Route::middleware(['auth'])->get('/sales/activity-report', [SalesDashboardController::class, 'activityReport'])->name('sales.activity.report');
 require __DIR__ . '/auth.php';

@@ -56,72 +56,70 @@ class UserController extends Controller
      */
     public function create()
     {
-        $this->authorize('create users');
-        
+       
         $roles = Role::all();
         
-        return view('users.create', compact('roles'));
+        return view('salesperson-form.create', compact('roles'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        $this->authorize('create users');
-        
-        $this->validate($request, [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'roles' => ['nullable', 'array'],
-            'roles.*' => ['exists:roles,id'],
-        ]);
-        
-        // Double-check if the email already exists to prevent race conditions
-        if (User::where('email', $request->input('email'))->exists()) {
-            return redirect()->back()->withInput()
-                ->with('error', 'A user with this email already exists.');
-        }
-        
-        DB::beginTransaction();
-        
-        try {
-            $user = User::create([
-                'name' => $request->input('name'),
-                'email' => $request->input('email'),
-                'password' => Hash::make($request->input('password')),
-            ]);
-            
-            // Assign roles
-            if ($request->has('roles')) {
-                $roles = Role::whereIn('id', $request->input('roles'))->get();
-                $user->assignRole($roles);
-            }
-            
-            DB::commit();
-            
-            return redirect()->route('admin.users.index')
-                ->with('success', 'User created successfully');
-                
-        } catch (\Illuminate\Database\QueryException $e) {
-            DB::rollBack();
-            
-            // Check specifically for duplicate entry error
-            if ($e->errorInfo[1] == 1062) {
-                return redirect()->back()->withInput()
-                    ->with('error', 'A user with this email already exists.');
-            }
-            
-            return redirect()->back()->withInput()
-                ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
-        } catch (\Exception $e) {
-            DB::rollBack();
-            
-            return redirect()->back()->withInput()
-                ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
-        }
+
+
+public function store(Request $request)
+{
+    
+
+    $this->validate($request, [
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+        'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        'counter_number' => ['nullable', 'string', 'max:255'],
+        'phone' => ['nullable', 'string', 'max:20'],
+    ]);
+
+    if (User::where('email', $request->input('email'))->exists()) {
+        return redirect()->back()->withInput()
+            ->with('error', 'A user with this email already exists.');
     }
+
+    DB::beginTransaction();
+
+    try {
+        $user = User::create([
+            'name' => $request->input('name'),
+            'email' => $request->input('email'),
+            'password' => Hash::make($request->input('password')),
+            'counter_number' => $request->input('counter_number'),
+            'phone' => $request->input('phone'),
+        ]);
+
+        // Assign default role: sales-person
+        $user->assignRole('Sales person');
+
+        DB::commit();
+
+        return redirect()->back()
+            ->with('success', 'User created successfully');
+
+    } catch (\Illuminate\Database\QueryException $e) {
+        DB::rollBack();
+
+        if ($e->errorInfo[1] == 1062) {
+           return redirect()->route('create.saleperson')->with('success', 'Sale Person created successfully!');
+
+        }
+
+        return redirect()->back()->withInput()
+            ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return redirect()->back()->withInput()
+            ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
+    }
+}
 
     /**
      * Display the specified resource.
