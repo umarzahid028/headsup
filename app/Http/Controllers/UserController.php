@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Illuminate\Validation\Rules;
+use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
 {
@@ -66,6 +67,22 @@ class UserController extends Controller
      * Store a newly created resource in storage.
      */
 
+    public function saletable(Request $request){
+        if ($request->ajax()) {
+            $data = User::latest();
+
+            return DataTables::of($data)
+                ->addIndexColumn()
+                 ->addColumn('action', function ($row) {
+                    $editBtn = '<a href="" class="inline-flex items-center px-3 py-1 text-xs font-medium text-black bg-yellow-400 rounded hover:bg-yellow-500">Edit</a>';
+                    $deleteBtn = '<button data-id="' . $row->id . '" class="ml-2 inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 delete-user">Delete</button>';
+                    return $editBtn . $deleteBtn;
+                })
+                ->rawColumns(['action'])   
+                ->make(true);
+        }
+        return view('salesperson-form.table');
+    }
 
 public function store(Request $request)
 {

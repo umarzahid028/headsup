@@ -8,17 +8,17 @@
     <div class="mt-10 px-6 space-y-12">
         {{-- Completed Tokens --}}
         <div>
-            <h3 class="text-2xl font-bold mb-4 text-green-700">Completed Tokens (Last 24 Hours)</h3>
+            <h3 class="text-2xl font-bold mb-4 ">Completed Tokens (Last 24 Hours)</h3>
 
             <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
                 <table class="min-w-full bg-white divide-y divide-gray-200">
-                    <thead class="bg-green-50">
+                    <thead class="bg-black ">
                         <tr>
                             @php
                                 $headers = ['Token No', 'Status', 'Assigned At', 'Completed At', 'Duration'];
                             @endphp
                             @foreach ($headers as $header)
-                                <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider">
                                     {{ $header }}
                                 </th>
                             @endforeach
@@ -50,7 +50,7 @@
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 font-medium text-gray-800">{{ $token->serial_number }}</td>
                                 <td class="px-4 py-3">
-                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-gray-800 text-white">
                                         {{ ucfirst($token->status) }}
                                     </span>
                                 </td>
@@ -70,14 +70,14 @@
 
         {{-- Skipped Tokens --}}
         <div class="mt-4">
-            <h3 class="text-2xl font-bold mb-4 text-red-700">Skipped Tokens (Last 24 Hours)</h3>
+            <h3 class="text-2xl font-bold mb-4">Skipped Tokens (Last 24 Hours)</h3>
 
             <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
                 <table class="min-w-full bg-white divide-y divide-gray-200">
-                    <thead class="bg-red-50">
+                    <thead class="bg-black ">
                         <tr>
                             @foreach ($headers as $header)
-                                <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider">
                                     {{ $header }}
                                 </th>
                             @endforeach
@@ -109,9 +109,10 @@
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 font-medium text-gray-800">{{ $token->serial_number }}</td>
                                 <td class="px-4 py-3">
-                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-gray-800 text-white">
                                         {{ ucfirst($token->status) }}
                                     </span>
+                                    
                                 </td>
                                 <td class="px-4 py-3">{{ $assignedTime }}</td>
                                 <td class="px-4 py-3">{{ $completedTime }}</td>

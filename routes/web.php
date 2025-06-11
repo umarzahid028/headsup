@@ -60,8 +60,8 @@ Route::get('/tokens', [TokenController::class, 'showTokensPage'])->name('tokens.
 Route::post('/tokens/generate', [TokenController::class, 'generateToken'])->name('tokens.generate');
 
 // Active tokens ke liye API (AJAX se call hoga, auth & role middleware lagao)
+Route::get('/tokens/active', [TokenController::class, 'activeTokens'])->name('tokens.active');
 Route::middleware(['auth', 'role:Sales person'])->group(function () {
-    Route::get('/tokens/active', [TokenController::class, 'activeTokens'])->name('tokens.active');
     Route::post('/tokens/{token}/complete', [TokenController::class, 'completeToken'])->name('tokens.complete');
     // routes/web.php
     Route::post('/tokens/{token}/skip', [TokenController::class, 'skip'])->name('tokens.skip');
@@ -125,6 +125,7 @@ Route::get('token/history', [TokenController::class, 'tokenhistory'])->name('tok
 Route::post('/customer-sales', [CustomerSaleController::class, 'store'])->name('customer.sales.store');
 
 //Create Sale perosn
+Route::get('saleperson', [UserController::class, 'saletable'])->name('saleperson.table')->middleware('role:Admin');
 Route::get('create/saleperson', [UserController::class, 'create'])->name('create.saleperson')->middleware('role:Admin|Sales Manager');
 Route::post('create/saleperson', [UserController::class, 'store'])->name('store.saleperson');
 

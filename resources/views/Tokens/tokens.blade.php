@@ -11,8 +11,6 @@
 
     <style>
         body {
-            background: linear-gradient(to top right, #0f172a, #1e293b, #334155);
-            color: #fff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
@@ -22,7 +20,7 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
         }
 
         .token-number {
@@ -34,50 +32,50 @@
 
         @keyframes glow {
             from {
-                text-shadow: 0 0 10px #3b82f6, 0 0 20px #3b82f6;
+                /* text-shadow: 0 0 10px white, 0 0 20px white; */
             }
+
             to {
-                text-shadow: 0 0 20px #06b6d4, 0 0 30px #06b6d4;
+                /* text-shadow: 0 0 20px #ccc, 0 0 30px #ccc; */
             }
         }
 
         .typing {
             overflow: hidden;
             white-space: nowrap;
-            animation: typing 2s steps(20, end), blink-caret 0.75s step-end infinite;
-            border-right: 3px solid #3b82f6;
             font-size: 1.2rem;
             display: inline-block;
         }
 
-        @keyframes typing {
-            from { width: 0 }
-            to { width: 100% }
-        }
-
         @keyframes blink-caret {
-            from, to { border-color: transparent }
-            50% { border-color: #3b82f6 }
+            from,
+            to {
+                border-color: transparent
+            }
+
+            50% {
+                border-color: white
+            }
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center px-4">
+<body class="min-h-screen flex items-center justify-center px-4 bg-gray-900">
 
     <div class="glass w-full max-w-md p-8 text-center">
-        <h1 class="text-3xl font-extrabold mb-6 text-blue-400">🎫 Token Generator</h1>
+        <h1 class="text-3xl font-extrabold mb-6 text-white">🎫 Token Generator</h1>
 
+        
+        <div class="mt-10">
+            <p class="typing text-gray-300">Your Token Number</p>
+            <div id="generatedToken" class="token-number mt-4 text-white"></div>
+            <p id="dateTime" class="mt-3 text-sm text-gray-500"></p>
+        </div>
         <button id="generateTokenBtn"
-            class="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-bold py-3 px-8 rounded-full shadow-xl transition-all duration-300 focus:outline-none">
+            class="w-full text-xl bg-gradient-to-r from-gray-800 to-gray-600 hover:from-gray-900 hover:to-gray-800 text-white font-bold py-3 px-8 rounded-full shadow-xl transition-all duration-300 focus:outline-none">
             Generate Token
         </button>
 
-        <div class="mt-10">
-            <p class="typing text-gray-300">Your Token Number:</p>
-            <div id="generatedToken" class="token-number mt-4 text-cyan-400"></div>
-            <p id="dateTime" class="mt-3 text-sm text-gray-400"></p>
-        </div>
-
-        <p class="mt-6 text-xs text-gray-500 italic">Please wait for your token to appear.</p>
+        <p class="mt-6 text-xs text-white italic">Please wait for your token to appear.</p>
     </div>
 
     <script>

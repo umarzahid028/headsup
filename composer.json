@@ -17,7 +17,8 @@
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-permission": "^6.16",
-        "spatie/laravel-settings": "^3.4"
+        "spatie/laravel-settings": "^3.4",
+        "yajra/laravel-datatables-oracle": "^12.3"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.5",

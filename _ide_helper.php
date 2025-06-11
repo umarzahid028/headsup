@@ -1620,11 +1620,15 @@ namespace Illuminate\Support\Facades {
         }
 
         /**
-         * {@inheritdoc}
+         * Finds an entry of the container by its identifier and returns it.
          *
          * @template TClass of object
          * @param string|class-string<TClass> $id
          * @return ($id is class-string<TClass> ? TClass : mixed)
+         * @param string $id Identifier of the entry to look for.
+         * @throws NotFoundExceptionInterface  No entry was found for **this** identifier.
+         * @throws ContainerExceptionInterface Error while retrieving the entry.
+         * @return mixed Entry.
          * @static 
          */
         public static function get($id)
@@ -22996,6 +23000,180 @@ namespace SimpleSoftwareIO\QrCode\Facades {
             }
     }
 
+namespace Yajra\DataTables\Facades {
+    /**
+     * 
+     *
+     * @mixin \Yajra\DataTables\DataTables
+     * @see \Yajra\DataTables\DataTables
+     */
+    class DataTables {
+        /**
+         * Make a DataTable instance from source.
+         * 
+         * Alias of make for backward compatibility.
+         *
+         * @param object $source
+         * @return \Yajra\DataTables\DataTableAbstract 
+         * @throws \Exception
+         * @static 
+         */
+        public static function of($source)
+        {
+            return \Yajra\DataTables\DataTables::of($source);
+        }
+
+        /**
+         * Make a DataTable instance from source.
+         *
+         * @param object $source
+         * @return \Yajra\DataTables\DataTableAbstract 
+         * @throws \Yajra\DataTables\Exceptions\Exception
+         * @static 
+         */
+        public static function make($source)
+        {
+            return \Yajra\DataTables\DataTables::make($source);
+        }
+
+        /**
+         * Get request object.
+         *
+         * @static 
+         */
+        public static function getRequest()
+        {
+            /** @var \Yajra\DataTables\DataTables $instance */
+            return $instance->getRequest();
+        }
+
+        /**
+         * Get config instance.
+         *
+         * @static 
+         */
+        public static function getConfig()
+        {
+            /** @var \Yajra\DataTables\DataTables $instance */
+            return $instance->getConfig();
+        }
+
+        /**
+         * DataTables using query builder.
+         *
+         * @throws \Yajra\DataTables\Exceptions\Exception
+         * @static 
+         */
+        public static function query($builder)
+        {
+            /** @var \Yajra\DataTables\DataTables $instance */
+            return $instance->query($builder);
+        }
+
+        /**
+         * DataTables using Eloquent Builder.
+         *
+         * @throws \Yajra\DataTables\Exceptions\Exception
+         * @static 
+         */
+        public static function eloquent($builder)
+        {
+            /** @var \Yajra\DataTables\DataTables $instance */
+            return $instance->eloquent($builder);
+        }
+
+        /**
+         * DataTables using Collection.
+         *
+         * @param \Illuminate\Support\Collection<array-key, array>|array $collection
+         * @throws \Yajra\DataTables\Exceptions\Exception
+         * @static 
+         */
+        public static function collection($collection)
+        {
+            /** @var \Yajra\DataTables\DataTables $instance */
+            return $instance->collection($collection);
+        }
+
+        /**
+         * DataTables using Collection.
+         *
+         * @param \Illuminate\Http\Resources\Json\AnonymousResourceCollection<array-key, array>|array $resource
+         * @return \Yajra\DataTables\ApiResourceDataTable|\Yajra\DataTables\DataTableAbstract 
+         * @static 
+         */
+        public static function resource($resource)
+        {
+            /** @var \Yajra\DataTables\DataTables $instance */
+            return $instance->resource($resource);
+        }
+
+        /**
+         * 
+         *
+         * @throws \Yajra\DataTables\Exceptions\Exception
+         * @static 
+         */
+        public static function validateDataTable($engine, $parent)
+        {
+            /** @var \Yajra\DataTables\DataTables $instance */
+            return $instance->validateDataTable($engine, $parent);
+        }
+
+        /**
+         * Register a custom macro.
+         *
+         * @param string $name
+         * @param object|callable $macro
+         * @param-closure-this static  $macro
+         * @return void 
+         * @static 
+         */
+        public static function macro($name, $macro)
+        {
+            \Yajra\DataTables\DataTables::macro($name, $macro);
+        }
+
+        /**
+         * Mix another object into the class.
+         *
+         * @param object $mixin
+         * @param bool $replace
+         * @return void 
+         * @throws \ReflectionException
+         * @static 
+         */
+        public static function mixin($mixin, $replace = true)
+        {
+            \Yajra\DataTables\DataTables::mixin($mixin, $replace);
+        }
+
+        /**
+         * Checks if macro is registered.
+         *
+         * @param string $name
+         * @return bool 
+         * @static 
+         */
+        public static function hasMacro($name)
+        {
+            return \Yajra\DataTables\DataTables::hasMacro($name);
+        }
+
+        /**
+         * Flush the existing macros.
+         *
+         * @return void 
+         * @static 
+         */
+        public static function flushMacros()
+        {
+            \Yajra\DataTables\DataTables::flushMacros();
+        }
+
+            }
+    }
+
 namespace Illuminate\Http {
     /**
      * 
@@ -27795,6 +27973,7 @@ namespace  {
     class PDF extends \Barryvdh\DomPDF\Facade\Pdf {}
     class Pdf extends \Barryvdh\DomPDF\Facade\Pdf {}
     class QrCode extends \SimpleSoftwareIO\QrCode\Facades\QrCode {}
+    class DataTables extends \Yajra\DataTables\Facades\DataTables {}
 }
 
 

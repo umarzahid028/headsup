@@ -68,12 +68,12 @@
                 <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Sales Person
                 </p>
-                <a href="{{ route('create.saleperson') }}" class="{{ request()->routeIs('create.saleperson') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                <a href="{{ route('saleperson.table') }}" class="{{ request()->routeIs('saleperson.table') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M18 9v6m3-3h-6m-4 4a4 4 0 100-8 4 4 0 000 8zm0 0v1a4 4 0 01-4 4H5a4 4 0 01-4-4v-1a6 6 0 0112 0z" />
                     </svg>
-                    <span class="flex-1" style="margin-left: 5px;">Create Sales Person</span>
+                    <span class="flex-1" style="margin-left: 5px;">Sales Person</span>
                 </a>
             </div>
             @endhasrole
