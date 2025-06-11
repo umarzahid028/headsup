@@ -89,13 +89,13 @@ Route::get('/tokens/current-assigned', function () {
     }
 
     $token = \App\Models\Token::with('salesperson')
-        ->where('user_id', $user->id)  // sirf current user ke tokens
+        ->where('user_id', $user->id)  
         ->where('status', 'assigned')
         ->latest('created_at')
         ->first();
 
     return view('partials.current-token', compact('token'));
-})->middleware(['auth', 'web']);  // ensure auth middleware laga ho
+})->middleware(['auth', 'web']);
 
 //Appoinments
 Route::middleware(['auth'])->group(function () {
@@ -125,9 +125,12 @@ Route::get('token/history', [TokenController::class, 'tokenhistory'])->name('tok
 Route::post('/customer-sales', [CustomerSaleController::class, 'store'])->name('customer.sales.store');
 
 //Create Sale perosn
-Route::get('saleperson', [UserController::class, 'saletable'])->name('saleperson.table')->middleware('role:Admin');
+Route::get('saleperson', [UserController::class, 'saletable'])->name('saleperson.table')->middleware('role:Admin|Sales Manager');
+Route::get('edit/sales/{id}', [UserController::class,'editsales'])->name('edit.saleperson')->middleware('role:Admin|Sales Manager');
+Route::post('edit/sales/{id}', [UserController::class,'updatesales'])->name('update.saleperon')->middleware('role:Admin|Sales Manager');
 Route::get('create/saleperson', [UserController::class, 'create'])->name('create.saleperson')->middleware('role:Admin|Sales Manager');
 Route::post('create/saleperson', [UserController::class, 'store'])->name('store.saleperson');
+Route::delete('/salesperson/delete/{id}', [UserController::class, 'deleteSalesperson'])->name('salesperson.delete');
 
 //Activity Records
 Route::middleware(['auth'])->get('/sales/activity-report', [SalesDashboardController::class, 'activityReport'])->name('sales.activity.report');

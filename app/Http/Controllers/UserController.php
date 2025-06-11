@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Illuminate\Validation\Rules;
-use Yajra\DataTables\Facades\DataTables;
+use DataTables;
 
 class UserController extends Controller
 {
@@ -19,36 +19,36 @@ class UserController extends Controller
     {
         $this->middleware('auth');
     }
-    
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
         $this->authorize('view users');
-        
+
         $query = User::query()
             ->with('roles')
             ->withCount('roles');
-        
+
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
-        
+
         if ($request->filled('role')) {
             $roleId = $request->input('role');
             $query->whereHas('roles', function ($q) use ($roleId) {
                 $q->where('id', $roleId);
             });
         }
-        
+
         $users = $query->latest()->paginate(10)->withQueryString();
         $roles = Role::orderBy('name')->get();
-        
+
         return view('users.index', compact('users', 'roles'));
     }
 
@@ -57,9 +57,9 @@ class UserController extends Controller
      */
     public function create()
     {
-       
+
         $roles = Role::all();
-        
+
         return view('salesperson-form.create', compact('roles'));
     }
 
@@ -67,76 +67,126 @@ class UserController extends Controller
      * Store a newly created resource in storage.
      */
 
-    public function saletable(Request $request){
+    public function saletable(Request $request)
+    {
         if ($request->ajax()) {
-            $data = User::latest();
+            $data = User::role('Sales person')->latest()->get();
 
             return DataTables::of($data)
                 ->addIndexColumn()
-                 ->addColumn('action', function ($row) {
-                    $editBtn = '<a href="" class="inline-flex items-center px-3 py-1 text-xs font-medium text-black bg-yellow-400 rounded hover:bg-yellow-500">Edit</a>';
+                ->addColumn('action', function ($row) {
+                    $editUrl = route('edit.saleperson', ['id' => $row->id]);
+                    $editBtn = '<a href="' . $editUrl . '" class="inline-flex items-center px-3 py-1 text-xs font-medium text-black bg-yellow-400 rounded hover:bg-yellow-500">Edit</a>';
+
                     $deleteBtn = '<button data-id="' . $row->id . '" class="ml-2 inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 delete-user">Delete</button>';
                     return $editBtn . $deleteBtn;
                 })
-                ->rawColumns(['action'])   
+                ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('salesperson-form.table');
     }
 
-public function store(Request $request)
-{
-    
+    public function editsales(Request $request, $id)
+    {
+        $this->authorize('edit users');
+        $edit = User::find($id);
+      return view('salesperson-form.edit', compact('edit'));
+    }
 
-    $this->validate($request, [
-        'name' => ['required', 'string', 'max:255'],
-        'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-        'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        'counter_number' => ['nullable', 'string', 'max:255'],
-        'phone' => ['nullable', 'string', 'max:20'],
+   public function updatesales(Request $request, $id)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email,' . $id,
+        'password' => 'nullable|min:6|confirmed',
+        'counter_number' => 'required|string|max:255',
     ]);
 
-    if (User::where('email', $request->input('email'))->exists()) {
-        return redirect()->back()->withInput()
-            ->with('error', 'A user with this email already exists.');
+    $user = User::find($id);
+
+    if (!$user) {
+        return redirect()->back()->with('error', 'User not found');
     }
 
-    DB::beginTransaction();
+    $user->name = $request->name;
+    $user->email = $request->email;
+    $user->counter_number = $request->counter_number;
 
-    try {
-        $user = User::create([
-            'name' => $request->input('name'),
-            'email' => $request->input('email'),
-            'password' => Hash::make($request->input('password')),
-            'counter_number' => $request->input('counter_number'),
-            'phone' => $request->input('phone'),
+    if ($request->filled('password')) {
+        $user->password = bcrypt($request->password);
+    }
+
+    $user->save();
+
+    return redirect()->route('saleperson.table')->with('success', 'User Updated Successfully');
+}
+
+public function deleteSalesperson($id)
+{
+    $user = User::find($id);
+
+    if (!$user) {
+        return response()->json(['message' => 'User not found'], 404);
+    }
+
+    $user->delete();
+
+    return response()->json(['message' => 'User deleted successfully']);
+}
+
+    public function store(Request $request)
+    {
+
+
+        $this->validate($request, [
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'counter_number' => ['nullable', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:20'],
         ]);
 
-        // Assign default role: sales-person
-        $user->assignRole('Sales person');
-
-        DB::commit();
-
-        return redirect()->back()
-            ->with('success', 'User created successfully');
-
-    } catch (\Illuminate\Database\QueryException $e) {
-        DB::rollBack();
-
-        if ($e->errorInfo[1] == 1062) {
-           return redirect()->route('create.saleperson')->with('success', 'Sale Person created successfully!');
-
+        if (User::where('email', $request->input('email'))->exists()) {
+            return redirect()->back()->withInput()
+                ->with('error', 'A user with this email already exists.');
         }
 
-        return redirect()->back()->withInput()
-            ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
-    } catch (\Exception $e) {
-        DB::rollBack();
+        DB::beginTransaction();
 
-        return redirect()->back()->withInput()
-            ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
+        try {
+            $user = User::create([
+                'name' => $request->input('name'),
+                'email' => $request->input('email'),
+                'password' => Hash::make($request->input('password')),
+                'counter_number' => $request->input('counter_number'),
+                'phone' => $request->input('phone'),
+            ]);
+
+            // Assign default role: sales-person
+            $user->assignRole('Sales person');
+
+            DB::commit();
+
+            return redirect()->back()
+                ->with('success', 'User created successfully');
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+
+            if ($e->errorInfo[1] == 1062) {
+                return redirect()->route('create.saleperson')->with('success', 'Sale Person created successfully!');
+            }
+
+            return redirect()->back()->withInput()
+                ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()->withInput()
+                ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
+        }
     }
-}
 
     /**
      * Display the specified resource.
@@ -144,9 +194,9 @@ public function store(Request $request)
     public function show(string $id)
     {
         $this->authorize('view users');
-        
+
         $user = User::with('roles')->findOrFail($id);
-        
+
         return view('users.show', compact('user'));
     }
 
@@ -156,11 +206,11 @@ public function store(Request $request)
     public function edit(string $id)
     {
         $this->authorize('edit users');
-        
+
         $user = User::findOrFail($id);
         $roles = Role::all();
         $userRoles = $user->roles->pluck('id')->toArray();
-        
+
         return view('users.edit', compact('user', 'roles', 'userRoles'));
     }
 
@@ -204,7 +254,7 @@ public function store(Request $request)
 
         if (!$user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
-            
+
             return redirect()->back()
                 ->with('success', 'User email verified successfully.');
         }

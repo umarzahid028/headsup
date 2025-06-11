@@ -11,88 +11,64 @@ class RoleAndPermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Define all permissions
+        Role::query()->delete();
+        Permission::query()->delete();
+
         $permissions = [
-            // Basic Permissions
+            'view users',
+            'create users',
+            'edit users',
+            'delete users',
+
+            'view roles',
+            'create roles',
+            'edit roles',
+            'delete roles',
+            'assign roles',
+
             'view any',
             'view own',
             'create',
             'edit',
             'delete',
             'manage',
-
-            // User Management
-            'view users',
-            'create users',
-            'edit users',
-            'delete users',
-            'manage users',
-
-            // Role & Permission Management
-            'view roles',
-            'create roles',
-            'edit roles',
-            'delete roles',
-            'assign roles',
-            'view permissions',
-            'manage permissions',
         ];
 
-        // Create permissions
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+            Permission::create(['name' => $permission, 'guard_name' => 'web']);
         }
 
-        // Create or update roles with guard_name
         $roles = [
-            'Admin' => $permissions, // Admin gets all permissions
+            'Admin' => $permissions,
+
             'Sales Manager' => [
-                // Basic permissions
+                'view users',
+                'edit users',
+                'view any',
+                'view own',
+                'create',
+                'manage'
+            ],
+
+            'Sales Person' => [
                 'view any',
                 'view own',
                 'create',
                 'edit',
-                'delete',
-                'manage',
-
-                // Sales related permissions
+                'delete'
             ],
-            'Sales person' => [
-                // Basic permissions
-                'view any',
-                'view own',
-                'create',
-                'edit',
-                'delete',
-                'manage',
-
-            ],
-
         ];
 
-        // Create roles and assign permissions
         foreach ($roles as $roleName => $rolePermissions) {
-            $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+            $role = Role::create(['name' => $roleName, 'guard_name' => 'web']);
             $role->syncPermissions($rolePermissions);
-
-            $this->command->info("\nRole '{$roleName}' created with " . count($rolePermissions) . " permissions:");
-            foreach ($rolePermissions as $permission) {
-                $this->command->info("- $permission");
-            }
         }
 
-        // Ensure admin users have the admin role
-        $adminUsers = User::whereHas('roles', function ($query) {
-            $query->where('name', 'Admin');
-        })->get();
-
-        foreach ($adminUsers as $admin) {
-            if (!$admin->hasRole('Admin')) {
-                $admin->assignRole('Admin');
-            }
+        $adminUser = User::first();
+        if ($adminUser && !$adminUser->hasRole('Admin')) {
+            $adminUser->assignRole('Admin');
         }
     }
 }
