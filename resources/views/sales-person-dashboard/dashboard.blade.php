@@ -73,7 +73,6 @@
       </form>
       </div>
   </div>
-
   <!-- Token Card -->
   <div id="current-token-container" class="w-full xl:w-1/2 px-4 space-y-6 mt-3">
     @include('partials.current-token', ['token' => $token])

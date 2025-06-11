@@ -19,7 +19,7 @@
       <tbody>
         @foreach($appointments as $index => $appt)
         <tr>
-          <td class="border-b px-4 py-3">{{ $index + 1 }}</td> <!-- Serial number -->
+          <td class="border-b px-4 py-3">{{ $loop->iteration }}</td>
           <td class="border-b px-4 py-3">{{ $appt->customer_name }}</td>
           <td class="border-b px-4 py-3">{{ $appt->salesperson->name }}</td>
           <td class="border-b px-4 py-3">{{ $appt->date }} {{ $appt->time }}</td>
@@ -37,33 +37,33 @@
             </span>
           </td>
           <td class="border-b px-4 py-3">
-  <div class="flex flex-wrap gap-3 items-center">
-    
-    @if(auth()->user()->id === $appt->salesperson_id)
-      <form method="POST" action="/appointments/{{ $appt->id }}/status">
-        @csrf
-        <div class="flex gap-3 items-center">
-          <select name="status" class="border rounded px-3 py-2 text-base w-56">
-            <option value="processing" {{ $appt->status == 'processing' ? 'selected' : '' }}>Processing</option>
-            <option value="completed" {{ $appt->status == 'completed' ? 'selected' : '' }}>Completed</option>
-            <option value="no_show" {{ $appt->status == 'no_show' ? 'selected' : '' }}>No Show</option>
-          </select>
+            <div class="flex flex-wrap gap-3 items-center">
 
-          <button type="submit" style="background-color: #111827;" class="hover:bg-blue-700 text-white font-semibold rounded px-5 py-2 text-base transition duration-150">
-            Update
-          </button>
-        </div>
-      </form>
-    @endif
+              @if(auth()->user()->id === $appt->salesperson_id || auth()->user()->hasRole('Admin'))
+                <form method="POST" action="/appointments/{{ $appt->id }}/status">
+                  @csrf
+                  <div class="flex gap-3 items-center">
+                    <select name="status" class="border rounded px-3 py-2 text-base w-56">
+                      <option value="processing" {{ $appt->status == 'processing' ? 'selected' : '' }}>Processing</option>
+                      <option value="completed" {{ $appt->status == 'completed' ? 'selected' : '' }}>Completed</option>
+                      <option value="no_show" {{ $appt->status == 'no_show' ? 'selected' : '' }}>No Show</option>
+                    </select>
 
-    @if(auth()->user()->hasRole('Sales person') && $appt->status != 'completed')
-      <a href="{{ route('appointment.form') }}" style="background-color: #111827;" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-        View
-      </a>
-    @endif
+                    <button type="submit" style="background-color: #111827;" class="text-white font-semibold rounded px-5 py-2 text-base transition duration-150">
+                      Update
+                    </button>
+                  </div>
+                </form>
+              @endif
 
-  </div>
-</td>
+              @if((auth()->user()->hasRole('Sales person') && $appt->status != 'completed') || auth()->user()->hasRole('Admin'))
+                <a href="{{ route('appointment.form', ['id' => $appt->id]) }}" style="background-color: #111827;" class="text-white font-bold py-2 px-4 rounded">
+                    View
+                </a>
+              @endif  
+            </div>
+          </td>
+
 
         </tr>
         @endforeach

@@ -1,4 +1,6 @@
-@if ($token)
+
+@if ($token)    
+
   <div 
     id="token-card-{{ $token->id }}" 
     class="bg-white  shadow-md p-5 mb-6  transition-shadow duration-300 hover:shadow-lg"
@@ -28,6 +30,8 @@
 
     <div class="flex justify-end">
 @if ($token)
+
+
   <button id="skipButton-{{ $token->id }}" type="button"  style="background-color:#1f2937; margin-right: 5px;"
     class="inline-flex items-center gap-2 hover:bg-green-700 active:bg-green-800 text-white font-semibold px-5 py-2 rounded-lg shadow-sm transition duration-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-1"
     style="height: 51px;">
@@ -41,8 +45,11 @@
     <span>Skip Token</span>
   </button>
 @else
+
+
   <p>No assigned token.</p>
 @endif
+
 
       <button 
         id="complete-btn-{{ $token->id }}" style="background-color:#1f2937;"
@@ -65,7 +72,7 @@
   </style>
 
 @else
-  <div class="text-center text-gray-400 mt-8 italic font-light text-base" role="alert" aria-live="polite">
+  <div class="text-center text-gray-400 mt-8 italic font-light text-base mb-4" role="alert" aria-live="polite">
     No assigned token found.
   </div>
 @endif

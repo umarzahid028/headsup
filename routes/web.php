@@ -77,6 +77,16 @@ Route::get('/tokens/current-assigned', function () {
     if (!$user) {
         return response('Unauthorized', 401);
     }
+    // Check if user is checked in
+    $isCheckedIn = \App\Models\Queue::where('user_id', $user->id)
+                    ->where('is_checked_in', true)
+                    ->exists();
+
+    if (!$isCheckedIn) {
+        $token = null;
+        return view('partials.current-token', compact('token'));
+
+    }
 
     $token = \App\Models\Token::with('salesperson')
         ->where('user_id', $user->id)  // sirf current user ke tokens
@@ -91,23 +101,23 @@ Route::get('/tokens/current-assigned', function () {
 Route::middleware(['auth'])->group(function () {
 
     // Both Sales Manager and Sales Person
-    Route::middleware('role:Sales Manager|Sales person')->group(function () {
+    Route::middleware('role:Admin|Sales Manager|Sales person')->group(function () {
         Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointment.records');
     });
 
     // Only Sales Manager
-    Route::middleware('role:Sales Manager')->group(function () {
+    Route::middleware('role:Admin|Sales Manager')->group(function () {
         Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointment.create');
         Route::post('/appointments', [AppointmentController::class, 'store']);
     });
 
     // Only Sales Person
-    Route::middleware('role:Sales person')->group(function () {
+    Route::middleware('role:Admin|Sales person')->group(function () {
         Route::post('/appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
     });
 });
 //Appointment form routes
-Route::get('appointment/form', [AppointmentController::class, 'appointmentform'])->name('appointment.form');
+Route::get('appointment/form/{id}', [AppointmentController::class, 'appointmentform'])->name('appointment.form');
 Route::post('/appointment-sales', [AppointmentController::class, 'appointmentstore'])->name('customer.appointment.store');
 //Token History
 Route::get('token/history', [TokenController::class, 'tokenhistory'])->name('token.history.view');

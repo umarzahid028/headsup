@@ -23,6 +23,9 @@ class TokenController extends Controller
         $availableSalespersons = User::role('Sales person')
             ->whereIn('id', $checkedInUserIds)
             ->get();
+        if ($availableSalespersons->isEmpty()) {
+            return response()->json(['message' => 'No available salespersons found'], 422);
+        }
 
         $busyUserIds = Token::where('status', 'assigned')->pluck('user_id')->toArray();
 
@@ -279,19 +282,22 @@ public function tokenhistory()
 {
     $user = Auth::user();
 
-    if ($user->hasRole('Sales person')) {
-        $now = Carbon::now();
-        $cutoff = $now->subHours(24); // 24 ghantay ka filter
+    if ($user->hasRole(['Admin', 'Sales person'])) {
+        $cutoff = Carbon::now()->subHours(24);
 
-        $tokens = Token::where('user_id', $user->id)
-            ->whereIn('status', ['completed', 'skipped'])
-            ->where('updated_at', '>=', $cutoff) // 24-hour filter
-            ->orderBy('serial_number')
-            ->get();
+        $query = Token::whereIn('status', ['completed', 'skipped'])
+            ->where('updated_at', '>=', $cutoff)
+            ->orderBy('serial_number');
 
+        if ($user->hasRole('Sales person')) {
+            $query->where('user_id', $user->id);
+        }
+
+        $tokens = $query->get();
         return view('tokens-history.tokens-history', compact('tokens'));
     }
 
     abort(403);
 }
+
 }

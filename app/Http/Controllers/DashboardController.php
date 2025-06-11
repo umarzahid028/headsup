@@ -60,20 +60,20 @@ public function salesdashboard()
     $user = Auth::user();
 
     $isCheckedIn = Queue::where('user_id', $user->id)
-                        ->where('is_checked_in', true)
-                        ->exists();
+        ->where('is_checked_in', true)
+        ->exists();
 
     $token = null;
-
- if ($isCheckedIn) {
-    $token = Token::with('salesperson')
-        ->where('user_id', $user->id)
-        ->where('status', 'assigned')
-        ->latest('created_at')
-        ->first();
-} else {
-    $token = null;
-}
+    
+    if ($isCheckedIn) {
+        $token = Token::with('salesperson')
+            ->where('user_id', $user->id)
+            ->where('status', 'assigned')
+            ->latest('created_at')
+            ->first();
+    } else {
+        $token = null;
+    }
     return view('sales-person-dashboard.dashboard', compact('token'));
 }
 

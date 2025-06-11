@@ -9,24 +9,28 @@ use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
 {
-     public function index() {
+    public function index()
+    {
         $user = auth()->user();
 
        if ($user->hasRole('Sales person')) {
-    $appointments = Appointment::where('salesperson_id', $user->id)->get();
-} elseif ($user->hasRole('Sales Manager')) {
-    $appointments = Appointment::all();
-} else {
-    $appointments = collect(); 
-}
-return view('appointments.index', compact('appointments'));
-}
-    public function create() {
+            $appointments = Appointment::where('salesperson_id', $user->id)->latest()->get();
+        } elseif ($user->hasAnyRole(['Admin', 'Sales Manager'])) {
+            $appointments = Appointment::latest()->get();
+        } else {
+            $appointments = collect();
+        }
+
+        return view('appointments.index', compact('appointments'));
+    }
+    public function create()
+    {
         $salespersons = User::role('Sales person')->get();
         return view('appointments.create', compact('salespersons'));
     }
 
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         $request->validate([
             'salesperson_id' => 'required|exists:users,id',
             'customer_name' => 'required',
@@ -49,10 +53,11 @@ return view('appointments.index', compact('appointments'));
         return redirect('/appointments')->with('success', 'Appointment booked successfully.');
     }
 
-    public function updateStatus(Request $request, $id) {
+    public function updateStatus(Request $request, $id)
+    {
         $appointment = Appointment::findOrFail($id);
-
-        if ($appointment->salesperson_id !== auth()->id()) {
+        
+        if ($appointment->salesperson_id !== auth()->id() && !auth()->user()->hasAnyRole(['Admin', 'Sales person'])) {
             abort(403);
         }
 
@@ -65,25 +70,29 @@ return view('appointments.index', compact('appointments'));
         return redirect()->back()->with('success', 'Status updated.');
     }
 
-    public function appointmentform()
+    public function appointmentform($id)
     {
-        return view('appointments/form');
+        $appointment = Appointment::findOrFail($id);
+        if ($appointment->salesperson_id !== auth()->id() && !auth()->user()->hasAnyRole(['Admin', 'Sales person'])) {
+            abort(403);
+        }
+        return view('appointments.form', compact('appointment'));
     }
 
-      public function appointmentstore(Request $request)
-{
-    $validated = $request->validate([
-        'name' => 'required|string',
-        'email' => 'required|email',
-        'phone' => 'required|string',
-        'interest' => 'nullable|string',
-        'notes' => 'nullable|string',
-        'process' => 'nullable|array',
-        'disposition' => 'nullable|array',
-    ]);
+    public function appointmentstore(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'phone' => 'required|string',
+            'interest' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'process' => 'nullable|array',
+            'disposition' => 'nullable|array',
+        ]);
 
-    CustomerSale::create($validated);
+        CustomerSale::create($validated);
 
-    return redirect()->route('appointment.records')->with('success','Customer sale data saved successfully!');
-}
+        return redirect()->route('appointment.records')->with('success', 'Customer sale data saved successfully!');
+    }
 }

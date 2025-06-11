@@ -18,7 +18,7 @@
       <div>
         <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
         <input id="name" name="name" type="text" required placeholder="Enter name"
-          class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
+          class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" value="{{ $appointment->customer_name ?? '' }}" />
       </div>
 
       <!-- Email -->
@@ -32,7 +32,7 @@
       <div>
         <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
         <input id="phone" name="phone" type="text" required placeholder="Enter phone number"
-          class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
+          class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" value="{{ $appointment->customer_phone ?? '' }}" />
       </div>
 
       <!-- Interest -->
@@ -46,7 +46,7 @@
       <div>
         <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
         <textarea id="notes" name="notes" rows="4" placeholder="Any notes"
-          class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full resize-none"></textarea>
+          class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full resize-none">{{ $appointment->notes ?? '' }}</textarea>
       </div>
     </div>
 
