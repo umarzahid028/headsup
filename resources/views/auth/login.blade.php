@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="flex flex-col items-center space-y-3 w-full mb-6">
-        <h1 class="text-2xl font-bold tracking-tight text-gray-800">TrevinosAuto Portal</h1>
-        <p class="text-sm text-muted-foreground">Sign in to manage your TrevinosAuto</p>
+        <h1 class="text-2xl font-bold tracking-tight text-gray-800">Headsup</h1>
+        <p class="text-sm text-muted-foreground">Sign in to manage your headsup</p>
     </div>
 
     <!-- Session Status -->
