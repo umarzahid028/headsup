@@ -19,33 +19,123 @@
 
   </x-slot>
 
-  <div class="w-full xl:w-1/2 px-4 space-y-6">
-      
-    <!-- Check-in Form -->
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-md p-6 space-y-6">
-        <div class="flex items-center justify-between">
-      <h2 class="text-xl font-semibold leading-tight text-foreground">
-        Welcome, {{ Auth::user()->name }}
-      </h2>
-    <!-- Speaker Button (Announce Token) -->
-<button id="announceButton" type="button"
-  class="text-white px-4 py-2  flex items-center gap-2 "
-  style="background-color: #1f2937; border-radius: 70px; height: 51px;">
-  
-  <!-- Speaker Icon SVG -->
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2"
-    viewBox="0 0 24 24" width="20" height="20">
-    <path stroke-linecap="round" stroke-linejoin="round"
-      d="M11 5L6 9H2v6h4l5 4V5zm7.5 7a3.5 3.5 0 00-2.1-3.2m0 6.4a3.5 3.5 0 002.1-3.2m2.5 0a6 6 0 00-3.6-5.5m0 11a6 6 0 003.6-5.5" />
-  </svg>
-</button>
+<div class="w-full xl:grid xl:grid-cols-12 gap-6 px-4 space-y-0">
+ <h2 class="text-xl font-semibold leading-tight text-foreground mb-4">
+          Welcome, {{ Auth::user()->name }}
+        </h2>
+
+  <!-- LEFT SIDE: Customer Sales Form (col-span-8) -->
+  <div class="xl:col-span-8 w-full">
+    <div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
+      <h3 class="text-2xl font-bold text-gray-800 mb-2">Customer Sales Form</h3>
+      <p class="text-gray-500 mb-6">Fill out the details below to log a customer sales interaction.</p>
+
+      <form id="salesForm" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        @csrf
+
+        <!-- Left Column -->
+        <div class="space-y-4">
+          <h4 class="text-lg font-semibold text-gray-700 mb-2">Customer Information</h4>
+
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input id="name" name="name" type="text" required placeholder="Enter name"
+              class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
+          </div>
+
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input id="email" name="email" type="email" required placeholder="Enter email"
+              class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
+          </div>
+
+          <div>
+            <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+            <input id="phone" name="phone" type="text" required placeholder="Enter phone number"
+              class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
+          </div>
+
+          <div>
+            <label for="interest" class="block text-sm font-medium text-gray-700 mb-1">Interest in Car</label>
+            <input id="interest" name="interest" type="text" placeholder="e.g. Toyota Corolla"
+              class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
+          </div>
+
+          <div>
+            <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea id="notes" name="notes" rows="4" placeholder="Any notes"
+              class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full resize-none"></textarea>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="space-y-4">
+          <h4 class="text-lg font-semibold text-gray-700 mb-2">Sales Details</h4>
+
+          <fieldset class="border border-gray-300 rounded-xl p-4">
+            <legend class="text-sm font-semibold text-gray-700 mb-3">Sales Process</legend>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              @foreach(['Investigating','Test Driving','Desking','Credit Application','Penciling','F&I'] as $process)
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="process[]" value="{{ $process }}"
+                  class="form-checkbox h-5 w-5 text-indigo-600">
+                <span class="text-gray-700 text-sm">{{ $process }}</span>
+              </label>
+              @endforeach
+            </div>
+          </fieldset>
+
+          <fieldset class="border border-gray-300 rounded-xl p-4">
+            <legend class="text-sm font-semibold text-gray-700 mb-3">Disposition</legend>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              @foreach([
+                'Sold!', 'Walked Away', 'Challenged Credit', "Didn't Like Vehicle", 
+                "Didn't Like Price", "Didn't Like Finance Terms", 'Insurance Expensive', 
+                'Wants to keep looking', 'Wants to think about it', 'Needs Co-Signer'
+              ] as $disposition)
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="disposition[]" value="{{ $disposition }}"
+                  class="form-checkbox h-5 w-5 text-indigo-600">
+                <span class="text-gray-700 text-sm">{{ $disposition }}</span>
+              </label>
+              @endforeach
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="md:col-span-2 text-right mt-6">
+          <button type="submit" style="background-color: #111827;"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-xl transition duration-200">
+            Submit
+          </button>
+        </div>
+      </form>
     </div>
-    <div style="margin-top: 0;">
+  </div>
+
+  <!-- RIGHT SIDE: Check-in + Token (col-span-4) -->
+  <div class="xl:col-span-4 w-full space-y-6">
+
+    <!-- Check-in Card -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-md p-6 space-y-6">
+      <div class="flex items-center justify-end">
+        <button id="announceButton" type="button"
+          class="text-white px-4 py-2 flex items-center gap-2"
+          style="background-color: #1f2937; border-radius: 70px; height: 51px;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2"
+            viewBox="0 0 24 24" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M11 5L6 9H2v6h4l5 4V5zm7.5 7a3.5 3.5 0 00-2.1-3.2m0 6.4a3.5 3.5 0 002.1-3.2m2.5 0a6 6 0 00-3.6-5.5m0 11a6 6 0 003.6-5.5" />
+          </svg>
+        </button>
+      </div>
+
+      <div>
         <p class="text-sm text-gray-500 w-25">Manage your check-in and tokens here.</p>
       </div>
-    <form id="toggleForm" action="{{ route('sales.perosn.store') }}" method="POST">
-      @csrf
 
+      <form id="toggleForm" action="{{ route('sales.perosn.store') }}" method="POST">
+        @csrf
         @php
           $isCheckedIn = Auth::user()->latestQueue && Auth::user()->latestQueue->is_checked_in;
         @endphp
@@ -56,9 +146,7 @@
             {{ $isCheckedIn ? '✅ Checked In' : '❌ Checked Out' }}
           </span>
 
-          <button
-            id="toggleButton"
-            type="submit"
+          <button id="toggleButton" type="submit"
             class="px-5 py-2.5 text-sm font-semibold text-white rounded-full transition-all duration-200 flex items-center justify-center gap-2
               {{ $isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' }}">
             <span class="btn-text">{{ $isCheckedIn ? 'Check Out' : 'Check In' }}</span>
@@ -71,107 +159,17 @@
           </button>
         </div>
       </form>
-      </div>
+    </div>
+
+    <!-- Token Card -->
+    <div id="current-token-container" class="w-full">
+      @include('partials.current-token', ['token' => $token])
+      <div class="text-center text-gray-400">Loading token...</div>
+    </div>
+
   </div>
-  <!-- Token Card -->
-  <div id="current-token-container" class="w-full xl:w-1/2 px-4 space-y-6 mt-3">
-    @include('partials.current-token', ['token' => $token])
-    <div class="text-center text-gray-400">Loading token...</div>
-  </div>
- <!-- Customer Sales Form with branding below -->
-<div class="px-4">
-  <div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg max-w-7xl mx-auto">
-  <h3 class="text-2xl font-bold text-gray-800 mb-2">Customer Sales Form</h3>
-  <p class="text-gray-500 mb-6">Fill out the details below to log a customer sales interaction.</p>
-
-  <form id="salesForm" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-    @csrf
-
-    <!-- Left Column -->
-    <div class="space-y-4">
-      <h4 class="text-lg font-semibold text-gray-700 mb-2">Customer Information</h4>
-
-      <!-- Name -->
-      <div>
-        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-        <input id="name" name="name" type="text" required placeholder="Enter name"
-          class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
-      </div>
-
-      <!-- Email -->
-      <div>
-        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-        <input id="email" name="email" type="email" required placeholder="Enter email"
-          class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
-      </div>
-
-      <!-- Phone -->
-      <div>
-        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-        <input id="phone" name="phone" type="text" required placeholder="Enter phone number"
-          class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
-      </div>
-
-      <!-- Interest -->
-      <div>
-        <label for="interest" class="block text-sm font-medium text-gray-700 mb-1">Interest in Car</label>
-        <input id="interest" name="interest" type="text" placeholder="e.g. Toyota Corolla"
-          class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
-      </div>
-
-      <!-- Notes -->
-      <div>
-        <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-        <textarea id="notes" name="notes" rows="4" placeholder="Any notes"
-          class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full resize-none"></textarea>
-      </div>
-    </div>
-
-    <!-- Right Column -->
-    <div class="space-y-4">
-      <h4 class="text-lg font-semibold text-gray-700 mb-2">Sales Details</h4>
-
-      <!-- Sales Process -->
-      <fieldset class="border border-gray-300 rounded-xl p-4">
-        <legend class="text-sm font-semibold text-gray-700 mb-3">Sales Process</legend>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          @foreach(['Investigating','Test Driving','Desking','Credit Application','Penciling','F&I'] as $process)
-          <label class="flex items-center space-x-2">
-            <input type="checkbox" name="process[]" value="{{ $process }}" class="form-checkbox h-5 w-5 text-indigo-600">
-            <span class="text-gray-700 text-sm">{{ $process }}</span>
-          </label>
-          @endforeach
-        </div>
-      </fieldset>
-
-      <!-- Disposition -->
-      <fieldset class="border border-gray-300 rounded-xl p-4">
-        <legend class="text-sm font-semibold text-gray-700 mb-3">Disposition</legend>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          @foreach([
-            'Sold!', 'Walked Away', 'Challenged Credit', "Didn't Like Vehicle", 
-            "Didn't Like Price", "Didn't Like Finance Terms", 'Insurance Expensive', 
-            'Wants to keep looking', 'Wants to think about it', 'Needs Co-Signer'
-          ] as $disposition)
-          <label class="flex items-center space-x-2">
-            <input type="checkbox" name="disposition[]" value="{{ $disposition }}" class="form-checkbox h-5 w-5 text-indigo-600">
-            <span class="text-gray-700 text-sm">{{ $disposition }}</span>
-          </label>
-          @endforeach
-        </div>
-      </fieldset>
-    </div>
-
-    <!-- Submit Button -->
-    <div class="md:col-span-2 text-right mt-6">
-      <button type="submit" style="background-color: #111827;"
-        class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-xl transition duration-200">
-        Submit
-      </button>
-    </div>
-  </form>
 </div>
-</div>
+
 
   @push('scripts')
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
