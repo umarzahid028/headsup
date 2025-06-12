@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200">
         <a href="" class="flex items-center">
             <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
-            <span class="ml-2 text-lg font-medium">TrevinosAuto</span>
+            <span class="ml-2 text-lg font-medium font-bold">HeadsUp</span>
         </a>
         <button @click="open = !open" class="lg:hidden text-gray-500 hover:text-gray-600">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -27,9 +27,7 @@
             <!-- Appoinment  -->
             @hasrole('Sales Manager|Admin')
             <div class="pt-2">
-                <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Appointments
-                </p>
+                
                 <a href="{{ route('appointment.create') }}" class="{{ request()->routeIs('appointment.create') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -49,9 +47,7 @@
             <!-- appointment list -->
             @hasrole('Sales person')
             <div class="pt-2">
-                <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Appointments
-                </p>
+               
                 <a href="{{ route('appointment.records') }}" class="{{ request()->routeIs('appointment.records') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -65,9 +61,7 @@
             <!-- create Sale person -->
             @hasrole('Admin|Sales Manager')
             <div class="pt-2">
-                <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Sales Person
-                </p>
+                
                 <a href="{{ route('saleperson.table') }}" class="{{ request()->routeIs('saleperson.table') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -80,9 +74,7 @@
 
             <!-- Tokens History -->
             <div class="pt-2">
-                <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Tokens History
-                </p>
+
                 <a href="{{ route('token.history.view') }}" class="{{ request()->routeIs('token.history.view') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h6M9 3h6a2 2 0 012 2v1H7V5a2 2 0 012-2zm0 4h6M5 8h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V10a2 2 0 012-2zm4 4h6m-6 4h6" />
@@ -94,9 +86,7 @@
             <!-- Activity Records -->
             @hasrole('Sales person')
             <div class="pt-2">
-                <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Activities
-                </p>
+                
                 <a href="{{ route('sales.activity.report') }}" class="{{ request()->routeIs('sales.activity.report') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">

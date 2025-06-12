@@ -1,5 +1,7 @@
 <x-app-layout>
   <x-slot name="header">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
       @keyframes spin {
@@ -18,22 +20,17 @@
     </style>
 
   </x-slot>
+<div class="w-full grid grid-cols-1 xl:grid-cols-5 gap-6 px-4">
 
-<div class="w-full xl:grid xl:grid-cols-12 gap-6 px-4 space-y-0">
- <h2 class="text-xl font-semibold leading-tight text-foreground mb-4">
-          Welcome, {{ Auth::user()->name }}
-        </h2>
-
-  <!-- LEFT SIDE: Customer Sales Form (col-span-8) -->
-  <div class="xl:col-span-8 w-full">
+  <!-- LEFT: Customer Sales Form (80%) -->
+  <div class="xl:col-span-4">
     <div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
       <h3 class="text-2xl font-bold text-gray-800 mb-2">Customer Sales Form</h3>
       <p class="text-gray-500 mb-6">Fill out the details below to log a customer sales interaction.</p>
 
       <form id="salesForm" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-8">
         @csrf
-
-        <!-- Left Column -->
+        <!-- LEFT FIELDS -->
         <div class="space-y-4">
           <h4 class="text-lg font-semibold text-gray-700 mb-2">Customer Information</h4>
 
@@ -68,7 +65,7 @@
           </div>
         </div>
 
-        <!-- Right Column -->
+        <!-- RIGHT FIELDS -->
         <div class="space-y-4">
           <h4 class="text-lg font-semibold text-gray-700 mb-2">Sales Details</h4>
 
@@ -89,9 +86,9 @@
             <legend class="text-sm font-semibold text-gray-700 mb-3">Disposition</legend>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               @foreach([
-                'Sold!', 'Walked Away', 'Challenged Credit', "Didn't Like Vehicle", 
-                "Didn't Like Price", "Didn't Like Finance Terms", 'Insurance Expensive', 
-                'Wants to keep looking', 'Wants to think about it', 'Needs Co-Signer'
+              'Sold!', 'Walked Away', 'Challenged Credit', "Didn't Like Vehicle",
+              "Didn't Like Price", "Didn't Like Finance Terms", 'Insurance Expensive',
+              'Wants to keep looking', 'Wants to think about it', 'Needs Co-Signer'
               ] as $disposition)
               <label class="flex items-center space-x-2">
                 <input type="checkbox" name="disposition[]" value="{{ $disposition }}"
@@ -104,7 +101,7 @@
         </div>
 
         <div class="md:col-span-2 text-right mt-6">
-          <button type="submit" style="background-color: #111827;"
+          <button type="submit"
             class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-xl transition duration-200">
             Submit
           </button>
@@ -113,31 +110,39 @@
     </div>
   </div>
 
-  <!-- RIGHT SIDE: Check-in + Token (col-span-4) -->
-  <div class="xl:col-span-4 w-full space-y-6">
-
-    <!-- Check-in Card -->
+  <!-- RIGHT: Token Panel (20%) -->
+  <div class="xl:col-span-1">
     <div class="bg-white rounded-2xl border border-gray-200 shadow-md p-6 space-y-6">
+
       <div class="flex items-center justify-end">
         <button id="announceButton" type="button"
           class="text-white px-4 py-2 flex items-center gap-2"
           style="background-color: #1f2937; border-radius: 70px; height: 51px;">
+          <!-- Announce Icon -->
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2"
             viewBox="0 0 24 24" width="20" height="20">
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M11 5L6 9H2v6h4l5 4V5zm7.5 7a3.5 3.5 0 00-2.1-3.2m0 6.4a3.5 3.5 0 002.1-3.2m2.5 0a6 6 0 00-3.6-5.5m0 11a6 6 0 003.6-5.5" />
           </svg>
         </button>
+
+        <button
+          onclick="assignNextToken({{ optional($token)->id ?? 0 }}, {{ optional(optional($token)->salesperson)->counter_number ?? 1 }})"
+          style="background-color: #1f2937; border-radius: 70px; height: 51px; margin-left:5px;"
+          class="text-white px-4 py-2 flex items-center gap-2">
+          <!-- Next Token Icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17.5 11l-5-5v3h-6v4h6v3l5-5zM19 3h-4v2h4v14h-4v2h4c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" />
+          </svg>
+        </button>
       </div>
 
-      <div>
-        <p class="text-sm text-gray-500 w-25">Manage your check-in and tokens here.</p>
-      </div>
+      <p class="text-sm text-gray-500 w-25">Manage your check-in and tokens here.</p>
 
       <form id="toggleForm" action="{{ route('sales.perosn.store') }}" method="POST">
         @csrf
         @php
-          $isCheckedIn = Auth::user()->latestQueue && Auth::user()->latestQueue->is_checked_in;
+        $isCheckedIn = Auth::user()->latestQueue && Auth::user()->latestQueue->is_checked_in;
         @endphp
 
         <div class="flex items-center justify-between bg-indigo-50 p-4 rounded-xl border border-indigo-100">
@@ -147,11 +152,11 @@
           </span>
 
           <button id="toggleButton" type="submit"
-            class="px-5 py-2.5 text-sm font-semibold text-white rounded-full transition-all duration-200 flex items-center justify-center gap-2
+            class="px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 flex items-center gap-2 rounded-[60px]
               {{ $isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' }}">
             <span class="btn-text">{{ $isCheckedIn ? 'Check Out' : 'Check In' }}</span>
-            <svg id="btnSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-              viewBox="0 0 24 24">
+            <svg id="btnSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+              fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor"
                 d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
@@ -159,17 +164,14 @@
           </button>
         </div>
       </form>
-    </div>
 
-    <!-- Token Card -->
-    <div id="current-token-container" class="w-full">
-      @include('partials.current-token', ['token' => $token])
-      <div class="text-center text-gray-400">Loading token...</div>
+      <div id="current-token-container" class="w-full">
+        @include('partials.current-token', ['token' => $token])
+      </div>
     </div>
-
   </div>
-</div>
 
+</div>
 
   @push('scripts')
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -178,7 +180,7 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
   <script>
-    $('#toggleForm').on('submit', function (e) {
+    $('#toggleForm').on('submit', function(e) {
       e.preventDefault();
 
       const btn = $('#toggleButton');
@@ -193,7 +195,7 @@
         url: $(this).attr('action'),
         method: 'POST',
         data: $(this).serialize(),
-        success: function (response) {
+        success: function(response) {
           btn.prop('disabled', false);
           btnText.removeClass('hidden');
           spinner.addClass('hidden');
@@ -222,7 +224,7 @@
             showConfirmButton: false,
           });
         },
-        error: function () {
+        error: function() {
           btn.prop('disabled', false);
           btnText.removeClass('hidden');
           spinner.addClass('hidden');
@@ -237,7 +239,7 @@
   </script>
 
   <script>
-    window.completeToken = function (tokenId) {
+    window.completeToken = function(tokenId) {
       const btn = document.getElementById(`complete-btn-${tokenId}`);
       if (!btn) return;
 
@@ -282,176 +284,214 @@
     };
   </script>
 
+  <div id="current-token-container"></div>
+
   <script>
     async function fetchCurrentToken() {
       try {
         const response = await fetch('/tokens/current-assigned');
         if (!response.ok) throw new Error('Network response was not ok');
+
         const html = await response.text();
         document.getElementById('current-token-container').innerHTML = html;
-        console.log('Token refreshed at', new Date().toLocaleTimeString());
       } catch (error) {
-        console.error('Token fetch error:', error);
+        console.error('Fetch error:', error);
       }
     }
 
-    fetchCurrentToken();
-    setInterval(fetchCurrentToken, 5000);
+    fetchCurrentToken(); // On page load
+    setInterval(fetchCurrentToken, 5000); // Every 5 sec
   </script>
 
-<script>
-  async function fetchCurrentUserToken() {
-  try {
-    const response = await fetch('/token/current', {
-      headers: { 'Accept': 'application/json' },
-      cache: 'no-store'
-    });
-    const data = await response.json();
 
-    if (data.token) {
-      const tokenNumber = String(data.token.serial_number).padStart(3, '0');
-      const counterNumber = data.token.counter_number;
+  <script>
+    async function fetchCurrentUserToken() {
+      try {
+        const response = await fetch('/token/current', {
+          headers: {
+            'Accept': 'application/json'
+          },
+          cache: 'no-store'
+        });
+        const data = await response.json();
 
-      const announcement = `Token number ${tokenNumber}, please proceed to counter number ${counterNumber}`;
-      speak(announcement);
-    } else {
-      speak("You currently have no assigned tokens.");
+        if (data.token) {
+          const tokenNumber = String(data.token.serial_number).padStart(3, '0');
+          const counterNumber = data.token.counter_number;
+
+          const announcement = `Token number ${tokenNumber}, please proceed to counter number ${counterNumber}`;
+          speak(announcement);
+        } else {
+          speak("You currently have no assigned tokens.");
+        }
+      } catch (error) {
+        console.error('Error fetching current token:', error);
+        speak("Error fetching your token information.");
+      }
     }
-  } catch (error) {
-    console.error('Error fetching current token:', error);
-    speak("Error fetching your token information.");
-  }
-}
 
-function speak(text) {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel(); // cancel previous
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    speechSynthesis.speak(utterance);
-  } else {
-    alert('Speech not supported in this browser.');
-  }
-}
+    function speak(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // cancel previous
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        speechSynthesis.speak(utterance);
+      } else {
+        alert('Speech not supported in this browser.');
+      }
+    }
 
-const announceButton = document.getElementById('announceButton');
-announceButton.addEventListener('click', fetchCurrentUserToken);
-
-</script>
+    const announceButton = document.getElementById('announceButton');
+    announceButton.addEventListener('click', fetchCurrentUserToken);
+  </script>
 
   <!-- skip tokken -->
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    document.body.addEventListener('click', async function(e) {
-      // Check if clicked element or its parent has id starting with "skipButton-"
-      const target = e.target.closest('button[id^="skipButton-"]');
-      if (!target) return;
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.body.addEventListener('click', async function(e) {
+        // Check if clicked element or its parent has id starting with "skipButton-"
+        const target = e.target.closest('button[id^="skipButton-"]');
+        if (!target) return;
 
-      e.preventDefault();
+        e.preventDefault();
 
-      const btn = target;
-      btn.disabled = true;
-      btn.querySelector('span').textContent = 'Skipping...';
+        const btn = target;
+        btn.disabled = true;
+        btn.querySelector('span').textContent = 'Skipping...';
 
-      // Extract token id
-      const tokenId = btn.id.split('-')[1];
+        // Extract token id
+        const tokenId = btn.id.split('-')[1];
 
-      try {
-        const response = await fetch(`/tokens/${tokenId}/skip`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-          }
-        });
+        try {
+          const response = await fetch(`/tokens/${tokenId}/skip`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+          });
 
-        if (!response.ok) throw new Error('Failed to skip token');
+          if (!response.ok) throw new Error('Failed to skip token');
 
-        const result = await response.json();
+          const result = await response.json();
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Success',
-          text: result.message || 'Token skipped successfully.',
-          timer: 2000,
-          showConfirmButton: false
-        });
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: result.message || 'Token skipped successfully.',
+            timer: 2000,
+            showConfirmButton: false
+          });
 
-        btn.style.display = 'none'; // Hide button after skip
+          btn.style.display = 'none'; // Hide button after skip
 
-      } catch (error) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: error.message || 'Something went wrong!'
-        });
-      } finally {
-        btn.disabled = false;
-        btn.querySelector('span').textContent = 'Skip Token';
-      }
+        } catch (error) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message || 'Something went wrong!'
+          });
+        } finally {
+          btn.disabled = false;
+          btn.querySelector('span').textContent = 'Skip Token';
+        }
+      });
     });
-  });
-</script>
+  </script>
 
-<!-- customer form -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- customer form -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
-document.getElementById('salesForm').addEventListener('submit', async function(e) {
-    e.preventDefault(); // Stop default form submission
+  <script>
+    document.getElementById('salesForm').addEventListener('submit', async function(e) {
+      e.preventDefault(); // Stop default form submission
 
-    const form = e.target;
-    const formData = new FormData(form);
+      const form = e.target;
+      const formData = new FormData(form);
 
-    // 🔄 Show processing alert
-    Swal.fire({
+      // 🔄 Show processing alert
+      Swal.fire({
         title: 'Processing...',
         text: 'Please wait while we save your data.',
         allowOutsideClick: false,
         didOpen: () => {
-            Swal.showLoading();
+          Swal.showLoading();
         }
-    });
+      });
 
-    try {
+      try {
         const response = await fetch("{{ route('customer.sales.store') }}", {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
-            },
-            body: formData
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+          },
+          body: formData
         });
 
         const result = await response.json();
 
         if (response.ok) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: result.message || 'Form submitted successfully',
-                timer: 3000,
-                showConfirmButton: false
-            });
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: result.message || 'Form submitted successfully',
+            timer: 3000,
+            showConfirmButton: false
+          });
 
-            form.reset(); // Optionally reset form
+          form.reset(); // Optionally reset form
         } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Oops...',
-                text: result.message || 'Something went wrong!',
-            });
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: result.message || 'Something went wrong!',
+          });
         }
 
-    } catch (err) {
+      } catch (err) {
         Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Request failed. Please try again.'
+          icon: 'error',
+          title: 'Error',
+          text: 'Request failed. Please try again.'
+        });
+      }
+    });
+  </script>
+
+
+  <script>
+    function assignNextToken(currentTokenId, counterNumber) {
+      fetch(`/tokens/next/${currentTokenId}`, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success' && data.token) {
+            const tokenNumber = data.token.serial_number;
+            makeVoiceAnnouncement(tokenNumber, counterNumber);
+          } else {
+            alert('No pending token found or something went wrong.');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Failed to call next token.');
         });
     }
-});
-</script>
+
+    function makeVoiceAnnouncement(tokenNumber, counterNumber) {
+      const message = `Token number ${tokenNumber}, please proceed to counter number ${counterNumber}`;
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.lang = 'en-US';
+      window.speechSynthesis.speak(utterance);
+    }
+  </script>
 
   @endpush
 </x-app-layout>

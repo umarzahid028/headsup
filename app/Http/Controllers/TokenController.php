@@ -89,7 +89,7 @@ public function activeTokens(Request $request)
         ]);
     }
 
-    return view('public.active-tokens', [
+    return view('screen.active-tokens', [
         'tokens' => $tokens,
         'pendingtokens' => $pendingtokens,
     ]);
@@ -298,6 +298,35 @@ public function tokenhistory()
     }
 
     abort(403);
+}
+
+public function assignNextToken(Request $request, Token $token)
+{
+    $salespersonId = $token->user_id;
+
+    if (!$salespersonId) {
+        return response()->json(['status' => 'error', 'message' => 'Invalid token or user not assigned.']);
+    }
+
+    $pendingToken = Token::where('status', 'pending')->orderBy('serial_number')->first();
+
+    if ($pendingToken) {
+        $pendingToken->update([
+            'user_id' => $salespersonId,
+            'status' => 'assigned',
+            'assigned_at' => now(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'token' => [
+                'serial_number' => $pendingToken->serial_number,
+                'counter_number' => $token->salesperson->counter_number ?? 'N/A'
+            ]
+        ]);
+    }
+
+    return response()->json(['status' => 'error', 'message' => 'No pending tokens available.']);
 }
 
 }

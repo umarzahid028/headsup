@@ -22,7 +22,7 @@ public function showStatus()
         ];
     });
 
-    return view('public.status', compact('users'));
+    return view('screen.status', compact('users'));
 }
 
 }

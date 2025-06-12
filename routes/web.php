@@ -66,6 +66,8 @@ Route::middleware(['auth', 'role:Sales person'])->group(function () {
     // routes/web.php
     Route::post('/tokens/{token}/skip', [TokenController::class, 'skip'])->name('tokens.skip');
 });
+Route::post('/tokens/next/{token}', [TokenController::class, 'assignNextToken'])->middleware('auth');
+
 Route::post('/check-in', [TokenController::class, 'checkIn'])->middleware('auth');
 
 //Current Token
