@@ -112,7 +112,7 @@
                     tokenDiv.textContent = String(data.token.serial_number).padStart(3, '0');
                     dateTimeDiv.textContent = `📅 ${date} | 🕒 ${time}`;
                 } else {
-                    tokenDiv.textContent = "No token found";
+                    tokenDiv.textContent = "All salespersons are currently unavailable. Please wait.";
                     dateTimeDiv.textContent = "";
                 }
             })
