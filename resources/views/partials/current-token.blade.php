@@ -31,7 +31,7 @@
 
 
     <button id="skipButton-{{ $token->id }}" type="button" style="background-color:#1f2937; margin-right: 5px;"
-      class="inline-flex items-center gap-2 hover:bg-green-700 active:bg-green-800 text-white font-semibold px-5 py-2 rounded-lg shadow-sm transition duration-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-1"
+       class="text-white px-2 py-2 flex items-center gap-2 rounded-xl w-full flex justify-center items-center"
       style="height: 51px;">
 
       <!-- Skip Icon SVG -->
@@ -53,7 +53,7 @@
       id="complete-btn-{{ $token->id }}" style="background-color:#1f2937;"
       type="button"
       onclick="completeToken({{ $token->id }})"
-      class="inline-flex items-center gap-2 hover:bg-green-700 active:bg-green-800 text-white font-semibold px-5 py-2 rounded-lg shadow-sm transition duration-300 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-1"
+      class="text-white px-2 py-2 flex items-center gap-2 rounded-xl w-full flex justify-center items-center"
       aria-label="Complete Token #{{ $token->serial_number }}">
       <span class="btn-text text-sm">Complete</span>
       <span class="spinner hidden" aria-hidden="true" style="border-top-color: white; border-width: 2.5px; border-style: solid; border-radius: 80%; width: 1rem; height: 1rem; animation: spin 1s linear infinite;"></span>

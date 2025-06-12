@@ -20,52 +20,41 @@
     </style>
 
   </x-slot>
-<div class="w-full grid grid-cols-1 xl:grid-cols-5 gap-6 px-4">
-
-  <!-- LEFT: Customer Sales Form (80%) -->
-  <div class="xl:col-span-4">
+<div class="w-full grid grid-cols-1 xl:grid-cols-4 gap-6 px-4">
+  <!-- LEFT SIDE: 3/4 i.e. 75% -->
+  <div class="xl:col-span-3">
     <div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
       <h3 class="text-2xl font-bold text-gray-800 mb-2">Customer Sales Form</h3>
       <p class="text-gray-500 mb-6">Fill out the details below to log a customer sales interaction.</p>
 
       <form id="salesForm" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-8">
         @csrf
-        <!-- LEFT FIELDS -->
+        <!-- Customer Info -->
         <div class="space-y-4">
           <h4 class="text-lg font-semibold text-gray-700 mb-2">Customer Information</h4>
-
           <div>
-            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-            <input id="name" name="name" type="text" required placeholder="Enter name"
-              class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input name="name" required class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
           </div>
-
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input id="email" name="email" type="email" required placeholder="Enter email"
-              class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input name="email" type="email" required class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
           </div>
-
           <div>
-            <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-            <input id="phone" name="phone" type="text" required placeholder="Enter phone number"
-              class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <input name="phone" required class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
           </div>
-
           <div>
-            <label for="interest" class="block text-sm font-medium text-gray-700 mb-1">Interest in Car</label>
-            <input id="interest" name="interest" type="text" placeholder="e.g. Toyota Corolla"
-              class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Interest in Car</label>
+            <input name="interest" class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
           </div>
-
           <div>
-            <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea id="notes" name="notes" rows="4" placeholder="Any notes"
-              class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full resize-none"></textarea>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea name="notes" rows="4" class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"></textarea>
           </div>
         </div>
 
-        <!-- RIGHT FIELDS -->
+        <!-- Sales Details -->
         <div class="space-y-4">
           <h4 class="text-lg font-semibold text-gray-700 mb-2">Sales Details</h4>
 
@@ -74,8 +63,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               @foreach(['Investigating','Test Driving','Desking','Credit Application','Penciling','F&I'] as $process)
               <label class="flex items-center space-x-2">
-                <input type="checkbox" name="process[]" value="{{ $process }}"
-                  class="form-checkbox h-5 w-5 text-indigo-600">
+                <input type="checkbox" name="process[]" value="{{ $process }}" class="form-checkbox h-5 w-5 text-indigo-600">
                 <span class="text-gray-700 text-sm">{{ $process }}</span>
               </label>
               @endforeach
@@ -91,8 +79,7 @@
               'Wants to keep looking', 'Wants to think about it', 'Needs Co-Signer'
               ] as $disposition)
               <label class="flex items-center space-x-2">
-                <input type="checkbox" name="disposition[]" value="{{ $disposition }}"
-                  class="form-checkbox h-5 w-5 text-indigo-600">
+                <input type="checkbox" name="disposition[]" value="{{ $disposition }}" class="form-checkbox h-5 w-5 text-indigo-600">
                 <span class="text-gray-700 text-sm">{{ $disposition }}</span>
               </label>
               @endforeach
@@ -101,7 +88,7 @@
         </div>
 
         <div class="md:col-span-2 text-right mt-6">
-          <button type="submit"
+          <button type="submit" style="background-color: #111827;"
             class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-xl transition duration-200">
             Submit
           </button>
@@ -110,68 +97,73 @@
     </div>
   </div>
 
-  <!-- RIGHT: Token Panel (20%) -->
+  <!-- RIGHT SIDE: 1/4 i.e. 25% -->
   <div class="xl:col-span-1">
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-md p-6 space-y-6">
+<div class="flex justify-between items-center  py-2">
+  <!-- Left: Counter Text -->
+  <h2 class="text-lg font-semibold text-gray-800">Counter Number : {{ Auth::user()->counter_number }}</h2>
 
-      <div class="flex items-center justify-end">
-        <button id="announceButton" type="button"
-          class="text-white px-4 py-2 flex items-center gap-2"
-          style="background-color: #1f2937; border-radius: 70px; height: 51px;">
-          <!-- Announce Icon -->
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2"
-            viewBox="0 0 24 24" width="20" height="20">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M11 5L6 9H2v6h4l5 4V5zm7.5 7a3.5 3.5 0 00-2.1-3.2m0 6.4a3.5 3.5 0 002.1-3.2m2.5 0a6 6 0 00-3.6-5.5m0 11a6 6 0 003.6-5.5" />
-          </svg>
-        </button>
+  <!-- Right: Speaker Button -->
+  <button id="announceButton" type="button" 
+    class="text-white w-[40px] h-[40px] flex items-center justify-center p-4"
+    style="background-color: #1f2937; border-radius: 70px;">
+    <!-- Speaker Icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2"
+      viewBox="0 0 24 24" width="20" height="20">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M11 5L6 9H2v6h4l5 4V5zm7.5 7a3.5 3.5 0 00-2.1-3.2m0 6.4a3.5 3.5 0 002.1-3.2m2.5 0a6 6 0 00-3.6-5.5m0 11a6 6 0 003.6-5.5" />
+    </svg>
+  </button>
+</div>
 
-        <button
-          onclick="assignNextToken({{ optional($token)->id ?? 0 }}, {{ optional(optional($token)->salesperson)->counter_number ?? 1 }})"
-          style="background-color: #1f2937; border-radius: 70px; height: 51px; margin-left:5px;"
-          class="text-white px-4 py-2 flex items-center gap-2">
-          <!-- Next Token Icon -->
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M17.5 11l-5-5v3h-6v4h6v3l5-5zM19 3h-4v2h4v14h-4v2h4c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" />
-          </svg>
-        </button>
-      </div>
 
-      <p class="text-sm text-gray-500 w-25">Manage your check-in and tokens here.</p>
+
 
       <form id="toggleForm" action="{{ route('sales.perosn.store') }}" method="POST">
         @csrf
         @php
         $isCheckedIn = Auth::user()->latestQueue && Auth::user()->latestQueue->is_checked_in;
         @endphp
+      <div class=" mb-2">
+                <span class="status-text inline-block  text-sm font-semibold rounded-full
+                  {{ $isCheckedIn ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 p-2 text-red-700' }}">
+                  {{ $isCheckedIn ? '✅ Checked In' : '❌ Checked Out' }}
+                </span>
+              </div>
+      <p class="text-sm text-gray-500 w-25 mb-4">Manage your check-in and tokens here.</p>
 
-        <div class="flex items-center justify-between bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-          <span class="status-text inline-block mt-1 text-sm font-semibold rounded-full px-3 py-1
-            {{ $isCheckedIn ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-700' }}">
-            {{ $isCheckedIn ? '✅ Checked In' : '❌ Checked Out' }}
-          </span>
+        
 
-          <button id="toggleButton" type="submit"
-            class="px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 flex items-center gap-2 rounded-[60px]
+          <button id="toggleButton" type="submit" 
+            class="px-5 py-2.5 mb-3 text-sm font-semibold w-full flex justify-center items-center rounded-xl text-white transition-all duration-200 flex items-center gap-2 rounded-[60px]
               {{ $isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' }}">
             <span class="btn-text">{{ $isCheckedIn ? 'Check Out' : 'Check In' }}</span>
             <svg id="btnSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
               fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+            d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
             </svg>
           </button>
-        </div>
+          
       </form>
-
-      <div id="current-token-container" class="w-full">
+<div >
+   <button
+          onclick="assignNextToken({{ optional($token)->id ?? 0 }}, {{ optional(optional($token)->salesperson)->counter_number ?? 1 }})"
+          style="background-color: #1f2937;"
+          class="text-white px-2 py-2 flex items-center gap-2 rounded-xl w-full flex justify-center items-center">
+          <!-- Next Token Icon -->
+          Next Token Call
+        </button>
+</div>
+      <div id="current-token-container" class="w-full mt-5">
         @include('partials.current-token', ['token' => $token])
       </div>
     </div>
   </div>
-
 </div>
+
+
 
   @push('scripts')
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
