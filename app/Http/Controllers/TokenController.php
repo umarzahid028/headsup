@@ -18,7 +18,7 @@ class TokenController extends Controller
 
     public function generateToken()
     {
-        $checkedInUserIds = Queue::where('is_checked_in', true)->pluck('user_id')->toArray();
+        $checkedInUserIds = Queue::pluck('user_id')->toArray();
 
         $availableSalespersons = User::role('Sales person')
             ->whereIn('id', $checkedInUserIds)
