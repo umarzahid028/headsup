@@ -60,7 +60,7 @@ Route::get('/tokens', [TokenController::class, 'showTokensPage'])->name('tokens.
 Route::post('/tokens/generate', [TokenController::class, 'generateToken'])->name('tokens.generate');
 
 // Active tokens ke liye API (AJAX se call hoga, auth & role middleware lagao)
-Route::get('/tokens/active', [TokenController::class, 'activeTokens'])->name('tokens.active');
+Route::get('/queue-list', [TokenController::class, 'activeTokens'])->name('tokens.active');
 Route::middleware(['auth', 'role:Sales person'])->group(function () {
     Route::post('/tokens/{token}/complete', [TokenController::class, 'completeToken'])->name('tokens.complete');
     // routes/web.php
