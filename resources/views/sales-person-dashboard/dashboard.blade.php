@@ -125,12 +125,18 @@
         $isCheckedIn = Auth::user()->latestQueue && Auth::user()->latestQueue->is_checked_in;
         @endphp
       <div class=" mb-2">
-                <span class="status-text inline-block  text-sm font-semibold rounded-full
-                  {{ $isCheckedIn ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 p-2 text-red-700' }}">
-                  {{ $isCheckedIn ? '✅ Checked In' : '❌ Checked Out' }}
-                </span>
-              </div>
-      <p class="text-sm text-gray-500 w-25 mb-4">Manage your check-in and tokens here.</p>
+        <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4">
+  <div class="flex items-center gap-2">
+    <span class="text-sm font-medium text-gray-700">Status:</span>
+    <span class="status-text text-sm font-semibold rounded-full px-3 py-1
+      {{ $isCheckedIn ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-700' }}">
+      {{ $isCheckedIn ? '✅ Checked In' : '❌ Checked Out' }}
+    </span>
+  </div>
+</div>
+
+<p class="text-sm text-gray-500 mb-4">Manage your check-in and tokens here.</p>
+
 
         
 
