@@ -282,7 +282,7 @@ public function tokenhistory()
 {
     $user = Auth::user();
 
-    if ($user->hasRole(['Admin', 'Sales person'])) {
+    if ($user->hasRole(['Admin', 'Sales Manager', 'Sales person'])) {
         $cutoff = Carbon::now()->subHours(24);
 
         $query = Token::whereIn('status', ['completed', 'skipped'])

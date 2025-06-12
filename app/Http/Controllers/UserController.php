@@ -169,13 +169,13 @@ public function deleteSalesperson($id)
 
             DB::commit();
 
-            return redirect()->back()
+            return redirect()->route('saleperson.table')
                 ->with('success', 'User created successfully');
         } catch (\Illuminate\Database\QueryException $e) {
             DB::rollBack();
 
             if ($e->errorInfo[1] == 1062) {
-                return redirect()->route('create.saleperson')->with('success', 'Sale Person created successfully!');
+                return redirect()->route('saleperson.table')->with('success', 'Sale Person created successfully!');
             }
 
             return redirect()->back()->withInput()

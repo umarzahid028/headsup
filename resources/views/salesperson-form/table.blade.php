@@ -99,28 +99,47 @@
     </script>
     @endif
 
-    <script>
+<script>
     $(document).on('click', '.delete-user', function () {
         var id = $(this).data('id');
 
-        if (confirm("Are you sure you want to delete this user?")) {
-            $.ajax({
-                url: '/salesperson/delete/' + id,
-                type: 'DELETE',
-                data: {
-                    _token: '{{ csrf_token() }}'
-                },
-                success: function (response) {
-                    alert(response.message);
-                    // optionally remove row from table
-                    location.reload();
-                },
-                error: function (xhr) {
-                    alert('Error: ' + xhr.responseText);
-                }
-            });
-        }
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/salesperson/delete/' + id,
+                    type: 'DELETE',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function (response) {
+                        Swal.fire(
+                            'Deleted!',
+                            response.message,
+                            'success'
+                        ).then(() => {
+                            location.reload(); // Optionally reload after alert
+                        });
+                    },
+                    error: function (xhr) {
+                        Swal.fire(
+                            'Error!',
+                            xhr.responseText,
+                            'error'
+                        );
+                    }
+                });
+            }
+        });
     });
 </script>
+
 
 </x-app-layout>
