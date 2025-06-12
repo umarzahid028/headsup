@@ -70,6 +70,9 @@
             <div id="generatedToken" class="token-number mt-4 text-white"></div>
             <p id="dateTime" class="mt-3 text-sm text-gray-500"></p>
         </div>
+        <div>
+            <p>All salespersons are currently unavailable. Please wait.</p>
+        </div>
         <button id="generateTokenBtn"
             class="w-full text-xl bg-gradient-to-r from-gray-800 to-gray-600 hover:from-gray-900 hover:to-gray-800 text-white font-bold py-3 px-8 rounded-full shadow-xl transition-all duration-300 focus:outline-none">
             Generate Token
@@ -112,7 +115,7 @@
                     tokenDiv.textContent = String(data.token.serial_number).padStart(3, '0');
                     dateTimeDiv.textContent = `📅 ${date} | 🕒 ${time}`;
                 } else {
-                    tokenDiv.textContent = "All salespersons are currently unavailable. Please wait.";
+                    tokenDiv.textContent = "No token found";
                     dateTimeDiv.textContent = "";
                 }
             })

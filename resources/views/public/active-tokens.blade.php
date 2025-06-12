@@ -165,7 +165,7 @@
 
     async function fetchAndUpdateTokens() {
       try {
-        const response = await fetch('/tokens/active', {
+        const response = await fetch('/queue-list', {
           headers: { 'Accept': 'application/json' }
         });
         const data = await response.json();
