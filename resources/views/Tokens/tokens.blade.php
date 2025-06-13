@@ -26,34 +26,33 @@
 </head>
 <body class="min-h-screen flex items-center justify-center bg-[#111827] px-4">
 
-  <!-- Main Card -->
   <div class="glass w-full max-w-md p-8 text-center text-white">
     <h1 class="text-3xl font-bold mb-6">🎫 Name Generator</h1>
 
-    <!-- Gender Toggle -->
+    <!-- Gender Selection -->
     <p class="text-white font-semibold mb-2">Gender Select</p>
     <div class="flex justify-center gap-6 mb-6">
       <!-- Mr. -->
-      <div class="flex items-center space-x-3">
-        <button id="toggleMr"
-          class="w-16 h-8 bg-white/20 rounded-full flex items-center p-1 transition-all duration-300">
-          <div id="dotMr"
-            class="w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300">
-          </div>
-        </button>
-        <span class="text-white font-medium">Mr.</span>
-      </div>
+      <label class="cursor-pointer">
+        <input type="radio" name="prefix" value="Mr." id="radioMr" class="peer sr-only">
+        <div class="w-24 py-2 rounded-full border-2 border-white/30 
+                    peer-checked:border-blue-500 peer-checked:bg-white 
+                    text-white peer-checked:text-blue-800 text-center font-semibold 
+                    transition duration-300 hover:bg-white/10">
+          Mr.
+        </div>
+      </label>
 
       <!-- Mrs. -->
-      <div class="flex items-center space-x-3">
-        <button id="toggleMrs"
-          class="w-16 h-8 bg-white/20 rounded-full flex items-center p-1 transition-all duration-300">
-          <div id="dotMrs"
-            class="w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300">
-          </div>
-        </button>
-        <span class="text-white font-medium">Mrs.</span>
-      </div>
+      <label class="cursor-pointer">
+        <input type="radio" name="prefix" value="Mrs." id="radioMrs" class="peer sr-only">
+        <div class="w-24 py-2 rounded-full border-2 border-white/30 
+                    peer-checked:border-pink-500 peer-checked:bg-white 
+                    text-white peer-checked:text-pink-700 text-center font-semibold 
+                    transition duration-300 hover:bg-white/10">
+          Mrs.
+        </div>
+      </label>
     </div>
 
     <!-- Output -->
@@ -65,18 +64,15 @@
     <div id="errorMessage" class="hidden mt-4 text-red-400 font-semibold"></div>
 
     <!-- Input -->
-    <input style="margin-top: 10px;"
-      type="text"
-      id="customerName"
-      placeholder="Enter your name"
-      class="w-full px-4 py-2 rounded-full bg-[#111827] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white mb-4"
-    />
+    <input type="text" id="customerName" placeholder="Enter your name"
+      class="w-full px-4 py-2 rounded-full bg-[#111827] text-white 
+             placeholder-gray-400 focus:outline-none focus:ring-2 
+             focus:ring-white mb-4" />
 
     <!-- Button -->
-    <button
-      id="generateTokenBtn"
-      class="mt-2 bg-gradient-to-r from-[#111827] to-gray-700 hover:from-gray-800 hover:to-gray-800 text-white font-bold py-3 px-6 rounded-full w-full transition-all duration-300"
-    >
+    <button id="generateTokenBtn"
+      class="mt-2 bg-gradient-to-r from-[#111827] to-gray-700 hover:from-gray-800 hover:to-gray-800 
+             text-white font-bold py-3 px-6 rounded-full w-full transition-all duration-300">
       Let's Go
     </button>
 
@@ -90,50 +86,21 @@
     const tokenDiv = document.getElementById('generatedToken');
     const dateTimeDiv = document.getElementById('dateTime');
     const errorMessage = document.getElementById('errorMessage');
+    const radios = document.querySelectorAll('input[name="prefix"]');
 
-    const toggleMr = document.getElementById("toggleMr");
-    const toggleMrs = document.getElementById("toggleMrs");
-    const dotMr = document.getElementById("dotMr");
-    const dotMrs = document.getElementById("dotMrs");
-
-    let selectedPrefix = "";
-
-    toggleMr.addEventListener("click", () => {
-      selectedPrefix = "Mr.";
-
-      toggleMr.style.backgroundColor = "#ffffff";
-      dotMr.style.backgroundColor = "#111827";
-      dotMr.style.transform = "translateX(32px)";
-
-      toggleMrs.style.backgroundColor = "rgba(255,255,255,0.1)";
-      dotMrs.style.backgroundColor = "#ffffff";
-      dotMrs.style.transform = "translateX(0)";
-
-      // Auto-fill prefix in input
-      const nameOnly = nameInput.value.replace(/^Mr\.|^Mrs\./i, "").trim();
-      nameInput.value = `Mr. ${nameOnly}`;
-    });
-
-    toggleMrs.addEventListener("click", () => {
-      selectedPrefix = "Mrs.";
-
-      toggleMrs.style.backgroundColor = "#ffffff";
-      dotMrs.style.backgroundColor = "#111827";
-      dotMrs.style.transform = "translateX(32px)";
-
-      toggleMr.style.backgroundColor = "rgba(255,255,255,0.1)";
-      dotMr.style.backgroundColor = "#ffffff";
-      dotMr.style.transform = "translateX(0)";
-
-      // Auto-fill prefix in input
-      const nameOnly = nameInput.value.replace(/^Mr\.|^Mrs\./i, "").trim();
-      nameInput.value = `Mrs. ${nameOnly}`;
+    radios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        const selectedPrefix = radio.value;
+        const nameOnly = nameInput.value.replace(/^Mr\.|^Mrs\./i, "").trim();
+        nameInput.value = `${selectedPrefix} ${nameOnly}`;
+      });
     });
 
     btn.addEventListener('click', () => {
       const fullName = nameInput.value.trim();
+      const selectedRadio = document.querySelector('input[name="prefix"]:checked');
 
-      if (!fullName || !selectedPrefix) {
+      if (!fullName || !selectedRadio) {
         Swal.fire({
           icon: 'warning',
           title: 'Enter name & select gender',
@@ -178,6 +145,7 @@
         const now = new Date();
         dateTimeDiv.textContent = `📅 ${now.toLocaleDateString()} | 🕒 ${now.toLocaleTimeString()}`;
         nameInput.value = '';
+        radios.forEach(r => r.checked = false);
       })
       .catch(() => {
         Swal.close();
@@ -191,5 +159,6 @@
       });
     });
   </script>
+
 </body>
 </html>
