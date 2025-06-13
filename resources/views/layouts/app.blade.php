@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-   <head>
+ <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -9,23 +9,21 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <!-- Tailwind CSS (if not already included via Vite or Mix) -->
-    {{-- <link href="{{ asset('css/app.css') }}" rel="stylesheet"> --}}
+    <!-- Tailwind CSS (activate this if you are not using Vite or Mix) -->
+    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-
-
+    
 
     <!-- Optional PNG fallback for older browsers -->
-    {{-- <link rel="alternate icon" href="{{ asset('favicon.png') }}" type="image/png"> --}}
+    <link rel="alternate icon" href="{{ asset('favicon.png') }}" type="image/png">
 
     <!-- Fonts or additional styles can go here -->
-    {{-- <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap"> --}}
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap">
 
     <!-- Scripts -->
-    {{-- <script src="{{ asset('js/app.js') }}" defer></script> --}}
+    <script src="{{ asset('js/app.js') }}" defer></script>
 </head>
+
 
     <body class="font-sans antialiased">
         <div x-data="{ sidebarOpen: true }" class="min-h-screen bg-background">

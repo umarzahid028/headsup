@@ -35,10 +35,10 @@
     <h1 class="text-3xl font-bold mb-6">🎫 Name Generator</h1>
 
     <!-- Gender Selection -->
-    <p class="text-white font-semibold mb-2">Gender Select</p>
-    <div class="flex justify-center gap-6 mb-6">
+    <!-- <p class="text-white font-semibold mb-2">Gender Select</p>
+    <div class="flex justify-center gap-6 mb-6"> -->
       <!-- Mr. -->
-      <label class="cursor-pointer group">
+      <!-- <label class="cursor-pointer group">
         <input type="radio" name="prefix" value="Mr." id="radioMr" class="peer sr-only">
         <div class="w-24 py-2 rounded-full border-2 border-white/30 
                     peer-checked:bg-white 
@@ -48,10 +48,10 @@
                     hover:bg-white/10 hover:shadow-md hover:scale-105">
           Mr.
         </div>
-      </label>
+      </label> -->
 
       <!-- Mrs. -->
-      <label class="cursor-pointer group">
+      <!-- <label class="cursor-pointer group">
         <input type="radio" name="prefix" value="Mrs." id="radioMrs" class="peer sr-only">
         <div class="w-24 py-2 rounded-full border-2 border-white/30
                     peer-checked:bg-white 
@@ -62,7 +62,7 @@
           Mrs.
         </div>
       </label>
-    </div>
+    </div> -->
 
     <!-- Output -->
     <p class="text-gray-300">Your Generated Name</p>
@@ -107,9 +107,9 @@
 
     btn.addEventListener('click', () => {
       const fullName = nameInput.value.trim();
-      const selectedRadio = document.querySelector('input[name="prefix"]:checked');
+      // const selectedRadio = document.querySelector('input[name="prefix"]:checked');
 
-      if (!fullName || !selectedRadio) {
+      if (!fullName) {
         Swal.fire({
           icon: 'warning',
           title: 'Enter name & select gender',
