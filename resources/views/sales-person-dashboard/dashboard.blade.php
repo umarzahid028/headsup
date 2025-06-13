@@ -322,46 +322,49 @@ $('#toggleForm').on('submit', function(e) {
   </script>
 
 
-  <script>
-    async function fetchCurrentUserToken() {
-      try {
-        const response = await fetch('/token/current', {
-          headers: {
-            'Accept': 'application/json'
-          },
-          cache: 'no-store'
-        });
-        const data = await response.json();
+ <script>
+  async function fetchCurrentUserToken() {
+    try {
+      const response = await fetch('/token/current', {
+        headers: {
+          'Accept': 'application/json'
+        },
+        cache: 'no-store'
+      });
 
-        if (data.token) {
-          const tokenNumber = String(data.token.serial_number).padStart(3, '0');
-          const counterNumber = data.token.counter_number;
+      const data = await response.json();
+      console.log("Token data received:", data); // 
 
-          const announcement = `Token number ${tokenNumber}, please proceed to counter number ${counterNumber}`;
-          speak(announcement);
-        } else {
-          speak("You currently have no assigned tokens.");
-        }
-      } catch (error) {
-        console.error('Error fetching current token:', error);
-        speak("Error fetching your token information.");
-      }
-    }
+      if (data.token) {
+        const customerName = data.token.customer_name || 'Customer'; // fallback if null
+        const counterNumber = data.token.counter_number || 'unknown'; // fallback if null
 
-    function speak(text) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); // cancel previous
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US';
-        speechSynthesis.speak(utterance);
+        const announcement = `${customerName}, please proceed to counter number ${counterNumber}`;
+        console.log("Announcement:", announcement); // 
+        speak(announcement);
       } else {
-        alert('Speech not supported in this browser.');
+        speak("You currently have no assigned tokens.");
       }
+    } catch (error) {
+      console.error('Error fetching current token:', error);
+      speak("Error fetching your token information.");
     }
+  }
 
-    const announceButton = document.getElementById('announceButton');
-    announceButton.addEventListener('click', fetchCurrentUserToken);
-  </script>
+  function speak(text) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      speechSynthesis.speak(utterance);
+    } else {
+      alert('Speech not supported in this browser.');
+    }
+  }
+
+  const announceButton = document.getElementById('announceButton');
+  announceButton?.addEventListener('click', fetchCurrentUserToken);
+</script>
 
   <!-- skip tokken -->
  <script>

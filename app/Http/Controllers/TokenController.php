@@ -132,13 +132,15 @@ public function activeTokens(Request $request)
             return response()->json(['token' => null]);
         }
 
-        return response()->json([
-            'token' => [
-                'serial_number' => $token->serial_number,
-                'counter_number' => $token->salesperson->counter_number ?? 'N/A',
-                'status' => $token->status,
-            ]
-        ]);
+      return response()->json([
+    'token' => [
+        'serial_number' => $token->serial_number,
+        'customer_name' => $token->customer_name,
+        'counter_number' => $token->salesperson->counter_number ?? 'N/A',
+        'status' => $token->status,
+    ]
+]);
+
     }
     
     public function checkIn(Request $request)

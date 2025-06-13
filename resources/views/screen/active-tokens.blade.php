@@ -45,12 +45,14 @@
 
     #active {
       border-color: #ccc;
-      width: 80%;
+      width: 70%;
+      animation: slideFadeIn 1s ease-out;
     }
 
     #pending {
       border-color: #777;
-      width: 20%;
+      width: 30%;
+      animation: slideFadeInRight 1s ease-out;
     }
 
     h1 {
@@ -76,17 +78,44 @@
       overflow-y: auto;
       max-height: calc(100vh - 12rem);
       width: 100%;
+      scrollbar-width: none;
     }
 
-    .active-token-row {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      text-align: center;
+    .scrollable::-webkit-scrollbar {
+      display: none;
+    }
+
+    .token-heading, .active-token-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
       font-weight: 900;
-      font-size: 3rem;
-      margin-bottom: 1.2rem;
-      user-select: none;
+      font-size: 2rem;
+      border-bottom: 1px dashed #444;
+      word-break: break-word;
+    }
+
+    .token-heading {
+      color: #ff4444;
+      font-size: 2.5rem;
+      border-bottom: 2px solid #555;
+      margin-bottom: 1.5rem;
       animation: fadeSlide 0.5s ease forwards;
+      text-align: center;
+    }
+
+    .active-token-row div {
+      flex: 1;
+      text-align: center;
+    }
+
+    .active-token-row div:nth-child(2) {
+      flex: 0.5;
+    }
+
+    .active-token-row:last-child {
+      border-bottom: none;
     }
 
     .pending-token-row {
@@ -103,29 +132,41 @@
       0% { opacity: 0; transform: translateY(10px) scale(0.95); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
+
+    @keyframes slideFadeIn {
+      0% { opacity: 0; transform: translateX(-50px); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes slideFadeInRight {
+      0% { opacity: 0; transform: translateX(50px); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
   </style>
 </head>
 <body>
+  <div id="container">
+    <section id="active">
+      <h1>Active Customers</h1>
+      <div class="token-heading">
+        <div>Counter</div>
+        <div>→</div>
+        <div>Name</div>
+      </div>
+      <div id="tokenList" class="scrollable"></div>
+    </section>
 
-<div id="container">
-  <section id="active">
-    <h1>Active Customers</h1>
-    <div class="grid grid-cols-3 gap-4 text-center text-red-400 font-bold uppercase text-3xl py-2">
-      <div>Counter</div>
-      <div>→</div>
-      <div>Name</div>
-    </div>
-    <div id="tokenList" class="scrollable"></div>
-  </section>
+    <section id="pending">
+      <h1>Waiting Customer</h1>
+      <div class="scrollable" id="pendingList"></div>
+    </section>
+  </div>
 
-  <section id="pending">
-    <h1>Waiting</h1>
-    <div class="scrollable" id="pendingList"></div>
-  </section>
-</div>
+
 
 <script>
   let audioEnabled = false;
+  const announcedNames = new Set(); // to remember which names have already been announced
 
   function enableAudio() {
     audioEnabled = true;
@@ -136,8 +177,8 @@
 
   function speak(text) {
     if (audioEnabled && 'speechSynthesis' in window) {
-      speechSynthesis.cancel(); // to prevent overlap
-      let utterance = new SpeechSynthesisUtterance(text);
+      speechSynthesis.cancel(); // prevent overlap
+      const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
       speechSynthesis.speak(utterance);
     }
@@ -157,6 +198,8 @@
         tokenList.innerHTML = `<div class="text-center text-white text-3xl">No active customers</div>`;
       } else {
         data.active.forEach((token, index) => {
+          const nameKey = token.customer_name.toLowerCase(); // normalize for safety
+
           const row = document.createElement('div');
           row.className = 'active-token-row';
           row.style.animationDelay = `${index * 150}ms`;
@@ -167,8 +210,11 @@
           `;
           tokenList.appendChild(row);
 
-          // Always speak, no matter what
-          speak(`${token.customer_name}, please proceed to counter number ${token.counter_number}`);
+          // 🧠 Speak only once per name (in-memory)
+          if (!announcedNames.has(nameKey)) {
+            speak(`${token.customer_name}, please proceed to counter number ${token.counter_number}`);
+            announcedNames.add(nameKey);
+          }
         });
       }
 

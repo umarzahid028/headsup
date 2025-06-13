@@ -21,6 +21,11 @@
       font-size: 3rem;
       font-weight: 800;
       letter-spacing: 0.1em;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+    #dateTime {
+      transition: opacity 0.5s ease;
     }
   </style>
 </head>
@@ -32,37 +37,36 @@
     <!-- Gender Selection -->
     <p class="text-white font-semibold mb-2">Gender Select</p>
     <div class="flex justify-center gap-6 mb-6">
-  <!-- Mr. -->
-  <label class="cursor-pointer group">
-    <input type="radio" name="prefix" value="Mr." id="radioMr" class="peer sr-only">
-    <div class="w-24 py-2 rounded-full border-2 border-white/30 
-               peer-checked:bg-white 
-                peer-checked:shadow-lg peer-checked:scale-105
-                text-white peer-checked:text-black text-center font-semibold 
-                transition-all duration-300 ease-in-out transform
-                hover:bg-white/10 hover:shadow-md hover:scale-105">
-       Mr.
-    </div>
-  </label>
+      <!-- Mr. -->
+      <label class="cursor-pointer group">
+        <input type="radio" name="prefix" value="Mr." id="radioMr" class="peer sr-only">
+        <div class="w-24 py-2 rounded-full border-2 border-white/30 
+                    peer-checked:bg-white 
+                    peer-checked:shadow-lg peer-checked:scale-105
+                    text-white peer-checked:text-black text-center font-semibold 
+                    transition-all duration-300 ease-in-out transform
+                    hover:bg-white/10 hover:shadow-md hover:scale-105">
+          Mr.
+        </div>
+      </label>
 
-  <!-- Mrs. -->
-  <label class="cursor-pointer group">
-    <input type="radio" name="prefix" value="Mrs." id="radioMrs" class="peer sr-only">
-    <div class="w-24 py-2 rounded-full border-2 border-white/30
-                peer-checked:bg-white 
-                peer-checked:shadow-lg peer-checked:scale-105
-                text-white peer-checked:text-black text-center font-semibold 
-                transition-all duration-300 ease-in-out transform
-                hover:bg-white/10 hover:shadow-md hover:scale-105">
-       Mrs.
+      <!-- Mrs. -->
+      <label class="cursor-pointer group">
+        <input type="radio" name="prefix" value="Mrs." id="radioMrs" class="peer sr-only">
+        <div class="w-24 py-2 rounded-full border-2 border-white/30
+                    peer-checked:bg-white 
+                    peer-checked:shadow-lg peer-checked:scale-105
+                    text-white peer-checked:text-black text-center font-semibold 
+                    transition-all duration-300 ease-in-out transform
+                    hover:bg-white/10 hover:shadow-md hover:scale-105">
+          Mrs.
+        </div>
+      </label>
     </div>
-  </label>
-</div>
-
 
     <!-- Output -->
     <p class="text-gray-300">Your Generated Name</p>
-    <div id="generatedToken" style="font-size:30px;" class="token-number mt-4"></div>
+    <div id="generatedToken" class="token-number mt-4" style="font-size: 25px;"></div>
     <p id="dateTime" class="mt-3 text-sm text-gray-400"></p>
 
     <!-- Error -->
@@ -146,7 +150,8 @@
           return;
         }
 
-        tokenDiv.textContent = data.token.customer_name.toUpperCase();
+        showGeneratedToken(data.token.customer_name.toUpperCase());
+
         const now = new Date();
         dateTimeDiv.textContent = `📅 ${now.toLocaleDateString()} | 🕒 ${now.toLocaleTimeString()}`;
         nameInput.value = '';
@@ -163,6 +168,27 @@
         });
       });
     });
+
+    // ✅ Name + Time auto-hide after 5s
+    function showGeneratedToken(name) {
+      tokenDiv.textContent = name;
+      tokenDiv.style.display = "block";
+      tokenDiv.style.opacity = "1";
+
+      dateTimeDiv.style.display = "block";
+      dateTimeDiv.style.opacity = "1";
+
+      setTimeout(() => {
+        tokenDiv.style.opacity = "0";
+        dateTimeDiv.style.opacity = "0";
+        setTimeout(() => {
+          tokenDiv.style.display = "none";
+          dateTimeDiv.style.display = "none";
+          tokenDiv.textContent = '';
+          dateTimeDiv.textContent = '';
+        }, 500);
+      }, 5000);
+    }
   </script>
 
 </body>
