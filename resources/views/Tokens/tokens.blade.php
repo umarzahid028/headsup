@@ -26,87 +26,101 @@
 </head>
 <body class="min-h-screen flex items-center justify-center bg-gray-900 px-4">
 
-  <div class="glass w-full max-w-md p-8 text-center text-white">
-    <h1 class="text-3xl font-bold mb-6">🎫 Token Generator</h1>
+<div class="glass w-full max-w-md p-8 text-center text-white">
+  <h1 class="text-3xl font-bold mb-6">🎫 Name Generator</h1>
 
-    <p class="text-gray-300">Your Token Number</p>
-    <div id="generatedToken" class="token-number mt-4"></div>
-    <p id="dateTime" class="mt-3 text-sm text-gray-500"></p>
+  <p class="text-gray-300">Your Generated Name</p>
+  <div id="generatedToken" class="token-number mt-4"></div>
+  <p id="dateTime" class="mt-3 text-sm text-gray-500"></p>
 
-    <!-- Hidden error message -->
-    <div id="errorMessage" class="hidden mt-4 text-red-400 font-semibold">
-      All salespersons are currently unavailable. Please wait...
-    </div>
-
-    <button id="generateTokenBtn"
-      class="mt-6 bg-gradient-to-r from-gray-800 to-gray-600 hover:from-gray-900 hover:to-gray-800 text-white font-bold py-3 px-6 rounded-full w-full transition-all duration-300">
-      Generate Token
-    </button>
-
-    <p class="mt-6 text-xs italic">Please wait for your token to appear.</p>
+  <!-- Hidden error message -->
+  <div id="errorMessage" class="hidden mt-4 text-red-400 font-semibold">
+    All salespersons are currently unavailable. Please wait...
   </div>
 
-  <script>
-    const btn = document.getElementById('generateTokenBtn');
-    const tokenDiv = document.getElementById('generatedToken');
-    const dateTimeDiv = document.getElementById('dateTime');
-    const errorMessage = document.getElementById('errorMessage');
+  <input style="margin-top: 10px;" type="text" id="customerName" placeholder="Enter your name"
+    class="w-full px-4 py-2 rounded-full bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 mb-4" />
 
-   btn.addEventListener('click', () => {
-  Swal.fire({
-    title: 'Processing...',
-    background: '#1e293b',
-    color: '#fff',
-    showConfirmButton: false,
-    allowOutsideClick: false,
-    didOpen: () => Swal.showLoading()
-  });
+  <button id="generateTokenBtn"
+    class="mt-6 bg-gradient-to-r from-gray-800 to-gray-600 hover:from-gray-900 hover:to-gray-800 text-white font-bold py-3 px-6 rounded-full w-full transition-all duration-300">
+    Let's Go
+  </button>
 
-  fetch('/tokens/generate', {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-    }
-  })
-  .then(async res => {
-    Swal.close();
+  <p class="mt-6 text-xs italic">Please wait for your name to appear.</p>
+</div>
 
-    const data = await res.json();
+<script>
+  const btn = document.getElementById('generateTokenBtn');
+  const nameInput = document.getElementById('customerName');
+  const tokenDiv = document.getElementById('generatedToken');
+  const dateTimeDiv = document.getElementById('dateTime');
+  const errorMessage = document.getElementById('errorMessage');
 
-    if (res.status === 422 && data.message === 'No available salespersons found') {
-      // Show only this if NO one is checked in
-      errorMessage.classList.remove('hidden');
-      errorMessage.textContent = "All salespersons are currently unavailable. Please wait...";
-      setTimeout(() => errorMessage.classList.add('hidden'), 5000);
-      tokenDiv.textContent = '';
-      dateTimeDiv.textContent = '';
+  btn.addEventListener('click', () => {
+    const name = nameInput.value.trim();
+
+    if (!name) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Please enter your name',
+        background: '#1e293b',
+        color: '#fff'
+      });
       return;
     }
 
-    // ✅ Token created, show token
-    if (data.token) {
-      tokenDiv.textContent = String(data.token.serial_number).padStart(3, '0');
-      const now = new Date();
-      dateTimeDiv.textContent = `📅 ${now.toLocaleDateString()} | 🕒 ${now.toLocaleTimeString()}`;
-
-      // ❌ DO NOT show message if busy — no need for error here
-      errorMessage.classList.add('hidden');
-    }
-  })
-  .catch(() => {
-    Swal.close();
     Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Something went wrong. Try again later!',
+      title: 'Processing...',
       background: '#1e293b',
-      color: '#fff'
+      color: '#fff',
+      showConfirmButton: false,
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    fetch('/tokens/generate', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify({ customer_name: name })
+    })
+    .then(async res => {
+      Swal.close();
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        errorMessage.classList.remove('hidden');
+        errorMessage.textContent = data.message || "Failed to generate token. Try again.";
+        setTimeout(() => errorMessage.classList.add('hidden'), 4000);
+        tokenDiv.textContent = '';
+        dateTimeDiv.textContent = '';
+        return;
+      }
+
+      if (data.token) {
+        tokenDiv.textContent = data.token.customer_name.toUpperCase();
+        const now = new Date();
+        dateTimeDiv.textContent = `📅 ${now.toLocaleDateString()} | 🕒 ${now.toLocaleTimeString()}`;
+        errorMessage.classList.add('hidden');
+        nameInput.value = '';
+      }
+    })
+    .catch(() => {
+      Swal.close();
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Something went wrong. Try again later!',
+        background: '#1e293b',
+        color: '#fff'
+      });
     });
   });
-});
+</script>
 
-  </script>
 </body>
 </html>

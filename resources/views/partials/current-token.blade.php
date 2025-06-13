@@ -27,6 +27,7 @@
   </div>
 
   <div class="flex justify-end">
+     
     @if ($token)
 
 
@@ -76,3 +77,4 @@
   No assigned token found.
 </div>
 @endif
+

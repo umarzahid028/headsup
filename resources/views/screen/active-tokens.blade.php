@@ -15,11 +15,10 @@
     html, body {
       margin: 0;
       padding: 0;
-      overflow-x: hidden;
-      background-color: #000; /* Black */
-      height: 100vh;
+      background-color: #000;
       font-family: 'Digital', monospace;
-      color: #fff; /* White */
+      color: #fff;
+      height: 100vh;
     }
 
     #container {
@@ -45,12 +44,12 @@
     }
 
     #active {
-      border-color: #ccc; /* Light gray border */
+      border-color: #ccc;
       width: 80%;
     }
 
     #pending {
-      border-color: #777; /* Medium gray border */
+      border-color: #777;
       width: 20%;
     }
 
@@ -79,17 +78,14 @@
       width: 100%;
     }
 
-    /* Token styles */
     .active-token-row {
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       text-align: center;
-      color: #fff;
       font-weight: 900;
       font-size: 3rem;
       margin-bottom: 1.2rem;
       user-select: none;
-      /* text-shadow: 0 0 10px #fff, 0 0 20px #aaa; */
       animation: fadeSlide 0.5s ease forwards;
     }
 
@@ -100,7 +96,6 @@
       text-align: center;
       margin-bottom: 1rem;
       user-select: none;
-      /* text-shadow: 0 0 10px #999, 0 0 20px #666; */
       animation: fadeSlide 0.5s ease forwards;
     }
 
@@ -108,120 +103,106 @@
       0% { opacity: 0; transform: translateY(10px) scale(0.95); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
-
   </style>
-
 </head>
 <body>
 
-  <div id="container" role="main" aria-live="polite" aria-atomic="true" aria-relevant="additions">
-    <section id="active">
-      <h1>Active Tokens</h1>
-      <div class="grid grid-cols-3 gap-4 text-center text-red-400 font-bold uppercase text-3xl py-2">
-        <div>Counter</div>
-        <div>→</div>
-        <div>Token</div>
-      </div>
-      <div id="tokenList" class="scrollable"></div>
-    </section>
+<div id="container">
+  <section id="active">
+    <h1>Active Customers</h1>
+    <div class="grid grid-cols-3 gap-4 text-center text-red-400 font-bold uppercase text-3xl py-2">
+      <div>Counter</div>
+      <div>→</div>
+      <div>Name</div>
+    </div>
+    <div id="tokenList" class="scrollable"></div>
+  </section>
 
-    <section id="pending">
-      <h1>Pending</h1>
-      <div class="scrollable" id="pendingList">
-      </div>
-    </section>
-  </div>
+  <section id="pending">
+    <h1>Waiting</h1>
+    <div class="scrollable" id="pendingList"></div>
+  </section>
+</div>
 
-  <script>
-    let announcedTokens = new Set(JSON.parse(localStorage.getItem('announcedTokens') || '[]'));
-    let audioEnabled = false;
+<script>
+  let announcedTokens = new Set(JSON.parse(localStorage.getItem('announcedTokens') || '[]'));
+  let audioEnabled = false;
 
+  function enableAudio() {
+    audioEnabled = true;
+    let utterance = new SpeechSynthesisUtterance("Announcements enabled");
+    speechSynthesis.speak(utterance);
+    fetchAndUpdateTokens();
+    setInterval(fetchAndUpdateTokens, 5000);
+  }
 
-    function enableAudio() {
-      console.log('as');
-      audioEnabled = true;
-      // Speak confirmation
-      let utterance = new SpeechSynthesisUtterance("Announcements enabled");
+  function speak(text) {
+    if (audioEnabled && 'speechSynthesis' in window) {
+      let utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
       speechSynthesis.speak(utterance);
-
-      // Hide overlay and show main content
-
-      // Immediately fetch tokens and start interval
-      fetchAndUpdateTokens();
-      setInterval(fetchAndUpdateTokens, 5000);
     }
+  }
 
-    function speak(text) {
-      if (audioEnabled && 'speechSynthesis' in window) {
-        let utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US';
-        speechSynthesis.speak(utterance);
-      }
-    }
+  function saveAnnouncedTokens() {
+    localStorage.setItem('announcedTokens', JSON.stringify(Array.from(announcedTokens)));
+  }
 
-    function saveAnnouncedTokens() {
-      localStorage.setItem('announcedTokens', JSON.stringify(Array.from(announcedTokens)));
-    }
+  async function fetchAndUpdateTokens() {
+    try {
+      const response = await fetch('/queue-list', {
+        headers: { 'Accept': 'application/json' }
+      });
+      const data = await response.json();
 
-    async function fetchAndUpdateTokens() {
-      try {
-        const response = await fetch('/queue-list', {
-          headers: { 'Accept': 'application/json' }
+      const tokenList = document.getElementById('tokenList');
+      tokenList.innerHTML = '';
+
+      if (data.active.length === 0) {
+        tokenList.innerHTML = `<div class="text-center text-white text-3xl">No active customers</div>`;
+      } else {
+        data.active.forEach((token, index) => {
+          const row = document.createElement('div');
+          row.className = 'active-token-row';
+          row.style.animationDelay = `${index * 150}ms`;
+          row.innerHTML = `
+            <div>${token.counter_number}</div>
+            <div>→</div>
+            <div>Mr. ${token.customer_name.charAt(0).toUpperCase() + token.customer_name.slice(1)}</div>
+
+          `;
+          tokenList.appendChild(row);
+
+          if (!announcedTokens.has(token.customer_name)) {
+           speak(`Mr. ${token.customer_name}, please proceed to counter number ${token.counter_number}`);
+            announcedTokens.add(token.customer_name);
+            saveAnnouncedTokens();
+          }
         });
-        const data = await response.json();
-
-        // Update active tokens
-        const tokenList = document.getElementById('tokenList');
-        tokenList.innerHTML = '';
-
-        if(data.active.length === 0){
-          tokenList.innerHTML = `<div class="text-center text-white text-3xl glow digital">No active tokens</div>`;
-        } else {
-          data.active.forEach((token, index) => {
-            const row = document.createElement('div');
-            row.className = 'active-token-row';
-            row.style.animationDelay = `${index * 150}ms`;
-            row.innerHTML = `
-              <div>${token.counter_number}</div>
-              <div>→</div>
-              <div>${String(token.serial_number).padStart(3, '0')}</div>
-            `;
-            tokenList.appendChild(row);
-
-            if (!announcedTokens.has(token.serial_number)) {
-              speak(`Token number ${token.serial_number}, please proceed to counter number ${token.counter_number}`);
-              announcedTokens.add(token.serial_number);
-              saveAnnouncedTokens();
-            }
-          });
-        }
-
-        // Update pending tokens
-        const pendingList = document.getElementById('pendingList');
-        pendingList.innerHTML = '';
-
-        if(data.pending.length === 0){
-          pendingList.innerHTML = `<div class="text-yellow-400 text-xl text-center select-none">No pending tokens</div>`;
-        } else {
-          data.pending.forEach((token, index) => {
-            const row = document.createElement('div');
-            row.className = 'pending-token-row';
-            row.style.animationDelay = `${index * 150}ms`;
-            row.textContent = String(token.serial_number).padStart(3, '0');
-            pendingList.appendChild(row);
-          });
-        }
-
-      } catch(error) {
-        console.error('Error fetching tokens:', error);
       }
+
+      const pendingList = document.getElementById('pendingList');
+      pendingList.innerHTML = '';
+
+      if (data.pending.length === 0) {
+        pendingList.innerHTML = `<div class="text-yellow-400 text-xl text-center">No waiting</div>`;
+      } else {
+        data.pending.forEach((token, index) => {
+          const row = document.createElement('div');
+          row.className = 'pending-token-row';
+          row.style.animationDelay = `${index * 150}ms`;
+          row.textContent = token.customer_name;
+          pendingList.appendChild(row);
+        });
+      }
+
+    } catch (error) {
+      console.error('Error fetching tokens:', error);
     }
+  }
 
-    window.onload = function () {
-      enableAudio();
-    };
-
-  </script>
+  window.onload = enableAudio;
+</script>
 
 </body>
 </html>

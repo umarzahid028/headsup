@@ -64,17 +64,24 @@ public function salesdashboard()
         ->exists();
 
     $token = null;
-    
+    $onHoldToken = null;
+
     if ($isCheckedIn) {
         $token = Token::with('salesperson')
             ->where('user_id', $user->id)
             ->where('status', 'assigned')
             ->latest('created_at')
             ->first();
-    } else {
-        $token = null;
+
+        $onHoldToken = Token::with('salesperson')
+            ->where('user_id', $user->id)
+            ->where('status', 'on_hold')
+            ->latest('created_at')
+            ->first();
     }
-    return view('sales-person-dashboard.dashboard', compact('token'));
+
+    return view('sales-person-dashboard.dashboard', compact('token', 'onHoldToken'));
 }
+
 
 }

@@ -14,8 +14,9 @@ return new class extends Migration
           Schema::create('tokens', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id')->nullable(); // assigned to salesperson
-            $table->integer('serial_number');
-            $table->enum('status', ['pending', 'assigned', 'skipped', 'completed'])->default('pending');
+            $table->integer('serial_number')->nullable();
+            $table->string('customer_name')->nullable();
+            $table->enum('status', ['pending', 'assigned', 'skipped', 'completed', 'on_hold'])->default('pending');
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();

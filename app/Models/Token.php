@@ -13,6 +13,7 @@ class Token extends Model
     protected $fillable = [
         'user_id',
         'serial_number',
+        'customer_name',
         'status',
         'assigned_at',
         'completed_at',

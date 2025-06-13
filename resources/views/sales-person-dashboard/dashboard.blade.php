@@ -20,6 +20,13 @@
     </style>
 
   </x-slot>
+ <div class=" px-5 py-3 mb-4">
+  <h2 class="text-xl font-semibold text-gray-800">
+    Welcome to {{ Auth::user()->name }}
+  </h2>
+</div>
+
+
 <div class="w-full grid grid-cols-1 xl:grid-cols-4 gap-6 px-4">
   <!-- LEFT SIDE: 3/4 i.e. 75% -->
   <div class="xl:col-span-3">
@@ -87,7 +94,7 @@
           </fieldset>
         </div>
 
-        <div class="md:col-span-2 text-right mt-6">
+        <div class="md:col-span-2 text-right">
           <button type="submit" style="background-color: #111827;"
             class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-xl transition duration-200">
             Submit
@@ -119,7 +126,7 @@
 
 
 
-      <form id="toggleForm" action="{{ route('sales.perosn.store') }}" method="POST">
+      <form id="toggleForm" action="{{ route('sales.person.store') }}" method="POST">
         @csrf
         @php
         $isCheckedIn = Auth::user()->latestQueue && Auth::user()->latestQueue->is_checked_in;
@@ -154,16 +161,17 @@
           
       </form>
 <div >
-   <button
+   
+</div>
+<button type="button"
           onclick="assignNextToken({{ optional($token)->id ?? 0 }}, {{ optional(optional($token)->salesperson)->counter_number ?? 1 }})"
           style="background-color: #1f2937;"
           class="text-white px-2 py-2 flex items-center gap-2 rounded-xl w-full flex justify-center items-center">
           <!-- Next Token Icon -->
           Next Token Call
         </button>
-</div>
       <div id="current-token-container" class="w-full mt-5">
-        @include('partials.current-token', ['token' => $token])
+        @include('partials.current-token', ['token' => $token, 'onHoldToken' => $onHoldToken])
       </div>
     </div>
   </div>
@@ -178,64 +186,76 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
   <script>
-    $('#toggleForm').on('submit', function(e) {
-      e.preventDefault();
+    // CSRF Token setup for all AJAX requests
+$.ajaxSetup({
+  headers: {
+    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+  }
+});
 
-      const btn = $('#toggleButton');
-      const btnText = btn.find('.btn-text');
-      const spinner = $('#btnSpinner');
+$('#toggleForm').on('submit', function(e) {
+  e.preventDefault();
 
-      btn.prop('disabled', true);
-      btnText.addClass('hidden');
-      spinner.removeClass('hidden');
+  const btn = $('#toggleButton');
+  const btnText = btn.find('.btn-text');
+  const spinner = $('#btnSpinner');
 
-      $.ajax({
-        url: $(this).attr('action'),
-        method: 'POST',
-        data: $(this).serialize(),
-        success: function(response) {
-          btn.prop('disabled', false);
-          btnText.removeClass('hidden');
-          spinner.addClass('hidden');
+  btn.prop('disabled', true);
+  btnText.addClass('hidden');
+  spinner.removeClass('hidden');
 
-          if (response.checked_in) {
-            btnText.text('Check Out');
-            btn.removeClass('bg-green-500 hover:bg-green-600').addClass('bg-red-500 hover:bg-red-600');
+  $.ajax({
+    url: $(this).attr('action'),
+    method: 'POST',
+    data: $(this).serialize(),
+    success: function(response) {
+      btn.prop('disabled', false);
+      btnText.removeClass('hidden');
+      spinner.addClass('hidden');
 
-            $('.status-text').text('✅ Checked In')
-              .removeClass('bg-red-100 text-red-700')
-              .addClass('bg-emerald-100 text-emerald-800');
-          } else {
-            btnText.text('Check In');
-            btn.removeClass('bg-red-500 hover:bg-red-600').addClass('bg-green-500 hover:bg-green-600');
+      if (response.checked_in) {
+        btnText.text('Check Out');
+        btn.removeClass('bg-green-500 hover:bg-green-600')
+           .addClass('bg-red-500 hover:bg-red-600');
 
-            $('.status-text').text('❌ Checked Out')
-              .removeClass('bg-emerald-100 text-emerald-800')
-              .addClass('bg-red-100 text-red-700');
-          }
+        $('.status-text').text('✅ Checked In')
+                         .removeClass('bg-red-100 text-red-700')
+                         .addClass('bg-emerald-100 text-emerald-800');
+      } else {
+        btnText.text('Check In');
+        btn.removeClass('bg-red-500 hover:bg-red-600')
+           .addClass('bg-green-500 hover:bg-green-600');
 
-          Swal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: response.message,
-            timer: 2000,
-            showConfirmButton: false,
-          });
-        },
-        error: function() {
-          btn.prop('disabled', false);
-          btnText.removeClass('hidden');
-          spinner.addClass('hidden');
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Something went wrong!',
-          });
-        }
+        $('.status-text').text('❌ Checked Out')
+                         .removeClass('bg-emerald-100 text-emerald-800')
+                         .addClass('bg-red-100 text-red-700');
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: response.message,
+        timer: 2000,
+        showConfirmButton: false,
       });
-    });
-  </script>
+    },
+    error: function(xhr, status, error) {
+      btn.prop('disabled', false);
+      btnText.removeClass('hidden');
+      spinner.addClass('hidden');
 
+      console.error("Error Response:", xhr.responseText);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Something went wrong while processing your request.',
+      });
+    }
+  });
+});
+
+  </script>
   <script>
     window.completeToken = function(tokenId) {
       const btn = document.getElementById(`complete-btn-${tokenId}`);
@@ -344,7 +364,7 @@
   </script>
 
   <!-- skip tokken -->
-  <script>
+ <script>
     document.addEventListener('DOMContentLoaded', function() {
       document.body.addEventListener('click', async function(e) {
         // Check if clicked element or its parent has id starting with "skipButton-"
@@ -490,6 +510,40 @@
       window.speechSynthesis.speak(utterance);
     }
   </script>
+
+{{-- Auto-Refresh Script --}}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    console.log("✅ JS Loaded");
+
+    const forms = document.querySelectorAll('.auto-refresh-form');
+
+    forms.forEach(form => {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault(); // Stop immediate form submit
+
+        console.log("🚀 Form Submitted - will submit via JS");
+
+        // Actually submit using JS
+        fetch(form.action, {
+          method: "POST",
+          body: new FormData(form),
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          }
+        }).then(response => {
+          console.log("✅ Submitted, refreshing soon...");
+          setTimeout(() => {
+            location.reload();
+          }, 1500);
+        }).catch(error => {
+          console.error("❌ Fetch failed:", error);
+        });
+      });
+    });
+  });
+</script>
 
   @endpush
 </x-app-layout>

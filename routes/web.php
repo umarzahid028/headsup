@@ -49,7 +49,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 
 //Queues Routes
 Route::get('/sales-person', [DashboardController::class, 'salesdashboard'])->name('sales.perosn');
-Route::post('/sales-person', [QueuesController::class, 'dashboardstore'])->name('sales.perosn.store');
+Route::post('/sales-person', [QueuesController::class, 'dashboardstore'])->name('sales.person.store');
 
 //Sales person status
 Route::get('/status', [StatusController::class, 'showStatus']);
@@ -66,6 +66,10 @@ Route::middleware(['auth', 'role:Sales person'])->group(function () {
     // routes/web.php
     Route::post('/tokens/{token}/skip', [TokenController::class, 'skip'])->name('tokens.skip');
 });
+// routes/web.php
+Route::post('/token/{id}/resume', [TokenController::class, 'resume'])->name('token.resume');
+
+Route::post('/token/{id}/hold', [TokenController::class, 'hold'])->name('token.hold');
 Route::post('/tokens/next/{token}', [TokenController::class, 'assignNextToken'])->middleware('auth');
 
 Route::post('/check-in', [TokenController::class, 'checkIn'])->middleware('auth');

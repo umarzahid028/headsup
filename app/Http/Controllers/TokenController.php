@@ -16,46 +16,58 @@ class TokenController extends Controller
         return view('tokens.tokens');
     }
 
-    public function generateToken()
-    {
-        $checkedInUserIds = Queue::where('is_checked_in', true)->pluck('user_id')->toArray();
+public function generateToken(Request $request)
+{
+    // Step 1: Validate the input
+    $validated = $request->validate([
+        'customer_name' => 'required|string|max:255',
+    ]);
 
-        $availableSalespersons = User::role('Sales person')
-            ->whereIn('id', $checkedInUserIds)
-            ->get();
-        if ($availableSalespersons->isEmpty()) {
-            return response()->json(['message' => 'No available salespersons found'], 422);
-        }
+    // Step 2: Get all checked-in Sales persons
+    $checkedInUserIds = Queue::where('is_checked_in', true)->pluck('user_id')->toArray();
 
-        $busyUserIds = Token::where('status', 'assigned')->pluck('user_id')->toArray();
+    $availableSalespersons = User::role('Sales person')
+        ->whereIn('id', $checkedInUserIds)
+        ->get();
 
-        $freeSalespersons = $availableSalespersons->filter(function ($user) use ($busyUserIds) {
-            return !in_array($user->id, $busyUserIds);
-        });
-
-        $lastToken = Token::orderBy('serial_number', 'desc')->first();
-        $nextSerial = $lastToken ? $lastToken->serial_number + 1 : 1;
-
-        if ($freeSalespersons->isNotEmpty()) {
-            $freeSalesperson = $freeSalespersons->first();
-
-            $token = Token::create([
-                'user_id' => $freeSalesperson->id,
-                'serial_number' => $nextSerial,
-                'status' => 'assigned',
-                'assigned_at' => Carbon::now(),
-            ]);
-        } else {
-            $token = Token::create([
-                'user_id' => null,
-                'serial_number' => $nextSerial,
-                'status' => 'pending',
-                'assigned_at' => null,
-            ]);
-        }
-
-        return response()->json(['token' => $token]);
+    if ($availableSalespersons->isEmpty()) {
+        return response()->json(['message' => 'No available salespersons found'], 422);
     }
+
+    // Step 3: Filter free salespersons
+    $busyUserIds = Token::where('status', 'assigned')->pluck('user_id')->toArray();
+
+    $freeSalespersons = $availableSalespersons->filter(function ($user) use ($busyUserIds) {
+        return !in_array($user->id, $busyUserIds);
+    });
+
+    // Step 4: Get next serial number (optional if you want to keep it)
+    $lastToken = Token::orderBy('serial_number', 'desc')->first();
+    $nextSerial = $lastToken ? $lastToken->serial_number + 1 : 1;
+
+    // Step 5: Create Token
+    if ($freeSalespersons->isNotEmpty()) {
+        $freeSalesperson = $freeSalespersons->first();
+
+        $token = Token::create([
+            'user_id' => $freeSalesperson->id,
+            'serial_number' => $nextSerial, // optional
+            'status' => 'assigned',
+            'assigned_at' => Carbon::now(),
+            'customer_name' => $validated['customer_name'],
+        ]);
+    } else {
+        $token = Token::create([
+            'user_id' => null,
+            'serial_number' => $nextSerial, // optional
+            'status' => 'pending',
+            'assigned_at' => null,
+            'customer_name' => $validated['customer_name'],
+        ]);
+    }
+
+    return response()->json(['token' => $token]);
+}
 
 public function activeTokens(Request $request)
 {
@@ -63,7 +75,6 @@ public function activeTokens(Request $request)
 
     $tokens = Token::where('status', 'assigned')
         ->whereIn('user_id', $checkedInUserIds)
-        ->orderBy('serial_number')
         ->get();
 
     $pendingtokens = Token::where('status', 'pending')
@@ -74,7 +85,7 @@ public function activeTokens(Request $request)
         return response()->json([
             'active' => $tokens->map(function ($token) {
                 return [
-                    'serial_number' => $token->serial_number,
+                    'customer_name' => $token->customer_name,
                     'salesperson' => $token->salesperson->name ?? 'Unassigned',
                     'status' => $token->status,
                     'counter_number' => $token->salesperson->counter_number ?? 'N/A',
@@ -83,7 +94,7 @@ public function activeTokens(Request $request)
             }),
             'pending' => $pendingtokens->map(function ($token) {
                 return [
-                    'serial_number' => $token->serial_number,
+                    'customer_name' => $token->customer_name,
                 ];
             }),
         ]);
@@ -328,5 +339,34 @@ public function assignNextToken(Request $request, Token $token)
 
     return response()->json(['status' => 'error', 'message' => 'No pending tokens available.']);
 }
+
+
+// public function hold($id)
+// {
+//     $token = Token::findOrFail($id);
+
+//     if ($token->status !== 'assigned') {
+//         return redirect()->back()->with('error', 'Only assigned tokens can be held.');
+//     }
+
+//     $token->status = 'on_hold';
+//     $token->save();
+
+//     return redirect()->back()->with('success', 'Token has been put on hold for test drive.');
+// }
+
+// public function resume($id)
+// {
+//     $token = Token::findOrFail($id);
+
+//     if ($token->status !== 'on_hold') {
+//         return redirect()->back()->with('error', 'Only on-hold tokens can be resumed.');
+//     }
+
+//     $token->status = 'assigned';
+//     $token->save();
+
+//     return redirect()->back()->with('success', 'Token resumed successfully.');
+// }
 
 }
