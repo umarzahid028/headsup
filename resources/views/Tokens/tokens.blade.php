@@ -32,32 +32,37 @@
     <!-- Gender Selection -->
     <p class="text-white font-semibold mb-2">Gender Select</p>
     <div class="flex justify-center gap-6 mb-6">
-      <!-- Mr. -->
-      <label class="cursor-pointer">
-        <input type="radio" name="prefix" value="Mr." id="radioMr" class="peer sr-only">
-        <div class="w-24 py-2 rounded-full border-2 border-white/30 
-                    peer-checked:border-blue-500 peer-checked:bg-white 
-                    text-white peer-checked:text-blue-800 text-center font-semibold 
-                    transition duration-300 hover:bg-white/10">
-          Mr.
-        </div>
-      </label>
-
-      <!-- Mrs. -->
-      <label class="cursor-pointer">
-        <input type="radio" name="prefix" value="Mrs." id="radioMrs" class="peer sr-only">
-        <div class="w-24 py-2 rounded-full border-2 border-white/30 
-                    peer-checked:border-pink-500 peer-checked:bg-white 
-                    text-white peer-checked:text-pink-700 text-center font-semibold 
-                    transition duration-300 hover:bg-white/10">
-          Mrs.
-        </div>
-      </label>
+  <!-- Mr. -->
+  <label class="cursor-pointer group">
+    <input type="radio" name="prefix" value="Mr." id="radioMr" class="peer sr-only">
+    <div class="w-24 py-2 rounded-full border-2 border-white/30 
+               peer-checked:bg-white 
+                peer-checked:shadow-lg peer-checked:scale-105
+                text-white peer-checked:text-black text-center font-semibold 
+                transition-all duration-300 ease-in-out transform
+                hover:bg-white/10 hover:shadow-md hover:scale-105">
+       Mr.
     </div>
+  </label>
+
+  <!-- Mrs. -->
+  <label class="cursor-pointer group">
+    <input type="radio" name="prefix" value="Mrs." id="radioMrs" class="peer sr-only">
+    <div class="w-24 py-2 rounded-full border-2 border-white/30
+                peer-checked:bg-white 
+                peer-checked:shadow-lg peer-checked:scale-105
+                text-white peer-checked:text-black text-center font-semibold 
+                transition-all duration-300 ease-in-out transform
+                hover:bg-white/10 hover:shadow-md hover:scale-105">
+       Mrs.
+    </div>
+  </label>
+</div>
+
 
     <!-- Output -->
     <p class="text-gray-300">Your Generated Name</p>
-    <div id="generatedToken" class="token-number mt-4"></div>
+    <div id="generatedToken" style="font-size:30px;" class="token-number mt-4"></div>
     <p id="dateTime" class="mt-3 text-sm text-gray-400"></p>
 
     <!-- Error -->

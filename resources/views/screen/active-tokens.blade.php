@@ -125,27 +125,22 @@
 </div>
 
 <script>
-  let announcedTokens = new Set(JSON.parse(localStorage.getItem('announcedTokens') || '[]'));
   let audioEnabled = false;
 
   function enableAudio() {
     audioEnabled = true;
-    let utterance = new SpeechSynthesisUtterance("Announcements enabled");
-    speechSynthesis.speak(utterance);
+    speak("Announcements enabled");
     fetchAndUpdateTokens();
     setInterval(fetchAndUpdateTokens, 5000);
   }
 
   function speak(text) {
     if (audioEnabled && 'speechSynthesis' in window) {
+      speechSynthesis.cancel(); // to prevent overlap
       let utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
       speechSynthesis.speak(utterance);
     }
-  }
-
-  function saveAnnouncedTokens() {
-    localStorage.setItem('announcedTokens', JSON.stringify(Array.from(announcedTokens)));
   }
 
   async function fetchAndUpdateTokens() {
@@ -168,16 +163,12 @@
           row.innerHTML = `
             <div>${token.counter_number}</div>
             <div>→</div>
-            <div>Mr. ${token.customer_name.charAt(0).toUpperCase() + token.customer_name.slice(1)}</div>
-
+            <div>${token.customer_name.charAt(0).toUpperCase() + token.customer_name.slice(1)}</div>
           `;
           tokenList.appendChild(row);
 
-          if (!announcedTokens.has(token.customer_name)) {
-           speak(`Mr. ${token.customer_name}, please proceed to counter number ${token.counter_number}`);
-            announcedTokens.add(token.customer_name);
-            saveAnnouncedTokens();
-          }
+          // Always speak, no matter what
+          speak(`${token.customer_name}, please proceed to counter number ${token.counter_number}`);
         });
       }
 
