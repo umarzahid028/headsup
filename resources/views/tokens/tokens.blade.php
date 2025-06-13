@@ -64,7 +64,7 @@
     <div id="errorMessage" class="hidden mt-4 text-red-400 font-semibold"></div>
 
     <!-- Input -->
-    <input type="text" id="customerName" placeholder="Enter your name"
+    <input style="margin-top: 10px;" type="text" id="customerName" placeholder="Enter your name"
       class="w-full px-4 py-2 rounded-full bg-[#111827] text-white 
              placeholder-gray-400 focus:outline-none focus:ring-2 
              focus:ring-white mb-4" />
