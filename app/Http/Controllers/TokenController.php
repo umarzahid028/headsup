@@ -334,6 +334,7 @@ public function assignNextToken(Request $request, Token $token)
             'status' => 'success',
             'token' => [
                 'serial_number' => $pendingToken->serial_number,
+                'customer_name' => $pendingToken->customer_name,
                 'counter_number' => $token->salesperson->counter_number ?? 'N/A'
             ]
         ]);

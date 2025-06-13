@@ -494,7 +494,7 @@ $('#toggleForm').on('submit', function(e) {
         .then(response => response.json())
         .then(data => {
           if (data.status === 'success' && data.token) {
-            const tokenNumber = data.token.serial_number;
+            const tokenNumber = data.token.customer_name;
             makeVoiceAnnouncement(tokenNumber, counterNumber);
           } else {
             alert('No pending token found or something went wrong.');
@@ -507,7 +507,7 @@ $('#toggleForm').on('submit', function(e) {
     }
 
     function makeVoiceAnnouncement(tokenNumber, counterNumber) {
-      const message = `Token number ${tokenNumber}, please proceed to counter number ${counterNumber}`;
+      const message = `${tokenNumber}, please proceed to counter number ${counterNumber}`;
       const utterance = new SpeechSynthesisUtterance(message);
       utterance.lang = 'en-US';
       window.speechSynthesis.speak(utterance);
