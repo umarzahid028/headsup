@@ -260,6 +260,27 @@ public function skip(Request $request, $tokenId)
         \Log::info("Pending token created for user $userId");
     }
 
+    public function returnAssignedTokenToPending($userId): bool
+{
+    $assigned = \App\Models\Token::where('user_id', $userId)
+                                 ->where('status', 'assigned')
+                                 ->first();
+
+    if (!$assigned) {
+        \Log::info("No assigned token for user $userId");
+        return false;
+    }
+
+    $assigned->update([
+        'user_id'     => null,
+        'status'      => 'pending',
+        'assigned_at' => null,
+    ]);
+
+    \Log::info("Token {$assigned->serial_number} returned to pending from user $userId");
+    return true;
+}
+
     public function completeToken(Request $request, $tokenId)
     {
         $token = Token::findOrFail($tokenId);

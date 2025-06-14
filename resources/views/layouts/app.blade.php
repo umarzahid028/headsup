@@ -1,28 +1,26 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
- <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>HeadsUp</title>
+        <title>HeadsUp</title>
 
-    <!-- CSRF Token -->
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+<!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+<!-- Scripts -->
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        
+        <!-- Sortable.js for drag and drop functionality -->
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+        <script src="//unpkg.com/alpinejs" defer></script>
 
-    <!-- Tailwind CSS (activate this if you are not using Vite or Mix) -->
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
-
-    
-
-    <!-- Optional PNG fallback for older browsers -->
-    <link rel="alternate icon" href="{{ asset('favicon.png') }}" type="image/png">
-
-    <!-- Fonts or additional styles can go here -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap">
-
-    <!-- Scripts -->
-    <script src="{{ asset('js/app.js') }}" defer></script>
-</head>
+        @yield('styles')
+    </head>
 
 
     <body class="font-sans antialiased">
@@ -76,10 +74,10 @@
                                         <!-- Notifications Dropdown -->
                                         <div class="ml-auto flex items-center gap-x-4">
                                             <div class="relative">
-                                                <button type="button" class="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" id="notifications-menu-button">
+                                                <!-- <button type="button" class="relative rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" id="notifications-menu-button">
                                                     <span class="sr-only">View notifications</span>
                                                     <x-heroicon-o-bell class="h-6 w-6" />
-                                                </button>
+                                                </button> -->
 
                                                 <!-- Notifications Dropdown Panel -->
                                                 <div class="hidden absolute right-0 z-10 mt-2 w-80 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" id="notifications-dropdown">
@@ -181,13 +179,13 @@
         </div>
         
         <!-- Sound initialization elements -->
-        <div id="sound-init-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2" style="display: none;">
+        <!-- <div id="sound-init-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2" style="display: none;">
             <button id="init-sound-btn" class="bg-primary text-white p-2 rounded-full shadow-lg hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
                 <span class="sr-only">Initialize Sound</span>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.465a5 5 0 001.06-7.89l5.415-5.415a1 1 0 00-1.414-1.414L6.464 9.88a7 7 0 002.12 11.382l.293.16a1 1 0 001.414-1.414l-3.879-3.89a3 3 0 01-.626-3.314L4.21 14.216a1 1 0 101.414 1.414l-.04-.04z" />
                 </svg>
-            </button>
+            </button> -->
             
             
         </div>

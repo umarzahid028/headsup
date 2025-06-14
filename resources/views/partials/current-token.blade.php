@@ -46,20 +46,21 @@
       <span>Skip Token</span>
     </button>
 
-    <button
-      id="complete-btn-{{ $token->id }}"
-      type="button"
-      onclick="completeToken({{ $token->id }})"
-      class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition"
-      aria-label="Complete Token #{{ $token->serial_number }}"
-    >
-      <span class="text-sm font-medium">Complete</span>
-      <span
-        class="spinner hidden"
-        aria-hidden="true"
-        style="border-top-color: white; border-width: 2.5px; border-style: solid; border-radius: 9999px; width: 1rem; height: 1rem; animation: spin 1s linear infinite;"
-      ></span>
-    </button>
+  <button
+  id="complete-btn-{{ $token->id }}"
+  type="button"
+  onclick="completeToken({{ $token->id }})"
+  class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition"
+  aria-label="Complete Token #{{ $token->serial_number }}"
+>
+  <span class="btn-text text-sm font-medium">Complete</span>
+  <span
+    class="spinner hidden"
+    aria-hidden="true"
+    style="border-top-color: white; border-width: 2.5px; border-style: solid; border-radius: 9999px; width: 1rem; height: 1rem; animation: spin 1s linear infinite;"
+  ></span>
+</button>
+
   </div>
 </div>
 

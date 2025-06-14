@@ -1,7 +1,9 @@
 <x-app-layout>
   <x-slot name="header">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-
+  <h1 class="text-2xl font-semibold text-gray-800">
+  Welcome, {{ Auth::user()->name }}
+</h1>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
       @keyframes spin {
@@ -20,11 +22,7 @@
     </style>
 
   </x-slot>
- <div class=" px-5 py-3 mb-4">
-  <h2 class="text-xl font-semibold text-gray-800">
-    Welcome to {{ Auth::user()->name }}
-  </h2>
-</div>
+
 
 
 <div class="w-full grid grid-cols-1 xl:grid-cols-4 gap-6 px-4">
@@ -112,7 +110,7 @@
 
   <!-- Right: Speaker Button -->
   <button id="announceButton" type="button" 
-    class="text-white w-[40px] h-[40px] flex items-center justify-center p-4"
+    class="text-white w-[60px] h-[60px] flex items-center justify-center p-2"
     style="background-color: #1f2937; border-radius: 70px;">
     <!-- Speaker Icon -->
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2"
