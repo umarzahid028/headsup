@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Queue;
 use App\Models\Token;
+use App\Models\CustomerSale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -71,41 +72,34 @@ public function generateToken(Request $request)
 
 public function activeTokens(Request $request)
 {
-    $checkedInUserIds = Queue::where('is_checked_in', true)->pluck('user_id')->toArray();
-
-    $tokens = Token::where('status', 'assigned')
-        ->whereIn('user_id', $checkedInUserIds)
+    // Fetch all checked-in users from Queue
+    $queues = Queue::with('user')  // assuming 'user' is the salesperson relation
+        ->where('is_checked_in', true)
         ->get();
 
-    $pendingtokens = Token::where('status', 'pending')
-        ->orderBy('serial_number')
-        ->get();
+    // Extract salesperson data
+    $activeData = $queues->map(function ($queue) {
+        $salesPersonName = $queue->user->name ?? 'Unassigned';
+
+        // Assuming 'CustomerSale' has 'user_id' and 'process' is a JSON or array field
+        $customerSale = CustomerSale::where('user_id', $queue->user_id)->latest()->first();
+
+        return [
+            'sales_person' => $salesPersonName,
+            'process' => $customerSale ? (array) $customerSale->process : [],
+        ];
+    });
 
     if ($request->wantsJson()) {
         return response()->json([
-            'active' => $tokens->map(function ($token) {
-                return [
-                    'customer_name' => $token->customer_name,
-                    'salesperson' => $token->salesperson->name ?? 'Unassigned',
-                    'status' => $token->status,
-                    'counter_number' => $token->salesperson->counter_number ?? 'N/A',
-                    'assigned_at' => optional($token->assigned_at)->toDateTimeString(),
-                ];
-            }),
-            'pending' => $pendingtokens->map(function ($token) {
-                return [
-                    'customer_name' => $token->customer_name,
-                ];
-            }),
+            'active' => $activeData
         ]);
     }
 
     return view('screen.active-tokens', [
-        'tokens' => $tokens,
-        'pendingtokens' => $pendingtokens,
+        'tokens' => $activeData,
     ]);
 }
-
 
 //Current Token
  public function currentAssignedToken(Request $request)

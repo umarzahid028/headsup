@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Tokens Display</title>
+  <title>Salesperson Status Display</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -22,8 +22,6 @@
     }
 
     #container {
-      display: flex;
-      gap: 2rem;
       width: 90%;
       max-width: 1280px;
       margin: auto;
@@ -35,43 +33,22 @@
     section {
       background-color: #0d0d0d;
       border-radius: 1.5rem;
-      border-width: 4px;
+      border: 4px solid #ccc;
       padding: 2rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      overflow: hidden;
-    }
-
-    #active {
-      border-color: #ccc;
-      width: 70%;
-      animation: slideFadeIn 1s ease-out;
-    }
-
-    #pending {
-      border-color: #777;
-      width: 30%;
-      animation: slideFadeInRight 1s ease-out;
+      height: 100%;
+      animation: fadeSlide 1s ease-out;
     }
 
     h1 {
       user-select: none;
-      margin-bottom: 2rem;
-    }
-
-    #active h1 {
       color: #fff;
       font-size: 5rem;
       font-weight: 800;
+      margin-bottom: 2rem;
       text-shadow: 0 0 10px #fff, 0 0 20px #999;
-    }
-
-    #pending h1 {
-      color: #ccc;
-      font-size: 2rem;
-      font-weight: 800;
-      text-shadow: 0 0 10px #999, 0 0 20px #666;
     }
 
     .scrollable {
@@ -85,15 +62,15 @@
       display: none;
     }
 
-    .token-heading, .active-token-row {
-      display: flex;
-      justify-content: space-between;
+    .token-heading,
+    .active-token-row {
+      display: grid;
+      grid-template-columns: 1fr 0.2fr 3fr;
       align-items: center;
       padding: 0.75rem 1rem;
       font-weight: 900;
-      font-size: 2rem;
-      border-bottom: 1px dashed #444;
       word-break: break-word;
+      gap: 1rem;
     }
 
     .token-heading {
@@ -101,145 +78,93 @@
       font-size: 2.5rem;
       border-bottom: 2px solid #555;
       margin-bottom: 1.5rem;
-      animation: fadeSlide 0.5s ease forwards;
       text-align: center;
     }
 
     .active-token-row div {
-      flex: 1;
+      font-size: 2rem;
       text-align: center;
     }
 
-    .active-token-row div:nth-child(2) {
-      flex: 0.5;
-    }
-
-    .active-token-row:last-child {
-      border-bottom: none;
-    }
-
-    .pending-token-row {
-      color: #ddd;
-      font-weight: 900;
-      font-size: 2.25rem;
-      text-align: center;
-      margin-bottom: 1rem;
-      user-select: none;
-      animation: fadeSlide 0.5s ease forwards;
+    .active-token-row div:nth-child(3) {
+      text-align: left;
+      font-size: 1.25rem;
     }
 
     @keyframes fadeSlide {
-      0% { opacity: 0; transform: translateY(10px) scale(0.95); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    @keyframes slideFadeIn {
-      0% { opacity: 0; transform: translateX(-50px); }
-      100% { opacity: 1; transform: translateX(0); }
-    }
-
-    @keyframes slideFadeInRight {
-      0% { opacity: 0; transform: translateX(50px); }
-      100% { opacity: 1; transform: translateX(0); }
+      0% {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
   </style>
 </head>
 <body>
   <div id="container">
     <section id="active">
-      <h1>Active Customers</h1>
-      <div class="token-heading">
-        <div>Counter</div>
-        <div>→</div>
-        <div>Name</div>
-      </div>
-      <div id="tokenList" class="scrollable"></div>
-    </section>
+      <h1>Status</h1>
 
-    <section id="pending">
-      <h1>Waiting Customer</h1>
-      <div class="scrollable" id="pendingList"></div>
+      <div class="token-heading">
+        <div>Name</div>
+        <div>→</div>
+        <div>Status</div>
+      </div>
+
+      <div id="tokenList" class="scrollable"></div>
     </section>
   </div>
 
+  <script>
+    async function fetchAndUpdateTokens() {
+      try {
+        const response = await fetch('/queue-list', {
+          headers: { 'Accept': 'application/json' }
+        });
 
+        const data = await response.json();
+        const tokenList = document.getElementById('tokenList');
+        tokenList.innerHTML = '';
 
-<script>
-  let audioEnabled = false;
-  const announcedNames = new Set(); // to remember which names have already been announced
+        if (!data.active || data.active.length === 0) {
+          tokenList.innerHTML = `<div class="text-center text-white text-3xl">No active records</div>`;
+          return;
+        }
 
-  function enableAudio() {
-    audioEnabled = true;
-    speak("Announcements enabled");
-    fetchAndUpdateTokens();
-    setInterval(fetchAndUpdateTokens, 5000);
-  }
-
-  function speak(text) {
-    if (audioEnabled && 'speechSynthesis' in window) {
-      speechSynthesis.cancel(); // prevent overlap
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      speechSynthesis.speak(utterance);
-    }
-  }
-
-  async function fetchAndUpdateTokens() {
-    try {
-      const response = await fetch('/queue-list', {
-        headers: { 'Accept': 'application/json' }
-      });
-      const data = await response.json();
-
-      const tokenList = document.getElementById('tokenList');
-      tokenList.innerHTML = '';
-
-      if (data.active.length === 0) {
-        tokenList.innerHTML = `<div class="text-center text-white text-3xl">No active customers</div>`;
-      } else {
         data.active.forEach((token, index) => {
-          const nameKey = token.customer_name.toLowerCase(); // normalize for safety
+          const name = token.sales_person || 'Unknown';
+          const processes = token.process || [];
 
           const row = document.createElement('div');
           row.className = 'active-token-row';
           row.style.animationDelay = `${index * 150}ms`;
           row.innerHTML = `
-            <div>${token.counter_number}</div>
+            <div><span class="whitespace-nowrap">${name}</span></div>
             <div>→</div>
-            <div>${token.customer_name.charAt(0).toUpperCase() + token.customer_name.slice(1)}</div>
+            <div>
+              ${
+                processes.length
+                  ? processes.map(p => `<span class="inline-block bg-gray-700 rounded px-2 py-1 mr-1 mb-1">${p}</span>`).join('')
+                  : '<span class="text-gray-500">No status</span>'
+              }
+            </div>
           `;
           tokenList.appendChild(row);
-
-          // 🧠 Speak only once per name (in-memory)
-          if (!announcedNames.has(nameKey)) {
-            speak(`${token.customer_name}, please proceed to counter number ${token.counter_number}`);
-            announcedNames.add(nameKey);
-          }
         });
+
+      } catch (error) {
+        console.error('Error fetching tokens:', error);
+        document.getElementById('tokenList').innerHTML = `<div class="text-red-500 text-center">Error loading data</div>`;
       }
-
-      const pendingList = document.getElementById('pendingList');
-      pendingList.innerHTML = '';
-
-      if (data.pending.length === 0) {
-        pendingList.innerHTML = `<div class="text-yellow-400 text-xl text-center">No waiting</div>`;
-      } else {
-        data.pending.forEach((token, index) => {
-          const row = document.createElement('div');
-          row.className = 'pending-token-row';
-          row.style.animationDelay = `${index * 150}ms`;
-          row.textContent = token.customer_name;
-          pendingList.appendChild(row);
-        });
-      }
-
-    } catch (error) {
-      console.error('Error fetching tokens:', error);
     }
-  }
 
-  window.onload = enableAudio;
-</script>
-
+    window.onload = () => {
+      fetchAndUpdateTokens();
+      setInterval(fetchAndUpdateTokens, 5000); // Refresh every 5 seconds
+    };
+  </script>
 </body>
 </html>

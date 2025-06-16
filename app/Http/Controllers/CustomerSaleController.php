@@ -12,6 +12,7 @@ public function store(Request $request)
 {
     try {
         $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
             'name' => 'required|string',
             'email' => 'required|email',
             'phone' => 'required|string',
@@ -28,7 +29,7 @@ public function store(Request $request)
     }
 
     $sale = CustomerSale::updateOrCreate(
-        ['email' => $validated['email']], // use unique identifier
+        ['email' => $validated['email'], 'user_id' => $validated['user_id']],
         [
             'name' => $validated['name'],
             'phone' => $validated['phone'],

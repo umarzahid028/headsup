@@ -9,20 +9,22 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::create('customer_sales', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email');
-            $table->string('phone');
-            $table->string('interest')->nullable();
-            $table->text('notes')->nullable();
-            $table->json('process')->nullable(); // stores array of sales process steps
-            $table->json('disposition')->nullable(); // stores array of disposition reasons
-            $table->timestamps();
-        });
-    }
+public function up(): void
+{
+    Schema::create('customer_sales', function (Blueprint $table) {
+        $table->id();
+        $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+        $table->string('name');
+        $table->string('email');
+        $table->string('phone');
+        $table->string('interest')->nullable();
+        $table->text('notes')->nullable();
+        $table->json('process')->nullable();
+        $table->json('disposition')->nullable();
+        $table->timestamps();
+    });
+}
+
 
     /**
      * Reverse the migrations.

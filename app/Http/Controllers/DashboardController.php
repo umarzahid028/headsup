@@ -9,6 +9,7 @@ use App\Models\Queue;
 use App\Models\Token;
 use App\Models\Vendor;
 use App\Models\Activity;
+use App\Models\CustomerSale;
 use App\Models\Estimate;
 use App\Models\Transport;
 use Illuminate\View\View;
@@ -33,10 +34,8 @@ class DashboardController extends Controller
      */
     public function index()
     {
-   
-
     $user = auth()->user();
-
+   
     if ($user->hasRole('Sales person')) {
         return redirect()->route('sales.perosn');
     }
@@ -58,6 +57,7 @@ class DashboardController extends Controller
 public function salesdashboard()
 {
     $user = Auth::user();
+$customers = CustomerSale::with('user')->where('user_id', $user->id)->get();
 
     $isCheckedIn = Queue::where('user_id', $user->id)
         ->where('is_checked_in', true)
@@ -80,7 +80,7 @@ public function salesdashboard()
             ->first();
     }
 
-    return view('sales-person-dashboard.dashboard', compact('token', 'onHoldToken'));
+    return view('sales-person-dashboard.dashboard', compact('token', 'onHoldToken', 'customers'));
 }
 
 

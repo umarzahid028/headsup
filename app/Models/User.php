@@ -63,4 +63,8 @@ class User extends Authenticatable
         $this->is_active = false;
         $this->save();
     }
+    public function customerSales()
+    {
+        return $this->hasMany(CustomerSale::class, 'user_id');
+    }
 }

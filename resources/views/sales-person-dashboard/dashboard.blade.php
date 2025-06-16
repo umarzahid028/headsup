@@ -2,10 +2,8 @@
   <x-slot name="header">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
     <h1 class="text-xl font-semibold text-gray-800">Welcome, {{ Auth::user()->name }}</h1>
     <p class="text-sm text-gray-500">Manage your check-in and token activity.</p>
-
     <style>
       @keyframes spin {
         to {
@@ -31,80 +29,97 @@
   $checkInTimeFormatted = $checkInTimeRaw ? \Carbon\Carbon::parse($checkInTimeRaw)->format('h:i A, M d') : 'N/A';
   $checkOutTimeFormatted = $latestQueue?->checked_out_at ? \Carbon\Carbon::parse($latestQueue->checked_out_at)->format('h:i A, M d') : 'N/A';
   @endphp
+
   <div class="w-full grid grid-cols-1 xl:grid-cols-4 gap-6 px-4 mt-4">
     <!-- LEFT SIDE: Customer Form -->
     <div class="xl:col-span-3">
-
-
-
       <!-- Form Container -->
       <div id="formContainer" class="hidden">
         <div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
           <h3 class="text-2xl font-bold text-gray-800 mb-2">Customer Sales Form</h3>
           <p class="text-gray-500 mb-6">Fill out the details below to log a customer sales interaction.</p>
-<form id="salesForm" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-    @csrf
+          <form id="salesForm" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            @csrf
+            <input type="hidden" name="user_id" value="{{ auth()->id() }}" />
 
-    <!-- Customer Info -->
-    <div class="space-y-4">
-        @foreach (['name', 'email', 'phone', 'interest'] as $field)
-            <div>
+            <!-- Customer Info -->
+            <div class="space-y-4">
+              @foreach (['name', 'email', 'phone', 'interest'] as $field)
+              <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">{{ ucfirst($field) }}</label>
                 <input name="{{ $field }}" type="{{ $field == 'email' ? 'email' : 'text' }}" required
-                    class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
+                  class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
+              </div>
+              @endforeach
             </div>
-        @endforeach
-    </div>
 
-    <!-- Sales Details -->
-    <div class="space-y-4">
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea name="notes" rows="6" class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"></textarea>
-        </div>
+            <!-- Sales Details -->
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea name="notes" rows="6"
+                  class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"></textarea>
+              </div>
 
-        <!-- Sales Process -->
-        <fieldset class="border border-gray-300 rounded-xl p-4">
-            <legend class="text-sm font-semibold text-gray-700 mb-3">Sales Process</legend>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                @foreach(['Investigating','Test Driving','Desking','Credit Application','Penciling','F&I'] as $process)
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" name="process[]" value="{{ $process }}" class="form-checkbox h-5 w-5 text-indigo-600">
+              <!-- Sales Process -->
+              <fieldset class="border border-gray-300 rounded-xl p-4">
+                <legend class="text-sm font-semibold text-gray-700 mb-3">Sales Process</legend>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  @foreach(['Investigating','Test Driving','Desking','Credit Application','Penciling','F&I'] as $process)
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" name="process[]" value="{{ $process }}"
+                      class="form-checkbox h-5 w-5 text-indigo-600">
                     <span class="text-gray-700 text-sm">{{ $process }}</span>
-                </label>
-                @endforeach
-            </div>
-        </fieldset>
+                  </label>
+                  @endforeach
+                </div>
+              </fieldset>
 
-        <!-- Disposition -->
-        <fieldset class="border border-gray-300 rounded-xl p-4">
-            <legend class="text-sm font-semibold text-gray-700 mb-3">Disposition</legend>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                @foreach([
-                    'Sold!', 'Walked Away', 'Challenged Credit', "Didn't Like Vehicle",
-                    "Didn't Like Price", "Didn't Like Finance Terms", 'Insurance Expensive',
-                    'Wants to keep looking', 'Wants to think about it', 'Needs Co-Signer'
-                ] as $disposition)
-                <label class="flex items-center space-x-2">
-                    <input type="checkbox" name="disposition[]" value="{{ $disposition }}" class="form-checkbox h-5 w-5 text-indigo-600">
-                    <span class="text-gray-700 text-sm">{{ $disposition }}</span>
-                </label>
-                @endforeach
-            </div>
-        </fieldset>
-    </div>
+              <!-- Disposition -->
+              <div id="customerModal"
+                class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                <div class="bg-white p-6 rounded-xl w-full max-w-2xl relative">
+                  <button type="button" id="closeModalBtn"
+                    class="absolute top-3 right-3 text-gray-500 hover:text-black text-xl font-bold">&times;</button>
 
-    <div class="md:col-span-2 text-right mt-4">
-        <button type="button" class="bg-gray-900 hover:bg-gray-800 text-white font-semibold px-8 py-3 rounded-xl transition duration-200">
-            Close
-        </button>
-    </div>
-</form>
+                  <fieldset class="border border-gray-300 rounded-xl p-4">
+                    <legend class="text-sm font-semibold text-gray-700 mb-3">Disposition</legend>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      @foreach([
+                      'Sold!', 'Walked Away', 'Challenged Credit', "Didn't Like Vehicle",
+                      "Didn't Like Price", "Didn't Like Finance Terms", 'Insurance Expensive',
+                      'Wants to keep looking', 'Wants to think about it', 'Needs Co-Signer'
+                      ] as $disposition)
+                      <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="disposition[]" value="{{ $disposition }}"
+                          class="form-checkbox h-5 w-5 text-indigo-600">
+                        <span class="text-gray-700 text-sm">{{ $disposition }}</span>
+                      </label>
+                      @endforeach
+                    </div>
+                  </fieldset>
+
+                  <div class="text-right mt-4">
+                    <button type="submit"
+                      class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-3 rounded-xl">
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="md:col-span-2 text-right mt-4">
+              <button id="openModalBtn" type="button" class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl">
+                Close
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
 
-
+    <!-- RIGHT SIDE -->
     <div class="">
       <div class="bg-white rounded-xl shadow p-3 w-full max-w-md mx-auto space-y-4 border">
 
@@ -117,22 +132,22 @@
           </span>
 
           <!-- Toggle Button Form -->
-          <form id="checkToggleForm" action="{{ route('sales.person.store') }}" method="POST">
-            @csrf
-            <button type="submit"
-              id="checkToggleButton"
-              class="check-toggle-btn px-6 py-2 text-sm font-semibold flex items-center gap-2 rounded-full text-white shadow-md
-          {{ $isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' }}">
-              <span class="btn-text">{{ $isCheckedIn ? 'Check Out' : 'Check In' }}</span>
-              <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
-                fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10"
-                  stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor"
-                  d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
-              </svg>
-            </button>
-          </form>
+           <form id="checkToggleForm" action="{{ route('sales.person.store') }}" method="POST">
+    @csrf
+    <button type="submit"
+      id="checkToggleButton"
+      class="check-toggle-btn px-6 py-2 text-sm font-semibold flex items-center gap-2 rounded-full text-white shadow-md
+      {{ $isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' }}">
+      <span class="btn-text">{{ $isCheckedIn ? 'Check Out' : 'Check In' }}</span>
+      <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+        fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10"
+          stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor"
+          d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+      </svg>
+    </button>
+  </form>
         </div>
 
         <!-- Timestamps -->
@@ -153,7 +168,35 @@
         </button>
 
       </div>
+      <!-- Customers -->
+      @foreach ($customers as $customer)
+      @php
+        $firstProcess = 'N/A';
+        if (is_array($customer->process) && isset($customer->process[0])) {
+          $firstProcess = $customer->process[0];
+        } elseif (is_string($customer->process)) {
+          $firstProcess = $customer->process;
+        }
+      @endphp
+      <div class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-6 border border-gray-200 mt-6 cursor-pointer"
+        data-name="{{ $customer->name }}"
+        data-email="{{ $customer->email }}"
+        data-phone="{{ $customer->phone ?? '' }}"
+        data-interest="{{ $customer->interest ?? '' }}"
+        data-process="{{ is_array($customer->process) ? implode(',', $customer->process) : $customer->process }}"
+      >
+        <h2 class="text-xl font-semibold mb-4 text-gray-800">Customer Info</h2>
+        <div class="space-y-2 text-gray-500 text-sm">
+          <p><span class="font-medium text-gray-400">Name:</span> {{ $customer->name }}</p>
+          <p><span class="font-medium text-gray-400">Email:</span> {{ $customer->email }}</p>
+          <p><span class="font-medium text-gray-400">User Name:</span> {{ $customer->user->name ?? 'Unknown' }}</p>
+          <p><span class="font-medium text-gray-400">Process:</span> {{ $firstProcess }}</p>
+        </div>
+      </div>
+      @endforeach
     </div>
+  </div>
+
 
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -167,216 +210,235 @@
       }
     </script>
 
-    <script>
-      let durationInterval = null;
+<script>
+  let durationInterval = null;
 
-      function startDurationTimer(startTimeIso) {
-        const start = new Date(startTimeIso);
+  function startDurationTimer(startTimeIso) {
+    const start = new Date(startTimeIso);
 
-        function updateDuration() {
-          const now = new Date();
-          const diffMs = now - start;
+    function updateDuration() {
+      const now = new Date();
+      const diffMs = now - start;
 
-          const seconds = Math.floor((diffMs / 1000) % 60);
-          const minutes = Math.floor((diffMs / 1000 / 60) % 60);
-          const hours = Math.floor((diffMs / 1000 / 60 / 60));
+      const seconds = Math.floor((diffMs / 1000) % 60);
+      const minutes = Math.floor((diffMs / 1000 / 60) % 60);
+      const hours = Math.floor((diffMs / 1000 / 60 / 60));
 
-          const formatted = [
-            hours > 0 ? `${hours}h` : '',
-            minutes > 0 ? `${minutes}m` : '',
-            `${seconds}s`
-          ].filter(Boolean).join(' ');
+      const formatted = [
+        hours > 0 ? `${hours}h` : '',
+        minutes > 0 ? `${minutes}m` : '',
+        `${seconds}s`
+      ].filter(Boolean).join(' ');
 
-          document.getElementById('duration').textContent = formatted;
+      document.getElementById('duration').textContent = formatted;
+    }
+
+    updateDuration();
+    if (durationInterval) clearInterval(durationInterval);
+    durationInterval = setInterval(updateDuration, 1000);
+  }
+
+  @if($isCheckedIn && $checkInTimeRaw)
+    startDurationTimer('{{ \Carbon\Carbon::parse($checkInTimeRaw)->toIso8601String() }}');
+  @endif
+
+  $.ajaxSetup({
+    headers: {
+      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+  });
+
+  $('#checkToggleForm').on('submit', function(e) {
+    e.preventDefault();
+
+    const btn = $('#checkToggleButton');
+    const btnText = btn.find('.btn-text');
+    const spinner = btn.find('.btn-spinner');
+
+    btn.prop('disabled', true);
+    btnText.addClass('hidden');
+    spinner.removeClass('hidden');
+
+    $.ajax({
+      url: $(this).attr('action'),
+      method: 'POST',
+      data: $(this).serialize(),
+      success: function(response) {
+        btn.prop('disabled', false);
+        btnText.removeClass('hidden');
+        spinner.addClass('hidden');
+
+        if (response.checked_in) {
+          // Checked In UI
+          btnText.text('Check Out');
+          btn.removeClass('bg-green-500 hover:bg-green-600')
+            .addClass('bg-red-500 hover:bg-red-600');
+
+          $('.status-text').text('✅ Checked In')
+            .removeClass('bg-red-100 text-red-700')
+            .addClass('bg-green-100 text-green-800');
+
+          $('#check-in-time').text(new Date(response.checked_in_at).toLocaleString());
+          $('#check-out-time').text('N/A');
+
+          $('#duration-wrapper').removeClass('hidden');
+          $('#duration').text('Loading...');
+          startDurationTimer(response.checked_in_at);
+
+          // 🗣️ AUTO ANNOUNCE TURN
+          const userName = @json(Auth::user()->name);
+          const message = `${userName}, it's your turn. Please proceed.`;
+          const utterance = new SpeechSynthesisUtterance(message);
+          utterance.lang = 'en-US';
+          speechSynthesis.speak(utterance);
+
+        } else {
+          // Checked Out UI
+          btnText.text('Check In');
+          btn.removeClass('bg-red-500 hover:bg-red-600')
+            .addClass('bg-green-500 hover:bg-green-600');
+
+          $('.status-text').text('❌ Checked Out')
+            .removeClass('bg-green-100 text-green-800')
+            .addClass('bg-red-100 text-red-700');
+
+          $('#check-out-time').text(new Date().toLocaleString());
+          $('#duration-wrapper').addClass('hidden');
+          clearInterval(durationInterval);
         }
 
-        updateDuration();
-        if (durationInterval) clearInterval(durationInterval);
-        durationInterval = setInterval(updateDuration, 1000);
-      }
-
-      @if($isCheckedIn && $checkInTimeRaw)
-      startDurationTimer('{{ \Carbon\Carbon::parse($checkInTimeRaw)->toIso8601String() }}');
-      @endif
-
-      $.ajaxSetup({
-        headers: {
-          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        }
-      });
-
-      $('#checkToggleForm').on('submit', function(e) {
-        e.preventDefault();
-
-        const btn = $('#checkToggleButton');
-        const btnText = btn.find('.btn-text');
-        const spinner = btn.find('.btn-spinner');
-
-        btn.prop('disabled', true);
-        btnText.addClass('hidden');
-        spinner.removeClass('hidden');
-
-        $.ajax({
-          url: $(this).attr('action'),
-          method: 'POST',
-          data: $(this).serialize(),
-          success: function(response) {
-            btn.prop('disabled', false);
-            btnText.removeClass('hidden');
-            spinner.addClass('hidden');
-
-            if (response.checked_in) {
-              // Checked In UI
-              btnText.text('Check Out');
-              btn.removeClass('bg-green-500 hover:bg-green-600')
-                .addClass('bg-red-500 hover:bg-red-600');
-
-              $('.status-text').text('✅ Checked In')
-                .removeClass('bg-red-100 text-red-700')
-                .addClass('bg-green-100 text-green-800');
-
-              $('#check-in-time').text(new Date(response.checked_in_at).toLocaleString());
-              $('#check-out-time').text('N/A');
-
-              $('#duration-wrapper').removeClass('hidden');
-              $('#duration').text('Loading...');
-              startDurationTimer(response.checked_in_at);
-            } else {
-              // Checked Out UI
-              btnText.text('Check In');
-              btn.removeClass('bg-red-500 hover:bg-red-600')
-                .addClass('bg-green-500 hover:bg-green-600');
-
-              $('.status-text').text('❌ Checked Out')
-                .removeClass('bg-green-100 text-green-800')
-                .addClass('bg-red-100 text-red-700');
-
-              $('#check-out-time').text(new Date().toLocaleString());
-              $('#duration-wrapper').addClass('hidden');
-              clearInterval(durationInterval);
-            }
-
-            Swal.fire({
-              icon: 'success',
-              title: 'Success',
-              text: response.message,
-              timer: 2000,
-              showConfirmButton: false,
-            });
-          },
-          error: function() {
-            btn.prop('disabled', false);
-            btnText.removeClass('hidden');
-            spinner.addClass('hidden');
-
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'Something went wrong. Please try again.',
-            });
-          }
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: response.message,
+          timer: 2000,
+          showConfirmButton: false,
         });
+      },
+      error: function() {
+        btn.prop('disabled', false);
+        btnText.removeClass('hidden');
+        spinner.addClass('hidden');
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Something went wrong. Please try again.',
+        });
+      }
+    });
+  });
+</script>
+
+<!-- Auto fill form -->
+ <script>
+    function toggleForm() {
+      document.getElementById('formContainer').classList.remove('hidden');
+    }
+
+    // Autofill on card click
+    document.querySelectorAll('.customer-card').forEach(card => {
+      card.addEventListener('click', function () {
+        const data = this.dataset;
+
+        toggleForm();
+
+        document.querySelector('input[name="name"]').value = data.name || '';
+        document.querySelector('input[name="email"]').value = data.email || '';
+        document.querySelector('input[name="phone"]').value = data.phone || '';
+        document.querySelector('input[name="interest"]').value = data.interest || '';
+
+        // Reset all process checkboxes
+        document.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+
+        // Check the ones included in data-process
+        if (data.process) {
+          const processes = data.process.split(',');
+          processes.forEach(proc => {
+            let checkbox = [...document.querySelectorAll('input[name="process[]"]')].find(cb => cb.value.trim() === proc.trim());
+            if (checkbox) checkbox.checked = true;
+          });
+        }
       });
-    </script>
+    });
+
+    // Modal close
+    document.getElementById('closeModalBtn').addEventListener('click', function () {
+      document.getElementById('customerModal').classList.add('hidden');
+    });
+
+    // Modal open
+    document.getElementById('openModalBtn').addEventListener('click', function () {
+      document.getElementById('customerModal').classList.remove('hidden');
+    });
+  </script>
+
 
     <script>
       const modal = document.getElementById('customerModal');
       const openBtn = document.getElementById('openModalBtn');
       const closeBtn = document.getElementById('closeModalBtn');
-      const form = document.getElementById('dispositionForm');
 
-      // Show modal
+      // Open modal
       openBtn.addEventListener('click', () => {
         modal.classList.remove('hidden');
       });
 
-      // Hide modal
+      // Close modal
       closeBtn.addEventListener('click', () => {
         modal.classList.add('hidden');
       });
 
-      // Close modal when clicking outside the box
+      // Click outside to close
       modal.addEventListener('click', (e) => {
         if (e.target === modal) {
           modal.classList.add('hidden');
         }
       });
-
-      // Handle Save Form Submit
-      form.addEventListener('submit', (e) => {
-        e.preventDefault(); // Prevent page reload
-
-        const formData = new FormData(form);
-        const selectedValues = formData.getAll('disposition[]');
-
-        console.log("Selected Dispositions:", selectedValues); // You can replace this with an AJAX call or other logic
-
-        // For example: sending to backend using fetch (if needed)
-        /*
-        fetch('/your-backend-route', {
-          method: 'POST',
-          headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json',
-          },
-          body: formData
-        }).then(response => {
-          if (response.ok) {
-            alert("Saved successfully!");
-            modal.classList.add('hidden');
-          }
-        });
-        */
-
-        // For now, just hide modal after save
-        alert("Saved: " + selectedValues.join(', '));
-        modal.classList.add('hidden');
-      });
     </script>
 
 
-<!-- form auto save -->
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("salesForm");
-    const fields = form.querySelectorAll("input, textarea");
 
-    fields.forEach(field => {
-        field.addEventListener("change", function () {
+    <!-- form auto save -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        const form = document.getElementById("salesForm");
+        const fields = form.querySelectorAll("input, textarea");
+
+        fields.forEach(field => {
+          field.addEventListener("change", function() {
             const formData = new FormData(form);
 
             fetch("{{ route('customer.sales.store') }}", {
                 method: "POST",
                 headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                  'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 },
                 body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
+              })
+              .then(response => response.json())
+              .then(data => {
                 console.log("Auto-saved:", data);
-            })
-            .catch(async error => {
+              })
+              .catch(async error => {
                 const errorText = await error.text?.() ?? error.message;
                 console.error("Save failed:", errorText);
-            });
+              });
+          });
         });
-    });
-});
-</script>
-    <!-- Form Show  -->
-    <script>
-      function toggleForm() {
-        const formDiv = document.getElementById("formContainer");
-        const isHidden = formDiv.classList.contains("hidden");
-
-        if (isHidden) {
-          formDiv.classList.remove("hidden");
-        } else {
-          formDiv.classList.add("hidden");
-        }
-      }
+      });
     </script>
+    <!-- Form Show  -->
+  <script>
+  function toggleForm() {
+    const formContainer = document.getElementById('formContainer');
+    if (formContainer) {
+      formContainer.classList.remove('hidden');
+      formContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+</script>
+
 
     <script>
       window.completeToken = function(tokenId) {
