@@ -31,7 +31,7 @@
                                     @if ($sale->served_at)
                                         <span class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">Served</span>
                                     @else
-                                        <span class="inline-block px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded">Pending</span>
+                                        <span class="inline-block px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded">Processing</span>
                                     @endif
                                 </td>
                             </tr>
