@@ -402,19 +402,19 @@
   </script>
 
 <!-- Every Customer live time -->
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const TIMER_KEY = 'customer_timer_start';
-    let intervalId = null;
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const TIMER_KEY = 'customer_timer_start';
+      let intervalId = null;
 
-    function formatDuration(seconds) {
+      function formatDuration(seconds) {
         const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
         const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
         const secs = String(seconds % 60).padStart(2, '0');
         return `${hrs}:${mins}:${secs}`;
-    }
+      }
 
-    function updateTimers() {
+      function updateTimers() {
         const start = localStorage.getItem(TIMER_KEY);
         if (!start) return;
 
@@ -424,51 +424,49 @@ document.addEventListener('DOMContentLoaded', function () {
         const formatted = formatDuration(diff);
 
         document.querySelectorAll('.live-duration').forEach(el => {
-            el.textContent = formatted;
+          el.textContent = formatted;
         });
-    }
+      }
 
-    function startTimer() {
-        const alreadyStarted = localStorage.getItem(TIMER_KEY);
-        if (!alreadyStarted) {
-            localStorage.setItem(TIMER_KEY, Date.now());
-        }
+      function startTimer() {
+        // Always reset the timer on new customer
+        localStorage.setItem(TIMER_KEY, Date.now());
 
         if (intervalId) clearInterval(intervalId);
         intervalId = setInterval(updateTimers, 1000);
         updateTimers(); // initial update
-    }
+      }
 
-    function stopTimer() {
+      function stopTimer() {
         if (intervalId) {
-            clearInterval(intervalId);
-            intervalId = null;
+          clearInterval(intervalId);
+          intervalId = null;
         }
 
         localStorage.removeItem(TIMER_KEY);
         document.querySelectorAll('.live-duration').forEach(el => {
-            el.textContent += ' (Ended)';
+          el.textContent += ' (Ended)';
         });
-    }
+      }
 
-    // Bind buttons
-    const startBtn = document.getElementById('newCustomerBtn');
-    const stopBtn = document.getElementById('openModalBtn');
+      // Bind buttons
+      const startBtn = document.getElementById('newCustomerBtn');
+      const stopBtn = document.getElementById('openModalBtn');
 
-    if (startBtn) {
+      if (startBtn) {
         startBtn.addEventListener('click', startTimer);
-    }
+      }
 
-    if (stopBtn) {
+      if (stopBtn) {
         stopBtn.addEventListener('click', stopTimer);
-    }
+      }
 
-    // Auto resume timer if it was already started
-    if (localStorage.getItem(TIMER_KEY)) {
+      // Optional: resume timer on page reload (if needed)
+      if (localStorage.getItem(TIMER_KEY)) {
         startTimer();
-    }
-});
-</script>
+      }
+    });
+  </script>
 
   <!-- Turn Status -->
   <script>
@@ -508,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function () {
           const msg = 'Your turn is complete.';
           const utter = new SpeechSynthesisUtterance(msg);
           utter.lang = 'en-US';
-          speechSynthesis.speak(utter);
+          
 
           Swal.fire({
             icon: 'success',
@@ -673,14 +671,11 @@ document.addEventListener('DOMContentLoaded', function () {
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('salesForm');
     const fields = form.querySelectorAll('input, textarea');
-    let activeCard = null;
 
-    // 🟡 Auto-save on input change
+    // Auto-save on field change
     fields.forEach(field => {
       field.addEventListener('change', () => {
         const formData = new FormData(form);
-        const customerId = form.dataset.customerId;
-
         fetch('{{ route('customer.sales.store') }}', {
           method: 'POST',
           headers: {
@@ -689,37 +684,18 @@ document.addEventListener('DOMContentLoaded', function () {
           },
           body: formData,
         })
-        .then(r => r.json())
-        .then(data => {
-          console.log('Auto-saved:', data);
-
-          // ✅ SweetAlert success
-          Swal.fire({
-            icon: 'success',
-            title: 'Saved!',
-            text: 'Customer data saved successfully.',
-            timer: 1200,
-            showConfirmButton: false
-          }).then(() => {
-            // ✅ Hide and remove card
-            if (activeCard && customerId === activeCard.dataset.customerId) {
-              activeCard.classList.add('fade-out');
-              setTimeout(() => activeCard.remove(), 500);
-            }
-
-            // ✅ Reset form and hide it
-            form.reset();
-            form.classList.add('hidden');
-            activeCard = null;
+          .then(r => r.json())
+          .then(data => {
+            console.log('Auto‑saved', data);
+            loadCustomers();
+          })
+          .catch(async err => {
+            console.error('Save failed', await err.text?.() ?? err.message);
           });
-        })
-        .catch(async err => {
-          console.error('Save failed', await err.text?.() ?? err.message);
-        });
       });
     });
 
-    // 🟢 Load customer cards (optional, not used after save to avoid re-showing)
+    // Load updated customers
     async function loadCustomers() {
       try {
         const resp = await fetch('{{ route('customer.index') }}?partial=1', {
@@ -731,24 +707,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const html = await resp.text();
         document.getElementById('customerCards').innerHTML = html;
-        bindCardClickEvents(); // rebind events
+        bindCardClickEvents();
       } catch (e) {
         console.error('Reload error', e);
       }
     }
 
-    // 🔵 Card click = open form
+    // Bind click to cards
     function bindCardClickEvents() {
       document.querySelectorAll('.customer-card').forEach(card => {
         card.addEventListener('click', () => {
           document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
           card.classList.add('active-card');
-          activeCard = card;
 
           const data = card.dataset;
-          form.dataset.customerId = data.customerId;
+          document.getElementById('formContainer')?.classList.remove('hidden');
 
           form.querySelector('input[name="name"]').value = data.name || '';
+          form.querySelector('input[name="name"]').dataset.customerId = data.customerId || '';
           form.querySelector('input[name="email"]').value = data.email || '';
           form.querySelector('input[name="phone"]').value = data.phone || '';
           form.querySelector('input[name="interest"]').value = data.interest || '';
@@ -761,13 +737,44 @@ document.addEventListener('DOMContentLoaded', function () {
               if (cb) cb.checked = true;
             });
           }
-
-          document.getElementById('formContainer')?.classList.remove('hidden');
         });
       });
     }
 
-    // 🔃 Bind on page load
+    // Submit handler: remove card after saving
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const customerId = form.querySelector('input[name="name"]').dataset.customerId;
+
+      try {
+        const response = await fetch('{{ route('customer.sales.store') }}', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: formData
+        });
+
+        const result = await response.json();
+        console.log('Saved via button:', result);
+
+        // Remove the related card
+        if (customerId) {
+          const card = document.querySelector(`.customer-card[data-customer-id="${customerId}"]`);
+          if (card) card.remove();
+        }
+
+        // Close modal
+        document.getElementById('customerModal').classList.add('hidden');
+
+      } catch (error) {
+        console.error('Save error', error);
+      }
+    });
+
     bindCardClickEvents();
   });
 </script>

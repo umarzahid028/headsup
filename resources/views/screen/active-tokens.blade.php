@@ -65,12 +65,12 @@
     .token-heading,
     .active-token-row {
       display: grid;
-      grid-template-columns: 1fr 0.2fr 3fr;
+      grid-template-columns: 1fr 2fr 1fr;
       align-items: center;
-      padding: 0.75rem 1rem;
       font-weight: 900;
       word-break: break-word;
       gap: 1rem;
+      text-align: center;
     }
 
     .token-heading {
@@ -78,17 +78,24 @@
       font-size: 2.5rem;
       border-bottom: 2px solid #555;
       margin-bottom: 1.5rem;
-      text-align: center;
+      width: 100%;
     }
 
     .active-token-row div {
       font-size: 2rem;
-      text-align: center;
     }
 
-    .active-token-row div:nth-child(3) {
-      text-align: left;
+    .active-token-row div:nth-child(2) {
       font-size: 1.25rem;
+    }
+
+    .status-badge {
+      background-color: #444;
+      border-radius: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      display: inline-block;
+      margin: 0.25rem;
+      font-size: 1rem;
     }
 
     @keyframes fadeSlide {
@@ -110,7 +117,7 @@
 
       <div class="token-heading">
         <div>Name</div>
-        <div>→</div>
+        <div>Customer Name</div>
         <div>Status</div>
       </div>
 
@@ -136,6 +143,7 @@
 
         data.active.forEach((token, index) => {
           const name = token.sales_person || 'Unknown';
+          const customerName = token.customer_name || 'Unknown Customer';
           const processes = token.process || [];
 
           const row = document.createElement('div');
@@ -143,11 +151,13 @@
           row.style.animationDelay = `${index * 150}ms`;
           row.innerHTML = `
             <div><span class="whitespace-nowrap">${name}</span></div>
-            <div>→</div>
+            <div>
+              <span class="inline-block text-lg">${customerName}</span>
+            </div>
             <div>
               ${
                 processes.length
-                  ? processes.map(p => `<span class="inline-block bg-gray-700 rounded px-2 py-1 mr-1 mb-1">${p}</span>`).join('')
+                  ? processes.map(p => `<span class="status-badge">${p}</span>`).join('')
                   : '<span class="text-gray-500">No status</span>'
               }
             </div>

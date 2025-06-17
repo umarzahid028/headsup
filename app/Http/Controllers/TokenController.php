@@ -70,42 +70,65 @@ public function generateToken(Request $request)
     return response()->json(['token' => $token]);
 }
 
+
 public function activeTokens(Request $request)
 {
-    // Fetch all checked-in users from Queue
-    $queues = Queue::with('user')  // assuming 'user' is the salesperson relation
+    // 🔹 Step 1: Get latest check-in per salesperson
+    $latestQueues = Queue::with('user')
         ->where('is_checked_in', true)
-        ->get();
+        ->latest()
+        ->get()
+        ->unique('user_id'); // only latest check-in per salesperson
 
-    // Extract salesperson data
-    $activeData = $queues->map(function ($queue) {
+    // 🔹 Step 2: Prepare output
+    $activeData = $latestQueues->map(function ($queue) {
         $salesPersonName = $queue->user->name ?? 'Unassigned';
 
-        // Assuming 'CustomerSale' has 'user_id' and 'process' is a JSON or array field
-        $customerSale = CustomerSale::where('user_id', $queue->user_id)->latest()->first();
+        // Get latest CustomerSale for that salesperson
+        $customerSale = CustomerSale::where('user_id', $queue->user_id)
+            ->latest()
+            ->first();
+
+        // Get customer name (no model/relationship needed)
+        $customerName = $customerSale->name ?? 'Unknown Customer';
+
+        // Get last process from process field (assumed JSON or array)
+        $lastProcess = [];
+
+        if ($customerSale && !empty($customerSale->process)) {
+            $processArray = is_array($customerSale->process)
+                ? $customerSale->process
+                : json_decode($customerSale->process, true);
+
+            $last = end($processArray);
+            if (!empty($last)) {
+                $lastProcess = [$last];
+            }
+        }
 
         return [
-            'sales_person' => $salesPersonName,
-            'process' => $customerSale ? (array) $customerSale->process : [],
+            'sales_person'  => $salesPersonName,
+            'customer_name' => $customerName,
+            'process'       => $lastProcess,
         ];
-    });
+    })->values(); // reset array indexes
 
+    // 🔹 Step 3: Return JSON or view
     if ($request->wantsJson()) {
-        return response()->json([
-            'active' => $activeData
-        ]);
+        return response()->json(['active' => $activeData]);
     }
 
-    return view('screen.active-tokens', [
-        'tokens' => $activeData,
-    ]);
+    return view('screen.active-tokens', ['tokens' => $activeData]);
 }
+
 
 //Current Token
  public function currentAssignedToken(Request $request)
     {
         $userId = Auth::id();
-
+ $customers = CustomerSale::with('user')
+        ->where('user_id', $user->id)
+        ->get();
         // Check if user is checked in
         $isCheckedIn = \App\Models\Queue::where('user_id', $userId)
                         ->where('is_checked_in', true)
@@ -132,6 +155,7 @@ public function activeTokens(Request $request)
         'customer_name' => $token->customer_name,
         'counter_number' => $token->salesperson->counter_number ?? 'N/A',
         'status' => $token->status,
+        'customer' => $customers,
     ]
 ]);
 
