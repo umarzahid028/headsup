@@ -5,7 +5,7 @@
       <!-- Page Heading -->
       <h2 class="text-2xl font-bold text-gray-800 mb-3 max-w-7xl mx-auto sm:px-6 lg:px-8">Create Appointment</h2>
 
-      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+      <div class="max-w-full mx-auto sm:px-6 lg:px-8">
         <div class="bg-white shadow rounded-lg p-6">
           <form method="POST" action="/appointments">
             @csrf
