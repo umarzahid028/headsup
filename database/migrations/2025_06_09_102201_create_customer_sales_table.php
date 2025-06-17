@@ -20,7 +20,7 @@ public function up(): void
         $table->string('interest')->nullable();
         $table->text('notes')->nullable();
         $table->json('process')->nullable();
-        $table->json('disposition')->nullable();
+        $table->string('disposition')->nullable();
         $table->timestamps();
     });
 }

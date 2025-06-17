@@ -345,6 +345,7 @@ public function tokenhistory()
 
     return view('tokens-history.tokens-history', compact('customerSales'));
 }
+
 public function assignNextToken(Request $request, Token $token)
 {
     $salespersonId = $token->user_id;

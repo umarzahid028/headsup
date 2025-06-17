@@ -2,17 +2,17 @@
   <x-slot name="header">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-   <div style="display:flex; justify-content: space-between;">
-    <div>
-       <h1 class="text-xl font-semibold text-gray-800">Welcome, {{ Auth::user()->name }}</h1>
-    <p class="text-sm text-gray-500">Manage your check-in and token activity.</p>
+    <div style="display:flex; justify-content: space-between;">
+      <div>
+        <h1 class="text-xl font-semibold text-gray-800">Welcome, {{ Auth::user()->name }}</h1>
+        <p class="text-sm text-gray-500">Manage your check-in and token activity.</p>
+      </div>
+      <div>
+        <p id="turn-status" style="text-align:center;" class="text-sm text-gray-700 font-medium my-2 animate-pulse-text">
+          Checking status...
+        </p>
+      </div>
     </div>
-   <div>
-     <p id="turn-status" style="text-align:center;" class="text-sm text-gray-700 font-medium my-2 animate-pulse-text">
-      Checking status...
-    </p>
-   </div>
-   </div>
 
     <style>
       @keyframes spin {
@@ -30,13 +30,10 @@
       }
 
       @keyframes pulseText {
-
-        0%,
-        100% {
+        0%, 100% {
           opacity: 1;
           transform: scale(1);
         }
-
         50% {
           opacity: 0.6;
           transform: scale(1.03);
@@ -46,39 +43,22 @@
       .animate-pulse-text {
         animation: pulseText 1.2s ease-in-out infinite;
       }
-    </style>
-    <style>
+
       #customerCards::-webkit-scrollbar {
         width: 6px;
       }
 
       #customerCards::-webkit-scrollbar-thumb {
         background-color: rgba(100, 116, 139, 0.5);
-        /* Slate-500 */
         border-radius: 9999px;
       }
 
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      .spinner {
-        border: 2px solid transparent;
-        border-radius: 50%;
-        width: 1rem;
-        height: 1rem;
-        animation: spin 1s linear infinite;
-      }
-    </style>
-<style>
-    .swal2-popup.no-scroll-popup {
+      .swal2-popup.no-scroll-popup {
         max-width: 400px;
         overflow-x: hidden !important;
-    }
+      }
 
-    .swal2-select {
+      .swal2-select {
         width: 100%;
         max-width: 100%;
         box-sizing: border-box;
@@ -86,42 +66,50 @@
         border: 1px solid #ccc;
         padding: 8px;
         overflow-x: hidden;
-    }
+      }
 
-     .swal2-popup {
+      .swal2-popup {
         overflow-x: hidden !important;
-    }
-</style>
+      }
+    </style>
   </x-slot>
 
   @php
-  $user = Auth::user();
-  $latestQueue = $user->latestQueue;
-  $isCheckedIn = $latestQueue && $latestQueue->is_checked_in;
-  $checkInTimeRaw = $latestQueue?->checked_in_at;
-  $checkInTimeFormatted = $checkInTimeRaw ? \Carbon\Carbon::parse($checkInTimeRaw)->format('h:i A, M d') : 'N/A';
-  $checkOutTimeFormatted = $latestQueue?->checked_out_at ? \Carbon\Carbon::parse($latestQueue->checked_out_at)->format('h:i A, M d') : 'N/A';
+    $user = Auth::user();
+    $latestQueue = $user->latestQueue;
+    $isCheckedIn = $latestQueue && $latestQueue->is_checked_in;
+    $checkInTimeRaw = $latestQueue?->checked_in_at;
+    $checkInTimeFormatted = $checkInTimeRaw ? \Carbon\Carbon::parse($checkInTimeRaw)->format('h:i A, M d') : 'N/A';
+    $checkOutTimeFormatted = $latestQueue?->checked_out_at ? \Carbon\Carbon::parse($latestQueue->checked_out_at)->format('h:i A, M d') : 'N/A';
   @endphp
 
   <div class="w-full grid grid-cols-1 xl:grid-cols-4 gap-6 px-4 mt-4">
     <!-- LEFT SIDE: Customer Form -->
-    <div class="xl:col-span-3">
-      <!-- Form Container -->
+    <div class="xl:col-span-3 overflow-visible">
       <div id="formContainer">
         <div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
           <h3 class="text-2xl font-bold text-gray-800 mb-2">Customer Sales Form</h3>
           <p class="text-gray-500 mb-6">Fill out the details below to log a customer sales interaction.</p>
-          <form id="salesForm" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+          <form id="salesForm" method="POST" action="{{ route('customer.sales.store') }}" class="grid grid-cols-1 md:grid-cols-2 gap-8">
             @csrf
+            <input type="hidden" name="id" id="customerId" value="">
             <input type="hidden" name="user_id" value="{{ auth()->id() }}" />
 
             <!-- Customer Info -->
             <div class="space-y-4">
               @foreach (['name', 'email', 'phone', 'interest'] as $field)
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">{{ ucfirst($field) }}</label>
-                <input name="{{ $field }}" type="{{ $field == 'email' ? 'email' : 'text' }}" required
-                  class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full" />
+                <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">
+                  {{ ucfirst($field) }}
+                  @if(in_array($field, ['name', 'email', 'phone']))
+                    <span class="text-red-600">*</span>
+                  @endif
+                </label>
+                <input name="{{ $field }}" type="{{ $field == 'email' ? 'email' : 'text' }}"
+                  class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
+                  value="{{ $sale->$field ?? '' }}"
+                  @if(in_array($field, ['name', 'email', 'phone'])) required @endif />
               </div>
               @endforeach
             </div>
@@ -131,16 +119,16 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
                 <textarea name="notes" rows="6"
-                  class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"></textarea>
+                  class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full">{{ $sale->notes ?? '' }}</textarea>
               </div>
 
-              <!-- Sales Process -->
               <fieldset class="border border-gray-300 rounded-xl p-4">
                 <legend class="text-sm font-semibold text-gray-700 mb-3">Sales Process</legend>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   @foreach(['Investigating','Test Driving','Desking','Credit Application','Penciling','F&I'] as $process)
                   <label class="flex items-center space-x-2">
                     <input type="checkbox" name="process[]" value="{{ $process }}"
+                      {{ isset($sale) && is_array($sale->process) && in_array($process, $sale->process) ? 'checked' : '' }}
                       class="form-checkbox h-5 w-5 text-indigo-600">
                     <span class="text-gray-700 text-sm">{{ $process }}</span>
                   </label>
@@ -148,9 +136,8 @@
                 </div>
               </fieldset>
 
-              <!-- Disposition -->
-              <div id="customerModal"
-                class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+              <!-- Disposition Modal -->
+              <div id="customerModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
                 <div class="bg-white p-6 rounded-xl w-full max-w-2xl relative">
                   <button type="button" id="closeModalBtn"
                     class="absolute top-3 right-3 text-gray-500 hover:text-black text-xl font-bold">&times;</button>
@@ -159,13 +146,14 @@
                     <legend class="text-sm font-semibold text-gray-700 mb-3">Disposition</legend>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       @foreach([
-                      'Sold!', 'Walked Away', 'Challenged Credit', "Didn't Like Vehicle",
-                      "Didn't Like Price", "Didn't Like Finance Terms", 'Insurance Expensive',
-                      'Wants to keep looking', 'Wants to think about it', 'Needs Co-Signer'
+                        'Sold!', 'Walked Away', 'Challenged Credit', "Didn't Like Vehicle",
+                        "Didn't Like Price", "Didn't Like Finance Terms", 'Insurance Expensive',
+                        'Wants to keep looking', 'Wants to think about it', 'Needs Co-Signer'
                       ] as $disposition)
                       <label class="flex items-center space-x-2">
-                        <input type="checkbox" name="disposition[]" value="{{ $disposition }}"
-                          class="form-checkbox h-5 w-5 text-indigo-600">
+                        <input type="radio" name="disposition" value="{{ $disposition }}"
+                          {{ isset($sale) && $sale->disposition === $disposition ? 'checked' : '' }}
+                          class="form-radio h-5 w-5 text-indigo-600">
                         <span class="text-gray-700 text-sm">{{ $disposition }}</span>
                       </label>
                       @endforeach
@@ -182,8 +170,10 @@
               </div>
             </div>
 
+            <!-- Modal Trigger -->
             <div class="md:col-span-2 text-right mt-4">
-              <button id="openModalBtn" style="background-color: #111827;" type="button" class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl">
+              <button id="openModalBtn" style="background-color: #111827;" type="button"
+                class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl">
                 Close
               </button>
             </div>
@@ -193,24 +183,22 @@
     </div>
 
     <!-- RIGHT SIDE -->
-    <div class="">
-      <div class="bg-white rounded-xl shadow p-3 w-full max-w-md mx-auto space-y-4 border">
+    <div class="xl:col-span-1 flex flex-col h-[calc(100vh-10rem)]">
+      <div class="bg-white rounded-xl shadow p-3 w-full max-w-md mx-auto space-y-4 border mb-4">
 
-        <!-- Status + Button Side by Side -->
+        <!-- Status + Button -->
         <div class="flex items-center justify-between">
-          <!-- Status Badge -->
           <span class="status-text text-sm font-semibold px-3 py-1 rounded-full
-        {{ $isCheckedIn ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700' }}">
+            {{ $isCheckedIn ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700' }}">
             {{ $isCheckedIn ? '✅ Checked In' : '❌ Checked Out' }}
           </span>
 
-          <!-- Toggle Button Form -->
           <form id="checkToggleForm" action="{{ route('sales.person.store') }}" method="POST">
             @csrf
             <button type="submit"
               id="checkToggleButton"
               class="check-toggle-btn px-6 py-2 text-sm font-semibold flex items-center gap-2 rounded-full text-white shadow-md
-      {{ $isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' }}">
+              {{ $isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' }}">
               <span class="btn-text">{{ $isCheckedIn ? 'Check Out' : 'Check In' }}</span>
               <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
                 fill="none" viewBox="0 0 24 24">
@@ -223,41 +211,24 @@
           </form>
         </div>
 
-        <!-- Timestamps -->
-        <div class="text-right space-y-1" style="text-align: left;">
-          <p class="text-xs text-gray-600">
-            <strong>Check In:</strong> <span id="check-in-time">{{ $checkInTimeFormatted }}</span>
-          </p>
-          <p class="text-xs text-gray-600">
-            <strong>Check Out:</strong> <span id="check-out-time">{{ $checkOutTimeFormatted }}</span>
-          </p>
-          <p class="text-xs text-gray-600 {{ $isCheckedIn ? '' : 'hidden' }}" id="duration-wrapper">
-            <strong>Duration:</strong> <span id="duration">Loading...</span>
-          </p>
+        <!-- Time Info -->
+        <div class="text-left space-y-1">
+          <p class="text-xs text-gray-600"><strong>Check In:</strong> <span id="check-in-time">{{ $checkInTimeFormatted }}</span></p>
+          <p class="text-xs text-gray-600"><strong>Check Out:</strong> <span id="check-out-time">{{ $checkOutTimeFormatted }}</span></p>
+          <p class="text-xs text-gray-600 {{ $isCheckedIn ? '' : 'hidden' }}" id="duration-wrapper"><strong>Duration:</strong> <span id="duration">Loading...</span></p>
         </div>
 
-        <div class="w-full">
-          <button id="newCustomerBtn" type="button"
-            class="w-full bg-[#111827] text-white font-semibold px-6 py-2 rounded-xl mb-4">
-            Take Customer
-          </button>
-
-
+        <div>
+          <button id="newCustomerBtn" type="button" class="w-full bg-[#111827] text-white font-semibold px-6 py-2 rounded-xl mb-4">Take Customer</button>
         </div>
       </div>
 
-
-      <!-- Customers -->
-      <div class="h-[500px]">
-        <div id="customerCards" class="h-full overflow-y-auto overflow-x-hidden pr-2">
-          @include('partials.customers', ['customers' => $customers])
-        </div>
+      <!-- Scrollable Customers -->
+      <div class="flex-1 overflow-y-auto pr-2" id="customerCards">
+        @include('partials.customers', ['customers' => $customers])
       </div>
-
-
     </div>
   </div>
-
 
   @push('scripts')
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -347,7 +318,7 @@
             startDurationTimer(response.checked_in_at);
 
             // 🔊 AUTO ANNOUNCE & ANIMATION
-            const userName = @json(Auth::user()->name);
+            const userName = @json(Auth::user() -> name);
             const message = `${userName}, it's your turn. Please proceed.`;
 
             // Voice
@@ -401,9 +372,9 @@
     });
   </script>
 
-<!-- Every Customer live time -->
+  <!-- Every Customer live time -->
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
       const TIMER_KEY = 'customer_timer_start';
       let intervalId = null;
 
@@ -506,7 +477,7 @@
           const msg = 'Your turn is complete.';
           const utter = new SpeechSynthesisUtterance(msg);
           utter.lang = 'en-US';
-          
+
 
           Swal.fire({
             icon: 'success',
@@ -558,29 +529,33 @@
   </script>
 
 
-<!-- JavaScript for Transfer -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- JavaScript for Transfer -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
+  <script>
     const salespeople = @json($salespeople);
-    const currentUserId = {{ auth()->id() }};
+    const currentUserId = {
+      {
+        auth() - > id()
+      }
+    };
 
     document.querySelectorAll('.transfer-btn').forEach(button => {
-        button.addEventListener('click', function () {
-            const customerId = this.getAttribute('data-customer-id');
-            const customerName = this.getAttribute('data-customer-name');
-            const customerCard = this.closest('.customer-card');
+      button.addEventListener('click', function() {
+        const customerId = this.getAttribute('data-customer-id');
+        const customerName = this.getAttribute('data-customer-name');
+        const customerCard = this.closest('.customer-card');
 
-            let options = '<option disabled selected value="">Choose a sales person</option>';
-            salespeople.forEach(sales => {
-                if (sales.id !== currentUserId) {
-                    options += `<option value="${sales.id}">${sales.name}</option>`;
-                }
-            });
+        let options = '<option disabled selected value="">Choose a sales person</option>';
+        salespeople.forEach(sales => {
+          if (sales.id !== currentUserId) {
+            options += `<option value="${sales.id}">${sales.name}</option>`;
+          }
+        });
 
-            Swal.fire({
-                title: `<div class="text-xl font-bold text-[#111827] mb-2">Transfer Customer</div>`,
-                html: `
+        Swal.fire({
+          title: `<div class="text-xl font-bold text-[#111827] mb-2">Transfer Customer</div>`,
+          html: `
                     <div class="text-sm text-[#111827] mb-4">
                         You are about to transfer <span class="font-semibold text-indigo-600">${customerName}</span> to another sales person.
                     </div>
@@ -594,189 +569,147 @@
                         </div>
                     </div>
                 `,
-                confirmButtonText: 'Confirm Transfer',
-                cancelButtonText: 'Cancel',
-                showCancelButton: true,
-                buttonsStyling: false,
-                customClass: {
-                    popup: 'rounded-2xl p-6 shadow-xl',
-                    confirmButton: 'bg-[#111827] hover:bg-[#0f172a] text-white px-5 py-2 mt-4 rounded-lg font-semibold',
-                    cancelButton: 'mx-3 bg-[#111827] hover:bg-[#0f172a] text-white px-5 py-2 mt-4 rounded-lg font-semibold',
+          confirmButtonText: 'Confirm Transfer',
+          cancelButtonText: 'Cancel',
+          showCancelButton: true,
+          buttonsStyling: false,
+          customClass: {
+            popup: 'rounded-2xl p-6 shadow-xl',
+            confirmButton: 'bg-[#111827] hover:bg-[#0f172a] text-white px-5 py-2 mt-4 rounded-lg font-semibold',
+            cancelButton: 'mx-3 bg-[#111827] hover:bg-[#0f172a] text-white px-5 py-2 mt-4 rounded-lg font-semibold',
+          },
+          preConfirm: () => {
+            const selectedId = document.getElementById('salespersonSelect').value;
+            if (!selectedId) {
+              Swal.showValidationMessage('Please select a sales person first.');
+            }
+            return selectedId;
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            const newSalesId = result.value;
+
+            fetch(`/customers/${customerId}/transfer`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
-                preConfirm: () => {
-                    const selectedId = document.getElementById('salespersonSelect').value;
-                    if (!selectedId) {
-                        Swal.showValidationMessage('Please select a sales person first.');
-                    }
-                    return selectedId;
+                body: JSON.stringify({
+                  new_user_id: newSalesId
+                })
+              })
+              .then(res => res.json())
+              .then(data => {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Customer Transferred',
+                  text: data.message,
+                  timer: 1500,
+                  showConfirmButton: false
+                });
+
+                // ✅ Remove card if not current user
+                if (newSalesId != currentUserId) {
+                  customerCard.remove();
                 }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const newSalesId = result.value;
 
-                    fetch(`/customers/${customerId}/transfer`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ new_user_id: newSalesId })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Customer Transferred',
-                            text: data.message,
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
+                // ✅ Clear the form
+                const salesForm = document.getElementById('salesForm');
+                if (salesForm) {
+                  salesForm.reset();
 
-                        // ✅ Remove card if not current user
-                        if (newSalesId != currentUserId) {
-                            customerCard.remove();
-                        }
+                  // Optional success message
+                  const msg = document.createElement('p');
+                  msg.innerText = "Form cleared!";
+                  msg.className = "text-green-600 text-sm mt-2";
+                  salesForm.appendChild(msg);
+                  setTimeout(() => msg.remove(), 3000);
+                }
 
-                        // ✅ Clear the form
-                        const salesForm = document.getElementById('salesForm');
-                        if (salesForm) {
-                            salesForm.reset();
+                // ✅ Close modal if open
+                const modal = document.getElementById('customerModal');
+                if (modal) {
+                  modal.classList.add('hidden');
+                }
+              })
+              .catch(err => {
+                Swal.fire('Error!', 'Transfer failed. Try again.', 'error');
+              });
+          }
+        });
+      });
+    });
+  </script>
 
-                            // Optional success message
-                            const msg = document.createElement('p');
-                            msg.innerText = "Form cleared!";
-                            msg.className = "text-green-600 text-sm mt-2";
-                            salesForm.appendChild(msg);
-                            setTimeout(() => msg.remove(), 3000);
-                        }
+  <!-- form auto save -->
 
-                        // ✅ Close modal if open
-                        const modal = document.getElementById('customerModal');
-                        if (modal) {
-                            modal.classList.add('hidden');
-                        }
-                    })
-                    .catch(err => {
-                        Swal.fire('Error!', 'Transfer failed. Try again.', 'error');
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('salesForm');
+    const fields = form.querySelectorAll('input, textarea');
+
+    let debounceTimeout;
+    fields.forEach(field => {
+        field.addEventListener('input', () => {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => autoSaveForm(), 700);
+        });
+    });
+
+    async function autoSaveForm() {
+        const formData = new FormData(form);
+        try {
+            const response = await fetch('{{ route('customer.sales.store') }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+            if (result.status === 'success') {
+                loadCustomers();
+            }
+        } catch (err) {
+            console.error('Auto-save failed', err);
+        }
+    }
+
+    async function loadCustomers() {
+        const resp = await fetch('{{ route('customer.index') }}?partial=1', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        const html = await resp.text();
+        document.getElementById('customer-list').innerHTML = html;
+        bindCardClickEvents();
+    }
+
+    function bindCardClickEvents() {
+        document.querySelectorAll('.customer-card').forEach(card => {
+            card.addEventListener('click', () => {
+                form.querySelector('input[name="id"]').value = card.dataset.customerId || '';
+                form.querySelector('input[name="name"]').value = card.dataset.name || '';
+                form.querySelector('input[name="email"]').value = card.dataset.email || '';
+                form.querySelector('input[name="phone"]').value = card.dataset.phone || '';
+                form.querySelector('input[name="interest"]').value = card.dataset.interest || '';
+
+                form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+                if (card.dataset.process) {
+                    card.dataset.process.split(',').forEach(proc => {
+                        const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
+                          .find(cb => cb.value.trim() === proc.trim());
+                        if (checkbox) checkbox.checked = true;
                     });
                 }
             });
         });
-    });
-</script>
-
-  <!-- form auto save -->
-
- <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('salesForm');
-    const fields = form.querySelectorAll('input, textarea');
-
-    // Auto-save on field change
-    fields.forEach(field => {
-      field.addEventListener('change', () => {
-        const formData = new FormData(form);
-        fetch('{{ route('customer.sales.store') }}', {
-          method: 'POST',
-          headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-          body: formData,
-        })
-          .then(r => r.json())
-          .then(data => {
-            console.log('Auto‑saved', data);
-            loadCustomers();
-          })
-          .catch(async err => {
-            console.error('Save failed', await err.text?.() ?? err.message);
-          });
-      });
-    });
-
-    // Load updated customers
-    async function loadCustomers() {
-      try {
-        const resp = await fetch('{{ route('customer.index') }}?partial=1', {
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-        });
-        if (!resp.ok) throw new Error('Failed to fetch customers');
-
-        const html = await resp.text();
-        document.getElementById('customerCards').innerHTML = html;
-        bindCardClickEvents();
-      } catch (e) {
-        console.error('Reload error', e);
-      }
     }
-
-    // Bind click to cards
-    function bindCardClickEvents() {
-      document.querySelectorAll('.customer-card').forEach(card => {
-        card.addEventListener('click', () => {
-          document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
-          card.classList.add('active-card');
-
-          const data = card.dataset;
-          document.getElementById('formContainer')?.classList.remove('hidden');
-
-          form.querySelector('input[name="name"]').value = data.name || '';
-          form.querySelector('input[name="name"]').dataset.customerId = data.customerId || '';
-          form.querySelector('input[name="email"]').value = data.email || '';
-          form.querySelector('input[name="phone"]').value = data.phone || '';
-          form.querySelector('input[name="interest"]').value = data.interest || '';
-
-          form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
-          if (data.process) {
-            data.process.split(',').forEach(proc => {
-              const cb = [...form.querySelectorAll('input[name="process[]"]')]
-                .find(x => x.value.trim() === proc.trim());
-              if (cb) cb.checked = true;
-            });
-          }
-        });
-      });
-    }
-
-    // Submit handler: remove card after saving
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const formData = new FormData(form);
-      const customerId = form.querySelector('input[name="name"]').dataset.customerId;
-
-      try {
-        const response = await fetch('{{ route('customer.sales.store') }}', {
-          method: 'POST',
-          headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          body: formData
-        });
-
-        const result = await response.json();
-        console.log('Saved via button:', result);
-
-        // Remove the related card
-        if (customerId) {
-          const card = document.querySelector(`.customer-card[data-customer-id="${customerId}"]`);
-          if (card) card.remove();
-        }
-
-        // Close modal
-        document.getElementById('customerModal').classList.add('hidden');
-
-      } catch (error) {
-        console.error('Save error', error);
-      }
-    });
 
     bindCardClickEvents();
-  });
+});
 </script>
 
   <!-- Form Show  -->
