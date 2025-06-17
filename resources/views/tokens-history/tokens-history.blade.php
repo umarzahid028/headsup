@@ -1,12 +1,12 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="text-xl font-semibold leading-tight text-foreground">
-            {{ __('Assigned Customers') }}
+            {{ __('Customers') }}
         </h2>
     </x-slot>
 
     <div class="mt-10 px-6 space-y-6">
-        <h3 class="text-2xl font-bold mb-4">All Assigned Customers</h3>
+
 
         @if ($customerSales->isEmpty())
             <div class="text-gray-500">No assigned customers found.</div>
