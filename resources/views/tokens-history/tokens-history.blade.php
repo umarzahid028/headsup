@@ -2,15 +2,15 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="text-xl font-semibold leading-tight text-foreground">
-            {{ __('Assigned Customers') }}
+            {{ __('Customers') }}
         </h2>
         <p class="text-sm text-muted-foreground mt-1">
             View the list of customers currently assigned to you or your team.
         </p>
     </x-slot>
 
-    <div class="px-6 space-y-6">
-        <h3 class="text-2xl font-bold mb-4">All Assigned Customers</h3>
+    <div class="mt-10 px-6 space-y-6">
+
 
         @if ($customerSales->isEmpty())
             <div class="text-gray-500">No assigned customers found.</div>
@@ -22,6 +22,7 @@
                             <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">#</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Customer Name</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Assigned At</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Activities</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Duration</th>
                         </tr>
@@ -33,10 +34,15 @@
                                 <td class="px-6 py-3">{{ $sale->name ?? 'Unknown' }}</td>
                                 <td class="px-6 py-3">{{ \Carbon\Carbon::parse($sale->created_at)->format('d M Y h:i A') }}</td>
                                 <td class="px-6 py-3">
+                                    @foreach ($sale->process as $process)
+                                        <span class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">{{ $process }}</span>
+                                    @endforeach
+                                </td>
+                                <td class="px-6 py-3">
                                     @if ($sale->served_at)
                                         <span class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">Served</span>
                                     @else
-                                        <span class="inline-block px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded">Pending</span>
+                                        <span class="inline-block px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded">Processing</span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-3">
