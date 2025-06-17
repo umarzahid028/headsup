@@ -26,7 +26,7 @@
 
 <a href="{{ $user->hasRole('Sales person') ? route('sales.perosn') : route('dashboard') }}"
    class="{{ $isDashboardActive ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
-    
+
     <svg class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none"
          viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -40,7 +40,7 @@
             <!-- Appoinment  -->
             @hasrole('Sales Manager|Admin')
             <div class="pt-2">
-                
+
                 <a href="{{ route('appointment.create') }}" class="{{ request()->routeIs('appointment.create') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -60,7 +60,7 @@
             <!-- appointment list -->
             @hasrole('Sales person')
             <div class="pt-2">
-               
+
                 <a href="{{ route('appointment.records') }}" class="{{ request()->routeIs('appointment.records') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -74,7 +74,7 @@
             <!-- create Sale person -->
             @hasrole('Admin|Sales Manager')
             <div class="pt-2">
-                
+
                 <a href="{{ route('saleperson.table') }}" class="{{ request()->routeIs('saleperson.table') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -92,14 +92,14 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h6M9 3h6a2 2 0 012 2v1H7V5a2 2 0 012-2zm0 4h6M5 8h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V10a2 2 0 012-2zm4 4h6m-6 4h6" />
                     </svg>
-                    <span class="flex-1">Tokens History</span>
+                    <span class="flex-1">Customers</span>
                 </a>
             </div>
 
             <!-- Activity Records -->
             @hasrole('Sales person')
             <div class="pt-2">
-                
+
                 <a href="{{ route('sales.activity.report') }}" class="{{ request()->routeIs('sales.activity.report') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
