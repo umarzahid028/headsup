@@ -669,84 +669,109 @@ document.addEventListener('DOMContentLoaded', function () {
 
   <!-- form auto save -->
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      /**-------------------------------------------------
-       * 1. Auto‑save form on any field change
-       *------------------------------------------------*/
-      const form = document.getElementById('salesForm');
-      const fields = form.querySelectorAll('input, textarea');
+ <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('salesForm');
+    const fields = form.querySelectorAll('input, textarea');
+    let activeCard = null;
 
-      fields.forEach(field => {
-        field.addEventListener('change', () => {
-          const formData = new FormData(form);
+    // 🟡 Auto-save on input change
+    fields.forEach(field => {
+      field.addEventListener('change', () => {
+        const formData = new FormData(form);
+        const customerId = form.dataset.customerId;
 
-          fetch('{{ route( 'customer.sales.store') }}', {
-                method: 'POST',
-                headers: {
-                  'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                  'X-Requested-With': 'XMLHttpRequest', // <-- ensures Laravel sees AJAX
-                },
-                body: formData,
-              })
-            .then(r => r.json())
-            .then(data => {
-              console.log('Auto‑saved', data);
-              loadCustomers(); // refresh cards
-            })
-            .catch(async err => {
-              console.error('Save failed', await err.text?.() ?? err.message);
-            });
+        fetch('{{ route('customer.sales.store') }}', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: formData,
+        })
+        .then(r => r.json())
+        .then(data => {
+          console.log('Auto-saved:', data);
+
+          // ✅ SweetAlert success
+          Swal.fire({
+            icon: 'success',
+            title: 'Saved!',
+            text: 'Customer data saved successfully.',
+            timer: 1200,
+            showConfirmButton: false
+          }).then(() => {
+            // ✅ Hide and remove card
+            if (activeCard && customerId === activeCard.dataset.customerId) {
+              activeCard.classList.add('fade-out');
+              setTimeout(() => activeCard.remove(), 500);
+            }
+
+            // ✅ Reset form and hide it
+            form.reset();
+            form.classList.add('hidden');
+            activeCard = null;
+          });
+        })
+        .catch(async err => {
+          console.error('Save failed', await err.text?.() ?? err.message);
         });
       });
-
-
-      async function loadCustomers() {
-        try {
-          const resp = await fetch('{{ route('customer.index') }}?partial=1', {
-              headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-              },
-            });
-          if (!resp.ok) throw new Error('Failed to fetch customers');
-
-          const html = await resp.text();
-          document.getElementById('customerCards').innerHTML = html;
-          bindCardClickEvents(); // re‑attach events
-        } catch (e) {
-          console.error('Reload error', e);
-        }
-      }
-
-
-      function bindCardClickEvents() {
-        document.querySelectorAll('.customer-card').forEach(card => {
-          card.addEventListener('click', () => {
-            const data = card.dataset;
-            document.getElementById('formContainer')?.classList.remove('hidden');
-
-            form.querySelector('input[name="name"]').value = data.name || '';
-            form.querySelector('input[name="email"]').value = data.email || '';
-            form.querySelector('input[name="phone"]').value = data.phone || '';
-            form.querySelector('input[name="interest"]').value = data.interest || '';
-
-            // reset + set process checkboxes
-            form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
-            if (data.process) {
-              data.process.split(',').forEach(proc => {
-                const cb = [...form.querySelectorAll('input[name="process[]"]')]
-                  .find(x => x.value.trim() === proc.trim());
-                if (cb) cb.checked = true;
-              });
-            }
-          });
-        });
-      }
-
-      // initial bind at page‑load
-      bindCardClickEvents();
     });
-  </script>
+
+    // 🟢 Load customer cards (optional, not used after save to avoid re-showing)
+    async function loadCustomers() {
+      try {
+        const resp = await fetch('{{ route('customer.index') }}?partial=1', {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+        });
+        if (!resp.ok) throw new Error('Failed to fetch customers');
+
+        const html = await resp.text();
+        document.getElementById('customerCards').innerHTML = html;
+        bindCardClickEvents(); // rebind events
+      } catch (e) {
+        console.error('Reload error', e);
+      }
+    }
+
+    // 🔵 Card click = open form
+    function bindCardClickEvents() {
+      document.querySelectorAll('.customer-card').forEach(card => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
+          card.classList.add('active-card');
+          activeCard = card;
+
+          const data = card.dataset;
+          form.dataset.customerId = data.customerId;
+
+          form.querySelector('input[name="name"]').value = data.name || '';
+          form.querySelector('input[name="email"]').value = data.email || '';
+          form.querySelector('input[name="phone"]').value = data.phone || '';
+          form.querySelector('input[name="interest"]').value = data.interest || '';
+
+          form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+          if (data.process) {
+            data.process.split(',').forEach(proc => {
+              const cb = [...form.querySelectorAll('input[name="process[]"]')]
+                .find(x => x.value.trim() === proc.trim());
+              if (cb) cb.checked = true;
+            });
+          }
+
+          document.getElementById('formContainer')?.classList.remove('hidden');
+        });
+      });
+    }
+
+    // 🔃 Bind on page load
+    bindCardClickEvents();
+  });
+</script>
+
   <!-- Form Show  -->
   <script>
     function toggleForm() {
