@@ -57,7 +57,14 @@ class DashboardController extends Controller
 public function salesdashboard()
 {
     $user = Auth::user();
-$customers = CustomerSale::with('user')->where('user_id', $user->id)->get();
+
+    $customers = CustomerSale::with('user')
+        ->where('user_id', $user->id)
+        ->get();
+
+    $salespeople = \App\Models\User::role('Sales person')
+        ->where('id', '!=', $user->id) // optional: exclude current user
+        ->get();
 
     $isCheckedIn = Queue::where('user_id', $user->id)
         ->where('is_checked_in', true)
@@ -80,8 +87,9 @@ $customers = CustomerSale::with('user')->where('user_id', $user->id)->get();
             ->first();
     }
 
-    return view('sales-person-dashboard.dashboard', compact('token', 'onHoldToken', 'customers'));
+    return view('sales-person-dashboard.dashboard', compact('token', 'onHoldToken', 'customers', 'salespeople'));
 }
+
 
 
 }

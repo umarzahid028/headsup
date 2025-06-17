@@ -13,7 +13,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\CreatePersonController;
 use App\Http\Controllers\CustomerSaleController;
 use App\Http\Controllers\SalesDashboardController;
-
+use App\Models\Queue;
 // Register Broadcasting Routes
 Broadcast::routes(['middleware' => ['web', 'auth']]);
 
@@ -129,7 +129,7 @@ Route::post('/appointment-sales', [AppointmentController::class, 'appointmentsto
 Route::get('token/history', [TokenController::class, 'tokenhistory'])->name('token.history.view');
 //Customer Sales
 Route::post('/customer-sales', [CustomerSaleController::class, 'store'])->name('customer.sales.store');
-
+Route::get('/customers', [CustomerSaleController::class, 'index'])->name('customer.index');
 //Create Sale perosn
 Route::get('saleperson', [UserController::class, 'saletable'])->name('saleperson.table')->middleware('role:Admin|Sales Manager');
 Route::get('edit/sales/{id}', [UserController::class,'editsales'])->name('edit.saleperson')->middleware('role:Admin|Sales Manager');
@@ -140,4 +140,38 @@ Route::delete('/salesperson/delete/{id}', [UserController::class, 'deleteSalespe
 
 //Activity Records
 Route::middleware(['auth'])->get('/sales/activity-report', [SalesDashboardController::class, 'activityReport'])->name('sales.activity.report');
+
+Route::post('/sales-person/take-turn', [QueuesController::class, 'takeTurn'])
+    ->name('sales.person.takeTurn');
+
+
+Route::middleware('auth')->get('/next-turn-status', function () {
+    $user = Auth::user();
+
+    $myQueue = Queue::where('user_id', $user->id)
+        ->where('is_checked_in', true)
+        ->whereNull('took_turn_at')
+        ->orderBy('id')
+        ->first();
+
+    $othersBefore = 0;
+
+    if ($myQueue) {
+        $othersBefore = Queue::where('is_checked_in', true)
+            ->whereNull('took_turn_at')
+            ->where('id', '<', $myQueue->id)
+            ->count();
+    }
+
+    return response()->json([
+        'is_your_turn'   => $myQueue !== null && $othersBefore === 0,
+        'others_pending' => $othersBefore,
+    ]);
+});
+
+
+// Customer Transfor
+Route::post('/customers/{id}/transfer', [CustomerSaleController::class, 'transfer']);
+
+
 require __DIR__ . '/auth.php';

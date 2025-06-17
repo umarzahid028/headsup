@@ -58,7 +58,34 @@ public function dashboardstore(Request $request)
         ], 500);
     }
 }
+public function takeTurn(Request $request)
+{
+    $user = Auth::user();
 
+    // Find current active queue
+    $queue = Queue::where('user_id', $user->id)
+        ->where('is_checked_in', true)
+        ->whereNull('took_turn_at')
+        ->orderBy('id')
+        ->first();
 
+    if (!$queue) {
+        return response()->json(['message' => 'No active turn found.'], 404);
+    }
+
+    // 1. Mark current turn complete
+    $queue->took_turn_at = now();
+    $queue->save();
+
+    // 2. Reinsert into queue (simulate continuous presence)
+    Queue::create([
+        'user_id' => $user->id,
+        'is_checked_in' => true,
+        'took_turn_at' => null,
+        'checked_in_at' => now(),
+    ]);
+
+    return response()->json(['message' => 'Turn completed.']);
+}
 
 }

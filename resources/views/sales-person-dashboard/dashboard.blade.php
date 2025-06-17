@@ -2,8 +2,18 @@
   <x-slot name="header">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <h1 class="text-xl font-semibold text-gray-800">Welcome, {{ Auth::user()->name }}</h1>
+   <div style="display:flex; justify-content: space-between;">
+    <div>
+       <h1 class="text-xl font-semibold text-gray-800">Welcome, {{ Auth::user()->name }}</h1>
     <p class="text-sm text-gray-500">Manage your check-in and token activity.</p>
+    </div>
+   <div>
+     <p id="turn-status" style="text-align:center;" class="text-sm text-gray-700 font-medium my-2 animate-pulse-text">
+      Checking status...
+    </p>
+   </div>
+   </div>
+
     <style>
       @keyframes spin {
         to {
@@ -18,7 +28,70 @@
         height: 1rem;
         animation: spin 1s linear infinite;
       }
+
+      @keyframes pulseText {
+
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+
+        50% {
+          opacity: 0.6;
+          transform: scale(1.03);
+        }
+      }
+
+      .animate-pulse-text {
+        animation: pulseText 1.2s ease-in-out infinite;
+      }
     </style>
+    <style>
+      #customerCards::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      #customerCards::-webkit-scrollbar-thumb {
+        background-color: rgba(100, 116, 139, 0.5);
+        /* Slate-500 */
+        border-radius: 9999px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .spinner {
+        border: 2px solid transparent;
+        border-radius: 50%;
+        width: 1rem;
+        height: 1rem;
+        animation: spin 1s linear infinite;
+      }
+    </style>
+<style>
+    .swal2-popup.no-scroll-popup {
+        max-width: 400px;
+        overflow-x: hidden !important;
+    }
+
+    .swal2-select {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        padding: 8px;
+        overflow-x: hidden;
+    }
+
+     .swal2-popup {
+        overflow-x: hidden !important;
+    }
+</style>
   </x-slot>
 
   @php
@@ -34,7 +107,7 @@
     <!-- LEFT SIDE: Customer Form -->
     <div class="xl:col-span-3">
       <!-- Form Container -->
-      <div id="formContainer" class="hidden">
+      <div id="formContainer">
         <div class="bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
           <h3 class="text-2xl font-bold text-gray-800 mb-2">Customer Sales Form</h3>
           <p class="text-gray-500 mb-6">Fill out the details below to log a customer sales interaction.</p>
@@ -100,7 +173,7 @@
                   </fieldset>
 
                   <div class="text-right mt-4">
-                    <button type="submit"
+                    <button type="submit" style="background-color: #111827;"
                       class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-3 rounded-xl">
                       Save
                     </button>
@@ -110,7 +183,7 @@
             </div>
 
             <div class="md:col-span-2 text-right mt-4">
-              <button id="openModalBtn" type="button" class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl">
+              <button id="openModalBtn" style="background-color: #111827;" type="button" class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl">
                 Close
               </button>
             </div>
@@ -132,22 +205,22 @@
           </span>
 
           <!-- Toggle Button Form -->
-           <form id="checkToggleForm" action="{{ route('sales.person.store') }}" method="POST">
-    @csrf
-    <button type="submit"
-      id="checkToggleButton"
-      class="check-toggle-btn px-6 py-2 text-sm font-semibold flex items-center gap-2 rounded-full text-white shadow-md
+          <form id="checkToggleForm" action="{{ route('sales.person.store') }}" method="POST">
+            @csrf
+            <button type="submit"
+              id="checkToggleButton"
+              class="check-toggle-btn px-6 py-2 text-sm font-semibold flex items-center gap-2 rounded-full text-white shadow-md
       {{ $isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' }}">
-      <span class="btn-text">{{ $isCheckedIn ? 'Check Out' : 'Check In' }}</span>
-      <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
-        fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10"
-          stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor"
-          d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
-      </svg>
-    </button>
-  </form>
+              <span class="btn-text">{{ $isCheckedIn ? 'Check Out' : 'Check In' }}</span>
+              <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10"
+                  stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+              </svg>
+            </button>
+          </form>
         </div>
 
         <!-- Timestamps -->
@@ -162,580 +235,616 @@
             <strong>Duration:</strong> <span id="duration">Loading...</span>
           </p>
         </div>
-        <button onclick="toggleForm()" style="background-color: #111827;"
-          class="bg-blue-600 text-white font-semibold px-6 py-2 rounded-xl mb-4">
-          New Customer
-        </button>
 
-      </div>
-      <!-- Customers -->
-      @foreach ($customers as $customer)
-      @php
-        $firstProcess = 'N/A';
-        if (is_array($customer->process) && isset($customer->process[0])) {
-          $firstProcess = $customer->process[0];
-        } elseif (is_string($customer->process)) {
-          $firstProcess = $customer->process;
-        }
-      @endphp
-      <div class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-6 border border-gray-200 mt-6 cursor-pointer"
-        data-name="{{ $customer->name }}"
-        data-email="{{ $customer->email }}"
-        data-phone="{{ $customer->phone ?? '' }}"
-        data-interest="{{ $customer->interest ?? '' }}"
-        data-process="{{ is_array($customer->process) ? implode(',', $customer->process) : $customer->process }}"
-      >
-        <h2 class="text-xl font-semibold mb-4 text-gray-800">Customer Info</h2>
-        <div class="space-y-2 text-gray-500 text-sm">
-          <p><span class="font-medium text-gray-400">Name:</span> {{ $customer->name }}</p>
-          <p><span class="font-medium text-gray-400">Email:</span> {{ $customer->email }}</p>
-          <p><span class="font-medium text-gray-400">User Name:</span> {{ $customer->user->name ?? 'Unknown' }}</p>
-          <p><span class="font-medium text-gray-400">Process:</span> {{ $firstProcess }}</p>
+        <div class="w-full">
+          <button id="newCustomerBtn" type="button"
+            class="w-full bg-[#111827] text-white font-semibold px-6 py-2 rounded-xl mb-4">
+            Take Customer
+          </button>
+
+
         </div>
       </div>
-      @endforeach
+
+
+      <!-- Customers -->
+      <div class="h-[500px]">
+        <div id="customerCards" class="h-full overflow-y-auto overflow-x-hidden pr-2">
+          @include('partials.customers', ['customers' => $customers])
+        </div>
+      </div>
+
+
     </div>
   </div>
 
 
-    @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-      function toggleForm() {
-        const form = document.getElementById('formContainer');
-        form.classList.toggle('hidden');
+  @push('scripts')
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    function toggleForm() {
+      const form = document.getElementById('formContainer');
+      form.classList.toggle('hidden');
+    }
+  </script>
+
+  <script>
+    let durationInterval = null;
+
+    function startDurationTimer(startTimeIso) {
+      const start = new Date(startTimeIso);
+
+      function updateDuration() {
+        const now = new Date();
+        const diffMs = now - start;
+
+        const seconds = Math.floor((diffMs / 1000) % 60);
+        const minutes = Math.floor((diffMs / 1000 / 60) % 60);
+        const hours = Math.floor((diffMs / 1000 / 60 / 60));
+
+        const formatted = [
+          hours > 0 ? `${hours}h` : '',
+          minutes > 0 ? `${minutes}m` : '',
+          `${seconds}s`
+        ].filter(Boolean).join(' ');
+
+        document.getElementById('duration').textContent = formatted;
       }
-    </script>
 
-<script>
-  let durationInterval = null;
-
-  function startDurationTimer(startTimeIso) {
-    const start = new Date(startTimeIso);
-
-    function updateDuration() {
-      const now = new Date();
-      const diffMs = now - start;
-
-      const seconds = Math.floor((diffMs / 1000) % 60);
-      const minutes = Math.floor((diffMs / 1000 / 60) % 60);
-      const hours = Math.floor((diffMs / 1000 / 60 / 60));
-
-      const formatted = [
-        hours > 0 ? `${hours}h` : '',
-        minutes > 0 ? `${minutes}m` : '',
-        `${seconds}s`
-      ].filter(Boolean).join(' ');
-
-      document.getElementById('duration').textContent = formatted;
+      updateDuration();
+      if (durationInterval) clearInterval(durationInterval);
+      durationInterval = setInterval(updateDuration, 1000);
     }
 
-    updateDuration();
-    if (durationInterval) clearInterval(durationInterval);
-    durationInterval = setInterval(updateDuration, 1000);
-  }
-
-  @if($isCheckedIn && $checkInTimeRaw)
+    @if($isCheckedIn && $checkInTimeRaw)
     startDurationTimer('{{ \Carbon\Carbon::parse($checkInTimeRaw)->toIso8601String() }}');
-  @endif
+    @endif
 
-  $.ajaxSetup({
-    headers: {
-      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-    }
-  });
-
-  $('#checkToggleForm').on('submit', function(e) {
-    e.preventDefault();
-
-    const btn = $('#checkToggleButton');
-    const btnText = btn.find('.btn-text');
-    const spinner = btn.find('.btn-spinner');
-
-    btn.prop('disabled', true);
-    btnText.addClass('hidden');
-    spinner.removeClass('hidden');
-
-    $.ajax({
-      url: $(this).attr('action'),
-      method: 'POST',
-      data: $(this).serialize(),
-      success: function(response) {
-        btn.prop('disabled', false);
-        btnText.removeClass('hidden');
-        spinner.addClass('hidden');
-
-        if (response.checked_in) {
-          // Checked In UI
-          btnText.text('Check Out');
-          btn.removeClass('bg-green-500 hover:bg-green-600')
-            .addClass('bg-red-500 hover:bg-red-600');
-
-          $('.status-text').text('✅ Checked In')
-            .removeClass('bg-red-100 text-red-700')
-            .addClass('bg-green-100 text-green-800');
-
-          $('#check-in-time').text(new Date(response.checked_in_at).toLocaleString());
-          $('#check-out-time').text('N/A');
-
-          $('#duration-wrapper').removeClass('hidden');
-          $('#duration').text('Loading...');
-          startDurationTimer(response.checked_in_at);
-
-          // 🗣️ AUTO ANNOUNCE TURN
-          const userName = @json(Auth::user()->name);
-          const message = `${userName}, it's your turn. Please proceed.`;
-          const utterance = new SpeechSynthesisUtterance(message);
-          utterance.lang = 'en-US';
-          speechSynthesis.speak(utterance);
-
-        } else {
-          // Checked Out UI
-          btnText.text('Check In');
-          btn.removeClass('bg-red-500 hover:bg-red-600')
-            .addClass('bg-green-500 hover:bg-green-600');
-
-          $('.status-text').text('❌ Checked Out')
-            .removeClass('bg-green-100 text-green-800')
-            .addClass('bg-red-100 text-red-700');
-
-          $('#check-out-time').text(new Date().toLocaleString());
-          $('#duration-wrapper').addClass('hidden');
-          clearInterval(durationInterval);
-        }
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Success',
-          text: response.message,
-          timer: 2000,
-          showConfirmButton: false,
-        });
-      },
-      error: function() {
-        btn.prop('disabled', false);
-        btnText.removeClass('hidden');
-        spinner.addClass('hidden');
-
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Something went wrong. Please try again.',
-        });
+    $.ajaxSetup({
+      headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
       }
     });
-  });
-</script>
 
-<!-- Auto fill form -->
- <script>
-    function toggleForm() {
-      document.getElementById('formContainer').classList.remove('hidden');
+    $('#checkToggleForm').on('submit', function(e) {
+      e.preventDefault();
+
+      const btn = $('#checkToggleButton');
+      const btnText = btn.find('.btn-text');
+      const spinner = btn.find('.btn-spinner');
+
+      btn.prop('disabled', true);
+      btnText.addClass('hidden');
+      spinner.removeClass('hidden');
+
+      $.ajax({
+        url: $(this).attr('action'),
+        method: 'POST',
+        data: $(this).serialize(),
+        success: function(response) {
+          btn.prop('disabled', false);
+          btnText.removeClass('hidden');
+          spinner.addClass('hidden');
+
+          if (response.checked_in) {
+            // Checked In UI
+            btnText.text('Check Out');
+            btn.removeClass('bg-green-500 hover:bg-green-600')
+              .addClass('bg-red-500 hover:bg-red-600');
+
+            $('.status-text').text('✅ Checked In')
+              .removeClass('bg-red-100 text-red-700')
+              .addClass('bg-green-100 text-green-800');
+
+            $('#check-in-time').text(new Date(response.checked_in_at).toLocaleString());
+            $('#check-out-time').text('N/A');
+
+            $('#duration-wrapper').removeClass('hidden');
+            $('#duration').text('Loading...');
+            startDurationTimer(response.checked_in_at);
+
+            // 🔊 AUTO ANNOUNCE & ANIMATION
+            const userName = @json(Auth::user()->name);
+            const message = `${userName}, it's your turn. Please proceed.`;
+
+            // Voice
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.lang = 'en-US';
+            speechSynthesis.speak(utterance);
+
+            // Visual animation
+            $('#turn-user-name').text(message);
+            $('#turn-announcement').removeClass('hidden');
+
+            setTimeout(() => {
+              $('#turn-announcement').addClass('hidden');
+            }, 5000);
+
+          } else {
+            // Checked Out UI
+            btnText.text('Check In');
+            btn.removeClass('bg-red-500 hover:bg-red-600')
+              .addClass('bg-green-500 hover:bg-green-600');
+
+            $('.status-text').text('❌ Checked Out')
+              .removeClass('bg-green-100 text-green-800')
+              .addClass('bg-red-100 text-red-700');
+
+            $('#check-out-time').text(new Date().toLocaleString());
+            $('#duration-wrapper').addClass('hidden');
+            clearInterval(durationInterval);
+          }
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: response.message,
+            timer: 2000,
+            showConfirmButton: false,
+          });
+        },
+        error: function() {
+          btn.prop('disabled', false);
+          btnText.removeClass('hidden');
+          spinner.addClass('hidden');
+
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Something went wrong. Please try again.',
+          });
+        }
+      });
+    });
+  </script>
+
+<!-- Every Customer live time -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const TIMER_KEY = 'customer_timer_start';
+    let intervalId = null;
+
+    function formatDuration(seconds) {
+        const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
+        const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+        const secs = String(seconds % 60).padStart(2, '0');
+        return `${hrs}:${mins}:${secs}`;
     }
 
-    // Autofill on card click
-    document.querySelectorAll('.customer-card').forEach(card => {
-      card.addEventListener('click', function () {
-        const data = this.dataset;
+    function updateTimers() {
+        const start = localStorage.getItem(TIMER_KEY);
+        if (!start) return;
 
-        toggleForm();
+        const startTime = new Date(parseInt(start));
+        const now = new Date();
+        const diff = Math.floor((now - startTime) / 1000);
+        const formatted = formatDuration(diff);
 
-        document.querySelector('input[name="name"]').value = data.name || '';
-        document.querySelector('input[name="email"]').value = data.email || '';
-        document.querySelector('input[name="phone"]').value = data.phone || '';
-        document.querySelector('input[name="interest"]').value = data.interest || '';
+        document.querySelectorAll('.live-duration').forEach(el => {
+            el.textContent = formatted;
+        });
+    }
 
-        // Reset all process checkboxes
-        document.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+    function startTimer() {
+        const alreadyStarted = localStorage.getItem(TIMER_KEY);
+        if (!alreadyStarted) {
+            localStorage.setItem(TIMER_KEY, Date.now());
+        }
 
-        // Check the ones included in data-process
-        if (data.process) {
-          const processes = data.process.split(',');
-          processes.forEach(proc => {
-            let checkbox = [...document.querySelectorAll('input[name="process[]"]')].find(cb => cb.value.trim() === proc.trim());
-            if (checkbox) checkbox.checked = true;
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(updateTimers, 1000);
+        updateTimers(); // initial update
+    }
+
+    function stopTimer() {
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+
+        localStorage.removeItem(TIMER_KEY);
+        document.querySelectorAll('.live-duration').forEach(el => {
+            el.textContent += ' (Ended)';
+        });
+    }
+
+    // Bind buttons
+    const startBtn = document.getElementById('newCustomerBtn');
+    const stopBtn = document.getElementById('openModalBtn');
+
+    if (startBtn) {
+        startBtn.addEventListener('click', startTimer);
+    }
+
+    if (stopBtn) {
+        stopBtn.addEventListener('click', stopTimer);
+    }
+
+    // Auto resume timer if it was already started
+    if (localStorage.getItem(TIMER_KEY)) {
+        startTimer();
+    }
+});
+</script>
+
+  <!-- Turn Status -->
+  <script>
+    function updateTurnStatus() {
+      console.log("📡 Checking turn status...");
+
+      $.get('/next-turn-status')
+        .done(function(res) {
+          console.log("✅ Turn status response:", res);
+
+          if (res.is_your_turn) {
+            $('#turn-status').text('🟢 It’s your turn now!');
+            $('#newCustomerBtn').prop('disabled', false);
+          } else {
+            const waitText = res.others_pending > 0 ?
+              '⏳ Waiting for the other salesperson to finish turn...' :
+              '— Check into queue to participate —';
+            $('#turn-status').text(waitText);
+            $('#newCustomerBtn').prop('disabled', true);
+          }
+        })
+        .fail(function(jqXHR, textStatus, errorThrown) {
+          console.error("🔥 Turn check failed:", jqXHR.responseText);
+          $('#turn-status').text('⚠️ Error checking turn status.');
+          $('#newCustomerBtn').prop('disabled', true);
+        });
+    }
+
+    $('#newCustomerBtn').on('click', function() {
+      $.ajax({
+        url: '{{ route("sales.person.takeTurn") }}',
+        method: 'POST',
+        data: {
+          _token: $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+          const msg = 'Your turn is complete.';
+          const utter = new SpeechSynthesisUtterance(msg);
+          utter.lang = 'en-US';
+          speechSynthesis.speak(utter);
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Done!',
+            text: msg,
+            timer: 2000,
+            showConfirmButton: false
+          });
+
+          updateTurnStatus();
+        },
+        error: function() {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Something went wrong.'
           });
         }
       });
     });
 
-    // Modal close
-    document.getElementById('closeModalBtn').addEventListener('click', function () {
-      document.getElementById('customerModal').classList.add('hidden');
+    $(document).ready(function() {
+      updateTurnStatus();
+      setInterval(updateTurnStatus, 10000);
+    });
+  </script>
+
+  <script>
+    const modal = document.getElementById('customerModal');
+    const openBtn = document.getElementById('openModalBtn');
+    const closeBtn = document.getElementById('closeModalBtn');
+
+    // Open modal
+    openBtn.addEventListener('click', () => {
+      modal.classList.remove('hidden');
     });
 
-    // Modal open
-    document.getElementById('openModalBtn').addEventListener('click', function () {
-      document.getElementById('customerModal').classList.remove('hidden');
+    // Close modal
+    closeBtn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+
+    // Click outside to close
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+      }
     });
   </script>
 
 
-    <script>
-      const modal = document.getElementById('customerModal');
-      const openBtn = document.getElementById('openModalBtn');
-      const closeBtn = document.getElementById('closeModalBtn');
+<!-- JavaScript for Transfer -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-      // Open modal
-      openBtn.addEventListener('click', () => {
-        modal.classList.remove('hidden');
-      });
+<script>
+    const salespeople = @json($salespeople);
+    const currentUserId = {{ auth()->id() }};
 
-      // Close modal
-      closeBtn.addEventListener('click', () => {
-        modal.classList.add('hidden');
-      });
+    document.querySelectorAll('.transfer-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const customerId = this.getAttribute('data-customer-id');
+            const customerName = this.getAttribute('data-customer-name');
+            const customerCard = this.closest('.customer-card');
 
-      // Click outside to close
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-          modal.classList.add('hidden');
-        }
-      });
-    </script>
+            let options = '<option disabled selected value="">Choose a sales person</option>';
+            salespeople.forEach(sales => {
+                if (sales.id !== currentUserId) {
+                    options += `<option value="${sales.id}">${sales.name}</option>`;
+                }
+            });
 
-
-
-    <!-- form auto save -->
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        const form = document.getElementById("salesForm");
-        const fields = form.querySelectorAll("input, textarea");
-
-        fields.forEach(field => {
-          field.addEventListener("change", function() {
-            const formData = new FormData(form);
-
-            fetch("{{ route('customer.sales.store') }}", {
-                method: "POST",
-                headers: {
-                  'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            Swal.fire({
+                title: `<div class="text-xl font-bold text-[#111827] mb-2">Transfer Customer</div>`,
+                html: `
+                    <div class="text-sm text-[#111827] mb-4">
+                        You are about to transfer <span class="font-semibold text-indigo-600">${customerName}</span> to another sales person.
+                    </div>
+                    <div class="text-left w-full">
+                        <label class="block text-sm font-medium mb-1 text-[#111827]">Select Sales Person:</label>
+                        <div style="overflow-x: hidden;">
+                            <select id="salespersonSelect"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-[#111827] text-[#111827]">
+                                ${options}
+                            </select>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'Confirm Transfer',
+                cancelButtonText: 'Cancel',
+                showCancelButton: true,
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'rounded-2xl p-6 shadow-xl',
+                    confirmButton: 'bg-[#111827] hover:bg-[#0f172a] text-white px-5 py-2 mt-4 rounded-lg font-semibold',
+                    cancelButton: 'mx-3 bg-[#111827] hover:bg-[#0f172a] text-white px-5 py-2 mt-4 rounded-lg font-semibold',
                 },
-                body: formData
-              })
-              .then(response => response.json())
-              .then(data => {
-                console.log("Auto-saved:", data);
-              })
-              .catch(async error => {
-                const errorText = await error.text?.() ?? error.message;
-                console.error("Save failed:", errorText);
-              });
-          });
+                preConfirm: () => {
+                    const selectedId = document.getElementById('salespersonSelect').value;
+                    if (!selectedId) {
+                        Swal.showValidationMessage('Please select a sales person first.');
+                    }
+                    return selectedId;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const newSalesId = result.value;
+
+                    fetch(`/customers/${customerId}/transfer`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ new_user_id: newSalesId })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Customer Transferred',
+                            text: data.message,
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+
+                        // ✅ Remove card if not current user
+                        if (newSalesId != currentUserId) {
+                            customerCard.remove();
+                        }
+
+                        // ✅ Clear the form
+                        const salesForm = document.getElementById('salesForm');
+                        if (salesForm) {
+                            salesForm.reset();
+
+                            // Optional success message
+                            const msg = document.createElement('p');
+                            msg.innerText = "Form cleared!";
+                            msg.className = "text-green-600 text-sm mt-2";
+                            salesForm.appendChild(msg);
+                            setTimeout(() => msg.remove(), 3000);
+                        }
+
+                        // ✅ Close modal if open
+                        const modal = document.getElementById('customerModal');
+                        if (modal) {
+                            modal.classList.add('hidden');
+                        }
+                    })
+                    .catch(err => {
+                        Swal.fire('Error!', 'Transfer failed. Try again.', 'error');
+                    });
+                }
+            });
         });
-      });
-    </script>
-    <!-- Form Show  -->
-  <script>
-  function toggleForm() {
-    const formContainer = document.getElementById('formContainer');
-    if (formContainer) {
-      formContainer.classList.remove('hidden');
-      formContainer.scrollIntoView({ behavior: 'smooth' });
-    }
-  }
+    });
 </script>
 
+  <!-- form auto save -->
 
-    <script>
-      window.completeToken = function(tokenId) {
-        const btn = document.getElementById(`complete-btn-${tokenId}`);
-        if (!btn) return;
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      /**-------------------------------------------------
+       * 1. Auto‑save form on any field change
+       *------------------------------------------------*/
+      const form = document.getElementById('salesForm');
+      const fields = form.querySelectorAll('input, textarea');
 
-        const btnText = btn.querySelector('.btn-text');
-        const spinner = btn.querySelector('.spinner');
+      fields.forEach(field => {
+        field.addEventListener('change', () => {
+          const formData = new FormData(form);
 
-        btn.disabled = true;
-        btnText.classList.add('hidden');
-        spinner.classList.remove('hidden');
-
-        axios.post('/tokens/' + tokenId + '/complete')
-          .then(response => {
-            if (response.data.status === 'success') {
-              Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: response.data.message,
-                timer: 2000,
-                showConfirmButton: false,
-              });
-
-              const tokenCard = document.getElementById('token-card-' + tokenId);
-              if (tokenCard) {
-                tokenCard.classList.add('opacity-0', 'translate-x-4', 'duration-300');
-                setTimeout(() => tokenCard.remove(), 300);
-              }
-            } else {
-              throw new Error(response.data.message || 'Something went wrong');
-            }
-          })
-          .catch(error => {
-            Swal.fire({
-              icon: 'error',
-              title: 'Oops...',
-              text: error.response?.data?.message || error.message || 'Something went wrong!',
+          fetch('{{ route( 'customer.sales.store') }}', {
+                method: 'POST',
+                headers: {
+                  'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                  'X-Requested-With': 'XMLHttpRequest', // <-- ensures Laravel sees AJAX
+                },
+                body: formData,
+              })
+            .then(r => r.json())
+            .then(data => {
+              console.log('Auto‑saved', data);
+              loadCustomers(); // refresh cards
+            })
+            .catch(async err => {
+              console.error('Save failed', await err.text?.() ?? err.message);
             });
-
-            btn.disabled = false;
-            btnText.classList.remove('hidden');
-            spinner.classList.add('hidden');
-          });
-      };
-    </script>
-
-    <div id="current-token-container"></div>
-
-    <script>
-      async function fetchCurrentToken() {
-        try {
-          const response = await fetch('/tokens/current-assigned');
-          if (!response.ok) throw new Error('Network response was not ok');
-
-          const html = await response.text();
-          document.getElementById('current-token-container').innerHTML = html;
-        } catch (error) {
-          console.error('Fetch error:', error);
-        }
-      }
-
-      fetchCurrentToken(); // On page load
-      setInterval(fetchCurrentToken, 5000); // Every 5 sec
-    </script>
-
-
-    <script>
-      async function fetchCurrentUserToken() {
-        try {
-          const response = await fetch('/token/current', {
-            headers: {
-              'Accept': 'application/json'
-            },
-            cache: 'no-store'
-          });
-
-          const data = await response.json();
-          console.log("Token data received:", data); // 
-
-          if (data.token) {
-            const customerName = data.token.customer_name || 'Customer'; // fallback if null
-            const counterNumber = data.token.counter_number || 'unknown'; // fallback if null
-
-            const announcement = `${customerName}, please proceed to counter number ${counterNumber}`;
-            console.log("Announcement:", announcement); // 
-            speak(announcement);
-          } else {
-            speak("You currently have no assigned tokens.");
-          }
-        } catch (error) {
-          console.error('Error fetching current token:', error);
-          speak("Error fetching your token information.");
-        }
-      }
-
-      function speak(text) {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = 'en-US';
-          speechSynthesis.speak(utterance);
-        } else {
-          alert('Speech not supported in this browser.');
-        }
-      }
-
-      const announceButton = document.getElementById('announceButton');
-      announceButton?.addEventListener('click', fetchCurrentUserToken);
-    </script>
-
-    <!-- skip tokken -->
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        document.body.addEventListener('click', async function(e) {
-          // Check if clicked element or its parent has id starting with "skipButton-"
-          const target = e.target.closest('button[id^="skipButton-"]');
-          if (!target) return;
-
-          e.preventDefault();
-
-          const btn = target;
-          btn.disabled = true;
-          btn.querySelector('span').textContent = 'Skipping...';
-
-          // Extract token id
-          const tokenId = btn.id.split('-')[1];
-
-          try {
-            const response = await fetch(`/tokens/${tokenId}/skip`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-              }
-            });
-
-            if (!response.ok) throw new Error('Failed to skip token');
-
-            const result = await response.json();
-
-            Swal.fire({
-              icon: 'success',
-              title: 'Success',
-              text: result.message || 'Token skipped successfully.',
-              timer: 2000,
-              showConfirmButton: false
-            });
-
-            btn.style.display = 'none'; // Hide button after skip
-
-          } catch (error) {
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: error.message || 'Something went wrong!'
-            });
-          } finally {
-            btn.disabled = false;
-            btn.querySelector('span').textContent = 'Skip Token';
-          }
         });
       });
-    </script>
 
-    <!-- customer form -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <script>
-      document.getElementById('salesForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
+      async function loadCustomers() {
+        try {
+          const resp = await fetch('{{ route('customer.index') }}?partial=1', {
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+              },
+            });
+          if (!resp.ok) throw new Error('Failed to fetch customers');
 
-        const form = e.target;
-        const formData = new FormData(form);
+          const html = await resp.text();
+          document.getElementById('customerCards').innerHTML = html;
+          bindCardClickEvents(); // re‑attach events
+        } catch (e) {
+          console.error('Reload error', e);
+        }
+      }
 
-        // Show processing alert
-        Swal.fire({
-          title: 'Processing...',
-          text: 'Please wait while we save your data.',
-          allowOutsideClick: false,
-          didOpen: () => {
-            Swal.showLoading();
-          }
+
+      function bindCardClickEvents() {
+        document.querySelectorAll('.customer-card').forEach(card => {
+          card.addEventListener('click', () => {
+            const data = card.dataset;
+            document.getElementById('formContainer')?.classList.remove('hidden');
+
+            form.querySelector('input[name="name"]').value = data.name || '';
+            form.querySelector('input[name="email"]').value = data.email || '';
+            form.querySelector('input[name="phone"]').value = data.phone || '';
+            form.querySelector('input[name="interest"]').value = data.interest || '';
+
+            // reset + set process checkboxes
+            form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+            if (data.process) {
+              data.process.split(',').forEach(proc => {
+                const cb = [...form.querySelectorAll('input[name="process[]"]')]
+                  .find(x => x.value.trim() === proc.trim());
+                if (cb) cb.checked = true;
+              });
+            }
+          });
+        });
+      }
+
+      // initial bind at page‑load
+      bindCardClickEvents();
+    });
+  </script>
+  <!-- Form Show  -->
+  <script>
+    function toggleForm() {
+      const formContainer = document.getElementById('formContainer');
+      if (formContainer) {
+        formContainer.classList.remove('hidden');
+        formContainer.scrollIntoView({
+          behavior: 'smooth'
+        });
+      }
+    }
+  </script>
+
+  <!-- Form Reset -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const newCustomerBtn = document.getElementById('newCustomerBtn');
+      const form = document.getElementById('salesForm');
+
+      newCustomerBtn.addEventListener('click', function() {
+        form.reset();
+
+        form.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+        // form.querySelector('input[name="user_id"]').value = "{{ auth()->id() }}";
+
+        document.getElementById('formContainer')?.classList.remove('hidden');
+
+        document.getElementById('customerModal')?.classList.add('hidden');
+      });
+    });
+  </script>
+
+
+
+  <!-- customer form -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+    document.getElementById('salesForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const form = e.target;
+      const formData = new FormData(form);
+
+      // Show processing alert
+      Swal.fire({
+        title: 'Processing...',
+        text: 'Please wait while we save your data.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      try {
+        const response = await fetch("{{ route('customer.sales.store') }}", {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+          },
+          body: formData
         });
 
-        try {
-          const response = await fetch("{{ route('customer.sales.store') }}", {
-            method: 'POST',
-            headers: {
-              'X-CSRF-TOKEN': '{{ csrf_token() }}',
-              'Accept': 'application/json'
-            },
-            body: formData
+        const result = await response.json();
+
+        if (response.ok) {
+          // Show success message, then redirect
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: result.message || 'Form submitted successfully',
+            timer: 2000,
+            showConfirmButton: false,
+            willClose: () => {
+              // 👇 Redirect after SweetAlert closes
+              window.location.href = result.redirect || "{{ route('sales.perosn') }}";
+            }
           });
 
-          const result = await response.json();
-
-          if (response.ok) {
-            // Show success message, then redirect
-            Swal.fire({
-              icon: 'success',
-              title: 'Success',
-              text: result.message || 'Form submitted successfully',
-              timer: 2000,
-              showConfirmButton: false,
-              willClose: () => {
-                // 👇 Redirect after SweetAlert closes
-                window.location.href = result.redirect || "{{ route('sales.perosn') }}";
-              }
-            });
-
-            form.reset(); // Optional
-          } else {
-            Swal.fire({
-              icon: 'error',
-              title: 'Oops...',
-              text: result.message || 'Something went wrong!',
-            });
-          }
-
-        } catch (err) {
+          form.reset(); // Optional
+        } else {
           Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: 'Request failed. Please try again.'
+            title: 'Oops...',
+            text: result.message || 'Something went wrong!',
           });
         }
-      });
-    </script>
 
-
-    <script>
-      function assignNextToken(currentTokenId, counterNumber) {
-        fetch(`/tokens/next/${currentTokenId}`, {
-            method: 'POST',
-            headers: {
-              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-            },
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.status === 'success' && data.token) {
-              const tokenNumber = data.token.customer_name;
-              makeVoiceAnnouncement(tokenNumber, counterNumber);
-            } else {
-              alert('No pending token found or something went wrong.');
-            }
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to call next token.');
-          });
-      }
-
-      function makeVoiceAnnouncement(tokenNumber, counterNumber) {
-        const message = `${tokenNumber}, please proceed to counter number ${counterNumber}`;
-        const utterance = new SpeechSynthesisUtterance(message);
-        utterance.lang = 'en-US';
-        window.speechSynthesis.speak(utterance);
-      }
-    </script>
-
-    {{-- Auto-Refresh Script --}}
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        console.log("✅ JS Loaded");
-
-        const forms = document.querySelectorAll('.auto-refresh-form');
-
-        forms.forEach(form => {
-          form.addEventListener('submit', function(e) {
-            e.preventDefault(); // Stop immediate form submit
-
-            console.log("🚀 Form Submitted - will submit via JS");
-
-            // Actually submit using JS
-            fetch(form.action, {
-              method: "POST",
-              body: new FormData(form),
-              headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-              }
-            }).then(response => {
-              console.log("✅ Submitted, refreshing soon...");
-              setTimeout(() => {
-                location.reload();
-              }, 1500);
-            }).catch(error => {
-              console.error("❌ Fetch failed:", error);
-            });
-          });
+      } catch (err) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Request failed. Please try again.'
         });
-      });
-    </script>
-
-    @endpush
+      }
+    });
+  </script>
+  @endpush
 </x-app-layout>

@@ -11,10 +11,12 @@ class Queue extends Model
         'is_checked_in',
         'checked_in_at',
         'checked_out_at',
+        'took_turn_at'
     ];
     public function user()
 {
     return $this->belongsTo(User::class);
 }
+
 
 }
