@@ -29,7 +29,9 @@
                                 <td class="px-6 py-3">{{ $sale->name ?? 'Unknown' }}</td>
                                 <td class="px-6 py-3">{{ \Carbon\Carbon::parse($sale->created_at)->format('d M Y h:i A') }}</td>
                                 <td class="px-6 py-3">
-                                    <span class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">{{ implode(", ", $sale->process) }}</span>
+                                    @foreach ($sale->process as $process)
+                                        <span class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">{{ $process }}</span>
+                                    @endforeach
                                 </td>
                                 <td class="px-6 py-3">
                                     @if ($sale->served_at)
