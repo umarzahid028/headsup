@@ -27,6 +27,7 @@
                                 <td class="px-6 py-3">{{ $index + 1 }}</td>
                                 <td class="px-6 py-3">{{ $sale->name ?? 'Unknown' }}</td>
                                 <td class="px-6 py-3">{{ \Carbon\Carbon::parse($sale->created_at)->format('d M Y h:i A') }}</td>
+                                <td class="px-6 py-3">{{ explode(' ', $sale->process)[0] }}</td>
                                 <td class="px-6 py-3">
                                     @if ($sale->served_at)
                                         <span class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">Served</span>
