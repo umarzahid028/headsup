@@ -128,7 +128,7 @@
   <script>
     async function fetchAndUpdateTokens() {
       try {
-        const response = await fetch('/queue-list', {
+        const response = await fetch('{{ route('tokens.active') }}', {
           headers: { 'Accept': 'application/json' }
         });
 
@@ -143,26 +143,29 @@
 
         data.active.forEach((token, index) => {
           const name = token.sales_person || 'Unknown';
-          const customerName = token.customer_name || 'Unknown Customer';
-          const processes = token.process || [];
 
-          const row = document.createElement('div');
-          row.className = 'active-token-row';
-          row.style.animationDelay = `${index * 150}ms`;
-          row.innerHTML = `
-            <div><span class="whitespace-nowrap">${name}</span></div>
-            <div>
-              <span class="inline-block text-lg">${customerName}</span>
-            </div>
-            <div>
-              ${
-                processes.length
-                  ? processes.map(p => `<span class="status-badge">${p}</span>`).join('')
-                  : '<span class="text-gray-500">No status</span>'
-              }
-            </div>
-          `;
-          tokenList.appendChild(row);
+          token.customers.forEach((customer, cIndex) => {
+            const customerName = customer.customer_name || 'Unknown Customer';
+            const processes = customer.process || [];
+
+            const row = document.createElement('div');
+            row.className = 'active-token-row';
+            row.style.animationDelay = `${(index * 3 + cIndex) * 150}ms`;
+            row.innerHTML = `
+              <div><span class="whitespace-nowrap">${name}</span></div>
+              <div>
+                <span class="inline-block text-lg">${customerName}</span>
+              </div>
+              <div>
+                ${
+                  processes.length
+                    ? processes.map(p => `<span class="status-badge">${p}</span>`).join('')
+                    : '<span class="text-gray-500">No status</span>'
+                }
+              </div>
+            `;
+            tokenList.appendChild(row);
+          });
         });
 
       } catch (error) {
@@ -173,7 +176,7 @@
 
     window.onload = () => {
       fetchAndUpdateTokens();
-      setInterval(fetchAndUpdateTokens, 5000); // Refresh every 5 seconds
+      setInterval(fetchAndUpdateTokens, 5000);
     };
   </script>
 </body>

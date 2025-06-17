@@ -71,56 +71,60 @@ public function generateToken(Request $request)
 }
 
 
+// app/Http/Controllers/YourController.php
+
 public function activeTokens(Request $request)
 {
-    // 🔹 Step 1: Get latest check-in per salesperson
     $latestQueues = Queue::with('user')
         ->where('is_checked_in', true)
         ->latest()
         ->get()
-        ->unique('user_id'); // only latest check-in per salesperson
+        ->unique('user_id');
 
-    // 🔹 Step 2: Prepare output
     $activeData = $latestQueues->map(function ($queue) {
         $salesPersonName = $queue->user->name ?? 'Unassigned';
 
-        // Get latest CustomerSale for that salesperson
-        $customerSale = CustomerSale::where('user_id', $queue->user_id)
+        $customerSales = CustomerSale::where('user_id', $queue->user_id)
+            // ->whereNull('served_at') // Uncomment if needed
             ->latest()
-            ->first();
+            ->take(3)
+            ->get();
 
-        // Get customer name (no model/relationship needed)
-        $customerName = $customerSale->name ?? 'Unknown Customer';
+        $customers = $customerSales->map(function ($sale) {
+            $customerName = $sale->name ?? 'Unknown Customer';
 
-        // Get last process from process field (assumed JSON or array)
-        $lastProcess = [];
+            $lastProcess = [];
+            if (!empty($sale->process)) {
+                $processArray = is_array($sale->process)
+                    ? $sale->process
+                    : json_decode($sale->process, true);
 
-        if ($customerSale && !empty($customerSale->process)) {
-            $processArray = is_array($customerSale->process)
-                ? $customerSale->process
-                : json_decode($customerSale->process, true);
-
-            $last = end($processArray);
-            if (!empty($last)) {
-                $lastProcess = [$last];
+                if (is_array($processArray)) {
+                    $last = end($processArray);
+                    if (!empty($last)) {
+                        $lastProcess = [$last];
+                    }
+                }
             }
-        }
+
+            return [
+                'customer_name' => $customerName,
+                'process'       => $lastProcess,
+            ];
+        });
 
         return [
-            'sales_person'  => $salesPersonName,
-            'customer_name' => $customerName,
-            'process'       => $lastProcess,
+            'sales_person' => $salesPersonName,
+            'customers'    => $customers,
         ];
-    })->values(); // reset array indexes
+    })->values();
 
-    // 🔹 Step 3: Return JSON or view
     if ($request->wantsJson()) {
         return response()->json(['active' => $activeData]);
     }
 
     return view('screen.active-tokens', ['tokens' => $activeData]);
 }
-
 
 //Current Token
  public function currentAssignedToken(Request $request)
@@ -334,24 +338,13 @@ public function tokenhistory()
 {
     $user = Auth::user();
 
-    if ($user->hasRole(['Admin', 'Sales Manager', 'Sales person'])) {
-        $cutoff = Carbon::now()->subHours(24);
+    $customerSales = CustomerSale::where('user_id', $user->id)
+        
+        ->latest()
+        ->get();
 
-        $query = Token::whereIn('status', ['completed', 'skipped'])
-            ->where('updated_at', '>=', $cutoff)
-            ->orderBy('serial_number');
-
-        if ($user->hasRole('Sales person')) {
-            $query->where('user_id', $user->id);
-        }
-
-        $tokens = $query->get();
-        return view('tokens-history.tokens-history', compact('tokens'));
-    }
-
-    abort(403);
+    return view('tokens-history.tokens-history', compact('customerSales'));
 }
-
 public function assignNextToken(Request $request, Token $token)
 {
     $salespersonId = $token->user_id;
