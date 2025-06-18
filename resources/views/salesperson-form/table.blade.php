@@ -3,16 +3,18 @@
         <h1 class="text-2xl font-semibold text-gray-800 px-4">Sales Person</h1>
         <p class="text-sm text-gray-500 mt-1 px-4">
             View and manage all active sales team members below.
+
         </p>
     </x-slot>
 
     <div class="px-6">
-        <div class="flex items-center justify-end mb-4 px-6">
-            <a href="{{ route('create.saleperson') }}" class="bg-black text-white px-4 py-2 rounded">
-                Add Sales Person
-            </a>
-        </div>
-
+@role('Admin|Sales Manager')
+    <div class="flex items-center justify-end mb-4 px-6">
+        <a href="{{ route('create.saleperson') }}" class="bg-black text-white px-4 py-2 rounded">
+            Add Sales Person
+        </a>
+    </div>
+@endrole
         <div class="px-6 py-4">
             <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
            
@@ -26,32 +28,33 @@
                             <th class="px-4 py-2 text-left">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="text-sm text-gray-700">
-                        @forelse($salespersons as $index => $person)
-                        <tr class="border-t">
-                            <td class="px-4 py-2">{{ $index + 1 }}</td>
-                            <td class="px-4 py-2">{{ $person->name }}</td>
-                            <td class="px-4 py-2">{{ $person->email }}</td>
-                            <td class="px-4 py-2">{{ $salescount->count()}}</td>
-                            <td class="px-4 py-2">
-                                <div class="flex gap-2">
-                                    <a href="{{ route('edit.saleperson', $person->id) }}"
-                                        class="px-4 py-2 text-xs font-medium bg-yellow-500 text-white rounded hover:bg-yellow-600" style="background-color:#111827;">
-                                        Edit
-                                    </a>
-                                    <button data-id="{{ $person->id }}"
-                                        class="delete-user px-4 py-2 text-xs font-medium bg-red-600 text-white rounded hover:bg-red-700" style="background-color:#111827;">
-                                        Delete
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="5" class="text-center py-4 text-gray-500">No salespersons found.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
+                   <tbody class="text-sm text-gray-700">
+    @forelse($salespersons as $index => $person)
+    <tr class="border-t">
+        <td class="px-4 py-2">{{ $index + 1 }}</td>
+        <td class="px-4 py-2">{{ $person->name }}</td>
+        <td class="px-4 py-2">{{ $person->email }}</td>
+        <td class="px-4 py-2">{{ $person->customer_sales_count }}</td> <!-- ✅ Fixed here -->
+        <td class="px-4 py-2">
+            <div class="flex gap-2">
+                <a href="{{ route('edit.saleperson', $person->id) }}"
+                    class="px-4 py-2 text-xs font-medium bg-yellow-500 text-white rounded hover:bg-yellow-600" style="background-color:#111827;">
+                    Edit
+                </a>
+                <button data-id="{{ $person->id }}"
+                    class="delete-user px-4 py-2 text-xs font-medium bg-red-600 text-white rounded hover:bg-red-700" style="background-color:#111827;">
+                    Delete
+                </button>
+            </div>
+        </td>
+    </tr>
+    @empty
+    <tr>
+        <td colspan="5" class="text-center py-4 text-gray-500">No salespersons found.</td>
+    </tr>
+    @endforelse
+</tbody>
+
                 </table>
             </div>
         </div>

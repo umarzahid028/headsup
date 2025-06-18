@@ -9,23 +9,23 @@
         <div class="container mx-auto space-y-6 py-6 px-4">
             <!-- Stats Grid -->
             <div class="grid gap-6 mb-8 md:grid-cols-2 xl:grid-cols-4">
-                <!-- Total Vehicles Card -->
+                <!-- Total Sales Person -->
                 <div class="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
                     <div class="flex items-center">
                         <div class="p-3 rounded-full bg-primary/10">
                             <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m4-3.13a4 4 0 11-8 0 4 4 0 018 0zm6 4a4 4 0 100-8 4 4 0 000 8z"/>
                             </svg>
                         </div>
                         <div class="ml-4">
-                            <p class="mb-2 text-sm font-medium text-muted-foreground">Total Vehicles</p>
-                            <p class="text-lg font-semibold text-foreground">{{ $totalVehicles ?? 0 }}</p>
+                            <p class="mb-2 text-sm font-medium text-muted-foreground">Total Sales Person</p>
+                            <p class="text-lg font-semibold text-foreground">{{ $queues ?? 0 }}</p>
                             <p class="text-sm text-muted-foreground">
-                                @if(($vehicleGrowth ?? 0) > 0)
-                                    <span class="text-emerald-500">+{{ $vehicleGrowth ?? 0 }}%</span>
+                                @if(($queueGrowth ?? 0) > 0)
+                                    <span class="text-emerald-500">+{{ $queueGrowth }}%</span>
                                 @else
-                                    <span class="text-destructive">{{ $vehicleGrowth ?? 0 }}%</span>
+                                    <span class="text-destructive">{{ $queueGrowth }}%</span>
                                 @endif
                                 from last month
                             </p>
@@ -33,213 +33,118 @@
                     </div>
                 </div>
 
-                <!-- Active Inspections Card -->
+                <!-- Total Customers -->
                 <div class="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
                     <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-amber-500/10">
-                            <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                        <div class="p-3 rounded-full bg-blue-500/10">
+                            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m4-3.13a4 4 0 11-8 0 4 4 0 018 0zm6 4a4 4 0 100-8 4 4 0 000 8z"/>
                             </svg>
                         </div>
                         <div class="ml-4">
-                            <p class="mb-2 text-sm font-medium text-muted-foreground">Active Inspections</p>
-                            <p class="text-lg font-semibold text-foreground">{{ $activeInspections ?? 0 }}</p>
-                            <p class="text-sm text-muted-foreground">{{ $completedInspections ?? 0 }} completed</p>
+                            <p class="mb-2 text-sm font-medium text-muted-foreground">Total Customers</p>
+                            <p class="text-lg font-semibold text-foreground">{{ $customer ?? 0 }}</p>
+                            <p class="text-sm text-muted-foreground">Reflects all active customer records</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Open Issues Card -->
+                <!-- Total Appointments -->
                 <div class="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
                     <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-destructive/10">
-                            <svg class="w-6 h-6 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        <div class="p-3 rounded-full bg-purple-500/10">
+                            <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                         </div>
                         <div class="ml-4">
-                            <p class="mb-2 text-sm font-medium text-muted-foreground">Open Issues</p>
-                            <p class="text-lg font-semibold text-foreground">{{ $openIssues ?? 0 }}</p>
-                            <p class="text-sm text-muted-foreground">{{ $resolvedIssues ?? 0 }} resolved</p>
+                            <p class="mb-2 text-sm font-medium text-muted-foreground">Total Appointments</p>
+                            <p class="text-lg font-semibold text-foreground">{{ $appointment ?? 0 }}</p>
+                            <p class="text-sm text-muted-foreground">Includes all scheduled sessions</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Monthly Revenue Card -->
+                <!-- Sold Customers -->
                 <div class="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
                     <div class="flex items-center">
-                        <div class="p-3 rounded-full bg-emerald-500/10">
-                            <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        <div class="p-3 rounded-full bg-green-500/10">
+                            <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M18 8a6 6 0 00-12 0v2a3 3 0 003 3h1m6-5v5a2 2 0 002 2h1a3 3 0 003-3v-1a6 6 0 00-6-6zM8 14h.01M8 14a4 4 0 014-4h4a2 2 0 012 2v2a4 4 0 01-4 4h-4a4 4 0 01-4-4z"/>
                             </svg>
                         </div>
                         <div class="ml-4">
-                            <p class="mb-2 text-sm font-medium text-muted-foreground">Monthly Revenue</p>
-                            <p class="text-lg font-semibold text-foreground">${{ number_format($monthlyRevenue ?? 0, 2) }}</p>
-                            <p class="text-sm text-muted-foreground">
-                                @if(($monthlyRevenue ?? 0) > ($lastMonthRevenue ?? 0))
-                                    <span class="text-emerald-500">↑</span>
-                                @else
-                                    <span class="text-destructive">↓</span>
-                                @endif
-                                ${{ number_format($lastMonthRevenue ?? 0, 2) }} last month
-                            </p>
+                            <p class="mb-2 text-sm font-medium text-muted-foreground">Sold Customers</p>
+                            <p class="text-lg font-semibold text-foreground">{{ $customerdetail ?? 0 }}</p>
+                            <p class="text-sm text-muted-foreground">Marked as 'Sold!' in system</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Charts Grid -->
-            <div class="grid gap-6 mb-8 md:grid-cols-2">
-                <!-- Vehicle Status Chart -->
+            <div class="grid gap-6 mb-8 md:grid-cols-2 xl:grid-cols-2">
                 <div class="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
-                    <h3 class="mb-4 text-lg font-semibold text-foreground">Vehicle Status Distribution</h3>
-                    <div class="h-64" id="vehicleStatusChart"></div>
+                    <h3 class="mb-4 text-lg font-semibold text-foreground">Sales Person Growth</h3>
+                    <div class="h-64" id="salesPersonChart"></div>
                 </div>
 
-                <!-- Revenue Chart -->
                 <div class="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
-                    <h3 class="mb-4 text-lg font-semibold text-foreground">Revenue Trend</h3>
-                    <div class="h-64" id="revenueChart"></div>
+                    <h3 class="mb-4 text-lg font-semibold text-foreground">Customer Count Over Time</h3>
+                    <div class="h-64" id="customerChart"></div>
                 </div>
-            </div>
 
-            <!-- Recent Activities -->
-            <div class="rounded-lg border bg-card text-card-foreground shadow-sm">
-                <div class="p-4 border-b">
-                    <h3 class="text-lg font-semibold text-foreground">Recent Activities</h3>
+                <div class="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
+                    <h3 class="mb-4 text-lg font-semibold text-foreground">Appointments Over Time</h3>
+                    <div class="h-64" id="appointmentChart"></div>
                 </div>
-                <div class="p-4">
-                    <div class="space-y-4">
-                        @forelse($recentActivities ?? [] as $activity)
-                            <div class="flex items-start">
-                                <div class="flex-shrink-0">
-                                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
-                                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    </span>
-                                </div>
-                                <div class="ml-4">
-                                    <p class="text-sm font-medium text-foreground">{{ $activity->description }}</p>
-                                    <p class="text-sm text-muted-foreground">{{ $activity->created_at->diffForHumans() }}</p>
-                                </div>
-                            </div>
-                        @empty
-                            <p class="text-sm text-muted-foreground">No recent activities</p>
-                        @endforelse
-                    </div>
+
+                <div class="p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
+                    <h3 class="mb-4 text-lg font-semibold text-foreground">Sold Customers Ratio</h3>
+                    <div class="h-64" id="soldCustomerChart"></div>
                 </div>
             </div>
         </div>
     </div>
 
     @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script>
-        // Vehicle Status Chart
-        var vehicleStatusOptions = {
-            series: {!! json_encode(array_values($vehicleStatusChart ?? [])) !!},
-            chart: {
-                type: 'donut',
-                height: 250,
-                background: 'transparent',
-                foreColor: '#a1a1aa' // text color for labels
-            },
-            labels: {!! json_encode(array_keys($vehicleStatusChart ?? [])) !!},
-            colors: ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444'],
-            legend: {
-                position: 'bottom',
-                labels: {
-                    colors: '#a1a1aa'
-                }
-            },
-            theme: {
-                mode: 'dark'
-            }
-        };
-        new ApexCharts(document.querySelector("#vehicleStatusChart"), vehicleStatusOptions).render();
+        <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+        <script>
+            new ApexCharts(document.querySelector("#salesPersonChart"), {
+                series: [{ name: 'Sales Persons', data: {!! json_encode($salesGrowthChart ?? [10, 20, 30, 40, 50]) !!} }],
+                chart: { type: 'bar', height: 250, background: 'transparent', foreColor: '#a1a1aa' },
+                xaxis: { categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May'], labels: { style: { colors: '#a1a1aa' } } },
+                colors: ['#0ea5e9'], theme: { mode: 'dark' }
+            }).render();
 
-        // Revenue Chart
-        var revenueOptions = {
-            series: [{
-                name: 'Revenue',
-                data: {!! json_encode(array_values($revenueChart ?? [])) !!}
-            }],
-            chart: {
-                type: 'area',
-                height: 250,
-                toolbar: {
-                    show: false
-                },
-                background: 'transparent',
-                foreColor: '#a1a1aa' // text color for labels
-            },
-            dataLabels: {
-                enabled: false
-            },
-            stroke: {
-                curve: 'smooth',
-                width: 2,
-                colors: ['#0ea5e9']
-            },
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1,
-                    opacityFrom: 0.3,
-                    opacityTo: 0.1,
-                    stops: [0, 90, 100]
-                }
-            },
-            xaxis: {
-                categories: {!! json_encode(array_keys($revenueChart ?? [])) !!},
-                labels: {
-                    style: {
-                        colors: '#a1a1aa'
-                    }
-                },
-                axisBorder: {
-                    show: false
-                },
-                axisTicks: {
-                    show: false
-                }
-            },
-            yaxis: {
-                labels: {
-                    style: {
-                        colors: '#a1a1aa'
-                    }
-                }
-            },
-            grid: {
-                borderColor: '#27272a',
-                strokeDashArray: 4,
-                xaxis: {
-                    lines: {
-                        show: true
-                    }
-                },
-                yaxis: {
-                    lines: {
-                        show: true
-                    }
-                }
-            },
-            tooltip: {
-                y: {
-                    formatter: function (val) {
-                        return "$" + val.toLocaleString()
-                    }
-                },
-                theme: 'dark'
-            },
-            theme: {
-                mode: 'dark'
-            }
-        };
-        new ApexCharts(document.querySelector("#revenueChart"), revenueOptions).render();
-    </script>
+            new ApexCharts(document.querySelector("#customerChart"), {
+                series: [{ name: 'Customers', data: {!! json_encode($customerChart ?? [5, 15, 25, 35, 45]) !!} }],
+                chart: { type: 'line', height: 250, background: 'transparent', foreColor: '#a1a1aa' },
+                stroke: { curve: 'smooth', colors: ['#10b981'] },
+                xaxis: { categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May'], labels: { style: { colors: '#a1a1aa' } } },
+                theme: { mode: 'dark' }
+            }).render();
+
+            new ApexCharts(document.querySelector("#appointmentChart"), {
+                series: [{ name: 'Appointments', data: {!! json_encode($appointmentChart ?? [2, 10, 15, 30, 40]) !!} }],
+                chart: { type: 'area', height: 250, background: 'transparent', foreColor: '#a1a1aa' },
+                fill: { gradient: { opacityFrom: 0.4, opacityTo: 0.1 } },
+                stroke: { curve: 'smooth', colors: ['#8b5cf6'] },
+                xaxis: { categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May'], labels: { style: { colors: '#a1a1aa' } } },
+                theme: { mode: 'dark' }
+            }).render();
+
+            new ApexCharts(document.querySelector("#soldCustomerChart"), {
+                series: Object.values({!! json_encode($soldChart ?? ['Sold' => 60, 'Unsold' => 40]) !!}),
+                chart: { type: 'donut', height: 250, background: 'transparent', foreColor: '#a1a1aa' },
+                labels: Object.keys({!! json_encode($soldChart ?? ['Sold' => 60, 'Unsold' => 40]) !!}),
+                colors: ['#22c55e', '#ef4444'],
+                legend: { position: 'bottom', labels: { colors: '#a1a1aa' } },
+                theme: { mode: 'dark' }
+            }).render();
+        </script>
     @endpush
 </x-app-layout>

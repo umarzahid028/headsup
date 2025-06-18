@@ -119,4 +119,8 @@ public function stopTimer(Request $request, $id)
         return response()->json(['status' => 'success', 'duration' => $formatted]);
     }
 
+    public function addcustomer()
+    {
+        return view('tokens-history/addcustomer');
+    }
 }

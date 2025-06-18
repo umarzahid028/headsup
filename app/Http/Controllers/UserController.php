@@ -69,12 +69,12 @@ class UserController extends Controller
 
    public function saletable()
 {
-         $salescount = User::role('Sales person')
-        ->withCount('customerSales') 
-        ->latest()
-        ->get();
-    $salespersons = User::role('Sales person')->latest()->get();
-    return view('salesperson-form.table', compact('salespersons', 'salescount'));
+   $salespersons = User::role('Sales person')
+    ->withCount('customerSales') 
+    ->latest()
+    ->get();
+   
+    return view('salesperson-form.table', compact('salespersons'));
 }
 
 
