@@ -31,8 +31,8 @@
         <tr class="bg-gray-100">
           <th class="border-b px-4 py-2 text-left">#</th> <!-- Serial Number -->
           <th class="border-b px-4 py-2 text-left">Customer</th>
-          <th class="border-b px-4 py-2 text-left">With</th>
-          <th class="border-b px-4 py-2 text-left">Time</th>
+          <th class="border-b px-4 py-2 text-left">Sale Person</th>
+          <th class="border-b px-4 py-2 text-left">Schedule At</th>
           <th class="border-b px-4 py-2 text-left">Status</th>
           <th class="border-b px-4 py-2 text-left">Action</th>
         </tr>
