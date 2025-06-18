@@ -29,14 +29,6 @@ public function store(Request $request)
         ], 422);
     }
 
-    $sale = null;
-
-    if (!empty($validated['id'])) {
-        $sale = CustomerSale::find($validated['id']);
-    } else {
-        $sale = CustomerSale::where('phone', $validated['phone'])->first();
-    }
-
     $data = [
         'user_id'     => $validated['user_id'] ?? null,
         'name'        => $validated['name'],
@@ -47,6 +39,19 @@ public function store(Request $request)
         'process'     => $validated['process'] ?? [],
         'disposition' => $validated['disposition'] ?? null,
     ];
+
+    // ✅ Always try to update if record with same user_id + email/phone exists
+    if (!empty($validated['id'])) {
+        $sale = CustomerSale::find($validated['id']);
+    } else {
+        $sale = CustomerSale::where('user_id', $data['user_id'])
+            ->where(function ($q) use ($data) {
+                $q->where('email', $data['email'])
+                  ->orWhere('phone', $data['phone']);
+            })
+            ->latest()
+            ->first();
+    }
 
     if ($sale) {
         $sale->update($data);
@@ -62,16 +67,19 @@ public function store(Request $request)
 }
 
 
-    public function index(Request $request)
-    {
-        $customers = CustomerSale::with('user')->latest()->get();
+  public function index(Request $request)
+{
+    $customers = CustomerSale::with('user')
+        ->where('user_id', auth()->id())
+        ->latest()
+        ->get();
 
-        if ($request->ajax() || $request->boolean('partial')) {
-            return view('partials.customers', compact('customers'))->render();
-        }
-
-        return view('sales-person-dashboard.dashboard', compact('customers'));
+    if ($request->ajax() || $request->boolean('partial')) {
+        return view('partials.customers', compact('customers'))->render();
     }
+
+    return view('sales-person-dashboard.dashboard', compact('customers'));
+}
 
 public function transfer(Request $request, $id)
 {
@@ -87,6 +95,7 @@ public function transfer(Request $request, $id)
         'message' => 'Customer transferred successfully.'
     ]);
 }
+
 
 public function stopTimer(Request $request, $id)
     {

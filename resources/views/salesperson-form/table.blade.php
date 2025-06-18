@@ -1,6 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
         <!-- Header Optional -->
+        <h1 class="text-2xl font-semibold text-gray-800 px-4">Sales Person List</h1>
+        <p class="text-sm text-gray-500 mt-1 px-4">
+            View and manage all active sales team members below.
+        </p>
+
     </x-slot>
 
     <style>
@@ -15,8 +20,8 @@
     </style>
 
     <div class="px-6">
-        <div class="flex items-center justify-between mb-4">
-            <h1 class="text-2xl font-semibold">Sales Person List</h1>
+        <div class="flex items-center justify-end mb-4 px-6">
+
             <a href="{{ route('create.saleperson') }}" class="bg-black text-white px-4 py-2 rounded">
                 Add Sales Person
             </a>
@@ -53,19 +58,37 @@
             }
         });
 
-        $(function () {
+        $(function() {
             $('#sales-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: "{{ route('saleperson.table') }}",
-                columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                    { data: 'name', name: 'name' },
-                    { data: 'email', name: 'email' },
-                    { data: 'counter_number', name: 'counter_number' },
-                    { data: 'action', name: 'action', orderable: false, searchable: false },
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'name',
+                        name: 'name'
+                    },
+                    {
+                        data: 'email',
+                        name: 'email'
+                    },
+                    {
+                        data: 'counter_number',
+                        name: 'counter_number'
+                    },
+                    {
+                        data: 'action',
+                        name: 'action',
+                        orderable: false,
+                        searchable: false
+                    },
                 ],
-                error: function (xhr, error, thrown) {
+                error: function(xhr, error, thrown) {
                     Swal.fire({
                         icon: 'error',
                         title: 'DataTable Error',
@@ -82,7 +105,8 @@
         Swal.fire({
             icon: 'success',
             title: 'Success',
-            text: '{{ session('success') }}',
+            text: '{{ session('
+            success ') }}',
             confirmButtonColor: '#111827',
         });
     </script>
@@ -93,53 +117,54 @@
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: '{{ session('error') }}',
+            text: '{{ session('
+            error ') }}',
             confirmButtonColor: '#d33',
         });
     </script>
     @endif
 
-<script>
-    $(document).on('click', '.delete-user', function () {
-        var id = $(this).data('id');
+    <script>
+        $(document).on('click', '.delete-user', function() {
+            var id = $(this).data('id');
 
-        Swal.fire({
-            title: 'Are you sure?',
-            text: "You won't be able to revert this!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, delete it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: '/salesperson/delete/' + id,
-                    type: 'DELETE',
-                    data: {
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function (response) {
-                        Swal.fire(
-                            'Deleted!',
-                            response.message,
-                            'success'
-                        ).then(() => {
-                            location.reload(); // Optionally reload after alert
-                        });
-                    },
-                    error: function (xhr) {
-                        Swal.fire(
-                            'Error!',
-                            xhr.responseText,
-                            'error'
-                        );
-                    }
-                });
-            }
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/salesperson/delete/' + id,
+                        type: 'DELETE',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            Swal.fire(
+                                'Deleted!',
+                                response.message,
+                                'success'
+                            ).then(() => {
+                                location.reload(); // Optionally reload after alert
+                            });
+                        },
+                        error: function(xhr) {
+                            Swal.fire(
+                                'Error!',
+                                xhr.responseText,
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
         });
-    });
-</script>
+    </script>
 
 
 </x-app-layout>

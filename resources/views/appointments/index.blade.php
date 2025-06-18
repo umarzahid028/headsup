@@ -11,54 +11,81 @@
     <div class="px-6 space-y-6">
         <h3 class="text-2xl font-bold mb-4">All Assigned Customers</h3>
 
-        @if ($customerSales->isEmpty())
+        @if ($appointments->isEmpty())
             <div class="text-gray-500">No assigned customers found.</div>
         @else
             <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
                 <table class="min-w-full bg-white divide-y divide-gray-200">
-                    <thead class="bg-black">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">#</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Customer Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Assigned At</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Duration</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 text-left">
-                        @foreach ($customerSales as $index => $sale)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-3">{{ $index + 1 }}</td>
-                                <td class="px-6 py-3">{{ $sale->name ?? 'Unknown' }}</td>
-                                <td class="px-6 py-3">{{ \Carbon\Carbon::parse($sale->created_at)->format('d M Y h:i A') }}</td>
-                                <td class="px-6 py-3">
-                                    @if ($sale->served_at)
-                                        <span class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">Served</span>
-                                    @else
-                                        <span class="inline-block px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded">Pending</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-3">
-                                    @if ($sale->served_duration)
-                                        <span class="font-mono text-black">{{ $sale->served_duration }}</span>
-                                    @else
-                                        <span class="live-duration font-mono text-black">00:00:00</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-3 space-x-2">
-                                    @if (!$sale->served_duration)
-                                        <button onclick="startCustomerTimer({{ $sale->id }})" class="bg-blue-600 text-white text-xs px-3 py-1 rounded">Start</button>
-                                        <button onclick="stopCustomerTimer()" class="bg-red-600 text-white text-xs px-3 py-1 rounded">Stop</button>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
-    </div>
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="border-b px-4 py-2 text-left">#</th> <!-- Serial Number -->
+          <th class="border-b px-4 py-2 text-left">Customer</th>
+          <th class="border-b px-4 py-2 text-left">With</th>
+          <th class="border-b px-4 py-2 text-left">Time</th>
+          <th class="border-b px-4 py-2 text-left">Status</th>
+          <th class="border-b px-4 py-2 text-left">Action</th>
+        </tr>
+      </thead>
+    <tbody>
+  @forelse($appointments as $index => $appt)
+    <tr>
+      <td class="border-b px-4 py-3">{{ $loop->iteration }}</td>
+      <td class="border-b px-4 py-3">{{ $appt->customer_name }}</td>
+      <td class="border-b px-4 py-3">{{ $appt->salesperson->name }}</td>
+      <td class="border-b px-4 py-3">{{ $appt->date }} {{ $appt->time }}</td>
+      <td class="border-b px-4 py-3">
+        @php
+          $statusClasses = [
+            'processing' => 'bg-yellow-200 text-yellow-800',
+            'completed' => 'bg-green-200 text-green-800',
+            'no_show' => 'bg-red-200 text-red-800',
+          ];
+          $statusClass = $statusClasses[$appt->status] ?? 'bg-gray-200 text-gray-800';
+        @endphp
+        <span class="inline-block px-3 py-1 text-sm font-semibold rounded-full {{ $statusClass }}">
+          {{ ucfirst($appt->status) }}
+        </span>
+      </td>
+      <td class="border-b px-4 py-3">
+        <div class="flex flex-wrap gap-3 items-center">
+          @if(auth()->user()->id === $appt->salesperson_id || auth()->user()->hasRole('Admin'))
+            <form method="POST" action="/appointments/{{ $appt->id }}/status">
+              @csrf
+              <div class="flex gap-3 items-center">
+                <select name="status" class="border rounded px-3 py-2 text-base w-56">
+                  <option value="processing" {{ $appt->status == 'processing' ? 'selected' : '' }}>Processing</option>
+                  <option value="completed" {{ $appt->status == 'completed' ? 'selected' : '' }}>Completed</option>
+                  <option value="no_show" {{ $appt->status == 'no_show' ? 'selected' : '' }}>No Show</option>
+                </select>
+
+                <button type="submit" style="background-color: #111827;" class="text-white font-semibold rounded px-5 py-2 text-base transition duration-150">
+                  Update
+                </button>
+              </div>
+            </form>
+          @endif
+
+          @if((auth()->user()->hasRole('Sales person') && $appt->status != 'completed') || auth()->user()->hasRole('Admin'))
+            <a href="{{ route('appointment.form', ['id' => $appt->id]) }}" style="background-color: #111827;" class="text-white font-bold py-2 px-4 rounded">
+              View
+            </a>
+          @endif
+        </div>
+      </td>
+    </tr>
+  @empty
+    <tr>
+      <td colspan="6" class="text-center py-6 text-gray-500 text-base italic">
+        No appointments found.
+      </td>
+    </tr>
+  @endforelse
+</tbody>
+
+    </table>
+@endif
+  </div>
+
 
     {{-- CSRF token --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -133,7 +160,6 @@
                 }
             }
 
-            // اگر لوکل اسٹوریج میں پرانا ٹائمر چل رہا ہے
             if (localStorage.getItem(TIMER_KEY)) {
                 updateTimers();
                 intervalId = setInterval(updateTimers, 1000);

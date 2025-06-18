@@ -1,10 +1,14 @@
 <x-app-layout>
   <x-slot name="header">
-
+<h2 class="text-2xl font-bold text-gray-800 mb-1 px-4">
+  Create Appointment
+</h2>
+<p class="text-gray-500 text-sm px-4">
+  Schedule a new appointment by filling out the form below.
+</p>
+ </x-slot>
     <div class="">
       <!-- Page Heading -->
-      <h2 class="text-2xl font-bold text-gray-800 mb-3 max-w-7xl mx-auto sm:px-6 lg:px-8">Create Appointment</h2>
-
       <div class="max-w-full mx-auto sm:px-6 lg:px-8">
         <div class="bg-white shadow rounded-lg p-6">
           <form method="POST" action="/appointments">
