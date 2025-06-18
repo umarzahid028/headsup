@@ -67,26 +67,16 @@ class UserController extends Controller
      * Store a newly created resource in storage.
      */
 
-    public function saletable(Request $request)
-    {
-        if ($request->ajax()) {
-            $data = User::role('Sales person')->latest()->get();
+   public function saletable()
+{
+         $salescount = User::role('Sales person')
+        ->withCount('customerSales') 
+        ->latest()
+        ->get();
+    $salespersons = User::role('Sales person')->latest()->get();
+    return view('salesperson-form.table', compact('salespersons', 'salescount'));
+}
 
-            return DataTables::of($data)
-                ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    $editUrl = route('edit.saleperson', ['id' => $row->id]);
-                    $editBtn = '<a href="' . $editUrl . '" class="inline-flex items-center px-3 py-1 text-xs font-medium text-black bg-yellow-400 rounded hover:bg-yellow-500">Edit</a>';
-
-                    $deleteBtn = '<button data-id="' . $row->id . '" class="ml-2 inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 delete-user">Delete</button>';
-                    return $editBtn . $deleteBtn;
-                })
-                ->rawColumns(['action'])
-                ->make(true);
-        }
-
-        return view('salesperson-form.table');
-    }
 
     public function editsales(Request $request, $id)
     {
