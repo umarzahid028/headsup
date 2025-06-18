@@ -54,11 +54,6 @@ Route::post('/sales-person', [QueuesController::class, 'dashboardstore'])->name(
 //Sales person status
 Route::get('/status', [StatusController::class, 'showStatus']);
 
-//Tokens Routes
-Route::get('/tokens', [TokenController::class, 'showTokensPage'])->name('tokens.page');
-
-Route::post('/tokens/generate', [TokenController::class, 'generateToken'])->name('tokens.generate');
-
 // Active tokens ke liye API (AJAX se call hoga, auth & role middleware lagao)
 Route::get('/queue-list', [TokenController::class, 'activeTokens'])->name('tokens.active');
 Route::middleware(['auth', 'role:Sales person'])->group(function () {

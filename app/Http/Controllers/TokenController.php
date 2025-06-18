@@ -17,60 +17,6 @@ class TokenController extends Controller
         return view('tokens.tokens');
     }
 
-public function generateToken(Request $request)
-{
-    // Step 1: Validate the input
-    $validated = $request->validate([
-        'customer_name' => 'required|string|max:255',
-    ]);
-
-    // Step 2: Get all checked-in Sales persons
-    $checkedInUserIds = Queue::where('is_checked_in', true)->pluck('user_id')->toArray();
-
-    $availableSalespersons = User::role('Sales person')
-        ->whereIn('id', $checkedInUserIds)
-        ->get();
-
-    if ($availableSalespersons->isEmpty()) {
-        return response()->json(['message' => 'No available salespersons found'], 422);
-    }
-
-    // Step 3: Filter free salespersons
-    $busyUserIds = Token::where('status', 'assigned')->pluck('user_id')->toArray();
-
-    $freeSalespersons = $availableSalespersons->filter(function ($user) use ($busyUserIds) {
-        return !in_array($user->id, $busyUserIds);
-    });
-
-    // Step 4: Get next serial number (optional if you want to keep it)
-    $lastToken = Token::orderBy('serial_number', 'desc')->first();
-    $nextSerial = $lastToken ? $lastToken->serial_number + 1 : 1;
-
-    // Step 5: Create Token
-    if ($freeSalespersons->isNotEmpty()) {
-        $freeSalesperson = $freeSalespersons->first();
-
-        $token = Token::create([
-            'user_id' => $freeSalesperson->id,
-            'serial_number' => $nextSerial, // optional
-            'status' => 'assigned',
-            'assigned_at' => Carbon::now(),
-            'customer_name' => $validated['customer_name'],
-        ]);
-    } else {
-        $token = Token::create([
-            'user_id' => null,
-            'serial_number' => $nextSerial, // optional
-            'status' => 'pending',
-            'assigned_at' => null,
-            'customer_name' => $validated['customer_name'],
-        ]);
-    }
-
-    return response()->json(['token' => $token]);
-}
-
-
 // app/Http/Controllers/YourController.php
 
 public function activeTokens(Request $request)
