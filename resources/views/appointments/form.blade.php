@@ -133,17 +133,20 @@
       })
       .then(res => res.json())
       .then(data => {
-        if (data.status === 'success') {
-          Swal.fire({
-            title: 'Success!',
-            text: data.message,
-            icon: 'success',
-            confirmButtonColor: false,
-          }).then(() => {
-            modal.classList.add('hidden');
-            salesForm.reset(); 
-          });
-        } else {
+      if (data.status === 'success') {
+  Swal.fire({
+    title: 'Success!',
+    text: data.message,
+    icon: 'success',
+    showConfirmButton: false,  
+    timer: 2000,              
+    timerProgressBar: true     
+  });
+
+  modal.classList.add('hidden');
+  salesForm.reset();
+}
+ else {
           Swal.fire('Error', 'Something went wrong!', 'error');
         }
       })

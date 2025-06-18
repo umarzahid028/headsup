@@ -17,9 +17,6 @@
                 Add Appoinments
             </a>
         </div>
-       
-
-
       
             <!-- <div class="text-gray-500">No assigned customers found.</div> -->
       

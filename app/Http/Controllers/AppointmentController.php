@@ -47,7 +47,7 @@ class AppointmentController extends Controller
             'date' => $request->date,
             'time' => $request->time,
             'notes' => $request->notes,
-            'status' => 'scheduled',
+            'status' => 'pending',
         ]);
 
         return redirect('/appointments')->with('success', 'Appointment booked successfully.');
