@@ -111,6 +111,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointment.create');
         Route::post('/appointments', [AppointmentController::class, 'store']);
     });
+Route::get('/appointments/{appointment}/edit', [AppointmentController::class, 'edit'])->name('appointments.edit');
+Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
+
+
 
     // Only Sales Person
     Route::middleware('role:Admin|Sales person')->group(function () {

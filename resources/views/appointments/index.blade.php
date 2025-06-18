@@ -60,7 +60,7 @@
       <td class="border-b px-4 py-3">
         <div class="flex flex-wrap gap-3 items-center">
           @if(auth()->user()->id === $appt->salesperson_id || auth()->user()->hasRole('Admin'))
-            <form method="POST" action="/appointments/{{ $appt->id }}/status">
+            <!-- <form method="POST" action="/appointments/{{ $appt->id }}/status">
               @csrf
               <div class="flex gap-3 items-center">
                 <select name="status" class="border rounded px-3 py-2 text-base w-56">
@@ -73,12 +73,16 @@
                   Update
                 </button>
               </div>
-            </form>
+            </form> -->
+
           @endif
 
           @if((auth()->user()->hasRole('Sales person') && $appt->status != 'completed') || auth()->user()->hasRole('Admin'))
             <a href="{{ route('appointment.form', ['id' => $appt->id]) }}" style="background-color: #111827;" class="text-white font-bold py-2 px-4 rounded">
               View
+            </a>
+             <a href="{{ route('appointments.edit', ['appointment' => $appt->id]) }}" class="text-yellow-600 border border-yellow-600 font-bold py-2 px-4 rounded hover:bg-yellow-600 hover:text-white transition" style="background-color:#111827; Color:white;">
+                Edit
             </a>
           @endif
         </div>
