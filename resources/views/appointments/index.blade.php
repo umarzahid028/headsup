@@ -20,9 +20,9 @@
        
 
 
-        @if ($appointments->isEmpty())
+      
             <!-- <div class="text-gray-500">No assigned customers found.</div> -->
-        @else
+      
         
             <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
            
@@ -94,7 +94,7 @@
 </tbody>
 
     </table>
-@endif
+
   </div>
 
 
