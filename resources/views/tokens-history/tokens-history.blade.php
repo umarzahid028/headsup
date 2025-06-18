@@ -24,7 +24,7 @@
                             <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Assigned At</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Activities</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Duration</th>
+                            <!-- <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Duration</th> -->
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 text-left">
@@ -45,9 +45,9 @@
                                         <span class="inline-block px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 rounded">Processing</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-3">
+                                <!-- <td class="px-6 py-3">
                                     <span class="live-duration font-mono text-black">00:00:00</span>
-                                </td>
+                                </td> -->
                             </tr>
                         @endforeach
                     </tbody>

@@ -10,11 +10,22 @@
 
     <div class="px-6 space-y-6">
         <h3 class="text-2xl font-bold mb-4">All Assigned Customers</h3>
+        
+            <div class="flex items-center justify-end mb-4 px-6">
+
+            <a href="{{ route('appointment.create') }}" class="bg-black text-white px-4 py-2 rounded">
+                Add Appoinments
+            </a>
+        </div>
+       
+
 
         @if ($appointments->isEmpty())
-            <div class="text-gray-500">No assigned customers found.</div>
+            <!-- <div class="text-gray-500">No assigned customers found.</div> -->
         @else
+        
             <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
+           
                 <table class="min-w-full bg-white divide-y divide-gray-200">
       <thead>
         <tr class="bg-gray-100">
