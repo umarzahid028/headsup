@@ -78,7 +78,7 @@
           @endif
 
           @if((auth()->user()->hasRole('Sales person') && $appt->status != 'completed') || auth()->user()->hasRole('Admin'))
-            <a href="{{ route('appointment.form', ['id' => $appt->id]) }}" style="background-color: #111827;" class="text-white font-bold py-2 px-4 rounded">
+            <a href="{{ route('appointment.form') }}" style="background-color: #111827;" class="text-white font-bold py-2 px-4 rounded">
               View
             </a>
              <a href="{{ route('appointments.edit', ['appointment' => $appt->id]) }}" class="text-yellow-600 border border-yellow-600 font-bold py-2 px-4 rounded hover:bg-yellow-600 hover:text-white transition" style="background-color:#111827; Color:white;">

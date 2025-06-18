@@ -100,13 +100,10 @@ public function update(Request $request, Appointment $appointment)
         return redirect()->back()->with('success', 'Status updated.');
     }
 
-    public function appointmentform($id)
+    public function appointmentform()
     {
-        $appointment = Appointment::findOrFail($id);
-        if ($appointment->salesperson_id !== auth()->id() && !auth()->user()->hasAnyRole(['Admin', 'Sales person'])) {
-            abort(403);
-        }
-        return view('appointments.form', compact('appointment'));
+        
+        return view('appointments.form');
     }
 
     public function appointmentstore(Request $request)

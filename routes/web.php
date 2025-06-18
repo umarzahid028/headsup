@@ -122,7 +122,7 @@ Route::put('/appointments/{appointment}', [AppointmentController::class, 'update
     });
 });
 //Appointment form routes
-Route::get('appointment/form/{id}', [AppointmentController::class, 'appointmentform'])->name('appointment.form');
+Route::get('appointment/form', [AppointmentController::class, 'appointmentform'])->name('appointment.form');
 Route::post('/appointment-sales', [AppointmentController::class, 'appointmentstore'])->name('customer.appointment.store');
 //Token History
 Route::get('token/history', [TokenController::class, 'tokenhistory'])->name('token.history.view');
