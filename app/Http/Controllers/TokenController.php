@@ -9,6 +9,7 @@ use App\Models\Token;
 use App\Models\CustomerSale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TokenController extends Controller
 {
@@ -74,28 +75,37 @@ public function activeTokens(Request $request)
 
 
 //Check in
+// Controller Method (already discussed)
 public function checkinSalespersons(Request $request)
 {
-    // Get unique checked-in users from the Queue table
-    $checkedInUsers = Queue::where('is_checked_in', true)
-        ->with('user')
-        ->latest()
+    // Get only those users who are currently checked-in
+    $latestCheckinPerUser = \App\Models\Queue::select(DB::raw('MIN(id) as id'))
+        ->where('is_checked_in', true)
+        ->whereNotExists(function ($query) {
+            $query->select(DB::raw(1))
+                ->from('queues as q2')
+                ->whereColumn('q2.user_id', 'queues.user_id')
+                ->where('q2.id', '>', DB::raw('queues.id')) // newer record exists
+                ->where('q2.is_checked_in', false); // which is a checkout
+        })
+        ->groupBy('user_id');
+
+    $checkins = \App\Models\Queue::whereIn('id', $latestCheckinPerUser)
+        ->with('user:id,name')
         ->get()
-        ->unique('user_id')
         ->map(function ($queue) {
             return [
                 'name' => $queue->user->name ?? 'Unnamed',
-                'time' => $queue->created_at->format('h:i A') ?? '',
+                'time' => optional($queue->created_at)->toIso8601String(),
             ];
-        })->values();
+        });
 
     if ($request->wantsJson()) {
-        return response()->json($checkedInUsers);
+        return response()->json($checkins);
     }
 
-    return view('screen.checkins', ['checkins' => $checkedInUsers]);
+    return view('screen.checkins', ['checkins' => $checkins]);
 }
-
 
 //Current Token
  public function currentAssignedToken(Request $request)
