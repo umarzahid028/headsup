@@ -1,12 +1,12 @@
 <x-app-layout>
     <x-slot name="header">
-      
+    <h1 class="text-2xl font-semibold px-4">Create User</h1>
+    <p class="text-gray-600 px-4">Add a new Sale Person to the system.</p>
     </x-slot>
 
 
 <div class="px-6">
-    <h1 class="text-2xl font-semibold mb-2">Create User</h1>
-    <p class="text-gray-600 mb-6">Add a new Sale Person to the system.</p>
+    
 
     <form action="{{ route('store.saleperson') }}" method="POST" class="bg-white shadow rounded-lg p-6">
         @csrf
