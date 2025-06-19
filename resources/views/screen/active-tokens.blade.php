@@ -23,11 +23,13 @@
 
     #container {
       width: 90%;
-      max-width: 1280px;
+      max-width: 1600px;
       margin: auto;
       padding: 1rem 0;
       height: 100vh;
       box-sizing: border-box;
+      display: flex;
+      gap: 1.5rem;
     }
 
     section {
@@ -37,7 +39,6 @@
       padding: 2rem;
       display: flex;
       flex-direction: column;
-      align-items: center;
       height: 100%;
       animation: fadeSlide 1s ease-out;
     }
@@ -45,10 +46,11 @@
     h1 {
       user-select: none;
       color: #fff;
-      font-size: 5rem;
+      font-size: 4rem;
       font-weight: 800;
       margin-bottom: 2rem;
       text-shadow: 0 0 10px #fff, 0 0 20px #999;
+      text-align: center;
     }
 
     .scrollable {
@@ -98,6 +100,20 @@
       font-size: 1rem;
     }
 
+    .checkin-item {
+      border-bottom: 1px solid #444;
+      padding: 0.75rem 0;
+    }
+
+    .checkin-item div {
+      font-size: 1.5rem;
+    }
+
+    .checkin-item small {
+      color: #999;
+      font-size: 1rem;
+    }
+
     @keyframes fadeSlide {
       0% {
         opacity: 0;
@@ -112,16 +128,24 @@
 </head>
 <body>
   <div id="container">
-    <section id="active">
+    
+    <!-- Left: Active Tokens -->
+    <section id="active" class="flex-1">
       <h1>Status</h1>
-
       <div class="token-heading">
         <div>Name</div>
         <div>Customer Name</div>
         <div>Status</div>
       </div>
-
       <div id="tokenList" class="scrollable"></div>
+    </section>
+
+    <!-- Right: Check-In List -->
+    <section id="checkin" class="w-[35%]">
+      <h1>Check-In</h1>
+      <div id="checkinList" class="scrollable">
+        <div class="text-center text-white text-2xl">Loading check-ins...</div>
+      </div>
     </section>
   </div>
 
@@ -153,9 +177,7 @@
             row.style.animationDelay = `${(index * 3 + cIndex) * 150}ms`;
             row.innerHTML = `
               <div><span class="whitespace-nowrap">${name}</span></div>
-              <div>
-                <span class="inline-block text-lg">${customerName}</span>
-              </div>
+              <div><span class="inline-block text-lg">${customerName}</span></div>
               <div>
                 ${
                   processes.length
@@ -174,9 +196,42 @@
       }
     }
 
+    async function fetchCheckins() {
+      try {
+        const response = await fetch('{{ route('salespersons.checkin') }}', {
+          headers: { 'Accept': 'application/json' }
+        });
+
+        const data = await response.json();
+        const checkinList = document.getElementById('checkinList');
+        checkinList.innerHTML = '';
+
+        if (!data || data.length === 0) {
+          checkinList.innerHTML = `<div class="text-center text-white text-2xl">No check-ins</div>`;
+          return;
+        }
+
+        data.forEach((person) => {
+          const div = document.createElement('div');
+          div.className = 'checkin-item';
+          div.innerHTML = `
+            <div>${person.name || 'Unnamed'}</div>
+            <small>${person.time || 'Unknown time'}</small>
+          `;
+          checkinList.appendChild(div);
+        });
+
+      } catch (error) {
+        console.error('Check-in fetch error:', error);
+        document.getElementById('checkinList').innerHTML = `<div class="text-red-500 text-center">Failed to load check-ins</div>`;
+      }
+    }
+
     window.onload = () => {
       fetchAndUpdateTokens();
+      fetchCheckins();
       setInterval(fetchAndUpdateTokens, 5000);
+      setInterval(fetchCheckins, 10000);
     };
   </script>
 </body>

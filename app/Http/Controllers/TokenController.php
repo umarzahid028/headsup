@@ -72,6 +72,31 @@ public function activeTokens(Request $request)
     return view('screen.active-tokens', ['tokens' => $activeData]);
 }
 
+
+//Check in
+public function checkinSalespersons(Request $request)
+{
+    // Get unique checked-in users from the Queue table
+    $checkedInUsers = Queue::where('is_checked_in', true)
+        ->with('user')
+        ->latest()
+        ->get()
+        ->unique('user_id')
+        ->map(function ($queue) {
+            return [
+                'name' => $queue->user->name ?? 'Unnamed',
+                'time' => $queue->created_at->format('h:i A') ?? '',
+            ];
+        })->values();
+
+    if ($request->wantsJson()) {
+        return response()->json($checkedInUsers);
+    }
+
+    return view('screen.checkins', ['checkins' => $checkedInUsers]);
+}
+
+
 //Current Token
  public function currentAssignedToken(Request $request)
     {

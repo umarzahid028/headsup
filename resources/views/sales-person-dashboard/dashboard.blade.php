@@ -622,71 +622,100 @@
   <!-- form auto save -->
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('salesForm');
     const fields = form.querySelectorAll('input, textarea');
 
     let debounceTimeout;
     fields.forEach(field => {
-        field.addEventListener('input', () => {
-            clearTimeout(debounceTimeout);
-            debounceTimeout = setTimeout(() => autoSaveForm(), 700);
-        });
+      field.addEventListener('input', () => {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => autoSaveForm(), 700);
+      });
     });
 
     async function autoSaveForm() {
-        const formData = new FormData(form);
-        try {
-            const response = await fetch('{{ route('customer.sales.store') }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                body: formData
-            });
+      const formData = new FormData(form);
+      try {
+        const response = await fetch('{{ route('customer.sales.store') }}', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: formData
+        });
 
-            const result = await response.json();
-            if (result.status === 'success') {
-                loadCustomers();
-            }
-        } catch (err) {
-            console.error('Auto-save failed', err);
+        const result = await response.json();
+        if (result.status === 'success') {
+          loadCustomers();
         }
+      } catch (err) {
+        console.error('Auto-save failed', err);
+      }
     }
 
     async function loadCustomers() {
-        const resp = await fetch('{{ route('customer.index') }}?partial=1', {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        });
-        const html = await resp.text();
-        document.getElementById('customer-list').innerHTML = html;
-        bindCardClickEvents();
+      const resp = await fetch('{{ route('customer.index') }}?partial=1', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+      const html = await resp.text();
+      document.getElementById('customer-list').innerHTML = html;
+      bindCardClickEvents(); // After loading new cards, re-bind events
+      applyActiveCard();     // Apply animation to previously active card
     }
 
     function bindCardClickEvents() {
-        document.querySelectorAll('.customer-card').forEach(card => {
-            card.addEventListener('click', () => {
-                form.querySelector('input[name="id"]').value = card.dataset.customerId || '';
-                form.querySelector('input[name="name"]').value = card.dataset.name || '';
-                form.querySelector('input[name="email"]').value = card.dataset.email || '';
-                form.querySelector('input[name="phone"]').value = card.dataset.phone || '';
-                form.querySelector('input[name="interest"]').value = card.dataset.interest || '';
+      document.querySelectorAll('.customer-card').forEach(card => {
+        card.addEventListener('click', () => {
+          // Save selected card ID to localStorage
+          const customerId = card.dataset.customerId;
+          localStorage.setItem('activeCustomerId', customerId);
 
-                form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
-                if (card.dataset.process) {
-                    card.dataset.process.split(',').forEach(proc => {
-                        const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
-                          .find(cb => cb.value.trim() === proc.trim());
-                        if (checkbox) checkbox.checked = true;
-                    });
-                }
+          // Fill form
+          form.querySelector('input[name="id"]').value = customerId || '';
+          form.querySelector('input[name="name"]').value = card.dataset.name || '';
+          form.querySelector('input[name="email"]').value = card.dataset.email || '';
+          form.querySelector('input[name="phone"]').value = card.dataset.phone || '';
+          form.querySelector('input[name="interest"]').value = card.dataset.interest || '';
+
+          form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+          if (card.dataset.process) {
+            card.dataset.process.split(',').forEach(proc => {
+              const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
+                .find(cb => cb.value.trim() === proc.trim());
+              if (checkbox) checkbox.checked = true;
             });
+          }
+
+          // Set animation class
+          document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
+          card.classList.add('active-card');
         });
+      });
     }
 
+    // Apply animation class to saved card
+    function applyActiveCard() {
+      const savedId = localStorage.getItem('activeCustomerId');
+      const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
+      if (savedCard) {
+        document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
+        savedCard.classList.add('active-card');
+      } else {
+        // If nothing saved or found, fallback to first card
+        const first = document.querySelector('.customer-card');
+        if (first) {
+          first.classList.add('active-card');
+          localStorage.setItem('activeCustomerId', first.dataset.customerId);
+        }
+      }
+    }
+
+    // First load
     bindCardClickEvents();
-});
+    applyActiveCard();
+  });
 </script>
 
   <!-- Form Show  -->
@@ -697,28 +726,6 @@ document.addEventListener('DOMContentLoaded', () => {
 </script> -->
 
 
-
-
-<!-- animation selected card -->
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-  const customerCards = document.querySelectorAll('.customer-card');
-
-  customerCards.forEach(card => {
-    card.addEventListener('click', () => {
-      // Remove animation from all cards first
-      customerCards.forEach(c => c.classList.remove('active-card'));
-
-      // Force reflow to restart animation
-      void card.offsetWidth;
-
-      // Add animation to the selected card
-      card.classList.add('active-card');
-    });
-  });
-});
-
-</script>
 
 
   <!-- Form Reset -->

@@ -168,6 +168,8 @@ Route::middleware('auth')->get('/next-turn-status', function () {
     ]);
 });
 
+Route::get('/checkins', [TokenController::class, 'checkinSalespersons'])->name('salespersons.checkin');
+
 Route::post('/stop-timer/{id}', [CustomerSaleController::class, 'stopTimer']);
 // Customer Transfor
 Route::post('/customers/{id}/transfer', [CustomerSaleController::class, 'transfer']);
