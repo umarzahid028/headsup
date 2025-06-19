@@ -13,10 +13,12 @@ class Queue extends Model
         'checked_out_at',
         'took_turn_at'
     ];
-    public function user()
+// app/Models/Queue.php
+public function user()
 {
-    return $this->belongsTo(User::class);
+    return $this->belongsTo(User::class, 'user_id');
 }
+
 
 
 }

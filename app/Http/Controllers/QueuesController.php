@@ -88,4 +88,40 @@ public function takeTurn(Request $request)
     return response()->json(['message' => 'Turn completed.']);
 }
 
+
+// app/Http/Controllers/QueueController.php
+
+public function nextTurnStatus()
+{
+    $user = Auth::user();
+
+    // Next in queue (turn not taken yet)
+    $nextInQueue = Queue::with('user')
+        ->where('is_checked_in', true)
+        ->whereNull('took_turn_at')
+        ->orderBy('id')
+        ->first();
+
+    // Boolean: is it your turn?
+    $isYourTurn = $nextInQueue && $nextInQueue->user_id === $user->id;
+
+    // Count others in queue excluding you
+    $othersPending = Queue::where('is_checked_in', true)
+        ->whereNull('took_turn_at')
+        ->where('user_id', '!=', $user->id)
+        ->count();
+
+    // Boolean: is anyone else checked in (excluding you)
+    $anyoneElse = $othersPending > 0;
+
+    return response()->json([
+        'is_your_turn' => $isYourTurn,
+        'others_pending' => $othersPending,
+        'user_name' => $nextInQueue && $nextInQueue->user ? $nextInQueue->user->name : null,
+        'current_turn_user_id' => $nextInQueue ? $nextInQueue->user_id : null,
+        'any_one_else' => $anyoneElse,
+    ]);
+}
+
+
 }

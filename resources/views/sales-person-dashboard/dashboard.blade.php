@@ -244,136 +244,119 @@
   </script>
 
 
+<script>
+  let durationInterval = null;
 
-  <script>
-    let durationInterval = null;
+  function startDurationTimer(startTimeIso) {
+    const start = new Date(startTimeIso);
 
-    function startDurationTimer(startTimeIso) {
-      const start = new Date(startTimeIso);
+    function updateDuration() {
+      const now = new Date();
+      const diffMs = now - start;
 
-      function updateDuration() {
-        const now = new Date();
-        const diffMs = now - start;
+      const seconds = Math.floor((diffMs / 1000) % 60);
+      const minutes = Math.floor((diffMs / 1000 / 60) % 60);
+      const hours = Math.floor((diffMs / 1000 / 60 / 60));
 
-        const seconds = Math.floor((diffMs / 1000) % 60);
-        const minutes = Math.floor((diffMs / 1000 / 60) % 60);
-        const hours = Math.floor((diffMs / 1000 / 60 / 60));
+      const formatted = [
+        hours > 0 ? `${hours}h` : '',
+        minutes > 0 ? `${minutes}m` : '',
+        `${seconds}s`
+      ].filter(Boolean).join(' ');
 
-        const formatted = [
-          hours > 0 ? `${hours}h` : '',
-          minutes > 0 ? `${minutes}m` : '',
-          `${seconds}s`
-        ].filter(Boolean).join(' ');
-
-        document.getElementById('duration').textContent = formatted;
-      }
-
-      updateDuration();
-      if (durationInterval) clearInterval(durationInterval);
-      durationInterval = setInterval(updateDuration, 1000);
+      document.getElementById('duration').textContent = formatted;
     }
 
-    @if($isCheckedIn && $checkInTimeRaw)
-    startDurationTimer('{{ \Carbon\Carbon::parse($checkInTimeRaw)->toIso8601String() }}');
-    @endif
+    updateDuration();
+    if (durationInterval) clearInterval(durationInterval);
+    durationInterval = setInterval(updateDuration, 1000);
+  }
 
-    $.ajaxSetup({
-      headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+  @if($isCheckedIn && $checkInTimeRaw)
+    startDurationTimer('{{ \Carbon\Carbon::parse($checkInTimeRaw)->toIso8601String() }}');
+  @endif
+
+  $.ajaxSetup({
+    headers: {
+      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+  });
+
+  $('#checkToggleForm').on('submit', function(e) {
+    e.preventDefault();
+
+    const btn = $('#checkToggleButton');
+    const btnText = btn.find('.btn-text');
+    const spinner = btn.find('.btn-spinner');
+
+    btn.prop('disabled', true);
+    btnText.addClass('hidden');
+    spinner.removeClass('hidden');
+
+    $.ajax({
+      url: $(this).attr('action'),
+      method: 'POST',
+      data: $(this).serialize(),
+      success: function(response) {
+        btn.prop('disabled', false);
+        btnText.removeClass('hidden');
+        spinner.addClass('hidden');
+
+        if (response.checked_in) {
+          // ✅ Checked In UI
+          btnText.text('Check Out');
+          btn.removeClass('bg-green-500 hover:bg-green-600')
+            .addClass('bg-red-500 hover:bg-red-600');
+
+          $('.status-text').text('✅ Checked In')
+            .removeClass('bg-red-100 text-red-700')
+            .addClass('bg-green-100 text-green-800');
+
+          $('#check-in-time').text(new Date(response.checked_in_at).toLocaleString());
+          $('#check-out-time').text('N/A');
+
+          $('#duration-wrapper').removeClass('hidden');
+          $('#duration').text('Loading...');
+          startDurationTimer(response.checked_in_at);
+
+        } else {
+          // ❌ Checked Out UI
+          btnText.text('Check In');
+          btn.removeClass('bg-red-500 hover:bg-red-600')
+            .addClass('bg-green-500 hover:bg-green-600');
+
+          $('.status-text').text('❌ Checked Out')
+            .removeClass('bg-green-100 text-green-800')
+            .addClass('bg-red-100 text-red-700');
+
+          $('#check-out-time').text(new Date().toLocaleString());
+          $('#duration-wrapper').addClass('hidden');
+          clearInterval(durationInterval);
+        }
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: response.message,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      },
+      error: function() {
+        btn.prop('disabled', false);
+        btnText.removeClass('hidden');
+        spinner.addClass('hidden');
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Something went wrong. Please try again.',
+        });
       }
     });
+  });
+</script>
 
-    $('#checkToggleForm').on('submit', function(e) {
-      e.preventDefault();
-
-      const btn = $('#checkToggleButton');
-      const btnText = btn.find('.btn-text');
-      const spinner = btn.find('.btn-spinner');
-
-      btn.prop('disabled', true);
-      btnText.addClass('hidden');
-      spinner.removeClass('hidden');
-
-      $.ajax({
-        url: $(this).attr('action'),
-        method: 'POST',
-        data: $(this).serialize(),
-        success: function(response) {
-          btn.prop('disabled', false);
-          btnText.removeClass('hidden');
-          spinner.addClass('hidden');
-
-          if (response.checked_in) {
-            // Checked In UI
-            btnText.text('Check Out');
-            btn.removeClass('bg-green-500 hover:bg-green-600')
-              .addClass('bg-red-500 hover:bg-red-600');
-
-            $('.status-text').text('✅ Checked In')
-              .removeClass('bg-red-100 text-red-700')
-              .addClass('bg-green-100 text-green-800');
-
-            $('#check-in-time').text(new Date(response.checked_in_at).toLocaleString());
-            $('#check-out-time').text('N/A');
-
-            $('#duration-wrapper').removeClass('hidden');
-            $('#duration').text('Loading...');
-            startDurationTimer(response.checked_in_at);
-
-            // 🔊 AUTO ANNOUNCE & ANIMATION
-            const userName = @json(Auth::user() -> name);
-            const message = `${userName}, it's your turn. Please proceed.`;
-
-            // Voice
-            const utterance = new SpeechSynthesisUtterance(message);
-            utterance.lang = 'en-US';
-            speechSynthesis.speak(utterance);
-
-            // Visual animation
-            $('#turn-user-name').text(message);
-            $('#turn-announcement').removeClass('hidden');
-
-            setTimeout(() => {
-              $('#turn-announcement').addClass('hidden');
-            }, 5000);
-
-          } else {
-            // Checked Out UI
-            btnText.text('Check In');
-            btn.removeClass('bg-red-500 hover:bg-red-600')
-              .addClass('bg-green-500 hover:bg-green-600');
-
-            $('.status-text').text('❌ Checked Out')
-              .removeClass('bg-green-100 text-green-800')
-              .addClass('bg-red-100 text-red-700');
-
-            $('#check-out-time').text(new Date().toLocaleString());
-            $('#duration-wrapper').addClass('hidden');
-            clearInterval(durationInterval);
-          }
-
-          Swal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: response.message,
-            timer: 2000,
-            showConfirmButton: false,
-          });
-        },
-        error: function() {
-          btn.prop('disabled', false);
-          btnText.removeClass('hidden');
-          spinner.addClass('hidden');
-
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Something went wrong. Please try again.',
-          });
-        }
-      });
-    });
-  </script>
 
   <!-- Every Customer live time -->
   <script>
@@ -443,70 +426,69 @@
   </script>
 
   <!-- Turn Status -->
-  <script>
-    function updateTurnStatus() {
-      console.log("📡 Checking turn status...");
+<script>
+  let currentTurnUserId = null;
 
-      $.get('/next-turn-status')
-        .done(function(res) {
-          console.log("✅ Turn status response:", res);
+  function updateTurnStatus() {
+    $.get('/next-turn-status')
+      .done(res => {
+        console.log(res);
 
-          if (res.is_your_turn) {
-            $('#turn-status').text('🟢 It’s your turn now!');
-            $('#newCustomerBtn').prop('disabled', false);
-          } else {
-            const waitText = res.others_pending > 0 ?
-              '⏳ Waiting for the other salesperson to finish turn...' :
-              '— Check into queue to participate —';
-            $('#turn-status').text(waitText);
-            $('#newCustomerBtn').prop('disabled', true);
-          }
-        })
-        .fail(function(jqXHR, textStatus, errorThrown) {
-          console.error("🔥 Turn check failed:", jqXHR.responseText);
-          $('#turn-status').text('⚠️ Error checking turn status.');
+        const isMyTurn = res.is_your_turn;
+        const othersPending = res.others_pending;
+        const anyOneElse = res.any_one_else;
+        const newTurnUserId = res.current_turn_user_id;
+        const userName = res.user_name || "";
+
+        // 💡 If no one else is checked in and it's not your turn: show nothing
+        if (!anyOneElse && !isMyTurn) {
+          $('#turn-status').text('');
           $('#newCustomerBtn').prop('disabled', true);
-        });
-    }
-
-    $('#newCustomerBtn').on('click', function() {
-      $.ajax({
-        url: '{{ route("sales.person.takeTurn") }}',
-        method: 'POST',
-        data: {
-          _token: $('meta[name="csrf-token"]').attr('content')
-        },
-        success: function(response) {
-          const msg = 'Your turn is complete.';
-          const utter = new SpeechSynthesisUtterance(msg);
-          utter.lang = 'en-US';
-
-
-          Swal.fire({
-            icon: 'success',
-            title: 'Done!',
-            text: msg,
-            timer: 2000,
-            showConfirmButton: false
-          });
-
-          updateTurnStatus();
-        },
-        error: function() {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Something went wrong.'
-          });
+          currentTurnUserId = newTurnUserId;
+          return;
         }
-      });
-    });
 
-    $(document).ready(function() {
-      updateTurnStatus();
-      setInterval(updateTurnStatus, 10000);
+        if (isMyTurn) {
+          $('#turn-status').text('🟢 It’s your turn now!');
+          $('#newCustomerBtn').prop('disabled', false);
+          if (currentTurnUserId !== newTurnUserId) {
+            const msg = `It's your turn now${userName ? ', ' + userName : ''}!`;
+            speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
+          }
+        } else if (anyOneElse) {
+          $('#turn-status').text('⏳ Waiting for the other salesperson to finish turn...');
+          $('#newCustomerBtn').prop('disabled', true);
+        } else {
+          $('#turn-status').text('');
+          $('#newCustomerBtn').prop('disabled', true);
+        }
+
+        currentTurnUserId = newTurnUserId;
+      })
+      .fail(() => {
+        $('#turn-status').text('⚠️ Error checking turn status.');
+        $('#newCustomerBtn').prop('disabled', true);
+      });
+  }
+
+  $('#newCustomerBtn').on('click', function () {
+    $.ajax({
+      url: '{{ route("sales.person.takeTurn") }}',
+      method: 'POST',
+      data: { _token: $('meta[name="csrf-token"]').attr('content') },
+      success: () => {
+        Swal.fire({icon: 'success', title: 'Done!', timer: 1500, showConfirmButton: false});
+        updateTurnStatus();
+      },
+      error: () => Swal.fire({icon: 'error', title: 'Error occurred!'})
     });
-  </script>
+  });
+
+  $(document).ready(() => {
+    updateTurnStatus();
+    setInterval(updateTurnStatus, 10000);
+  });
+</script>
 
   <script>
     const modal = document.getElementById('customerModal');

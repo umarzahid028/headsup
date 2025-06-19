@@ -142,31 +142,8 @@ Route::middleware(['auth'])->get('/sales/activity-report', [SalesDashboardContro
 
 Route::post('/sales-person/take-turn', [QueuesController::class, 'takeTurn'])
     ->name('sales.person.takeTurn');
+Route::get('/next-turn-status', [QueuesController::class, 'nextTurnStatus']);
 
-
-Route::middleware('auth')->get('/next-turn-status', function () {
-    $user = Auth::user();
-
-    $myQueue = Queue::where('user_id', $user->id)
-        ->where('is_checked_in', true)
-        ->whereNull('took_turn_at')
-        ->orderBy('id')
-        ->first();
-
-    $othersBefore = 0;
-
-    if ($myQueue) {
-        $othersBefore = Queue::where('is_checked_in', true)
-            ->whereNull('took_turn_at')
-            ->where('id', '<', $myQueue->id)
-            ->count();
-    }
-
-    return response()->json([
-        'is_your_turn'   => $myQueue !== null && $othersBefore === 0,
-        'others_pending' => $othersBefore,
-    ]);
-});
 
 Route::get('/checkins', [TokenController::class, 'checkinSalespersons'])->name('salespersons.checkin');
 
