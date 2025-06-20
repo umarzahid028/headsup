@@ -48,7 +48,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 });
 
 //Queues Routes
-Route::get('/sales-person/{id}', [DashboardController::class, 'salesdashboard'])->name('sales.perosn');
+Route::get('/sales/{id}', [DashboardController::class, 'salesdashboard'])->name('sales.perosn');
 Route::post('/sales-person', [QueuesController::class, 'dashboardstore'])->name('sales.person.store');
 
 //Sales person status
@@ -158,4 +158,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/customers/transfer', [CustomerSaleController::class, 'transferToManager'])->name('customers.transfer');
 });
 
-require __DIR__ . '/auth.php';
+// Time customer
+Route::post('/customer/complete-form/{id}', [CustomerSaleController::class, 'completeForm'])->name('customer.completeForm');
+
+    
+
+    require __DIR__.'/auth.php';
+

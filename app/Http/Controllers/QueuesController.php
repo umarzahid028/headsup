@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Queue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -123,5 +124,30 @@ public function nextTurnStatus()
     ]);
 }
 
+public function completeForm(Request $request)
+{
+    $user = Auth::user();
 
+    $queue = Queue::where('user_id', $user->id)
+        ->whereNotNull('took_turn_at')
+        ->whereNull('form_completed_at')
+        ->latest()
+        ->first();
+
+    if (!$queue) {
+        return response()->json(['message' => 'No active form found to complete.'], 404);
+    }
+
+    $queue->form_completed_at = now();
+    $queue->save();
+
+    $duration = Carbon::parse($queue->took_turn_at)
+        ->diff(Carbon::parse($queue->form_completed_at))
+        ->format('%Hh %Im %Ss');
+
+    return response()->json([
+        'message' => 'Form completed successfully.',
+        'duration' => $duration,
+    ]);
+}
 }

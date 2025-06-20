@@ -131,57 +131,6 @@
   }
 </style>
 
-<div id="customer-list">
-  
 
-   
-      <div
-        id="card-{{ $customer->id }}"
-        class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
-        data-name="{{ $appointment->customer_name }}"
-       
-        data-phone="{{ $customer->phone ?? '' }}"
-        data-interest="{{ $customer->interest ?? '' }}"
-        data-process="{{ is_array($customer->process) ? implode(',', $customer->process) : $customer->process }}"
-        data-disposition="{{ $dispositions }}"
-        data-customer-id="{{ $customer->id }}"
-        data-customer-name="{{ $customer->name }}"
-      >
-        <div class="flex justify-between items-center">
-          <h2 class="text-xl font-semibold text-gray-800">Appointment Details</h2>
-        </div>
-
-        <div class="space-y-2 text-gray-500 text-sm mt-3">
-          <p>
-            <span class="font-medium text-gray-400">Sales Person:</span>
-            <span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full ml-2">
-               {{ $appointment->salesperson->name ?? 'N/A' }}
-            </span>
-          </p>
-          <p><span class="font-medium text-gray-400">Name:</span>{{ $appointment->customer_name }}</p>
-          <p><span class="font-medium text-gray-400">Email:</span> {{ $appointment->customer_phone ?? '–' }}</p>
-          <p><span class="font-medium text-gray-400">Process:</span>{{ $appointment->date }} {{ $appointment->time }}</p>
-          <p><span class="font-medium text-gray-400">Disposition:</span> {{ $dispositions ?? 'N/A' }}</p>
-        </div>
-
-        <div class="w-full">
-          <button
-  class="transfer-btn mt-4 bg-[#111827] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#0f172a] transition"
-  data-customer-id="{{ $customer->id }}"
-  data-customer-name="{{ $customer->name }}"
->
-  Transfer
-</button>
-     <button id="toBtn"
-      style="background-color: #111827;"
-      type="button"
-    class="bg-indigo-600 text-white font-semibold px-6 py-2 rounded-xl hover:bg-indigo-700 transition"
-    >
-      T/O
-    </button>
-        </div>
-      </div>
-   
-</div>
 
 

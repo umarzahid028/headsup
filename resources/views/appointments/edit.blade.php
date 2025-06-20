@@ -4,7 +4,7 @@
       Update Appointment
     </h2>
     <p class="text-gray-500 text-sm px-4">
-      Update existing appointment details using the form below.
+      Update appointment details and status using the form below.
     </p>
   </x-slot>
 
@@ -12,7 +12,6 @@
     <div class="max-w-full mx-auto sm:px-6 lg:px-8">
       <div class="bg-white shadow rounded-lg p-6">
 
-        <!-- Main Appointment Update Form -->
         <form method="POST" action="{{ route('appointments.update', $appointment->id) }}">
           @csrf
           @method('PUT')
@@ -51,17 +50,20 @@
 
           <!-- Salesperson -->
           <h3 class="text-lg font-semibold text-gray-700 mb-4">Salesperson</h3>
-          <div class="mb-8">
-            <label class="block text-sm font-medium text-gray-700">Select Salesperson</label>
-            <select name="salesperson_id"
-              class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              @foreach($salespersons as $person)
-                <option value="{{ $person->id }}" {{ $appointment->salesperson_id == $person->id ? 'selected' : '' }}>
-                  {{ $person->name }}
-                </option>
-              @endforeach
-            </select>
-          </div>
+<div class="mb-8">
+  <label class="block text-sm font-medium text-gray-700">Select Salesperson</label>
+
+  <select name="salesperson_id" required
+    class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+    @foreach($salespersons as $person)
+      <option value="{{ $person->id }}" {{ $appointment->salesperson_id == $person->id ? 'selected' : '' }}>
+        {{ $person->name }}
+      </option>
+    @endforeach
+  </select>
+</div>
+
+
 
           <!-- Notes -->
           <h3 class="text-lg font-semibold text-gray-700 mb-4">Additional Notes</h3>
@@ -71,40 +73,26 @@
               class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">{{ old('notes', $appointment->notes) }}</textarea>
           </div>
 
-          <!-- Submit button -->
+          <!-- Status -->
+          <h3 class="text-lg font-semibold text-gray-700 mb-4">Appointment Status</h3>
+          <div class="mb-8">
+            <label class="block text-sm font-medium text-gray-700">Select Status</label>
+            <select name="status"
+              class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <option value="scheduled" {{ $appointment->status == 'scheduled' ? 'selected' : '' }}>Scheduled</option>
+              <option value="completed" {{ $appointment->status == 'completed' ? 'selected' : '' }}>Completed</option>
+              <option value="cancel" {{ $appointment->status == 'cancel' ? 'selected' : '' }}>Cancel</option>
+            </select>
+          </div>
+
+          <!-- Submit -->
           <div class="flex justify-end">
-            <button type="submit" style="background-color: #111827;"
-              class="py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <button type="submit"
+              class="py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
               Update Appointment
             </button>
           </div>
         </form>
-
-        <!-- Appointment Status Update Section -->
-        <div class="mt-10 border-t pt-6">
-          <h3 class="text-lg font-semibold text-gray-700 mb-4">Appointment Status Update</h3>
-
-          @forelse($appointments as $index => $appt)
-            <form method="POST" action="/appointments/{{ $appt->id }}/status" class="mb-4">
-              @csrf
-              <div class="flex flex-col md:flex-row md:items-center gap-3">
-                <select name="status" class="border rounded px-3 py-2 text-base w-full md:w-56">
-                  <option value="processing" {{ $appt->status == 'processing' ? 'selected' : '' }}>Processing</option>
-                  <option value="completed" {{ $appt->status == 'completed' ? 'selected' : '' }}>Completed</option>
-                  <option value="no_show" {{ $appt->status == 'no_show' ? 'selected' : '' }}>No Show</option>
-                  <option value="Cancel" {{ $appt->status == 'Cancel' ? 'selected' : '' }}>Cancel</option>
-                </select>
-
-                <button type="submit"
-                  class="bg-gray-900 text-white font-semibold rounded px-5 py-2 text-base transition duration-150">
-                  Update
-                </button>
-              </div>
-            </form>
-          @empty
-            <p class="text-gray-500 text-sm">No appointments found.</p>
-          @endforelse
-        </div>
 
       </div>
     </div>

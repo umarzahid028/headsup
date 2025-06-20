@@ -89,6 +89,8 @@
   <div id="formContainer">
     <form id="salesForm" method="POST" action="{{ route('customer.sales.store') }}" class=" grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
       @csrf
+       <input type="hidden" name="appointment_id" value="{{ $appointment->id ?? '' }}">
+
 <div class="md:col-span-2">
   <h3 class="text-2xl font-bold text-gray-800 leading-tight mb-0">Customer Sales Form</h3>
   <p class="text-gray-500 mt-0 leading-tight">Fill out the details below to log a customer sales interaction.</p>
@@ -110,7 +112,7 @@
           <input name="{{ $field }}" type="{{ $field == 'email' ? 'email' : 'text' }}"
             class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
             value="{{ $sale->$field ?? '' }}"
-            @if(in_array($field, ['name', 'email', 'phone'])) required @endif />
+            @if(in_array($field, ['name', 'phone'])) required @endif />
         </div>
         @endforeach
       </div>
@@ -173,11 +175,10 @@
 
       <!-- Modal Trigger -->
       <div class="md:col-span-2 text-right mt-4">
-        <button id="openModalBtn" style="background-color: #111827;" type="button"
+       <button id="openModalBtn"  onclick="completeForm({{ $customer->id }})" style="background-color: #111827;" type="button"
           class="bg-indigo-600 text-white font-semibold px-6 py-2 rounded-xl">
           Close
         </button>
-   
       </div>
     </form>
   </div>
@@ -221,14 +222,56 @@
         </div>
 
         <div>
-           <button id="newCustomerBtn" type="button" class="w-full bg-[#111827] text-white font-semibold px-6 py-2 rounded-xl mb-4">Take Customer</button>
+          <button id="newCustomerBtn" type="button" class="w-full bg-[#111827] text-white font-semibold px-6 py-2 rounded-xl mb-4">Take Customer</button>
         </div>
       </div>
 
       <!-- Scrollable Customers -->
       <div class="flex-1 overflow-y-auto pr-2" id="customerCards">
         @include('partials.customers', ['customers' => $customers])
+         {{-- صرف تب کارڈ دکھائیں جب status "completed" نہ ہو --}}
+@if($appointment->status !== 'completed')
+  <div id="customer-list">
+    <div
+      class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
+      data-name="{{ $appointment->customer_name }}"
+      data-phone="{{ $appointment->customer_phone }}"
+    >
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-semibold text-gray-800">Appointment Details</h2>
       </div>
+
+      <div class="space-y-2 text-gray-500 text-sm mt-3">
+        <p>
+          <span class="font-medium text-gray-400">Sales Person:</span>
+          <span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full ml-2">
+             {{ $appointment->salesperson->name ?? 'N/A' }}
+          </span>
+        </p>
+        <p><span class="font-medium text-gray-400">Name:</span> {{ $appointment->customer_name }}</p>
+        <p><span class="font-medium text-gray-400">Phone No :</span> {{ $appointment->customer_phone ?? '–' }}</p>
+        <p><span class="font-medium text-gray-400">Date & Time:</span> {{ $appointment->date }} {{ $appointment->time }}</p>
+      </div>
+
+      <div class="w-full">
+        <button
+          class="transfer-btn mt-4 bg-[#111827] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#0f172a] transition">
+          Transfer
+        </button>
+
+        <button id="toBtn"
+          style="background-color:#111827;"
+          type="button"
+          class="bg-indigo-600 text-white font-semibold px-6 py-2 rounded-xl hover:bg-indigo-700 transition">
+          T/O
+        </button>
+      </div>
+    </div>
+  </div>
+@endif
+
+     
+</div>
     </div>
   </div>
 
@@ -243,6 +286,24 @@
       form.classList.toggle('hidden');
     }
   </script>
+
+<!-- Time duration  -->
+<script>
+function completeForm(customerId) {
+    fetch(`/customer/complete-form/${customerId}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message || 'Form completed');
+    });
+}
+</script>
+
 
 
 <script>
@@ -394,75 +455,6 @@
   });
 </script>
 
-
-
-
-  <!-- Every Customer live time -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const TIMER_KEY = 'customer_timer_start';
-      let intervalId = null;
-
-      function formatDuration(seconds) {
-        const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
-        const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-        const secs = String(seconds % 60).padStart(2, '0');
-        return `${hrs}:${mins}:${secs}`;
-      }
-
-      function updateTimers() {
-        const start = localStorage.getItem(TIMER_KEY);
-        if (!start) return;
-
-        const startTime = new Date(parseInt(start));
-        const now = new Date();
-        const diff = Math.floor((now - startTime) / 1000);
-        const formatted = formatDuration(diff);
-
-        document.querySelectorAll('.live-duration').forEach(el => {
-          el.textContent = formatted;
-        });
-      }
-
-      function startTimer() {
-        // Always reset the timer on new customer
-        localStorage.setItem(TIMER_KEY, Date.now());
-
-        if (intervalId) clearInterval(intervalId);
-        intervalId = setInterval(updateTimers, 1000);
-        updateTimers(); // initial update
-      }
-
-      function stopTimer() {
-        if (intervalId) {
-          clearInterval(intervalId);
-          intervalId = null;
-        }
-
-        localStorage.removeItem(TIMER_KEY);
-        document.querySelectorAll('.live-duration').forEach(el => {
-          el.textContent += ' (Ended)';
-        });
-      }
-
-      // Bind buttons
-      const startBtn = document.getElementById('newCustomerBtn');
-      const stopBtn = document.getElementById('openModalBtn');
-
-      if (startBtn) {
-        startBtn.addEventListener('click', startTimer);
-      }
-
-      if (stopBtn) {
-        stopBtn.addEventListener('click', stopTimer);
-      }
-
-      // Optional: resume timer on page reload (if needed)
-      if (localStorage.getItem(TIMER_KEY)) {
-        startTimer();
-      }
-    });
-  </script>
 
   <!-- Turn Status -->
 <script>
@@ -642,102 +634,102 @@
 </script>
   <!-- form auto save -->
 
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('salesForm');
-    const fields = form.querySelectorAll('input, textarea');
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('salesForm');
+      const fields = form.querySelectorAll('input, textarea');
 
-    let debounceTimeout;
-    fields.forEach(field => {
-      field.addEventListener('input', () => {
-        clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => autoSaveForm(), 700);
-      });
-    });
-
-    async function autoSaveForm() {
-      const formData = new FormData(form);
-      try {
-        const response = await fetch('{{ route('customer.sales.store') }}', {
-          method: 'POST',
-          headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-          body: formData
+      let debounceTimeout;
+      fields.forEach(field => {
+        field.addEventListener('input', () => {
+          clearTimeout(debounceTimeout);
+          debounceTimeout = setTimeout(() => autoSaveForm(), 700);
         });
-
-        const result = await response.json();
-        if (result.status === 'success') {
-          loadCustomers();
-        }
-      } catch (err) {
-        console.error('Auto-save failed', err);
-      }
-    }
-
-    async function loadCustomers() {
-      const resp = await fetch('{{ route('customer.index') }}?partial=1', {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
       });
-      const html = await resp.text();
-      document.getElementById('customer-list').innerHTML = html;
-      bindCardClickEvents(); // After loading new cards, re-bind events
-      applyActiveCard();     // Apply animation to previously active card
-    }
 
-    function bindCardClickEvents() {
-      document.querySelectorAll('.customer-card').forEach(card => {
-        card.addEventListener('click', () => {
-          // Save selected card ID to localStorage
-          const customerId = card.dataset.customerId;
-          localStorage.setItem('activeCustomerId', customerId);
+      async function autoSaveForm() {
+        const formData = new FormData(form);
+        try {
+          const response = await fetch('{{ route('customer.sales.store') }}', {
+            method: 'POST',
+            headers: {
+              'X-CSRF-TOKEN': '{{ csrf_token() }}',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData
+          });
 
-          // Fill form
-          form.querySelector('input[name="id"]').value = customerId || '';
-          form.querySelector('input[name="name"]').value = card.dataset.name || '';
-          form.querySelector('input[name="email"]').value = card.dataset.email || '';
-          form.querySelector('input[name="phone"]').value = card.dataset.phone || '';
-          form.querySelector('input[name="interest"]').value = card.dataset.interest || '';
-
-          form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
-          if (card.dataset.process) {
-            card.dataset.process.split(',').forEach(proc => {
-              const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
-                .find(cb => cb.value.trim() === proc.trim());
-              if (checkbox) checkbox.checked = true;
-            });
+          const result = await response.json();
+          if (result.status === 'success') {
+            loadCustomers();
           }
-
-          // Set animation class
-          document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
-          card.classList.add('active-card');
-        });
-      });
-    }
-
-    // Apply animation class to saved card
-    function applyActiveCard() {
-      const savedId = localStorage.getItem('activeCustomerId');
-      const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
-      if (savedCard) {
-        document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
-        savedCard.classList.add('active-card');
-      } else {
-        // If nothing saved or found, fallback to first card
-        const first = document.querySelector('.customer-card');
-        if (first) {
-          first.classList.add('active-card');
-          localStorage.setItem('activeCustomerId', first.dataset.customerId);
+        } catch (err) {
+          console.error('Auto-save failed', err);
         }
       }
-    }
 
-    // First load
-    bindCardClickEvents();
-    applyActiveCard();
-  });
-</script>
+      async function loadCustomers() {
+        const resp = await fetch('{{ route('customer.index') }}?partial=1', {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        const html = await resp.text();
+        document.getElementById('customer-list').innerHTML = html;
+        bindCardClickEvents(); // After loading new cards, re-bind events
+        applyActiveCard();     // Apply animation to previously active card
+      }
+
+      function bindCardClickEvents() {
+        document.querySelectorAll('.customer-card').forEach(card => {
+          card.addEventListener('click', () => {
+            // Save selected card ID to localStorage
+            const customerId = card.dataset.customerId;
+            localStorage.setItem('activeCustomerId', customerId);
+
+            // Fill form
+            form.querySelector('input[name="id"]').value = customerId || '';
+            form.querySelector('input[name="name"]').value = card.dataset.name || '';
+            form.querySelector('input[name="email"]').value = card.dataset.email || '';
+            form.querySelector('input[name="phone"]').value = card.dataset.phone || '';
+            form.querySelector('input[name="interest"]').value = card.dataset.interest || '';
+
+            form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+            if (card.dataset.process) {
+              card.dataset.process.split(',').forEach(proc => {
+                const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
+                  .find(cb => cb.value.trim() === proc.trim());
+                if (checkbox) checkbox.checked = true;
+              });
+            }
+
+            // Set animation class
+            document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
+            card.classList.add('active-card');
+          });
+        });
+      }
+
+      // Apply animation class to saved card
+      function applyActiveCard() {
+        const savedId = localStorage.getItem('activeCustomerId');
+        const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
+        if (savedCard) {
+          document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
+          savedCard.classList.add('active-card');
+        } else {
+          // If nothing saved or found, fallback to first card
+          const first = document.querySelector('.customer-card');
+          if (first) {
+            first.classList.add('active-card');
+            localStorage.setItem('activeCustomerId', first.dataset.customerId);
+          }
+        }
+      }
+
+      // First load
+      bindCardClickEvents();
+      applyActiveCard();
+    });
+  </script>
 
   <!-- Form Show  -->
  <!-- <script>
@@ -813,7 +805,7 @@
             showConfirmButton: false,
             willClose: () => {
               // 👇 Redirect after SweetAlert closes
-              window.location.href = result.redirect || "{{ route('sales.perosn') }}";
+              window.location.href = result.redirect;
             }
           });
 
@@ -835,5 +827,33 @@
       }
     });
   </script>
+
+
+<script>
+  $('#closeFormBtn').on('click', function () {
+    $.ajax({
+      url: '{{ route("sales.person.completeForm") }}',
+      method: 'POST',
+      data: {
+        _token: $('meta[name="csrf-token"]').attr('content')
+      },
+      success: function (res) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Form Completed!',
+          text: 'Duration: ' + res.duration
+        });
+      },
+      error: function () {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: 'Could not complete the form.'
+        });
+      }
+    });
+  });
+</script>
+
   @endpush
 </x-app-layout>

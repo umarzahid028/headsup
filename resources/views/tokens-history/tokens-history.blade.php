@@ -25,6 +25,8 @@
                         <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Assigned At</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Activities</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Disposition</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Duration</th>
+
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 text-left">
@@ -51,6 +53,26 @@
                                     {{ $sale->disposition ?? 'N/A' }}
                                 </span>
                             </td>
+@php
+use Carbon\Carbon;
+
+$duration = 'N/A';
+
+if ($sale->ended_at && $queue = $sale->user->queues()->whereNotNull('took_turn_at')->latest('took_turn_at')->first()) {
+    $start = Carbon::parse($queue->took_turn_at);
+    $end = Carbon::parse($sale->ended_at);
+    $duration = $start->diff($end)->format('%Hh %Im %Ss');
+}
+@endphp
+
+<td class="px-6 py-3">
+    <span class="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded">
+        {{ $duration }}
+    </span>
+</td>
+
+
+
                         </tr>
                     @empty
                         <tr>

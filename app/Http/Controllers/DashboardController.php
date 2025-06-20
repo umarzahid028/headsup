@@ -38,8 +38,8 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         if ($user->hasRole('Sales person')) {
-            return redirect()->route('sales.perosn');
-        }
+    return redirect()->route('sales.perosn', ['id' => $user->id]);
+}
           $queues = User::role('Sales person')->count();
 
     $lastMonthCount = User::role('Sales person')
@@ -66,7 +66,7 @@ $customerdetail = CustomerSale::where('disposition', 'Sold!')->count();
 
 
     //Sales perosn
-    public function salesdashboard()
+    public function salesdashboard($id)
     {
         
         $user = Auth::user();
@@ -101,6 +101,8 @@ $customerdetail = CustomerSale::where('disposition', 'Sold!')->count();
                 ->first();
         }
 
-        return view('sales-person-dashboard.dashboard', compact('token', 'onHoldToken', 'customers', 'salespeople'));
+            $appointment = Appointment::findOrFail($id);
+       
+        return view('sales-person-dashboard.dashboard', compact('token', 'onHoldToken', 'customers', 'salespeople', 'appointment'));
     }
 }

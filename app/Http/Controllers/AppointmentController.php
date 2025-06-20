@@ -19,8 +19,7 @@ class AppointmentController extends Controller
             $appointments = Appointment::latest()->get();
         } else {
             $appointments = collect();
-        }
-
+        }   
         return view('appointments.index', compact('appointments'));
     }
     public function create()
@@ -62,7 +61,7 @@ class AppointmentController extends Controller
         'date' => $request->date,
         'time' => $request->time,
         'notes' => $request->notes,
-        'status' => 'pending',
+        'status' => 'scheduled',
     ]);
 
     return redirect('/appointments')->with('success', 'Appointment booked successfully.');
@@ -83,61 +82,31 @@ public function edit(Appointment $appointment)
 
     return view('appointments.edit', compact('appointment', 'salespersons', 'appointments'));
 }
-
 public function update(Request $request, Appointment $appointment)
 {
-    $user = auth()->user();
-
-    // Validation rules
-    $rules = [
-        'customer_name' => 'required',
-        'customer_phone' => 'required',
-        'date' => 'required|date',
-        'time' => 'required',
-    ];
-
-    // Admin or Sales Manager must provide salesperson_id
-    if (in_array($user->role, ['Admin', 'Sales Manager'])) {
-        $rules['salesperson_id'] = 'required|exists:users,id';
-    }
-
-    $request->validate($rules);
-
-    // Determine salesperson_id
-    $salespersonId = in_array($user->role, ['Admin', 'Sales Manager']) 
-        ? $request->salesperson_id 
-        : $user->id;
-
-    // Update appointment
-    $appointment->update([
-        'salesperson_id' => $salespersonId,
-        'customer_name' => $request->customer_name,
-        'customer_phone' => $request->customer_phone,
-        'date' => $request->date,
-        'time' => $request->time,
-        'notes' => $request->notes,
+    $validated = $request->validate([
+        'customer_name'   => 'required|string',
+        'customer_phone'  => 'required|string',
+        'date'            => 'required|date',
+        'time'            => 'required',
+        'status'          => 'required|in:scheduled,completed,cancel',
+        'salesperson_id'  => 'required|exists:users,id',  
+        'notes'           => 'nullable|string',
     ]);
 
-    return redirect()->route('appointment.records')->with('success', 'Appointment updated successfully.');
+    $appointment->update([
+        'customer_name'   => $validated['customer_name'],
+        'customer_phone'  => $validated['customer_phone'],
+        'date'            => $validated['date'],
+        'time'            => $validated['time'],
+        'status'          => $validated['status'],
+        'salesperson_id'  => $validated['salesperson_id'],
+        'notes'           => $validated['notes'] ?? null,
+    ]);
+
+    return redirect()
+           ->route('appointment.records')
+           ->with('success', 'Appointment updated successfully.');
 }
-
-
-
-    public function updateStatus(Request $request, $id)
-    {
-        $appointment = Appointment::findOrFail($id);
-        
-        if ($appointment->salesperson_id !== auth()->id() && !auth()->user()) {
-            abort(403);
-        }
-
-        $request->validate([
-            'status' => 'required|in:processing,completed,no_show',
-        ]);
-
-        $appointment->update(['status' => $request->status]);
-
-        return redirect()->back()->with('success', 'Status updated.');
-    }
 
 }
