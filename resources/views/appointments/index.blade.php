@@ -56,15 +56,14 @@
       </td>
       <td class="border-b px-4 py-3">
         <div class="flex flex-wrap gap-3 items-center">
-          @if(auth()->user()->id === $appt->salesperson_id || auth()->user()->hasRole('Admin'))
-           
-
-          @endif
-
+        
          
-            <a href="{{ route('appointment.form') }}" style="background-color: #111827;" class="text-white font-bold py-1 px-4 rounded">
-              
-            </a>
+<a href="{{ route('sales.perosn', ['id' => $appt->id]) }}"
+   class="text-white font-bold py-1 px-4 rounded"
+   style="background-color: #111827;">
+   Customer Arrive
+</a>
+
              <a href="{{ route('appointments.edit', ['appointment' => $appt->id]) }}" class="text-yellow-600 border border-yellow-600 font-bold py-1   px-4 rounded hover:bg-yellow-600 hover:text-white transition" style="background-color:#111827; Color:white;">
                 Edit
             </a>

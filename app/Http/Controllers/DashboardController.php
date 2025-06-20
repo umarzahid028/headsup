@@ -68,6 +68,7 @@ $customerdetail = CustomerSale::where('disposition', 'Sold!')->count();
     //Sales perosn
     public function salesdashboard()
     {
+        
         $user = Auth::user();
 
         $customers = CustomerSale::with('user')
@@ -95,6 +96,7 @@ $customerdetail = CustomerSale::where('disposition', 'Sold!')->count();
             $onHoldToken = Token::with('salesperson')
                 ->where('user_id', $user->id)
                 ->where('status', 'on_hold')
+        
                 ->latest('created_at')
                 ->first();
         }

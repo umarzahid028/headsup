@@ -48,7 +48,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 });
 
 //Queues Routes
-Route::get('/sales-person', [DashboardController::class, 'salesdashboard'])->name('sales.perosn');
+Route::get('/sales-person/{id}', [DashboardController::class, 'salesdashboard'])->name('sales.perosn');
 Route::post('/sales-person', [QueuesController::class, 'dashboardstore'])->name('sales.person.store');
 
 //Sales person status
@@ -112,7 +112,8 @@ Route::middleware(['auth'])->group(function () {
    
 Route::get('/appointments/{appointment}/edit', [AppointmentController::class, 'edit'])->name('appointments.edit');
 Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
-
+Route::get('/appointments/{appointment}/form', [AppointmentController::class, 'form'])->name('appointments.form');
+Route::post('/appointments/form', [AppointmentController::class, 'formstore'])->name('appointments.form.store');
 
 
     // Only Sales Person
@@ -121,7 +122,7 @@ Route::put('/appointments/{appointment}', [AppointmentController::class, 'update
   
 });
 //Appointment form routes
-Route::get('appointment/form', [AppointmentController::class, 'appointmentform'])->name('appointment.form');
+
 Route::post('/appointment-sales', [AppointmentController::class, 'appointmentstore'])->name('customer.appointment.store');
 //Token History
 Route::get('token/history', [TokenController::class, 'tokenhistory'])->name('token.history.view');

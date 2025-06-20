@@ -140,26 +140,4 @@ public function update(Request $request, Appointment $appointment)
         return redirect()->back()->with('success', 'Status updated.');
     }
 
-    public function appointmentform()
-    {
-        
-        return view('appointments.form');
-    }
-
-    public function appointmentstore(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|email',
-            'phone' => 'required|string',
-            'interest' => 'nullable|string',
-            'notes' => 'nullable|string',
-            'process' => 'nullable|array',
-            'disposition' => 'nullable|array',
-        ]);
-
-        CustomerSale::create($validated);
-
-        return redirect()->route('appointment.records')->with('success', 'Customer sale data saved successfully!');
-    }
 }
