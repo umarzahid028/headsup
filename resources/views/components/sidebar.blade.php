@@ -17,31 +17,31 @@
         <nav class="space-y-1">
 
             <!-- Dashboard -->
-          @php
-    $user = auth()->user();
-    $isDashboardActive =
-        ($user->hasAnyRole(['Admin', 'Sales Manager']) && request()->routeIs('dashboard')) ||
-        ($user->hasRole('Sales person') && request()->routeIs('sales.perosn'));
-@endphp
+            @php
+            $user = auth()->user();
+            $isDashboardActive =
+            ($user->hasAnyRole(['Admin', 'Sales Manager']) && request()->routeIs('dashboard')) ||
+            ($user->hasRole('Sales person') && request()->routeIs('sales.perosn'));
+            @endphp
 
-<a href="{{ $user->hasRole('Sales person') ? route('sales.perosn') : route('dashboard') }}"
-   class="{{ $isDashboardActive ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+            <a href="{{ $user->hasRole('Sales person') ? route('sales.perosn') : route('dashboard') }}"
+                class="{{ $isDashboardActive ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
 
-    <svg class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none"
-         viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-    </svg>
+                <svg class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
 
-    Dashboard
-</a>
+                Dashboard
+            </a>
 
 
             <!-- Appoinment  -->
             @hasrole('Sales Manager|Admin')
             <div class="pt-2">
 
-               
+
                 <a href="{{ route('appointment.records') }}" class="{{ request()->routeIs('appointment.records') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -88,6 +88,18 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h6M9 3h6a2 2 0 012 2v1H7V5a2 2 0 012-2zm0 4h6M5 8h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V10a2 2 0 012-2zm4 4h6m-6 4h6" />
                     </svg>
                     <span class="flex-1">Customers</span>
+                </a>
+            </div>
+
+            <!-- T/O -->
+            <div class="pt-2">
+
+                <a href="{{ route('to.customers') }}" class="{{ request()->routeIs('to.customers') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2M8 14h8M18 14l2 3m-2-3l-2 3" />
+                    </svg>
+
+                    <span class="flex-1">T/O Customers</span>
                 </a>
             </div>
 

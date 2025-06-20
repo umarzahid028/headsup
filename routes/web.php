@@ -107,19 +107,18 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Only Sales Manager
-    Route::middleware('role:Admin|Sales Manager')->group(function () {
         Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointment.create');
         Route::post('/appointments', [AppointmentController::class, 'store']);
-    });
+   
 Route::get('/appointments/{appointment}/edit', [AppointmentController::class, 'edit'])->name('appointments.edit');
 Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
 
 
 
     // Only Sales Person
-    Route::middleware('role:Admin|Sales person')->group(function () {
+   
         Route::post('/appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
-    });
+  
 });
 //Appointment form routes
 Route::get('appointment/form', [AppointmentController::class, 'appointmentform'])->name('appointment.form');
@@ -151,5 +150,11 @@ Route::post('/stop-timer/{id}', [CustomerSaleController::class, 'stopTimer']);
 // Customer Transfor
 Route::post('/customers/{id}/transfer', [CustomerSaleController::class, 'transfer']);
 Route::get('add/customer', [CustomerSaleController::class, 'addcustomer'])->name('add.customer');
+
+// T/o customer
+Route::middleware(['auth'])->group(function () {
+    Route::get('/t/o-customers/customer', [CustomerSaleController::class, 'customer'])->name('to.customers');
+    Route::post('/customers/transfer', [CustomerSaleController::class, 'transferToManager'])->name('customers.transfer');
+});
 
 require __DIR__ . '/auth.php';

@@ -78,13 +78,19 @@
 
         <div class="w-full">
           <button
-  class="transfer-btn w-full mt-4 bg-[#111827] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#0f172a] transition"
+  class="transfer-btn mt-4 bg-[#111827] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#0f172a] transition"
   data-customer-id="{{ $customer->id }}"
   data-customer-name="{{ $customer->name }}"
 >
   Transfer
 </button>
-
+     <button id="toBtn"
+      style="background-color: #111827;"
+      type="button"
+      class="bg-indigo-600 text-white font-semibold px-6 py-2 rounded-xl hover:bg-indigo-700 transition"
+    >
+      T/O
+    </button>
         </div>
       </div>
     @endif

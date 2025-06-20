@@ -103,7 +103,7 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">
             {{ ucfirst($field) }}
-            @if(in_array($field, ['name', 'email', 'phone']))
+            @if(in_array($field, ['name', 'phone']))
               <span class="text-red-600">*</span>
             @endif
           </label>
@@ -174,9 +174,10 @@
       <!-- Modal Trigger -->
       <div class="md:col-span-2 text-right mt-4">
         <button id="openModalBtn" style="background-color: #111827;" type="button"
-          class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl">
+          class="bg-indigo-600 text-white font-semibold px-6 py-2 rounded-xl">
           Close
         </button>
+   
       </div>
     </form>
   </div>
@@ -356,6 +357,44 @@
     });
   });
 </script>
+
+
+<!-- T/O buttons -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('#toBtn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const card = btn.closest('.customer-card');
+        const customerId = card.dataset.customerId;
+
+        try {
+          const res = await fetch("{{ route('customers.transfer') }}", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': '{{ csrf_token() }}',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ id: customerId })
+          });
+
+          const result = await res.json();
+          if (result.status === 'success') {
+            card.classList.add('opacity-50');
+            card.querySelector('#toBtn').innerText = 'T/O Done';
+            card.querySelector('#toBtn').disabled = true;
+          }
+        } catch (err) {
+          console.error('T/O failed', err);
+        }
+      });
+    });
+  });
+</script>
+
+
 
 
   <!-- Every Customer live time -->

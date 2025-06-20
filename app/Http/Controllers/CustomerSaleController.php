@@ -66,6 +66,16 @@ public function store(Request $request)
     ]);
 }
 
+public function transferToManager(Request $request)
+{
+    $customer = CustomerSale::findOrFail($request->id);
+
+    $customer->disposition = 'T/O'; 
+    $customer->save();
+
+    return response()->json(['status' => 'success']);
+}
+
 
   public function index(Request $request)
 {
@@ -123,4 +133,10 @@ public function stopTimer(Request $request, $id)
     {
         return view('tokens-history/addcustomer');
     }
+
+public function customer()
+{
+    $customers = CustomerSale::where('disposition', 'T/O')->latest()->get();
+    return view('t/o-customers.customer', compact('customers'));
 }
+    }

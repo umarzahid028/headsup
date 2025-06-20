@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('customer_phone');
             $table->date('date');
             $table->time('time');
-            $table->enum('status', ['scheduled', 'processing', 'completed', 'no_show'])->default('scheduled');
+            $table->enum('status', ['scheduled', 'cancel', 'processing', 'completed', 'no_show'])->default('scheduled');
             $table->text('notes')->nullable();
             $table->timestamps();
 
