@@ -12,10 +12,9 @@ class CustomerSaleController extends Controller
 {
 public function store(Request $request)
 {
-    // ✅ Step 1: Validate the request
     try {
         $validated = $request->validate([
-            'id'             => 'nullable|exists:customer_sales,id',
+            'id'             => 'nullable|integer|exists:customer_sales,id',
             'user_id'        => 'required|exists:users,id',
             'customer_id'    => 'nullable|exists:customers,id',
             'name'           => 'required|string|max:255',
@@ -34,7 +33,6 @@ public function store(Request $request)
         ], 422);
     }
 
-    // ✅ Step 2: Prepare data
     $data = [
         'user_id'     => $validated['user_id'],
         'customer_id' => $validated['customer_id'] ?? null,
@@ -47,11 +45,8 @@ public function store(Request $request)
         'disposition' => $validated['disposition'] ?? null,
     ];
 
-    // ✅ Step 3: Create or update sale
-    $sale = null;
-    if (!empty($validated['id'])) {
-        $sale = CustomerSale::find($validated['id']);
-    }
+    // ✅ Find or create
+    $sale = !empty($validated['id']) ? CustomerSale::find($validated['id']) : null;
 
     if ($sale) {
         $sale->update($data);
@@ -59,19 +54,19 @@ public function store(Request $request)
         $sale = CustomerSale::create($data);
     }
 
-    // ✅ Step 4: Update appointment status if provided
-    if (!empty($validated['appointment_id'])) {
-        \App\Models\Appointment::where('id', $validated['appointment_id'])
-            ->update(['status' => 'completed']);
-    }
-
-    // ✅ Step 5: Set ended_at if disposition is provided
+    // ✅ Set ended_at if disposition is given
     if (!empty($validated['disposition'])) {
         $sale->ended_at = now();
         $sale->save();
     }
 
-    // ✅ Step 6: Calculate call duration if queue entry exists
+    // ✅ Update appointment status if needed
+    if (!empty($validated['appointment_id'])) {
+        \App\Models\Appointment::where('id', $validated['appointment_id'])
+            ->update(['status' => 'completed']);
+    }
+
+    // ✅ Calculate duration from queue
     $queue = \App\Models\Queue::where('user_id', $data['user_id'])
         ->where('customer_id', $data['customer_id'])
         ->whereNotNull('took_turn_at')
@@ -85,15 +80,14 @@ public function store(Request $request)
         $duration = $start->diff($end)->format('%Hh %Im %Ss');
     }
 
-    // ✅ Step 7: Return success response
     return response()->json([
         'status'   => 'success',
         'message'  => 'Customer sale data saved successfully!',
         'duration' => $duration,
+        'id'       => $sale->id, // send back id to frontend
         'redirect' => route('sales.perosn', ['id' => auth()->id()]),
     ]);
 }
-
 
 public function transferToManager(Request $request)
 {
