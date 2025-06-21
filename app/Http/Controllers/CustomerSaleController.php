@@ -12,6 +12,7 @@ class CustomerSaleController extends Controller
 {
 public function store(Request $request)
 {
+    // ✅ Step 1: Validate the request
     try {
         $validated = $request->validate([
             'id'             => 'nullable|exists:customer_sales,id',
@@ -33,11 +34,12 @@ public function store(Request $request)
         ], 422);
     }
 
+    // ✅ Step 2: Prepare data
     $data = [
         'user_id'     => $validated['user_id'],
         'customer_id' => $validated['customer_id'] ?? null,
         'name'        => $validated['name'],
-        'email'       => $validated['email'],
+        'email'       => $validated['email'] ?? null,
         'phone'       => $validated['phone'],
         'interest'    => $validated['interest'] ?? null,
         'notes'       => $validated['notes'] ?? null,
@@ -45,35 +47,45 @@ public function store(Request $request)
         'disposition' => $validated['disposition'] ?? null,
     ];
 
-    // Check if sale exists
+    // ✅ Step 3: Create or update sale
+    $sale = null;
     if (!empty($validated['id'])) {
         $sale = CustomerSale::find($validated['id']);
+    }
+
+    if ($sale) {
         $sale->update($data);
     } else {
         $sale = CustomerSale::create($data);
     }
 
-    // Save ended_at time if disposition is present
+    // ✅ Step 4: Update appointment status if provided
+    if (!empty($validated['appointment_id'])) {
+        \App\Models\Appointment::where('id', $validated['appointment_id'])
+            ->update(['status' => 'completed']);
+    }
+
+    // ✅ Step 5: Set ended_at if disposition is provided
     if (!empty($validated['disposition'])) {
         $sale->ended_at = now();
         $sale->save();
     }
 
-    // Get turn start time from Queue
+    // ✅ Step 6: Calculate call duration if queue entry exists
     $queue = \App\Models\Queue::where('user_id', $data['user_id'])
-                ->where('customer_id', $data['customer_id'])
-                ->whereNotNull('took_turn_at')
-                ->latest('took_turn_at')
-                ->first();
+        ->where('customer_id', $data['customer_id'])
+        ->whereNotNull('took_turn_at')
+        ->latest('took_turn_at')
+        ->first();
 
     $duration = null;
-
     if ($queue && $sale->ended_at) {
         $start = \Carbon\Carbon::parse($queue->took_turn_at);
         $end = \Carbon\Carbon::parse($sale->ended_at);
         $duration = $start->diff($end)->format('%Hh %Im %Ss');
     }
 
+    // ✅ Step 7: Return success response
     return response()->json([
         'status'   => 'success',
         'message'  => 'Customer sale data saved successfully!',
@@ -176,4 +188,4 @@ public function completeForm(Request $request, $id)
 
 }
 
-    
+  
