@@ -120,6 +120,23 @@
       white-space: nowrap;
       font-size: 0.9rem;
     }
+
+    .active-token-row.bg-yellow-900 {
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 0px #facc15;
+  }
+  50% {
+    box-shadow: 0 0 20px #facc15;
+  }
+  100% {
+    box-shadow: 0 0 0px #facc15;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -189,8 +206,17 @@
           const customerName = customer.customer_name || 'Unknown Customer';
           const processes = customer.process || [];
 
+          const forwardedAt = new Date(customer.forwarded_at);
+          const now = new Date();
+          const isForwarded = customer.forwarded === true && (now - forwardedAt) < (5 * 60 * 1000); // 5 minutes
+
           const row = document.createElement('div');
           row.className = 'active-token-row';
+          if (isForwarded) {
+            row.style.backgroundColor = '#222d44'; // 💡 highlight style
+            row.style.boxShadow = '0 0 15px #44f';  // optional
+          }
+
           row.innerHTML = `
             <div><span class="whitespace-nowrap">${name}</span></div>
             <div><span class="inline-block text-base">${customerName}</span></div>

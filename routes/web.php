@@ -80,17 +80,16 @@ Route::get('/tokens/current-assigned', function () {
     }
     // Check if user is checked in
     $isCheckedIn = \App\Models\Queue::where('user_id', $user->id)
-                    ->where('is_checked_in', true)
-                    ->exists();
+        ->where('is_checked_in', true)
+        ->exists();
 
     if (!$isCheckedIn) {
         $token = null;
         return view('partials.current-token', compact('token'));
-
     }
 
     $token = \App\Models\Token::with('salesperson')
-        ->where('user_id', $user->id)  
+        ->where('user_id', $user->id)
         ->where('status', 'assigned')
         ->latest('created_at')
         ->first();
@@ -107,19 +106,18 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // Only Sales Manager
-        Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointment.create');
-        Route::post('/appointments', [AppointmentController::class, 'store']);
-   
-Route::get('/appointments/{appointment}/edit', [AppointmentController::class, 'edit'])->name('appointments.edit');
-Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
-Route::get('/appointments/{appointment}/form', [AppointmentController::class, 'form'])->name('appointments.form');
-Route::post('/appointments/form', [AppointmentController::class, 'formstore'])->name('appointments.form.store');
+    Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointment.create');
+    Route::post('/appointments', [AppointmentController::class, 'store']);
+
+    Route::get('/appointments/{appointment}/edit', [AppointmentController::class, 'edit'])->name('appointments.edit');
+    Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
+    Route::get('/appointments/{appointment}/form', [AppointmentController::class, 'form'])->name('appointments.form');
+    Route::post('/appointments/form', [AppointmentController::class, 'formstore'])->name('appointments.form.store');
 
 
     // Only Sales Person
-   
-        Route::post('/appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
-  
+
+    Route::post('/appointments/{id}/status', [AppointmentController::class, 'updateStatus']);
 });
 //Appointment form routes
 
@@ -131,8 +129,8 @@ Route::post('/customer-sales', [CustomerSaleController::class, 'store'])->name('
 Route::get('/customers', [CustomerSaleController::class, 'index'])->name('customer.index');
 //Create Sale perosn
 Route::get('saleperson', [UserController::class, 'saletable'])->name('saleperson.table')->middleware('role:Admin|Sales Manager');
-Route::get('edit/sales/{id}', [UserController::class,'editsales'])->name('edit.saleperson')->middleware('role:Admin|Sales Manager');
-Route::post('edit/sales/{id}', [UserController::class,'updatesales'])->name('update.saleperon')->middleware('role:Admin|Sales Manager');
+Route::get('edit/sales/{id}', [UserController::class, 'editsales'])->name('edit.saleperson')->middleware('role:Admin|Sales Manager');
+Route::post('edit/sales/{id}', [UserController::class, 'updatesales'])->name('update.saleperon')->middleware('role:Admin|Sales Manager');
 Route::get('create/saleperson', [UserController::class, 'create'])->name('create.saleperson')->middleware('role:Admin|Sales Manager');
 Route::post('create/saleperson', [UserController::class, 'store'])->name('store.saleperson');
 Route::delete('/salesperson/delete/{id}', [UserController::class, 'deleteSalesperson'])->name('salesperson.delete');
@@ -152,16 +150,22 @@ Route::post('/stop-timer/{id}', [CustomerSaleController::class, 'stopTimer']);
 Route::post('/customers/{id}/transfer', [CustomerSaleController::class, 'transfer']);
 Route::get('add/customer', [CustomerSaleController::class, 'addcustomer'])->name('add.customer');
 
-// T/o customer
-Route::middleware(['auth'])->group(function () {
-    Route::get('/t/o-customers/customer', [CustomerSaleController::class, 'customer'])->name('to.customers');
-    Route::post('/customers/transfer', [CustomerSaleController::class, 'transferToManager'])->name('customers.transfer');
-});
+
+// routes/web.php
+Route::post('/forward-to-manager', [CustomerSaleController::class, 'forwardToManager'])->name('customer.forward');
+Route::get('/t/o-customers/customer', [CustomerSaleController::class, 'customer'])->name('to.customers');
+// web.php
+Route::get('/customers/fetch', [CustomerSaleController::class, 'fetch'])->name('customers.fetch');
+
+
 
 // Time customer
 Route::post('/customer/complete-form/{id}', [CustomerSaleController::class, 'completeForm'])->name('customer.completeForm');
 
-    
+// Customer Save to manager
+Route::post('/customer-form', [CustomerSaleController::class, 'customerform'])->name('customer.form.store');
 
-    require __DIR__.'/auth.php';
 
+
+
+require __DIR__ . '/auth.php';

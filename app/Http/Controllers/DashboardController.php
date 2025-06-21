@@ -70,10 +70,9 @@ $customerdetail = CustomerSale::where('disposition', 'Sold!')->count();
     {
         
         $user = Auth::user();
-
-        $customers = CustomerSale::with('user')
-            ->where('user_id', $user->id)
-            ->get();
+$customers = CustomerSale::where('user_id', auth()->id())
+    ->where('forwarded_to_manager', false)
+    ->get();
 
         $salespeople = \App\Models\User::role('Sales person')
             ->where('id', '!=', $user->id) // optional: exclude current user

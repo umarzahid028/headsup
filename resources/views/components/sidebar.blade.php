@@ -24,7 +24,7 @@
             ($user->hasRole('Sales person') && request()->routeIs('sales.perosn'));
             @endphp
 
-           <a href="{{ $user->hasRole('Sales person') ? route('sales.perosn', ['id' => $user->id]) : route('dashboard') }}"
+            <a href="{{ $user->hasRole('Sales person') ? route('sales.perosn', ['id' => $user->id]) : route('dashboard') }}"
                 class="{{ $isDashboardActive ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
 
                 <svg class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -92,17 +92,18 @@
             </div>
 
             <!-- T/O -->
-            <!-- <div class="pt-2">
+            @hasrole('Sales Manager')
+            <div class="pt-2">
 
                 <a href="{{ route('to.customers') }}" class="{{ request()->routeIs('to.customers') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2M8 14h8M18 14l2 3m-2-3l-2 3" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M4 14a8 8 0 0114-6.9M20 10a8 8 0 01-14 6.9" />
                     </svg>
 
                     <span class="flex-1">T/O Customers</span>
                 </a>
-            </div> -->
-
+            </div>
+            @endhasrole
             <!-- Activity Records -->
             @hasrole('Sales person')
             <div class="pt-2">

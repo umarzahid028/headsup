@@ -31,11 +31,10 @@ public function activeTokens(Request $request)
     $activeData = $latestQueues->map(function ($queue) {
         $salesPersonName = $queue->user->name ?? 'Unassigned';
 
-        $customerSales = CustomerSale::where('user_id', $queue->user_id)
-            // ->whereNull('served_at') // Uncomment if needed
-            ->latest()
-            ->take(3)
-            ->get();
+       $customerSales = CustomerSale::where('user_id', $queue->user_id)
+    ->latest()
+    ->get();
+
 
         $customers = $customerSales->map(function ($sale) {
             $customerName = $sale->name ?? 'Unknown Customer';
@@ -57,6 +56,8 @@ public function activeTokens(Request $request)
             return [
                 'customer_name' => $customerName,
                 'process'       => $lastProcess,
+                'forwarded'     => (bool) $sale->forwarded_to_manager,
+                'forwarded_at'  => $sale->forwarded_at,
             ];
         });
 

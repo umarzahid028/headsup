@@ -175,17 +175,21 @@
 
       <!-- Modal Trigger -->
       <div class="md:col-span-2 text-right mt-4">
-       <button id="openModalBtn"   style="background-color: #111827;" type="button"
-          class="bg-indigo-600 text-white font-semibold px-6 py-2 rounded-xl">
+       <button id="openModalBtn" style="background-color: #111827;" type="button"
+          class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl">
           Close
         </button>
-         <button id="toBtn"
-      style="background-color: #111827;"
-      type="button"
-    class="bg-indigo-600 text-white font-semibold px-6 py-2 rounded-xl hover:bg-indigo-700 transition"
-    >
-      T/O
-    </button>
+<button id="toBtn" type="button" style="background-color: #111827;"
+  class=" text-white font-semibold px-6 py-3 rounded-xl gap-2">
+  
+  <span class="btn-label">T/O</span>
+
+  <!-- Spinner inside a button or container -->
+<div id="toSpinner" class="hidden absolute inset-0 bg-black/50 flex items-center justify-center z-50 rounded-xl">
+  <div class="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+</div>
+
+</button>
       </div>
     </form>
   </div>
@@ -236,7 +240,7 @@
       <!-- Scrollable Customers -->
       <div class="flex-1 overflow-y-auto pr-2" id="customerCards">
         @include('partials.customers', ['customers' => $customers])
-         {{-- صرف تب کارڈ دکھائیں جب status "completed" نہ ہو --}}
+
 @if($appointment->status !== 'completed')
   <div id="customer-list">
     <div
@@ -423,39 +427,64 @@ function completeForm(customerId) {
 
 <!-- T/O buttons -->
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('#toBtn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const card = btn.closest('.customer-card');
-        const customerId = card.dataset.customerId;
+document.addEventListener('DOMContentLoaded', () => {
+  const toBtn   = document.getElementById('toBtn');
+  const spinner = document.getElementById('toSpinner');
+  const label   = toBtn.querySelector('.btn-label');
+  const form    = document.getElementById('salesForm');
 
-        try {
-          const res = await fetch("{{ route('customers.transfer') }}", {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-TOKEN': '{{ csrf_token() }}',
-              'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify({ id: customerId })
-          });
+  async function forwardCard() {
+    const id = form.querySelector('input[name="id"]').value;
+    if (!id) {
+      Swal.fire('Error', 'No customer selected.', 'error');
+      return;
+    }
 
-          const result = await res.json();
-          if (result.status === 'success') {
-            card.classList.add('opacity-50');
-            card.querySelector('#toBtn').innerText = 'T/O Done';
-            card.querySelector('#toBtn').disabled = true;
-          }
-        } catch (err) {
-          console.error('T/O failed', err);
-        }
+    // 🔄 Show spinner & disable button
+    spinner.classList.remove('hidden');
+    label.classList.add('opacity-0');
+    toBtn.disabled = true;
+
+    try {
+      const response = await fetch("{{ route('customer.forward') }}", {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ id })
       });
-    });
-  });
-</script>
 
+      if (!response.ok) throw new Error('Server error');
+      const result = await response.json();
+
+      // ✅ Send notification for next page
+      localStorage.setItem('manager_notification', 'T/O Customer forwarded to Sales Manager.');
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Transferred!',
+        text: result.message || 'Card moved to Sales Manager.',
+        timer: 1500,
+        showConfirmButton: false
+      }).then(() => {
+        window.location.reload(); // 🔄 refresh
+      });
+
+    } catch (error) {
+      Swal.fire('Error', error.message || 'Something went wrong.', 'error');
+    } finally {
+      spinner.classList.add('hidden');
+      label.classList.remove('opacity-0');
+      toBtn.disabled = false;
+    }
+  }
+
+  toBtn.addEventListener('click', forwardCard);
+});
+</script>
 
   <!-- Turn Status -->
 <script>

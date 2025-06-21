@@ -46,10 +46,10 @@
         : ($customer->disposition ?? null);
     @endphp
 
-   @if (is_null($customer->disposition) && !$customer->forwarded_to_manager)
+   @if ($customer->forwarded_to_manager && empty($customer->disposition))
       <div
         id="card-{{ $customer->id }}"
-        class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
+        class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl mb-4 border border-gray-200 p-4 cursor-pointer transition-all duration-300"
         data-name="{{ $customer->name }}"
         data-email="{{ $customer->email }}"
         data-phone="{{ $customer->phone ?? '' }}"
@@ -58,6 +58,7 @@
         data-disposition="{{ $dispositions }}"
         data-customer-id="{{ $customer->id }}"
         data-customer-name="{{ $customer->name }}"
+        data-to="{{ $customer->is_to ? 'true' : 'false' }}"
       >
         <div class="flex justify-between items-center">
           <h2 class="text-xl font-semibold text-gray-800">Customer Info</h2>
@@ -75,56 +76,7 @@
           <p><span class="font-medium text-gray-400">Process:</span> {{ $firstProcess }}</p>
           <p><span class="font-medium text-gray-400">Disposition:</span> {{ $dispositions ?? 'N/A' }}</p>
         </div>
-
-        <div class="w-full">
-          <button
-  class="transfer-btn w-full mt-4 bg-[#111827] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#0f172a] transition"
-  data-customer-id="{{ $customer->id }}"
-  data-customer-name="{{ $customer->name }}"
->
-  Transfer
-</button>
-    
-        </div>
       </div>
     @endif
   @endforeach
 </div>
-
-
-<style>
-  .active-card {
-    animation: pulseActive 1s infinite;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
-  }
-
-  @keyframes pulseActive {
-    0% {
-      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
-    }
-
-    70% {
-      box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
-    }
-
-    100% {
-      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
-    }
-  }
-
-  .fade-out {
-    animation: fadeOut 0.5s forwards;
-  }
-
-  @keyframes fadeOut {
-    to {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-  }
-</style>
-
-
-
-

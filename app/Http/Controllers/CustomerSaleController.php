@@ -89,17 +89,6 @@ public function store(Request $request)
     ]);
 }
 
-public function transferToManager(Request $request)
-{
-    $customer = CustomerSale::findOrFail($request->id);
-
-    $customer->disposition = 'T/O'; 
-    $customer->save();
-
-    return response()->json(['status' => 'success']);
-}
-
-
   public function index(Request $request)
 {
     $customers = CustomerSale::with('user')
@@ -138,7 +127,7 @@ public function transfer(Request $request, $id)
 
 public function customer()
 {
-    $customers = CustomerSale::where('disposition', 'T/O')->latest()->get();
+    $customers = CustomerSale::where('forwarded_to_manager', true)->latest()->get();
     return view('t/o-customers.customer', compact('customers'));
 }
 
@@ -180,6 +169,104 @@ public function completeForm(Request $request, $id)
     ]);
 }
 
+public function forwardToManager(Request $request)
+{
+    $customer = CustomerSale::findOrFail($request->id);
+    $customer->forwarded_to_manager = true;
+     $customer->forwarded_at = now();
+    $customer->save();
+
+  return response()->json([
+    'status' => 'forwarded',
+    'message' => 'Customer forwarded to Sales Manager!',
+    'redirect' => route('sales.perosn', ['id' => $customer->id]) 
+]);
+}
+
+ public function fetch()
+{
+    $customers = CustomerSale::with('user')->get();
+    return view('partials.customer-list', compact('customers'));
+}
+
+public function customerform(Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'id'             => 'nullable|integer|exists:customer_sales,id',
+            'user_id'        => 'required|exists:users,id',
+            'customer_id'    => 'nullable|exists:customers,id',
+            'name'           => 'required|string|max:255',
+            'email'          => 'nullable|email|max:255',
+            'phone'          => 'required|string|max:20',
+            'interest'       => 'nullable|string|max:255',
+            'notes'          => 'nullable|string',
+            'process'        => 'nullable|array',
+            'disposition'    => 'nullable|string',
+            'appointment_id' => 'nullable|exists:appointments,id',
+        ]);
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'status' => 'error',
+            'errors' => $e->errors(),
+        ], 422);
+    }
+
+    $data = [
+        'user_id'     => $validated['user_id'],
+        'customer_id' => $validated['customer_id'] ?? null,
+        'name'        => $validated['name'],
+        'email'       => $validated['email'] ?? null,
+        'phone'       => $validated['phone'],
+        'interest'    => $validated['interest'] ?? null,
+        'notes'       => $validated['notes'] ?? null,
+        'process'     => $validated['process'] ?? [],
+        'disposition' => $validated['disposition'] ?? null,
+    ];
+
+    // ✅ Find or create
+    $sale = !empty($validated['id']) ? CustomerSale::find($validated['id']) : null;
+
+    if ($sale) {
+        $sale->update($data);
+    } else {
+        $sale = CustomerSale::create($data);
+    }
+
+    // ✅ Set ended_at if disposition is given
+    if (!empty($validated['disposition'])) {
+        $sale->ended_at = now();
+        $sale->save();
+    }
+
+    // ✅ Update appointment status if needed
+    if (!empty($validated['appointment_id'])) {
+        \App\Models\Appointment::where('id', $validated['appointment_id'])
+            ->update(['status' => 'completed']);
+    }
+
+    // ✅ Calculate duration from queue
+    $queue = \App\Models\Queue::where('user_id', $data['user_id'])
+        ->where('customer_id', $data['customer_id'])
+        ->whereNotNull('took_turn_at')
+        ->latest('took_turn_at')
+        ->first();
+
+    $duration = null;
+    if ($queue && $sale->ended_at) {
+        $start = \Carbon\Carbon::parse($queue->took_turn_at);
+        $end = \Carbon\Carbon::parse($sale->ended_at);
+        $duration = $start->diff($end)->format('%Hh %Im %Ss');
+    }
+
+    return response()->json([
+        'status'   => 'success',
+        'message'  => 'Customer sale data saved successfully!',
+        'duration' => $duration,
+        'id'       => $sale->id, // send back id to frontend
+        'redirect' => route('to.customers', ['id' => auth()->id()]),
+    ]);
+}
 }
 
   
