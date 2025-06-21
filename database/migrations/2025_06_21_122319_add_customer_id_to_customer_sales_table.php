@@ -9,17 +9,18 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-  public function up()
+   public function up()
 {
     Schema::table('customer_sales', function (Blueprint $table) {
-        $table->string('served_duration')->nullable();
+        $table->unsignedBigInteger('customer_id')->nullable()->after('user_id');
     });
 }
 
 public function down()
 {
     Schema::table('customer_sales', function (Blueprint $table) {
-        $table->dropColumn('served_duration');
+        $table->dropColumn('customer_id');
     });
 }
+
 };

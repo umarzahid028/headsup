@@ -92,7 +92,7 @@
             </div>
 
             <!-- T/O -->
-            <div class="pt-2">
+            <!-- <div class="pt-2">
 
                 <a href="{{ route('to.customers') }}" class="{{ request()->routeIs('to.customers') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -101,7 +101,7 @@
 
                     <span class="flex-1">T/O Customers</span>
                 </a>
-            </div>
+            </div> -->
 
             <!-- Activity Records -->
             @hasrole('Sales person')

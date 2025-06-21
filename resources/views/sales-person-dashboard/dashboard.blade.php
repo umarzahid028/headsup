@@ -175,10 +175,17 @@
 
       <!-- Modal Trigger -->
       <div class="md:col-span-2 text-right mt-4">
-       <button id="openModalBtn"  onclick="completeForm({{ $customer->id }})" style="background-color: #111827;" type="button"
+       <button id="openModalBtn"   style="background-color: #111827;" type="button"
           class="bg-indigo-600 text-white font-semibold px-6 py-2 rounded-xl">
           Close
         </button>
+         <button id="toBtn"
+      style="background-color: #111827;"
+      type="button"
+    class="bg-indigo-600 text-white font-semibold px-6 py-2 rounded-xl hover:bg-indigo-700 transition"
+    >
+      T/O
+    </button>
       </div>
     </form>
   </div>
@@ -255,16 +262,10 @@
 
       <div class="w-full">
         <button
-          class="transfer-btn mt-4 bg-[#111827] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#0f172a] transition">
+          class="transfer-btn w-full mt-4 bg-[#111827] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#0f172a] transition">
           Transfer
         </button>
 
-        <button id="toBtn"
-          style="background-color:#111827;"
-          type="button"
-          class="bg-indigo-600 text-white font-semibold px-6 py-2 rounded-xl hover:bg-indigo-700 transition">
-          T/O
-        </button>
       </div>
     </div>
   </div>
@@ -829,31 +830,6 @@ function completeForm(customerId) {
   </script>
 
 
-<script>
-  $('#closeFormBtn').on('click', function () {
-    $.ajax({
-      url: '{{ route("sales.person.completeForm") }}',
-      method: 'POST',
-      data: {
-        _token: $('meta[name="csrf-token"]').attr('content')
-      },
-      success: function (res) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Form Completed!',
-          text: 'Duration: ' + res.duration
-        });
-      },
-      error: function () {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error!',
-          text: 'Could not complete the form.'
-        });
-      }
-    });
-  });
-</script>
 
   @endpush
 </x-app-layout>

@@ -54,24 +54,28 @@
                                 </span>
                             </td>
 @php
-use Carbon\Carbon;
-
 $duration = 'N/A';
 
-if ($sale->ended_at && $queue = $sale->user->queues()->whereNotNull('took_turn_at')->latest('took_turn_at')->first()) {
-    $start = Carbon::parse($queue->took_turn_at);
-    $end = Carbon::parse($sale->ended_at);
+// Find the latest queue for this user + customer that has took_turn_at
+$queue = \App\Models\Queue::where('user_id', $sale->user_id ?? auth()->id())
+    ->where('customer_id', $sale->customer_id ?? null)
+    ->whereNotNull('took_turn_at')
+    ->latest('took_turn_at')
+    ->first();
+
+// If we have both times, calculate duration
+if (!empty($queue) && $sale->ended_at) {
+    $start = \Carbon\Carbon::parse($queue->took_turn_at);
+    $end = \Carbon\Carbon::parse($sale->ended_at);
     $duration = $start->diff($end)->format('%Hh %Im %Ss');
 }
 @endphp
 
 <td class="px-6 py-3">
-    <span class="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded">
-        {{ $duration }}
-    </span>
+  <span class="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded">
+    {{ $duration }}
+  </span>
 </td>
-
-
 
                         </tr>
                     @empty
