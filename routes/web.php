@@ -48,7 +48,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 });
 
 //Queues Routes
-Route::get('/sales/{id}', [DashboardController::class, 'salesdashboard'])->name('sales.perosn');
+Route::get('/sales/{id?}', [DashboardController::class, 'salesdashboard'])->name('sales.perosn');
 Route::post('/sales-person', [QueuesController::class, 'dashboardstore'])->name('sales.person.store');
 
 //Sales person status
@@ -136,7 +136,7 @@ Route::post('create/saleperson', [UserController::class, 'store'])->name('store.
 Route::delete('/salesperson/delete/{id}', [UserController::class, 'deleteSalesperson'])->name('salesperson.delete');
 
 //Activity Records
-Route::middleware(['auth'])->get('/sales/activity-report', [SalesDashboardController::class, 'activityReport'])->name('sales.activity.report');
+Route::get('activity-report', [SalesDashboardController::class, 'activityReport'])->name('activity.report');
 
 Route::post('/sales-person/take-turn', [QueuesController::class, 'takeTurn'])
     ->name('sales.person.takeTurn');

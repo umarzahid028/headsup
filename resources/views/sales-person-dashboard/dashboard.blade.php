@@ -241,7 +241,7 @@
       <div class="flex-1 overflow-y-auto pr-2" id="customerCards">
         @include('partials.customers', ['customers' => $customers])
 
-@if($appointment->status !== 'completed')
+@if($appointment && $appointment->status !== 'completed')
   <div id="customer-list">
     <div
       class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"

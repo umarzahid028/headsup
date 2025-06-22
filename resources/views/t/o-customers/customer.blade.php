@@ -220,7 +220,7 @@
 
         if (newCustomerDetected) {
           $('#customer-list').html(newDom.find('#customer-list').html());
-          playNotificationSound();
+          // playNotificationSound();
           speak("Manager T O Requested");
         }
 

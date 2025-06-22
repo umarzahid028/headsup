@@ -85,7 +85,7 @@ public function store(Request $request)
         'message'  => 'Customer sale data saved successfully!',
         'duration' => $duration,
         'id'       => $sale->id, // send back id to frontend
-        'redirect' => route('sales.perosn', ['id' => auth()->id()]),
+        'redirect' => route('sales.perosn'),
     ]);
 }
 

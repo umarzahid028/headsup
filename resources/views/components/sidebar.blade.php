@@ -24,7 +24,7 @@
             ($user->hasRole('Sales person') && request()->routeIs('sales.perosn'));
             @endphp
 
-            <a href="{{ $user->hasRole('Sales person') ? route('sales.perosn', ['id' => $user->id]) : route('dashboard') }}"
+          <a href="{{ $user->hasRole('Sales person') ? route('sales.perosn') : route('dashboard') }}"
                 class="{{ $isDashboardActive ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
 
                 <svg class="text-gray-500 mr-3 flex-shrink-0 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -108,7 +108,7 @@
             @hasrole('Sales person')
             <div class="pt-2">
 
-                <a href="{{ route('sales.activity.report') }}" class="{{ request()->routeIs('sales.activity.report') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                <a href="{{ route('activity.report') }}" class="{{ request()->routeIs('activity.report') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

@@ -46,7 +46,10 @@
   </span>
 </td>
 
-      <td class="border-b px-4 py-3">{{ $appt->date }} {{ $appt->time }}</td>
+      <td class="border-b px-4 py-3">
+    {{ \Carbon\Carbon::parse($appt->date . ' ' . $appt->time)->format('d F Y, h:i A') }}
+</td>
+
       <td class="border-b px-4 py-3">
         @php
           $statusClasses = [
