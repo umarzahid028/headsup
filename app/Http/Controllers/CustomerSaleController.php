@@ -17,7 +17,7 @@ public function store(Request $request)
             'id'             => 'nullable|integer|exists:customer_sales,id',
             'user_id'        => 'nullable|exists:users,id',
             'customer_id'    => 'nullable|exists:customers,id',
-            'name'           => 'required|string|max:255',  // only 'name' required
+            'name'           => 'required|string|max:255',
             'email'          => 'nullable|email|max:255',
             'phone'          => 'nullable|string|max:20',
             'interest'       => 'nullable|string|max:255',
@@ -34,7 +34,7 @@ public function store(Request $request)
     }
 
     $data = [
-        'user_id'     => $validated['user_id'] ?? auth()->id(), // fallback to logged-in user
+        'user_id'     => $validated['user_id'] ?? auth()->id(),
         'customer_id' => $validated['customer_id'] ?? null,
         'name'        => $validated['name'],
         'email'       => $validated['email'] ?? null,
@@ -45,12 +45,12 @@ public function store(Request $request)
         'disposition' => $validated['disposition'] ?? null,
     ];
 
-    $sale = !empty($validated['id'])
-        ? CustomerSale::find($validated['id'])
-        : CustomerSale::create($data);
+    $sale = !empty($validated['id']) ? CustomerSale::find($validated['id']) : null;
 
-    if ($sale && !empty($validated['id'])) {
+    if ($sale) {
         $sale->update($data);
+    } else {
+        $sale = CustomerSale::create($data);
     }
 
     if (!empty($validated['disposition'])) {
@@ -63,19 +63,17 @@ public function store(Request $request)
             ->update(['status' => 'completed']);
     }
 
-    $duration = null;
-    if (!empty($data['user_id']) && !empty($data['customer_id']) && $sale->ended_at) {
-        $queue = \App\Models\Queue::where('user_id', $data['user_id'])
-            ->where('customer_id', $data['customer_id'])
-            ->whereNotNull('took_turn_at')
-            ->latest('took_turn_at')
-            ->first();
+    $queue = \App\Models\Queue::where('user_id', $data['user_id'])
+        ->where('customer_id', $data['customer_id'])
+        ->whereNotNull('took_turn_at')
+        ->latest('took_turn_at')
+        ->first();
 
-        if ($queue) {
-            $start = \Carbon\Carbon::parse($queue->took_turn_at);
-            $end   = \Carbon\Carbon::parse($sale->ended_at);
-            $duration = $start->diff($end)->format('%Hh %Im %Ss');
-        }
+    $duration = null;
+    if ($queue && $sale->ended_at) {
+        $start = \Carbon\Carbon::parse($queue->took_turn_at);
+        $end = \Carbon\Carbon::parse($sale->ended_at);
+        $duration = $start->diff($end)->format('%Hh %Im %Ss');
     }
 
     return response()->json([
@@ -86,6 +84,7 @@ public function store(Request $request)
         'redirect' => route('sales.perosn'),
     ]);
 }
+
 
   public function index(Request $request)
 {

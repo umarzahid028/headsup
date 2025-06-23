@@ -18,7 +18,7 @@ public function up(): void
           ->constrained()       
           ->nullOnDelete(); 
         $table->string('name');
-        $table->string('email');
+        $table->string('email')->nullable();
         $table->string('phone')->nullable();
         $table->string('interest')->nullable();
         $table->text('notes')->nullable();
