@@ -16,7 +16,7 @@ public function up(): void
         $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
         $table->string('name');
         $table->string('email');
-        $table->string('phone');
+        $table->string('phone')->nullable();
         $table->string('interest')->nullable();
         $table->text('notes')->nullable();
         $table->json('process')->nullable();

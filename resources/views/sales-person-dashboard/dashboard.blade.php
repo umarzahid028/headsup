@@ -100,7 +100,7 @@
 <input type="hidden" name="user_id" value="{{ auth()->id() }}" />
 
       <!-- Customer Info -->
-    <div class="space-y-4">
+  <div class="space-y-4">
   @foreach (['name', 'email', 'phone', 'interest'] as $field)
   <div>
     <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">
@@ -109,10 +109,12 @@
         <span class="text-red-600">*</span>
       @endif
     </label>
-    <input id="{{ $field }}Input" name="{{ $field }}" type="{{ $field == 'email' ? 'email' : 'text' }}"
-      class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
-      value="{{ $sale->$field ?? '' }}"
-      @if($field == 'name') required @endif />
+    <input id="{{ $field }}Input"
+           name="{{ $field }}"
+           type="{{ $field == 'email' ? 'email' : 'text' }}"
+           class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
+           value="{{ $sale->$field ?? '' }}"
+           @if($field == 'name') required @endif />
   </div>
   @endforeach
 </div>
@@ -233,9 +235,13 @@
         </div>
 
         <div>
-          <button id="newCustomerBtn" type="button" disabled class="w-full bg-gray-400 text-white font-semibold px-6 py-2 rounded-xl mb-4">
+<button id="newCustomerBtn"
+        type="button"
+        disabled
+        class="w-full bg-gray-400 text-white font-semibold px-6 py-2 rounded-xl mb-4">
   Take Customer
 </button>
+
         </div>
       </div>
 
@@ -295,19 +301,21 @@
   </script>
 
 <script>
-  const nameInput = document.getElementById('nameInput');
-  const newCustomerBtn = document.getElementById('newCustomerBtn');
+  document.addEventListener('DOMContentLoaded', () => {
+    const nameInput = document.getElementById('nameInput');
+    const newCustomerBtn = document.getElementById('newCustomerBtn');
 
-  nameInput.addEventListener('input', function () {
-    if (nameInput.value.trim()) {
-      newCustomerBtn.disabled = false;
-      newCustomerBtn.classList.remove('bg-gray-400');
-      newCustomerBtn.classList.add('bg-[#111827]');
-    } else {
-      newCustomerBtn.disabled = true;
-      newCustomerBtn.classList.remove('bg-[#111827]');
-      newCustomerBtn.classList.add('bg-gray-400');
+    function toggleButtonState() {
+      const hasName = nameInput.value.trim().length > 0;
+      newCustomerBtn.disabled = !hasName;
+      newCustomerBtn.classList.toggle('bg-gray-400', !hasName);
+      newCustomerBtn.classList.toggle('bg-[#111827]', hasName);
     }
+
+    nameInput.addEventListener('input', toggleButtonState);
+
+    // Run on load in case form has pre-filled value (edit mode)
+    toggleButtonState();
   });
 </script>
 
@@ -689,6 +697,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fields = form.querySelectorAll('input, textarea');
 
   let debounceTimeout;
+
   fields.forEach(field => {
     field.addEventListener('input', () => {
       clearTimeout(debounceTimeout);
@@ -697,6 +706,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   async function autoSaveForm() {
+    const nameInput = form.querySelector('input[name="name"]');
+    if (!nameInput.value.trim()) {
+      // Don't save if name is empty
+      return;
+    }
+
     const formData = new FormData(form);
     try {
       const response = await fetch('{{ route('customer.sales.store') }}', {
@@ -711,6 +726,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await response.json();
       if (result.status === 'success') {
         loadCustomers();
+
         // Set returned ID (for newly created records)
         if (result.id) {
           form.querySelector('input[name="id"]').value = result.id;
