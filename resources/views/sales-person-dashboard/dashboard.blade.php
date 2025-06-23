@@ -558,19 +558,45 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
+  // ✅ Add validation on Take Customer button click
   $('#newCustomerBtn').on('click', function () {
+    const nameVal = $('#nameInput').val().trim();
+
+    if (!nameVal) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Name field required!',
+        text: 'Please fill in the customer name before proceeding.',
+      });
+      return; // stop execution
+    }
+
+    // ✅ Proceed if name is filled
     $.ajax({
       url: '{{ route("sales.person.takeTurn") }}',
       method: 'POST',
-      data: { _token: $('meta[name="csrf-token"]').attr('content') },
+      data: {
+        _token: $('meta[name="csrf-token"]').attr('content')
+      },
       success: () => {
-        Swal.fire({icon: 'success', title: 'Done!', timer: 1500, showConfirmButton: false});
+        Swal.fire({
+          icon: 'success',
+          title: 'Done!',
+          timer: 1500,
+          showConfirmButton: false
+        });
         updateTurnStatus();
       },
-      error: () => Swal.fire({icon: 'error', title: 'Error occurred!'})
+      error: () => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error occurred!'
+        });
+      }
     });
   });
 
+  // ✅ Run status check on page load and every 10 sec
   $(document).ready(() => {
     updateTurnStatus();
     setInterval(updateTurnStatus, 10000);
