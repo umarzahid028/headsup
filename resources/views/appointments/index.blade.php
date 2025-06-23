@@ -69,7 +69,7 @@
                             <td class="border-b px-4 py-3">
                                 <div class="flex flex-wrap gap-3 items-center">
 
-                                  @if(Auth::usr()->hasRole('Sales person'))
+                                  @if(Auth::user()->hasRole('Sales person'))
                                     @if(Auth::id() == $appt->salesperson_id)
                                         <a href="{{ route('sales.perosn', ['id' => $appt->id]) }}"
                                         class="text-white font-bold py-2 px-4 rounded"
