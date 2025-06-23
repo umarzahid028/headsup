@@ -304,9 +304,23 @@
     }
   </script>
 
-<!-- Include SweetAlert2 if not already -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const nameInput = document.getElementById('nameInput');
+  const newCustomerBtn = document.getElementById('newCustomerBtn');
 
+  function toggleButton() {
+    const hasValue = nameInput.value.trim().length > 0;
+
+    newCustomerBtn.disabled = !hasValue;
+    newCustomerBtn.classList.toggle('bg-gray-400', !hasValue);
+    newCustomerBtn.classList.toggle('bg-[#111827]', hasValue);
+  }
+
+  nameInput.addEventListener('input', toggleButton);
+  toggleButton(); // Initial check on page load
+});
+</script>
 
 <!-- Time duration  -->
 <script>
@@ -505,40 +519,52 @@ document.addEventListener('DOMContentLoaded', () => {
   <!-- Turn Status -->
 <script>
   let currentTurnUserId = null;
+  const salesForm       = document.getElementById('salesForm');
+  const nameInput       = document.getElementById('nameInput');
+  const newCustomerBtn  = document.getElementById('newCustomerBtn');
 
-  const salesForm = document.getElementById('salesForm');
-  const nameInput = document.getElementById('nameInput');
-  const newCustomerBtn = document.getElementById('newCustomerBtn');
-
-  // Enable or disable the form (except the Take Customer button)
   function setFormEnabled(enabled) {
-    salesForm.querySelectorAll('input, textarea, select, button').forEach(el => {
-      if (el.id === 'newCustomerBtn') return; // Never disable this button
-      el.disabled = !enabled;
-    });
+    salesForm.querySelectorAll('input, textarea, select, button')
+      .forEach(el => {
+        if (el.id === 'newCustomerBtn') return;
+        el.disabled = !enabled;
+      });
 
-    nameInput.classList.toggle('bg-gray-100', !enabled);
-    nameInput.classList.toggle('cursor-not-allowed', !enabled);
+    if (!enabled) {
+      nameInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+    } else {
+      nameInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+    }
+
+    toggleButton();
   }
 
-  // Change button color depending on name input
-  function updateButtonStyle() {
+  function toggleButton() {
+    if (nameInput.disabled) {
+      newCustomerBtn.disabled = true;
+      newCustomerBtn.classList.add('bg-gray-400');
+      newCustomerBtn.classList.remove('bg-[#111827]');
+      return;
+    }
+
     const hasValue = nameInput.value.trim().length > 0;
+    newCustomerBtn.disabled = !hasValue;
     newCustomerBtn.classList.toggle('bg-gray-400', !hasValue);
     newCustomerBtn.classList.toggle('bg-[#111827]', hasValue);
   }
 
-  nameInput.addEventListener('input', updateButtonStyle);
+  // Name input listener:
+  nameInput.addEventListener('input', toggleButton);
 
-  // Check current turn
   function updateTurnStatus() {
     $.get('/next-turn-status')
       .done(res => {
-        const isMyTurn = res.is_your_turn;
-        const anyOneElse = res.any_one_else;
+        const isMyTurn      = res.is_your_turn;
+        const anyOneElse    = res.any_one_else;
         const newTurnUserId = res.current_turn_user_id;
-        const userName = res.user_name || '';
+        const userName      = res.user_name || '';
 
+        /* 1️⃣ not my turn & someone else pending */
         if (!anyOneElse && !isMyTurn) {
           $('#turn-status').text('');
           setFormEnabled(false);
@@ -546,6 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
+        /* 2️⃣ my turn */
         if (isMyTurn) {
           $('#turn-status').text('🟢 It’s your turn now!');
           setFormEnabled(true);
@@ -553,12 +580,15 @@ document.addEventListener('DOMContentLoaded', () => {
           if (currentTurnUserId !== newTurnUserId) {
             const msg = `It's your turn now${userName ? ', ' + userName : ''}!`;
             speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
+
+            // Reset form for fresh entry
             salesForm.reset();
             document.getElementById('customerId').value = '';
             localStorage.removeItem('activeCustomerId');
-            updateButtonStyle();
           }
-        } else if (anyOneElse) {
+        }
+        /* 3️⃣ someone else’s turn */
+        else if (anyOneElse) {
           $('#turn-status').text('⏳ Waiting for the other salesperson to finish turn…');
           setFormEnabled(false);
         } else {
@@ -574,55 +604,42 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  // Take Customer button click
+  /* ---------- Take Customer button click ---------- */
   $('#newCustomerBtn').on('click', function () {
     const nameVal = nameInput.value.trim();
 
-    // Show SweetAlert if name is empty
     if (!nameVal) {
       Swal.fire({
         icon: 'warning',
-        title: 'Name is required!',
-        text: 'Please enter the customer name before proceeding.',
-        showConfirmButton: true
+        title: 'Name field required!',
+        text: 'Please fill in the customer name before proceeding.',
+        showConfirmButton: false,
+        timer: 2000
       });
       return;
     }
 
-    // Send AJAX if name is valid
     $.ajax({
       url: '{{ route("sales.person.takeTurn") }}',
       method: 'POST',
       data: { _token: $('meta[name="csrf-token"]').attr('content') },
       success: () => {
-        Swal.fire({
-          icon: 'success',
-          title: 'Customer Taken!',
-          text: 'You may now fill the form.',
-          timer: 1500,
-          showConfirmButton: false
-        });
+        Swal.fire({ icon: 'success', title: 'Done!', timer: 1500, showConfirmButton: false });
+        // keep name visible so user sees what was submitted
         updateTurnStatus();
       },
-      error: () => {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error!',
-          text: 'Unable to take the customer.'
-        });
-      }
+      error: () => Swal.fire({ icon: 'error', title: 'Error occurred!' })
     });
   });
 
-  // On page load
+  /* ---------- Initialise ---------- */
   $(document).ready(() => {
+    // Start with form disabled until first status check
     setFormEnabled(false);
-    updateButtonStyle();
     updateTurnStatus();
-    setInterval(updateTurnStatus, 10000);
+    setInterval(updateTurnStatus, 10000); // Every 10 s
   });
 </script>
-
 
 
 <script>
