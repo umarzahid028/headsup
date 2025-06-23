@@ -13,15 +13,17 @@ class AppointmentController extends Controller
     {
         $user = auth()->user();
 
-       if ($user->hasRole('Sales person')) {
+        if ($user->hasRole('Sales person')) {
             $appointments = Appointment::where('salesperson_id', $user->id)->latest()->get();
         } elseif ($user->hasAnyRole(['Admin', 'Sales Manager'])) {
             $appointments = Appointment::latest()->get();
         } else {
             $appointments = collect();
         }   
+
         return view('appointments.index', compact('appointments'));
     }
+
     public function create()
     {
         $salespersons = User::role('Sales person')->get();
@@ -41,17 +43,17 @@ class AppointmentController extends Controller
     ];
 
     // Only validate salesperson_id if user is Admin or Sales Manager
-    if (in_array($user->role, ['Admin', 'Sales Manager'])) {
+    if (in_array($user->getRoleNames()->first(), ['Admin', 'Sales Manager'])) {
         $rules['salesperson_id'] = 'required|exists:users,id';
     }
 
     $request->validate($rules);
 
     // Determine salesperson_id
-    $salespersonId = in_array($user->role, ['Admin', 'Sales Manager']) 
-        ? $request->salesperson_id 
-        : $user->id;
-
+    $salespersonId = in_array($user->getRoleNames()->first(), ['Admin', 'Sales Manager']) 
+    ? $request->salesperson_id 
+    : $user->id;
+    
     // Create appointment
     Appointment::create([
         'created_by' => $user->id,
