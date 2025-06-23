@@ -23,7 +23,6 @@ public function dashboardstore(Request $request)
                 'checked_out_at' => now(),
             ]);
 
-            app(\App\Http\Controllers\TokenController::class)->returnAssignedTokenToPending($user->id);
 
             $checkedIn = false;
             $message = 'You are now checked out.';
@@ -36,7 +35,6 @@ public function dashboardstore(Request $request)
                 'checked_in_at' => now(),
             ]);
 
-            app(\App\Http\Controllers\TokenController::class)->assignPendingTokenToUser($user->id);
 
             $checkedIn = true;
             $message = 'You are now checked in.';

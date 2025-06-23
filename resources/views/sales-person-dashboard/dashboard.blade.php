@@ -100,22 +100,22 @@
 <input type="hidden" name="user_id" value="{{ auth()->id() }}" />
 
       <!-- Customer Info -->
-      <div class="space-y-4">
-        @foreach (['name', 'email', 'phone', 'interest'] as $field)
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">
-            {{ ucfirst($field) }}
-            @if(in_array($field, ['name', 'phone']))
-              <span class="text-red-600">*</span>
-            @endif
-          </label>
-          <input name="{{ $field }}" type="{{ $field == 'email' ? 'email' : 'text' }}"
-            class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
-            value="{{ $sale->$field ?? '' }}"
-            @if(in_array($field, ['name', 'phone'])) required @endif />
-        </div>
-        @endforeach
-      </div>
+    <div class="space-y-4">
+  @foreach (['name', 'email', 'phone', 'interest'] as $field)
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">
+      {{ ucfirst($field) }}
+      @if($field == 'name')
+        <span class="text-red-600">*</span>
+      @endif
+    </label>
+    <input id="{{ $field }}Input" name="{{ $field }}" type="{{ $field == 'email' ? 'email' : 'text' }}"
+      class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
+      value="{{ $sale->$field ?? '' }}"
+      @if($field == 'name') required @endif />
+  </div>
+  @endforeach
+</div>
 
       <!-- Sales Details -->
       <div class="space-y-4">
@@ -233,7 +233,9 @@
         </div>
 
         <div>
-          <button id="newCustomerBtn" type="button" class="w-full bg-[#111827] text-white font-semibold px-6 py-2 rounded-xl mb-4">Take Customer</button>
+          <button id="newCustomerBtn" type="button" disabled class="w-full bg-gray-400 text-white font-semibold px-6 py-2 rounded-xl mb-4">
+  Take Customer
+</button>
         </div>
       </div>
 
@@ -291,6 +293,23 @@
       form.classList.toggle('hidden');
     }
   </script>
+
+<script>
+  const nameInput = document.getElementById('nameInput');
+  const newCustomerBtn = document.getElementById('newCustomerBtn');
+
+  nameInput.addEventListener('input', function () {
+    if (nameInput.value.trim()) {
+      newCustomerBtn.disabled = false;
+      newCustomerBtn.classList.remove('bg-gray-400');
+      newCustomerBtn.classList.add('bg-[#111827]');
+    } else {
+      newCustomerBtn.disabled = true;
+      newCustomerBtn.classList.remove('bg-[#111827]');
+      newCustomerBtn.classList.add('bg-gray-400');
+    }
+  });
+</script>
 
 <!-- Time duration  -->
 <script>
