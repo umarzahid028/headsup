@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Queue;
-use App\Models\Token;
 use App\Models\CustomerSale;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,10 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class TokenController extends Controller
 {
-    public function showTokensPage()
-    {
-        return view('tokens.tokens');
-    }
+   
 
 // app/Http/Controllers/YourController.php
 
@@ -124,63 +120,7 @@ public function addusers()
     return view('tokens-history.tokens-history', compact('customerSales'));
 }
 
-public function assignNextToken(Request $request, Token $token)
-{
-    $salespersonId = $token->user_id;
-
-    if (!$salespersonId) {
-        return response()->json(['status' => 'error', 'message' => 'Invalid token or user not assigned.']);
-    }
-
-    $pendingToken = Token::where('status', 'pending')->orderBy('serial_number')->first();
-
-    if ($pendingToken) {
-        $pendingToken->update([
-            'user_id' => $salespersonId,
-            'status' => 'assigned',
-            'assigned_at' => now(),
-        ]);
-
-        return response()->json([
-            'status' => 'success',
-            'token' => [
-                'serial_number' => $pendingToken->serial_number,
-                'customer_name' => $pendingToken->customer_name,
-                'counter_number' => $token->salesperson->counter_number ?? 'N/A'
-            ]
-        ]);
-    }
-
-    return response()->json(['status' => 'error', 'message' => 'No pending tokens available.']);
-}
 
 
-// public function hold($id)
-// {
-//     $token = Token::findOrFail($id);
-
-//     if ($token->status !== 'assigned') {
-//         return redirect()->back()->with('error', 'Only assigned tokens can be held.');
-//     }
-
-//     $token->status = 'on_hold';
-//     $token->save();
-
-//     return redirect()->back()->with('success', 'Token has been put on hold for test drive.');
-// }
-
-// public function resume($id)
-// {
-//     $token = Token::findOrFail($id);
-
-//     if ($token->status !== 'on_hold') {
-//         return redirect()->back()->with('error', 'Only on-hold tokens can be resumed.');
-//     }
-
-//     $token->status = 'assigned';
-//     $token->save();
-
-//     return redirect()->back()->with('success', 'Token resumed successfully.');
-// }
 
 }

@@ -519,132 +519,128 @@ document.addEventListener('DOMContentLoaded', () => {
   <!-- Turn Status -->
 <script>
   let currentTurnUserId = null;
+  const salesForm       = document.getElementById('salesForm');
+  const nameInput       = document.getElementById('nameInput');
+  const newCustomerBtn  = document.getElementById('newCustomerBtn');
 
-  // Enable/Disable "Take Customer" button based on name input
-  document.addEventListener('DOMContentLoaded', function () {
-    const nameInput = document.getElementById('nameInput');
-    const newCustomerBtn = document.getElementById('newCustomerBtn');
+  function setFormEnabled(enabled) {
+    salesForm.querySelectorAll('input, textarea, select, button')
+      .forEach(el => {
+        if (el.id === 'newCustomerBtn') return;
+        el.disabled = !enabled;
+      });
 
-    function toggleButton() {
-      const hasValue = nameInput.value.trim().length > 0;
-      newCustomerBtn.disabled = !hasValue;
-      newCustomerBtn.classList.toggle('bg-gray-400', !hasValue);
-      newCustomerBtn.classList.toggle('bg-[#111827]', hasValue);
+    if (!enabled) {
+      nameInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+    } else {
+      nameInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
     }
 
-    nameInput.addEventListener('input', toggleButton);
-    toggleButton(); // Initial check on page load
-  });
+    toggleButton();
+  }
 
-  // Check whose turn it is
+  function toggleButton() {
+    if (nameInput.disabled) {
+      newCustomerBtn.disabled = true;
+      newCustomerBtn.classList.add('bg-gray-400');
+      newCustomerBtn.classList.remove('bg-[#111827]');
+      return;
+    }
+
+    const hasValue = nameInput.value.trim().length > 0;
+    newCustomerBtn.disabled = !hasValue;
+    newCustomerBtn.classList.toggle('bg-gray-400', !hasValue);
+    newCustomerBtn.classList.toggle('bg-[#111827]', hasValue);
+  }
+
+  // Name input listener:
+  nameInput.addEventListener('input', toggleButton);
+
   function updateTurnStatus() {
     $.get('/next-turn-status')
       .done(res => {
-        const isMyTurn        = res.is_your_turn;
-        const anyOneElse      = res.any_one_else;
-        const newTurnUserId   = res.current_turn_user_id;
-        const userName        = res.user_name || '';
+        const isMyTurn      = res.is_your_turn;
+        const anyOneElse    = res.any_one_else;
+        const newTurnUserId = res.current_turn_user_id;
+        const userName      = res.user_name || '';
 
+        /* 1️⃣ not my turn & someone else pending */
         if (!anyOneElse && !isMyTurn) {
           $('#turn-status').text('');
-          $('#newCustomerBtn').prop('disabled', true);
+          setFormEnabled(false);
           currentTurnUserId = newTurnUserId;
           return;
         }
 
+        /* 2️⃣ my turn */
         if (isMyTurn) {
           $('#turn-status').text('🟢 It’s your turn now!');
-          $('#newCustomerBtn').prop('disabled', false);
+          setFormEnabled(true);
 
           if (currentTurnUserId !== newTurnUserId) {
             const msg = `It's your turn now${userName ? ', ' + userName : ''}!`;
             speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
 
-            // ✅ Reset the form
-            const salesForm = document.getElementById('salesForm');
-            if (salesForm) {
-              salesForm.reset();
-            }
-
-            // Clear hidden ID field and local storage
+            // Reset form for fresh entry
+            salesForm.reset();
             document.getElementById('customerId').value = '';
             localStorage.removeItem('activeCustomerId');
-
-            // Reset process checkboxes
-            document.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
-
-            // Reset button styling
-            const btn = document.getElementById('newCustomerBtn');
-            btn.classList.remove('bg-[#111827]');
-            btn.classList.add('bg-gray-400');
-            btn.disabled = true;
-
-            currentTurnUserId = newTurnUserId;
           }
-        } else if (anyOneElse) {
+        }
+        /* 3️⃣ someone else’s turn */
+        else if (anyOneElse) {
           $('#turn-status').text('⏳ Waiting for the other salesperson to finish turn…');
-          $('#newCustomerBtn').prop('disabled', true);
+          setFormEnabled(false);
         } else {
           $('#turn-status').text('');
-          $('#newCustomerBtn').prop('disabled', true);
+          setFormEnabled(false);
         }
 
         currentTurnUserId = newTurnUserId;
       })
       .fail(() => {
         $('#turn-status').text('⚠️ Error checking turn status.');
-        $('#newCustomerBtn').prop('disabled', true);
+        setFormEnabled(false);
       });
   }
 
-  // Handle "Take Customer" button click
+  /* ---------- Take Customer button click ---------- */
   $('#newCustomerBtn').on('click', function () {
-    const nameInput = $('#nameInput');
-    const nameVal = nameInput.val().trim();
+    const nameVal = nameInput.value.trim();
 
-   if (!nameVal) {
-  Swal.fire({
-    icon: 'warning',
-    title: 'Name field required!',
-    text: 'Please fill in the customer name before proceeding.',
-    showConfirmButton: false,   
-    timer: 2000                  
-  });
-  return;
-}
+    if (!nameVal) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Name field required!',
+        text: 'Please fill in the customer name before proceeding.',
+        showConfirmButton: false,
+        timer: 2000
+      });
+      return;
+    }
 
     $.ajax({
       url: '{{ route("sales.person.takeTurn") }}',
       method: 'POST',
-      data: {
-        _token: $('meta[name="csrf-token"]').attr('content')
-      },
+      data: { _token: $('meta[name="csrf-token"]').attr('content') },
       success: () => {
-        Swal.fire({
-          icon: 'success',
-          title: 'Done!',
-          timer: 1500,
-          showConfirmButton: false
-        });
-
-        $('#nameInput').val(nameVal);
+        Swal.fire({ icon: 'success', title: 'Done!', timer: 1500, showConfirmButton: false });
+        // keep name visible so user sees what was submitted
         updateTurnStatus();
       },
-      error: () => {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error occurred!'
-        });
-      }
+      error: () => Swal.fire({ icon: 'error', title: 'Error occurred!' })
     });
   });
 
-  // Start polling for turn status
+  /* ---------- Initialise ---------- */
   $(document).ready(() => {
+    // Start with form disabled until first status check
+    setFormEnabled(false);
     updateTurnStatus();
-    setInterval(updateTurnStatus, 10000); // Every 10 seconds
+    setInterval(updateTurnStatus, 10000); // Every 10 s
   });
 </script>
+
 
 <script>
     const modal = document.getElementById('customerModal');

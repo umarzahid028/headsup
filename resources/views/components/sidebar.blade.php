@@ -61,7 +61,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zM9 14l2 2 4-4" />
                     </svg>
-                    <span class="flex-1" style="margin-left: 5px;">Appointment List</span>
+                    <span class="flex-1" style="margin-left: 5px;">Appointment</span>
                 </a>
             </div>
             @endhasrole
