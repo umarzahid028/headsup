@@ -64,13 +64,17 @@
 
     .token-heading,
     .active-token-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      align-items: center;
-      font-weight: 700;
-      gap: 1rem;
-      text-align: center;
-    }
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  font-weight: 700;
+  gap: 1rem;
+  text-align: center;
+  margin-bottom: 1rem; /* ✅ gap between rows */
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #333;
+}
+
 
     .token-heading {
       font-size: 1.75rem;
