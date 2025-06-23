@@ -86,7 +86,7 @@
                                     @endif
                                   @endif
 
-                                  @if(Auth::usr()->hasRole(['Admin', 'Sales Manager']))
+                                  @if(Auth::user()->hasRole(['Admin', 'Sales Manager']))
                                     <a href="{{ route('sales.perosn', ['id' => $appt->id]) }}"
                                         class="text-white font-bold py-2 px-4 rounded"
                                         style="background-color: #111827;">
