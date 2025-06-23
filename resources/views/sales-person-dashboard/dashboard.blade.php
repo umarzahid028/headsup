@@ -759,12 +759,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function autoSaveForm() {
     const nameInput = form.querySelector('input[name="name"]');
-    if (!nameInput.value.trim()) {
-      // Don't save if name is empty
-      return;
-    }
+    const idInput = form.querySelector('input[name="id"]');
+
+    if (!nameInput.value.trim()) return; // Don't save if name is empty
 
     const formData = new FormData(form);
+
     try {
       const response = await fetch('{{ route('customer.sales.store') }}', {
         method: 'POST',
@@ -776,14 +776,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const result = await response.json();
+
       if (result.status === 'success') {
         loadCustomers();
 
-        // Set returned ID (for newly created records)
-        if (result.id) {
-          form.querySelector('input[name="id"]').value = result.id;
+        // ✅ Set returned ID only if not already set
+        if (result.id && !idInput.value) {
+          idInput.value = result.id;
           localStorage.setItem('activeCustomerId', result.id);
         }
+      } else if (result.errors) {
+        console.warn('Validation failed:', result.errors);
       }
     } catch (err) {
       console.error('Auto-save failed', err);
@@ -791,13 +794,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadCustomers() {
-    const resp = await fetch('{{ route('customer.index') }}?partial=1', {
-      headers: { 'X-Requested-With': 'XMLHttpRequest' },
-    });
-    const html = await resp.text();
-    document.getElementById('customer-list').innerHTML = html;
-    bindCardClickEvents();
-    applyActiveCard();
+    try {
+      const resp = await fetch('{{ route('customer.index') }}?partial=1', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+
+      const html = await resp.text();
+      document.getElementById('customer-list').innerHTML = html;
+
+      bindCardClickEvents();
+      applyActiveCard();
+    } catch (err) {
+      console.error('Failed to load customers', err);
+    }
   }
 
   function bindCardClickEvents() {
@@ -810,15 +819,19 @@ document.addEventListener('DOMContentLoaded', () => {
         form.querySelector('input[name="phone"]').value = card.dataset.phone || '';
         form.querySelector('input[name="interest"]').value = card.dataset.interest || '';
 
+        // Clear all process checkboxes first
         form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+
+        // Set checked processes if present
         if (card.dataset.process) {
           card.dataset.process.split(',').forEach(proc => {
-            const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
+            const checkbox = Array.from(form.querySelectorAll('input[name="process[]"]'))
               .find(cb => cb.value.trim() === proc.trim());
             if (checkbox) checkbox.checked = true;
           });
         }
 
+        // Highlight selected card
         document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
         card.classList.add('active-card');
         localStorage.setItem('activeCustomerId', customerId);
@@ -829,6 +842,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function applyActiveCard() {
     const savedId = localStorage.getItem('activeCustomerId');
     const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
+
     if (savedCard) {
       document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
       savedCard.classList.add('active-card');
@@ -841,6 +855,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Initial bindings
   bindCardClickEvents();
   applyActiveCard();
 });

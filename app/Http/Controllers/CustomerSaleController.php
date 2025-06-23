@@ -86,6 +86,7 @@ public function store(Request $request)
 }
 
 
+
   public function index(Request $request)
 {
     $customers = CustomerSale::with('user')
