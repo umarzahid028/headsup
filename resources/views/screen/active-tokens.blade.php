@@ -70,7 +70,7 @@
   font-weight: 700;
   gap: 1rem;
   text-align: center;
-  margin-bottom: 1rem; /* ✅ gap between rows */
+  margin-bottom: 1rem; 
   padding: 0.5rem 0;
   border-bottom: 1px solid #333;
 }

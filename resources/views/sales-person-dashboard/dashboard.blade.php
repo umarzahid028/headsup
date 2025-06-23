@@ -602,14 +602,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const nameInput = $('#nameInput');
     const nameVal = nameInput.val().trim();
 
-    if (!nameVal) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Name field required!',
-        text: 'Please fill in the customer name before proceeding.'
-      });
-      return;
-    }
+   if (!nameVal) {
+  Swal.fire({
+    icon: 'warning',
+    title: 'Name field required!',
+    text: 'Please fill in the customer name before proceeding.',
+    showConfirmButton: false,   
+    timer: 2000                  
+  });
+  return;
+}
 
     $.ajax({
       url: '{{ route("sales.person.takeTurn") }}',
@@ -643,7 +645,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateTurnStatus, 10000); // Every 10 seconds
   });
 </script>
-  <script>
+
+<script>
     const modal = document.getElementById('customerModal');
     const openBtn = document.getElementById('openModalBtn');
     const closeBtn = document.getElementById('closeModalBtn');
