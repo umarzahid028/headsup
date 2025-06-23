@@ -520,23 +520,23 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
   let currentTurnUserId = null;
 
-  /* ---------- Enable / Disable Button based on name ---------- */
+  // Enable/Disable "Take Customer" button based on name input
   document.addEventListener('DOMContentLoaded', function () {
-    const nameInput      = $('#nameInput');
-    const newCustomerBtn = $('#newCustomerBtn');
+    const nameInput = document.getElementById('nameInput');
+    const newCustomerBtn = document.getElementById('newCustomerBtn');
 
-    const toggleButton = () => {
-      const hasName = nameInput.val().trim().length > 0;
-      newCustomerBtn.prop('disabled', !hasName)
-                    .toggleClass('bg-gray-400', !hasName)
-                    .toggleClass('bg-[#111827]',  hasName);
-    };
+    function toggleButton() {
+      const hasValue = nameInput.value.trim().length > 0;
+      newCustomerBtn.disabled = !hasValue;
+      newCustomerBtn.classList.toggle('bg-gray-400', !hasValue);
+      newCustomerBtn.classList.toggle('bg-[#111827]', hasValue);
+    }
 
-    nameInput.on('input', toggleButton);
-    toggleButton();  // run once on page-load
+    nameInput.addEventListener('input', toggleButton);
+    toggleButton(); // Initial check on page load
   });
 
-  /* ---------- Polling to see whose turn it is ---------- */
+  // Check whose turn it is
   function updateTurnStatus() {
     $.get('/next-turn-status')
       .done(res => {
@@ -559,6 +559,27 @@ document.addEventListener('DOMContentLoaded', () => {
           if (currentTurnUserId !== newTurnUserId) {
             const msg = `It's your turn now${userName ? ', ' + userName : ''}!`;
             speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
+
+            // ✅ Reset the form
+            const salesForm = document.getElementById('salesForm');
+            if (salesForm) {
+              salesForm.reset();
+            }
+
+            // Clear hidden ID field and local storage
+            document.getElementById('customerId').value = '';
+            localStorage.removeItem('activeCustomerId');
+
+            // Reset process checkboxes
+            document.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+
+            // Reset button styling
+            const btn = document.getElementById('newCustomerBtn');
+            btn.classList.remove('bg-[#111827]');
+            btn.classList.add('bg-gray-400');
+            btn.disabled = true;
+
+            currentTurnUserId = newTurnUserId;
           }
         } else if (anyOneElse) {
           $('#turn-status').text('⏳ Waiting for the other salesperson to finish turn…');
@@ -576,58 +597,50 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  /* ---------- Take Customer button click ---------- */
+  // Handle "Take Customer" button click
   $('#newCustomerBtn').on('click', function () {
     const nameInput = $('#nameInput');
-    const nameVal   = nameInput.val().trim();   // cache value
+    const nameVal = nameInput.val().trim();
 
-    // 1️⃣ Validation
     if (!nameVal) {
       Swal.fire({
-        icon : 'warning',
+        icon: 'warning',
         title: 'Name field required!',
-        text : 'Please fill in the customer name before proceeding.'
+        text: 'Please fill in the customer name before proceeding.'
       });
-      return;  // stop if name empty
+      return;
     }
 
-    // 2️⃣ Proceed with AJAX request
     $.ajax({
-      url    : '{{ route("sales.person.takeTurn") }}',
-      method : 'POST',
-      data   : {
+      url: '{{ route("sales.person.takeTurn") }}',
+      method: 'POST',
+      data: {
         _token: $('meta[name="csrf-token"]').attr('content')
       },
-
       success: () => {
-        // show success toast
         Swal.fire({
-          icon            : 'success',
-          title           : 'Done!',
-          timer           : 1500,
+          icon: 'success',
+          title: 'Done!',
+          timer: 1500,
           showConfirmButton: false
         });
 
-        // restore cached name (in case DOM reset / rerender)
         $('#nameInput').val(nameVal);
-
-        // refresh turn status
         updateTurnStatus();
       },
-
       error: () => {
         Swal.fire({
-          icon : 'error',
+          icon: 'error',
           title: 'Error occurred!'
         });
       }
     });
   });
 
-  /* ---------- Initialise polling ---------- */
+  // Start polling for turn status
   $(document).ready(() => {
     updateTurnStatus();
-    setInterval(updateTurnStatus, 10000); // every 10 s
+    setInterval(updateTurnStatus, 10000); // Every 10 seconds
   });
 </script>
   <script>
