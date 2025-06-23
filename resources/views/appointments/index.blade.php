@@ -3,8 +3,8 @@
   </x-slot>
   <meta http-equiv="refresh" content="5">
 
-  <h2 class="text-2xl font-bold text-gray-800 mb-2 max-w-4xl mx-auto px-6">Appointments List</h2>
-  <div class="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow mt-16" style="max-height: calc(100vh - 80px); overflow-y: auto;">
+  <h2 class="text-2xl font-bold text-gray-800 mb-2 max-w-7xl mx-auto sm:px-6 lg:px-8">Appointments List</h2>
+  <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 p-6 bg-white rounded-lg shadow" >
     <table class="w-full border border-gray-300 rounded table-auto">
       <thead>
         <tr class="bg-gray-100">
