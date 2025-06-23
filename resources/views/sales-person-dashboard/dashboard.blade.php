@@ -5,7 +5,7 @@
     <div style="display:flex; justify-content: space-between;">
       <div class="px-2">
         <h1 class="text-xl font-semibold text-gray-800">Welcome, {{ Auth::user()->name }}</h1>
-        <p class="text-sm text-gray-500">Manage your check-in and token activity.</p>
+        <p class="text-sm text-gray-500">Manage your check-in activity.</p>
       </div>
       <div>
         <p id="turn-status" style="text-align:center;" class="text-sm text-gray-700 font-medium my-2 animate-pulse-text">
