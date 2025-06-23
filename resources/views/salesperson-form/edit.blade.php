@@ -1,12 +1,12 @@
 <x-app-layout>
     <x-slot name="header">
-      
+       <h1 class="text-2xl font-semibold px-3">Edit User</h1>
+    <p class="text-gray-600 px-3">Add a new Sale Person to the system.</p>
     </x-slot>
 
 
 <div class="px-6">
-    <h1 class="text-2xl font-semibold mb-2">Edit User</h1>
-    <p class="text-gray-600 mb-6">Add a new Sale Person to the system.</p>
+   
 
     <form action="{{ route('update.saleperon', ['id' => $edit->id]) }}" method="POST" class="bg-white shadow rounded-lg p-6">
         @csrf
@@ -85,41 +85,47 @@
                            placeholder="Confirm password"  />
                 </div>
             </div>
+ <div class="relative">
+    <label for="role" class="block text-sm font-medium text-gray-700 mb-1">User Type</label>
+    <div class="relative">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </span>
+       <select name="role" id="role" required
+        class="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200">
+    <option value="manager" {{ $edit->hasRole('Sales Manager') ? 'selected' : '' }}>Sales Manager</option>
+    <option value="admin" {{ $edit->hasRole('Sales person') ? 'selected' : '' }}>Sales Person</option>
+</select>
 
-            <!-- Counter Number -->
-            <div class="relative">
-                <label for="counter_number" class="block text-sm font-medium text-gray-700 mb-1">Counter Number</label>
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5"
-                             viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M8 16h8M8 12h8m-8-4h8M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                    </span>
-                    <input type="text" name="counter_number" id="counter_number"
-                           class="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200"
-                           placeholder="Enter counter number" required value="{{ $edit->counter_number }}" />
-                </div>
-            </div>
+    </div>
+</div>
+
 
             <!-- Phone Number -->
-            <!-- <div class="relative">
-                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5"
-                             viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M3 5a2 2 0 012-2h3l2 3h6l2-3h3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/>
-                        </svg>
-                    </span>
-                    <input type="text" name="phone" id="phone"
-                           class="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200"
-                           placeholder="Enter phone number" required />
-                </div>
-            </div> -->
+            <div class="relative">
+    <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+    <div class="relative">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M3 5a2 2 0 012-2h3l2 3h6l2-3h3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/>
+            </svg>
+        </span>
+        <input type="text" name="phone" id="phone"
+               value="{{ old('phone', $edit->phone ?? '') }}"
+               class="pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200"
+               placeholder="Enter phone number"/>
+    </div>
+</div>
+
         </div>
+
+       
 
         <!-- Submit Button -->
         <div class="mt-6" style="display:flex; justify-content: end;">

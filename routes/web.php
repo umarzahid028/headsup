@@ -55,48 +55,7 @@ Route::post('/sales-person', [QueuesController::class, 'dashboardstore'])->name(
 Route::get('/status', [StatusController::class, 'showStatus']);
 
 // Active tokens ke liye API (AJAX se call hoga, auth & role middleware lagao)
-Route::get('/queue-list', [TokenController::class, 'activeTokens'])->name('tokens.active');
-Route::middleware(['auth', 'role:Sales person'])->group(function () {
-    Route::post('/tokens/{token}/complete', [TokenController::class, 'completeToken'])->name('tokens.complete');
-    // routes/web.php
-    Route::post('/tokens/{token}/skip', [TokenController::class, 'skip'])->name('tokens.skip');
-});
-// routes/web.php
-Route::post('/token/{id}/resume', [TokenController::class, 'resume'])->name('token.resume');
-
-Route::post('/token/{id}/hold', [TokenController::class, 'hold'])->name('token.hold');
-Route::post('/tokens/next/{token}', [TokenController::class, 'assignNextToken'])->middleware('auth');
-
-Route::post('/check-in', [TokenController::class, 'checkIn'])->middleware('auth');
-
-//Current Token
-Route::middleware('auth')->get('/token/current', [TokenController::class, 'currentAssignedToken'])->name('token.current');
-//Active Token auto refresh
-Route::get('/tokens/current-assigned', function () {
-    $user = Auth::user();  // logged-in user ko lelo
-
-    if (!$user) {
-        return response('Unauthorized', 401);
-    }
-    // Check if user is checked in
-    $isCheckedIn = \App\Models\Queue::where('user_id', $user->id)
-        ->where('is_checked_in', true)
-        ->exists();
-
-    if (!$isCheckedIn) {
-        $token = null;
-        return view('partials.current-token', compact('token'));
-    }
-
-    $token = \App\Models\Token::with('salesperson')
-        ->where('user_id', $user->id)
-        ->where('status', 'assigned')
-        ->latest('created_at')
-        ->first();
-
-    return view('partials.current-token', compact('token'));
-})->middleware(['auth', 'web']);
-
+Route::get('/queue-list', [TokenController::class, 'queuelist'])->name('tokens.active');
 //Appoinments
 Route::middleware(['auth'])->group(function () {
 
@@ -123,7 +82,7 @@ Route::middleware(['auth'])->group(function () {
 
 Route::post('/appointment-sales', [AppointmentController::class, 'appointmentstore'])->name('customer.appointment.store');
 //Token History
-Route::get('token/history', [TokenController::class, 'tokenhistory'])->name('token.history.view');
+Route::get('/add/users', [TokenController::class, 'addusers'])->name('token.history.view');
 //Customer Sales
 Route::post('/customer-sales', [CustomerSaleController::class, 'store'])->name('customer.sales.store');
 Route::get('/customers', [CustomerSaleController::class, 'index'])->name('customer.index');

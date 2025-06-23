@@ -67,15 +67,19 @@ class UserController extends Controller
      * Store a newly created resource in storage.
      */
 
-   public function saletable()
+public function saletable()
 {
-   $salespersons = User::role('Sales person')
-    ->withCount('customerSales') 
-    ->latest()
-    ->get();
-   
+    $salespersons = User::whereHas('roles', function ($q) {
+            $q->whereIn('name', ['Sales person', 'Sales Manager']);
+        })
+        ->with(['roles', 'customerSales']) 
+        ->withCount('customerSales') 
+        ->latest()
+        ->get();
+
     return view('salesperson-form.table', compact('salespersons'));
 }
+
 
 
     public function editsales(Request $request, $id)
@@ -85,13 +89,13 @@ class UserController extends Controller
       return view('salesperson-form.edit', compact('edit'));
     }
 
-   public function updatesales(Request $request, $id)
+public function updatesales(Request $request, $id)
 {
     $request->validate([
         'name' => 'required|string|max:255',
         'email' => 'required|email|unique:users,email,' . $id,
         'password' => 'nullable|min:6|confirmed',
-        'counter_number' => 'required|string|max:255',
+        'role' => 'required|in:manager,admin', // role validation
     ]);
 
     $user = User::find($id);
@@ -102,7 +106,6 @@ class UserController extends Controller
 
     $user->name = $request->name;
     $user->email = $request->email;
-    $user->counter_number = $request->counter_number;
 
     if ($request->filled('password')) {
         $user->password = bcrypt($request->password);
@@ -110,8 +113,15 @@ class UserController extends Controller
 
     $user->save();
 
+    if (!$user->hasRole('admin')) {
+        $selectedRole = $request->role === 'manager' ? 'Sales Manager' : 'Sales person';
+
+        $user->syncRoles([$selectedRole]);
+    }
+
     return redirect()->route('saleperson.table')->with('success', 'User Updated Successfully');
 }
+
 
 public function deleteSalesperson($id)
 {
@@ -126,57 +136,59 @@ public function deleteSalesperson($id)
     return response()->json(['message' => 'User deleted successfully']);
 }
 
-    public function store(Request $request)
-    {
+public function store(Request $request)
+{
+    $this->validate($request, [
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+        'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        'phone' => ['nullable', 'string', 'max:20'],
+        'role' => ['required', 'in:admin,manager'], 
+    ]);
 
+    if (User::where('email', $request->input('email'))->exists()) {
+        return redirect()->back()->withInput()
+            ->with('error', 'A user with this email already exists.');
+    }
 
-        $this->validate($request, [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'counter_number' => ['nullable', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:20'],
+    DB::beginTransaction();
+
+    try {
+        $user = User::create([
+            'name' => $request->input('name'),
+            'email' => $request->input('email'),
+            'password' => Hash::make($request->input('password')),
+            'phone' => $request->input('phone'),
         ]);
 
-        if (User::where('email', $request->input('email'))->exists()) {
-            return redirect()->back()->withInput()
-                ->with('error', 'A user with this email already exists.');
-        }
-
-        DB::beginTransaction();
-
-        try {
-            $user = User::create([
-                'name' => $request->input('name'),
-                'email' => $request->input('email'),
-                'password' => Hash::make($request->input('password')),
-                'counter_number' => $request->input('counter_number'),
-                'phone' => $request->input('phone'),
-            ]);
-
-            // Assign default role: sales-person
+        // Assign role dynamically from the request
+        if ($request->role === 'admin') {
             $user->assignRole('Sales person');
-
-            DB::commit();
-
-            return redirect()->route('saleperson.table')
-                ->with('success', 'User created successfully');
-        } catch (\Illuminate\Database\QueryException $e) {
-            DB::rollBack();
-
-            if ($e->errorInfo[1] == 1062) {
-                return redirect()->route('saleperson.table')->with('success', 'Sale Person created successfully!');
-            }
-
-            return redirect()->back()->withInput()
-                ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return redirect()->back()->withInput()
-                ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
+        } elseif ($request->role === 'manager') {
+            $user->assignRole('Sales Manager');
         }
+
+        DB::commit();
+
+        return redirect()->route('saleperson.table')
+            ->with('success', 'User created successfully');
+    } catch (\Illuminate\Database\QueryException $e) {
+        DB::rollBack();
+
+        if ($e->errorInfo[1] == 1062) {
+            return redirect()->route('saleperson.table')->with('success', 'Sale Person created successfully!');
+        }
+
+        return redirect()->back()->withInput()
+            ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return redirect()->back()->withInput()
+            ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
     }
+}
+
 
     /**
      * Display the specified resource.
