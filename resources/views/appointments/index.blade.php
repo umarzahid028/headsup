@@ -68,7 +68,25 @@
                             </td>
                             <td class="border-b px-4 py-3">
                                 <div class="flex flex-wrap gap-3 items-center">
-                                  
+
+                                  @if(Auth::usr()->hasRole('Sales person'))
+                                    @if(Auth::id() == $appt->salesperson_id)
+                                        <a href="{{ route('sales.perosn', ['id' => $appt->id]) }}"
+                                        class="text-white font-bold py-2 px-4 rounded"
+                                        style="background-color: #111827;">
+                                        Customer Arrive
+                                    </a>
+
+
+                                    <a href="{{ route('appointments.edit', ['appointment' => $appt->id]) }}"
+                                        class="text-yellow-600 border border-yellow-600 font-bold py-2   px-4 rounded hover:bg-yellow-600 hover:text-white transition"
+                                        style="background-color:#111827; Color:white;">
+                                        Edit
+                                    </a>
+                                    @endif
+                                  @endif
+
+                                  @if(Auth::usr()->hasRole(['Admin', 'Sales Manager']))
                                     <a href="{{ route('sales.perosn', ['id' => $appt->id]) }}"
                                         class="text-white font-bold py-2 px-4 rounded"
                                         style="background-color: #111827;">
@@ -81,6 +99,9 @@
                                         style="background-color:#111827; Color:white;">
                                         Edit
                                     </a>
+                                  @endif
+
+                                   
                                 </div>
                             </td>
                         </tr>

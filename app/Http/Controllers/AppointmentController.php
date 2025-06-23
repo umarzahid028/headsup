@@ -13,13 +13,7 @@ class AppointmentController extends Controller
     {
         $user = auth()->user();
 
-        if ($user->hasRole('Sales person')) {
-            $appointments = Appointment::where('salesperson_id', $user->id)->latest()->get();
-        } elseif ($user->hasAnyRole(['Admin', 'Sales Manager'])) {
-            $appointments = Appointment::latest()->get();
-        } else {
-            $appointments = collect();
-        }   
+        $appointments = Appointment::latest()->get();
 
         return view('appointments.index', compact('appointments'));
     }
