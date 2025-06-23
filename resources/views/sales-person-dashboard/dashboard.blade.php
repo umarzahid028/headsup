@@ -105,17 +105,18 @@
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">
         {{ ucfirst($field) }}
-        @if($field == 'name')
+        @if($field === 'name')
           <span class="text-red-600">*</span>
         @endif
       </label>
+
       <input
-        id="{{ $field == 'name' ? 'nameInput' : $field . 'Input' }}"
+        id="{{ $field === 'name' ? 'nameInput' : $field . 'Input' }}"
         name="{{ $field }}"
-        type="{{ $field == 'email' ? 'email' : 'text' }}"
+        type="{{ $field === 'email' ? 'email' : 'text' }}"
         class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
         value="{{ $sale->$field ?? '' }}"
-        @if($field == 'name') required @endif
+        @if($field === 'name') required @endif
       />
     </div>
   @endforeach
@@ -237,7 +238,10 @@
         </div>
 
         <div>
-<button id="newCustomerBtn" type="button" disabled
+<button
+  id="newCustomerBtn"
+  type="button"
+  disabled
   class="w-full bg-gray-400 text-white font-semibold px-6 py-2 rounded-xl mb-4">
   Take Customer
 </button>
@@ -516,18 +520,31 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
   let currentTurnUserId = null;
 
+  /* ---------- Enable / Disable Button based on name ---------- */
+  document.addEventListener('DOMContentLoaded', function () {
+    const nameInput      = $('#nameInput');
+    const newCustomerBtn = $('#newCustomerBtn');
+
+    const toggleButton = () => {
+      const hasName = nameInput.val().trim().length > 0;
+      newCustomerBtn.prop('disabled', !hasName)
+                    .toggleClass('bg-gray-400', !hasName)
+                    .toggleClass('bg-[#111827]',  hasName);
+    };
+
+    nameInput.on('input', toggleButton);
+    toggleButton();  // run once on page-load
+  });
+
+  /* ---------- Polling to see whose turn it is ---------- */
   function updateTurnStatus() {
     $.get('/next-turn-status')
       .done(res => {
-        console.log(res);
+        const isMyTurn        = res.is_your_turn;
+        const anyOneElse      = res.any_one_else;
+        const newTurnUserId   = res.current_turn_user_id;
+        const userName        = res.user_name || '';
 
-        const isMyTurn = res.is_your_turn;
-        const othersPending = res.others_pending;
-        const anyOneElse = res.any_one_else;
-        const newTurnUserId = res.current_turn_user_id;
-        const userName = res.user_name || "";
-
-        // 💡 If no one else is checked in and it's not your turn: show nothing
         if (!anyOneElse && !isMyTurn) {
           $('#turn-status').text('');
           $('#newCustomerBtn').prop('disabled', true);
@@ -538,12 +555,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isMyTurn) {
           $('#turn-status').text('🟢 It’s your turn now!');
           $('#newCustomerBtn').prop('disabled', false);
+
           if (currentTurnUserId !== newTurnUserId) {
             const msg = `It's your turn now${userName ? ', ' + userName : ''}!`;
             speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
           }
         } else if (anyOneElse) {
-          $('#turn-status').text('⏳ Waiting for the other salesperson to finish turn...');
+          $('#turn-status').text('⏳ Waiting for the other salesperson to finish turn…');
           $('#newCustomerBtn').prop('disabled', true);
         } else {
           $('#turn-status').text('');
@@ -558,51 +576,60 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  // ✅ Add validation on Take Customer button click
+  /* ---------- Take Customer button click ---------- */
   $('#newCustomerBtn').on('click', function () {
-    const nameVal = $('#nameInput').val().trim();
+    const nameInput = $('#nameInput');
+    const nameVal   = nameInput.val().trim();   // cache value
 
+    // 1️⃣ Validation
     if (!nameVal) {
       Swal.fire({
-        icon: 'warning',
+        icon : 'warning',
         title: 'Name field required!',
-        text: 'Please fill in the customer name before proceeding.',
+        text : 'Please fill in the customer name before proceeding.'
       });
-      return; // stop execution
+      return;  // stop if name empty
     }
 
-    // ✅ Proceed if name is filled
+    // 2️⃣ Proceed with AJAX request
     $.ajax({
-      url: '{{ route("sales.person.takeTurn") }}',
-      method: 'POST',
-      data: {
+      url    : '{{ route("sales.person.takeTurn") }}',
+      method : 'POST',
+      data   : {
         _token: $('meta[name="csrf-token"]').attr('content')
       },
+
       success: () => {
+        // show success toast
         Swal.fire({
-          icon: 'success',
-          title: 'Done!',
-          timer: 1500,
+          icon            : 'success',
+          title           : 'Done!',
+          timer           : 1500,
           showConfirmButton: false
         });
+
+        // restore cached name (in case DOM reset / rerender)
+        $('#nameInput').val(nameVal);
+
+        // refresh turn status
         updateTurnStatus();
       },
+
       error: () => {
         Swal.fire({
-          icon: 'error',
+          icon : 'error',
           title: 'Error occurred!'
         });
       }
     });
   });
 
-  // ✅ Run status check on page load and every 10 sec
+  /* ---------- Initialise polling ---------- */
   $(document).ready(() => {
     updateTurnStatus();
-    setInterval(updateTurnStatus, 10000);
+    setInterval(updateTurnStatus, 10000); // every 10 s
   });
 </script>
-
   <script>
     const modal = document.getElementById('customerModal');
     const openBtn = document.getElementById('openModalBtn');
