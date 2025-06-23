@@ -35,13 +35,13 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Date</label>
-                            <input type="date" name="date" required
+                            <input type="date" name="date" id="date" required
                                 class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Time</label>
-                            <input type="time" name="time" required
+                            <input type="time" name="time" id="time" required
                                 class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
                         </div>
                     </div>
@@ -86,6 +86,33 @@
     </div>
 
     @push('scripts')
-        <!-- Add any JS scripts if needed -->
+        <script>
+            const now = new Date();
+
+            // Format date as YYYY-MM-DD
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const today = `${year}-${month}-${day}`;
+
+            // Format time as HH:MM
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const currentTime = `${hours}:${minutes}`;
+
+            const dateInput = document.getElementById('date');
+            const timeInput = document.getElementById('time');
+
+            // Set minimum date to tomorrow
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowDate =
+                `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+
+            dateInput.setAttribute('min', tomorrowDate);
+
+            // Optional: disable past times if same-day restriction allowed (not needed here since we block today)
+            // timeInput.setAttribute('min', currentTime);
+        </script>
     @endpush
 </x-app-layout>

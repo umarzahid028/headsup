@@ -96,13 +96,20 @@ public function update(Request $request, Appointment $appointment)
         'notes'           => 'nullable|string',
     ]);
 
+    $user = auth()->user();
+
+    $salespersonId = in_array($user->getRoleNames()->first(), ['Admin', 'Sales Manager']) 
+    ? $request->salesperson_id 
+    : $user->id;
+    
+
     $appointment->update([
         'customer_name'   => $validated['customer_name'],
         'customer_phone'  => $validated['customer_phone'],
         'date'            => $validated['date'],
         'time'            => $validated['time'],
         'status'          => $validated['status'],
-        'salesperson_id'  => $validated['salesperson_id'],
+        'salesperson_id'  =>   $salespersonId,
         'notes'           => $validated['notes'] ?? null,
     ]);
 
