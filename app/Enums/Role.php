@@ -8,20 +8,23 @@ enum Role: string
     case MANAGER = 'Manager';
     case RECON_MANAGER = 'Recon Manager';
     case SALES_PERSON = 'Sales person';
+    case SALES_MANAGER = 'Sales Manager';
 
     public function label(): string
     {
         return match ($this) {
             self::ADMIN => 'Administrator',
             self::MANAGER => 'Manager',
+            self::RECON_MANAGER => 'Recon Manager',
             self::SALES_PERSON => 'Sales person',
+            self::SALES_MANAGER => 'Sales Manager',
         };
     }
 
     public function canEnterCosts(): bool
     {
         return match ($this) {
-            self::ADMIN, self::MANAGER, self::ONSITE_VENDOR => true,
+            self::ADMIN, self::MANAGER, self::SALES_MANAGER => true,
             default => false,
         };
     }
@@ -42,3 +45,5 @@ enum Role: string
         };
     }
 }
+
+
