@@ -52,7 +52,7 @@ class RoleAndPermissionSeeder extends Seeder
                 'manage'
             ],
 
-            'Sales Person' => [
+            'Sales person' => [
                 'view any',
                 'view own',
                 'create',

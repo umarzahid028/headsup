@@ -21,35 +21,27 @@ class UserRoleSeeder extends Seeder
         'password' => 'admin@admin.com'
     ],
     'Sales Manager' => [
-        'name' => 'Sales Manager',
-        'email' => 'salesmanager@salesmanager.com',
-        'password' => 'salesmanager@salesmanager.com'
+        'name' => 'Alex',
+        'email' => 'alex@alex.com',
+        'password' => 'alex@alex.com'
     ],
     'Sales person' => [
         [
-            'name' => 'Sales Person 1',
-            'email' => 'salesperson1@sales.com',
-            'password' => 'salesperson1@sales.com',
-            'counter_number' => '1',
+            'name' => 'Asad',
+            'email' => 'asad@asad.com',
+            'password' => 'asad@asad.com',
         ],
         [
-            'name' => 'Sales Person 2',
-            'email' => 'salesperson2@sales.com',
-            'password' => 'salesperson2@sales.com',
-            'counter_number' => '2',
+            'name' => 'Awais',
+            'email' => 'awais@awais.com',
+            'password' => 'awais@awais.com',
         ],
         [
-            'name' => 'Sales Person 3',
-            'email' => 'salesperson3@sales.com',
-            'password' => 'salesperson3@sales.com',
-            'counter_number' => '3',
+            'name' => 'Umar',
+            'email' => 'umar@umar.com',
+            'password' => 'umar@umar.com',
         ],
-        [
-            'name' => 'Sales Person 4',
-            'email' => 'salesperson4@sales.com',
-            'password' => 'salesperson4@sales.com',
-            'counter_number' => '4',
-        ],
+      
     ]
 ];
 
@@ -63,7 +55,6 @@ class UserRoleSeeder extends Seeder
                 [
                     'name' => $userData['name'],
                     'password' => Hash::make($userData['password']),
-                    'counter_number' => $userData['counter_number'] ?? null,
                     'email_verified_at' => now()
                 ]
             );
