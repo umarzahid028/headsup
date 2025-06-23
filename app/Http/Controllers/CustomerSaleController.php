@@ -15,9 +15,9 @@ public function store(Request $request)
     try {
         $validated = $request->validate([
             'id'             => 'nullable|integer|exists:customer_sales,id',
-            'user_id'        => 'required|exists:users,id',
+            'user_id'        => 'nullable|exists:users,id',
             'customer_id'    => 'nullable|exists:customers,id',
-            'name'           => 'required|string|max:255',
+            'name'           => 'required|string|max:255',  // only 'name' required
             'email'          => 'nullable|email|max:255',
             'phone'          => 'nullable|string|max:20',
             'interest'       => 'nullable|string|max:255',
@@ -34,57 +34,55 @@ public function store(Request $request)
     }
 
     $data = [
-        'user_id'     => $validated['user_id'],
+        'user_id'     => $validated['user_id'] ?? auth()->id(), // fallback to logged-in user
         'customer_id' => $validated['customer_id'] ?? null,
         'name'        => $validated['name'],
         'email'       => $validated['email'] ?? null,
-        'phone'       => $validated['phone'],
+        'phone'       => $validated['phone'] ?? null,
         'interest'    => $validated['interest'] ?? null,
         'notes'       => $validated['notes'] ?? null,
         'process'     => $validated['process'] ?? [],
         'disposition' => $validated['disposition'] ?? null,
     ];
 
-    // ✅ Find or create
-    $sale = !empty($validated['id']) ? CustomerSale::find($validated['id']) : null;
+    $sale = !empty($validated['id'])
+        ? CustomerSale::find($validated['id'])
+        : CustomerSale::create($data);
 
-    if ($sale) {
+    if ($sale && !empty($validated['id'])) {
         $sale->update($data);
-    } else {
-        $sale = CustomerSale::create($data);
     }
 
-    // ✅ Set ended_at if disposition is given
     if (!empty($validated['disposition'])) {
         $sale->ended_at = now();
         $sale->save();
     }
 
-    // ✅ Update appointment status if needed
     if (!empty($validated['appointment_id'])) {
         \App\Models\Appointment::where('id', $validated['appointment_id'])
             ->update(['status' => 'completed']);
     }
 
-    // ✅ Calculate duration from queue
-    $queue = \App\Models\Queue::where('user_id', $data['user_id'])
-        ->where('customer_id', $data['customer_id'])
-        ->whereNotNull('took_turn_at')
-        ->latest('took_turn_at')
-        ->first();
-
     $duration = null;
-    if ($queue && $sale->ended_at) {
-        $start = \Carbon\Carbon::parse($queue->took_turn_at);
-        $end = \Carbon\Carbon::parse($sale->ended_at);
-        $duration = $start->diff($end)->format('%Hh %Im %Ss');
+    if (!empty($data['user_id']) && !empty($data['customer_id']) && $sale->ended_at) {
+        $queue = \App\Models\Queue::where('user_id', $data['user_id'])
+            ->where('customer_id', $data['customer_id'])
+            ->whereNotNull('took_turn_at')
+            ->latest('took_turn_at')
+            ->first();
+
+        if ($queue) {
+            $start = \Carbon\Carbon::parse($queue->took_turn_at);
+            $end   = \Carbon\Carbon::parse($sale->ended_at);
+            $duration = $start->diff($end)->format('%Hh %Im %Ss');
+        }
     }
 
     return response()->json([
         'status'   => 'success',
         'message'  => 'Customer sale data saved successfully!',
         'duration' => $duration,
-        'id'       => $sale->id, // send back id to frontend
+        'id'       => $sale->id,
         'redirect' => route('sales.perosn'),
     ]);
 }
