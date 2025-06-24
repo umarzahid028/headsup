@@ -72,7 +72,7 @@ public function saletable()
     $salespersons = User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['Sales person', 'Sales Manager']);
         })
-        ->with(['roles', 'customerSales']) 
+        ->with(['roles', 'customerSales','latestQueue']) 
         ->withCount('customerSales') 
         ->latest()
         ->get();
