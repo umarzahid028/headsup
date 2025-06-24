@@ -5,18 +5,19 @@
             {{ __('Customers') }}
         </h2>
         <p class="text-sm text-muted-foreground mt-1">
-            View the list of customers currently assigned to you or your team.
+            View the list of customers.
         </p>
     </x-slot>
 
-    <div class="flex items-center justify-end mb-4 px-6">
-        <a href="{{ route('add.customer') }}" class="bg-black text-white px-4 py-2 rounded">
-            Add Customer
-        </a>
-    </div>
+    
 
     <div class="py-6">
         <div class="container mx-auto space-y-6 py-6 px-4">
+            <div class="flex items-center justify-end mb-4 px-6">
+                <a href="{{ route('add.customer') }}" class="bg-black text-white px-4 py-2 rounded">
+                    Add Customer
+                </a>
+            </div>
             <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
                 <table class="min-w-full bg-white divide-y divide-gray-200">
                     <thead>
