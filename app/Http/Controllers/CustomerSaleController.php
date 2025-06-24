@@ -315,9 +315,11 @@ public function checkout(Request $request, $id)
 {
     $person = Queue::find($id);
     if (!$person->is_checked_in) {
-        return response()->json([
-            'message' => 'This salesperson is already checked out.'
-        ], 400);
+    //     return response()->json([
+    //         'message' => 'This salesperson is already checked out.'
+    //     ], 400);
+
+        return redirect()->back()->with('error', 'This salesperson is already checked out.');
     }
 
     $person->is_checked_in = false;
