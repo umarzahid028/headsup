@@ -1,8 +1,6 @@
 <x-app-layout>
-
-    {{-- ✅ Force SweetAlert2 buttons to be visible always --}}
+    {{-- ✅ SweetAlert2 Buttons Styling --}}
     <style>
-        /* ✅ Force SweetAlert2 buttons to look correct and stay visible */
         .swal2-popup .swal2-actions button.swal2-confirm,
         .swal2-popup .swal2-actions button.swal2-cancel {
             display: inline-block !important;
@@ -13,13 +11,10 @@
             color: #fff !important;
             border: none !important;
             cursor: pointer !important;
-            box-shadow: none !important;
             opacity: 1 !important;
             visibility: visible !important;
-            transition: background-color 0.2s ease-in-out !important;
         }
 
-        /* ✅ Confirm button */
         .swal2-popup .swal2-actions .swal2-confirm {
             background-color: #d33 !important;
         }
@@ -28,7 +23,6 @@
             background-color: #b91c1c !important;
         }
 
-        /* ✅ Cancel button */
         .swal2-popup .swal2-actions .swal2-cancel {
             background-color: #3085d6 !important;
         }
@@ -37,19 +31,15 @@
             background-color: #2563eb !important;
         }
 
-        /* ✅ Button container layout */
         .swal2-popup .swal2-actions {
             display: flex !important;
             justify-content: center !important;
             gap: 12px !important;
-            margin-top: 1.5rem !important;
         }
     </style>
 
-
-
     <x-slot name="header">
-        <h1 class="text-2xl font-semibold text-gray-800 px-4">Users </h1>
+        <h1 class="text-2xl font-semibold text-gray-800 px-4">Users</h1>
         <p class="text-sm text-gray-500 mt-1 px-4">
             View and manage all active sales team members below.
         </p>
@@ -58,9 +48,7 @@
     <div class="px-6">
         @role('Admin|Sales Manager')
         <div class="flex items-center justify-end mb-4 px-6">
-            <a href="{{ route('create.saleperson') }}" class="bg-black text-white px-4 py-2 rounded">
-                Add User
-            </a>
+            <a href="{{ route('create.saleperson') }}" class="bg-black text-white px-4 py-2 rounded">Add User</a>
         </div>
         @endrole
 
@@ -84,49 +72,37 @@
                             <td class="px-4 py-2">{{ $person->name }}</td>
                             <td class="px-4 py-2">{{ $person->email }}</td>
                             <td class="px-4 py-2">{{ $person->customer_sales_count }}</td>
+                            <td class="px-4 py-2">{{ $person->roles->first()->name ?? 'No Role' }}</td>
                             <td class="px-4 py-2">
-                                {{ $person->roles->first()->name ?? 'No Role' }}
-                            </td>
-
-                            <td class="px-4 py-2">
-                                <div class="flex gap-2">
+                                <div class="flex gap-2 mb-2">
                                     <a href="{{ route('edit.saleperson', $person->id) }}"
                                         class="px-4 py-2 text-xs font-medium text-white rounded hover:bg-yellow-600"
-                                        style="background-color:#111827;">
-                                        Edit
-                                    </a>
+                                        style="background-color:#111827;">Edit</a>
                                     <button data-id="{{ $person->id }}"
                                         class="delete-user px-4 py-2 text-xs font-medium text-white rounded hover:bg-red-700"
-                                        style="background-color:#111827;">
-                                        Delete
-                                    </button>
+                                        style="background-color:#111827;">Delete</button>
                                 </div>
-                                 <div class="flex items-center justify-between">
-         
-<form class="check-out-form" action="{{ route('sales.person.checkout', $person->id) }}" method="POST">
-  @csrf
-  <button type="submit"
-    class="check-out-btn bg-red-500 hover:bg-red-600 px-6 py-2 text-sm font-semibold flex items-center gap-2 rounded-full text-white shadow-md">
-    
-    <span class="btn-text">Check Out</span>
 
-    <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
-      fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-      <path class="opacity-75" fill="currentColor"
-        d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
-    </svg>
-  </button>
+                                {{-- ✅ Check In/Out Form --}}
+                              <form class="checkToggleForm" action="{{ route('sales.person.store') }}" method="POST">
+    @csrf
+    <input type="hidden" name="user_id" value="{{ $person->id }}">
+    <button type="submit" class="checkToggleButton flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full text-white bg-green-500 hover:bg-green-600">
+        <span class="btn-text">Check In</span>
+        <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+        </svg>
+    </button>
 </form>
-
-
-
 
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center py-4 text-gray-500">No salespersons found.</td>
+                            <td colspan="6" class="text-center py-4 text-gray-500">No salespersons found.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -135,17 +111,16 @@
         </div>
     </div>
 
-    <!-- ✅ SweetAlert2 CDN -->
+    {{-- ✅ SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- ✅ Flash Messages -->
+    {{-- ✅ Flash Messages --}}
     @if(session('success'))
     <script>
         Swal.fire({
             icon: 'success',
             title: 'Success',
-            text: '{{ session('
-            success ') }}',
+            text: @json(session('success')),
             confirmButtonColor: '#111827',
         });
     </script>
@@ -156,68 +131,73 @@
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: '{{ session('
-            error ') }}',
+            text: @json(session('error')),
             confirmButtonColor: '#d33',
         });
     </script>
     @endif
 
-<script>
-  $.ajaxSetup({
-    headers: {
-      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-    }
-  });
+    {{-- ✅ AJAX for Check In/Out --}}
+  <script>
+    $(document).on('submit', '.checkToggleForm', function (e) {
+        e.preventDefault();
 
-  $(document).on('submit', '.check-out-form', function (e) {
-    e.preventDefault();
+        const form = $(this);
+        const button = form.find('.checkToggleButton');
+        const btnText = form.find('.btn-text');
+        const spinner = form.find('.btn-spinner');
 
-    const form = $(this);
-    const btn = form.find('.check-out-btn');
-    const btnText = btn.find('.btn-text');
-    const spinner = btn.find('.btn-spinner');
+        // Disable and show spinner
+        button.prop('disabled', true);
+        btnText.addClass('hidden');
+        spinner.removeClass('hidden');
 
-    btn.prop('disabled', true);
-    btnText.addClass('hidden');
-    spinner.removeClass('hidden');
+        $.ajax({
+            url: form.attr('action'),
+            method: 'POST',
+            data: form.serialize(),
+            success: function (response) {
+                // Enable and reset
+                button.prop('disabled', false);
+                btnText.removeClass('hidden');
+                spinner.addClass('hidden');
 
-    $.ajax({
-      url: form.attr('action'),
-      method: 'POST',
-      data: form.serialize(),
-      success: function (response) {
-        btn.prop('disabled', false);
-        btnText.removeClass('hidden');
-        spinner.addClass('hidden');
+                // Update button text & classes
+                if (response.checked_in) {
+                    btnText.text('Check Out');
+                    button.removeClass('bg-green-500 hover:bg-green-600')
+                        .addClass('bg-red-500 hover:bg-red-600');
+                } else {
+                    btnText.text('Check In');
+                    button.removeClass('bg-red-500 hover:bg-red-600')
+                        .addClass('bg-green-500 hover:bg-green-600');
+                }
 
-        Swal.fire({
-          icon: 'success',
-          title: 'Checked Out!',
-          text: response.message || 'You have been checked out.',
-          timer: 2000,
-          showConfirmButton: false,
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: response.message,
+                    timer: 1500,
+                    showConfirmButton: false,
+                });
+            },
+            error: function (xhr) {
+                button.prop('disabled', false);
+                btnText.removeClass('hidden');
+                spinner.addClass('hidden');
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: xhr.responseJSON?.message || 'Something went wrong.',
+                });
+            }
         });
-
-        // Optionally: Disable button or remove it
-        // btn.prop('disabled', true).addClass('opacity-50').text('Checked Out');
-      },
-      error: function () {
-        btn.prop('disabled', false);
-        btnText.removeClass('hidden');
-        spinner.addClass('hidden');
-
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Something went wrong. Please try again.',
-        });
-      }
     });
-  });
 </script>
 
-    <!-- ✅ Delete Confirmation JS -->
+
+    {{-- ✅ Delete Confirmation --}}
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.delete-user').forEach(button => {
@@ -232,34 +212,29 @@
                         confirmButtonColor: '#d33',
                         cancelButtonColor: '#3085d6',
                         confirmButtonText: 'Yes, delete it!',
-                        cancelButtonText: 'Cancel',
-                        customClass: {
-                            confirmButton: 'swal2-confirm',
-                            cancelButton: 'swal2-cancel'
-                        }
+                        cancelButtonText: 'Cancel'
                     }).then((result) => {
                         if (result.isConfirmed) {
                             fetch(`/salesperson/delete/${userId}`, {
-                                    method: 'DELETE',
-                                    headers: {
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                        'Accept': 'application/json',
-                                        'Content-Type': 'application/json',
-                                    },
-                                })
-                                .then(response => response.json())
-                                .then(data => {
-                                    Swal.fire('Deleted!', data.message, 'success')
-                                        .then(() => location.reload());
-                                })
-                                .catch(err => {
-                                    Swal.fire('Error', 'Failed to delete user.', 'error');
-                                });
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                },
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                Swal.fire('Deleted!', data.message, 'success')
+                                    .then(() => location.reload());
+                            })
+                            .catch(err => {
+                                Swal.fire('Error', 'Failed to delete user.', 'error');
+                            });
                         }
                     });
                 });
             });
         });
     </script>
-
 </x-app-layout>
