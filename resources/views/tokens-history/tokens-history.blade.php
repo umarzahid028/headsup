@@ -72,29 +72,33 @@
                                     @endif
     
                                 </td>
-                                @php
+                               @php
                                     $duration = 'N/A';
-    
+
                                     // Find the latest queue for this customer that has took_turn_at (ignore user_id filter)
                                     $queue = \App\Models\Queue::where('customer_id', $sale->customer_id ?? null)
                                         ->whereNotNull('took_turn_at')
                                         ->latest('took_turn_at')
                                         ->first();
-    
+
                                     // If we have both times, calculate duration
                                     if (!empty($queue) && $sale->ended_at) {
-                                        $start = \Carbon\Carbon::parse($queue->took_turn_at);
-                                        $end = \Carbon\Carbon::parse($sale->ended_at);
-                                        $duration = $start->diff($end)->format('%Hh %Im %Ss');
+                                        $startAt = $queue->took_turn_at ?? null;
+                                        $endAt = $sale->ended_at ?? null;
+
+                                        if ($startAt && $endAt) {
+                                            $start = \Carbon\Carbon::parse($startAt);
+                                            $end = \Carbon\Carbon::parse($endAt);
+                                            $diff = $start->diff($end);
+
+                                            $duration = sprintf('%02dh %02dm %02ds', $diff->h, $diff->i, $diff->s);
+                                        }
                                     }
                                 @endphp
     
     
                                 <td class="px-6 py-3">
-                                    <span
-                                        class="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded">
-                                        {{ $duration }}
-                                    </span>
+                                    {{ $duration }}
                                 </td>
     
                             </tr>
