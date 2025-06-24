@@ -103,7 +103,7 @@
                                             </button>
                                             @if( isset($person->latestQueue) && $person->latestQueue->checked_in_at && is_null($person->latestQueue->checked_out_at))
                                                 <form class="check-out-form"
-                                                    action="{{ route('sales.person.checkout', $person->id) }}" method="POST">
+                                                    action="{{ route('sales.person.checkout', $person->latestQueue->id) }}" method="POST">
                                                     @csrf
                                                     <button type="submit"
                                                         class="check-out-btn px-4 py-2 text-xs text-white rounded hover:bg-red-700" style="background-color:#111827;">

@@ -313,7 +313,7 @@ public function customerform(Request $request)
 
 public function checkout(Request $request, $id)
 {
-    $person = Queue::findOrFail($id);
+    $person = Queue::find($id);
     if (!$person->is_checked_in) {
         return response()->json([
             'message' => 'This salesperson is already checked out.'
