@@ -49,7 +49,7 @@
    @if ($customer->forwarded_to_manager && empty($customer->disposition))
       <div
         id="card-{{ $customer->id }}"
-        class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl mb-4 border border-gray-200 p-4 cursor-pointer transition-all duration-300"
+        class="customer-card w-full mx-auto bg-white shadow-md rounded-2xl mb-4 border border-gray-200 p-4 cursor-pointer transition-all duration-300"
         data-name="{{ $customer->name }}"
         data-email="{{ $customer->email }}"
         data-phone="{{ $customer->phone ?? '' }}"
@@ -67,7 +67,7 @@
         <div class="space-y-2 text-gray-500 text-sm mt-3">
           <p>
             <span class="font-medium text-gray-400">Sales Person:</span>
-            <span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full ml-2">
+            <span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded ml-2">
               {{ $customer->user->name ?? 'Unknown' }}
             </span>
           </p>
