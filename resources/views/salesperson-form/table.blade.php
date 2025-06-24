@@ -101,24 +101,26 @@
                                                 style="background-color:#111827;">
                                                 Delete
                                             </button>
-                                            <form class="check-out-form"
-                                                action="{{ route('sales.person.checkout', $person->id) }}" method="POST">
-                                                @csrf
-                                                <button type="submit"
-                                                    class="check-out-btn px-4 py-2 text-xs text-white rounded hover:bg-red-700" style="background-color:#111827;">
-    
-                                                    <span class="btn-text">Check Out</span>
-    
-                                                    <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white"
-                                                        xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                        viewBox="0 0 24 24">
-                                                        <circle class="opacity-25" cx="12" cy="12" r="10"
-                                                            stroke="currentColor" stroke-width="4" />
-                                                        <path class="opacity-75" fill="currentColor"
-                                                            d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
-                                                    </svg>
-                                                </button>
-                                            </form>
+                                            @if($person->latestQueue->checked_in_at && is_null($person->latestQueue->checked_out_at))
+                                                <form class="check-out-form"
+                                                    action="{{ route('sales.person.checkout', $person->id) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit"
+                                                        class="check-out-btn px-4 py-2 text-xs text-white rounded hover:bg-red-700" style="background-color:#111827;">
+        
+                                                        <span class="btn-text">Check Out</span>
+        
+                                                        <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white"
+                                                            xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                            viewBox="0 0 24 24">
+                                                            <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                                stroke="currentColor" stroke-width="4" />
+                                                            <path class="opacity-75" fill="currentColor"
+                                                                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            @endif
                                         </div>
     
                                     </td>
