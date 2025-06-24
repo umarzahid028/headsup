@@ -42,10 +42,7 @@
                             <td class="border-b px-4 py-3">{{ $loop->iteration }}</td>
                             <td class="border-b px-4 py-3">{{ $appt->customer_name }}</td>
                             <td class="border-b px-4 py-3">
-                                <span
-                                    class="inline-block bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">
-                                    {{ $appt->salesperson->name }}
-                                </span>
+                                {{ $appt->salesperson->name }}
                             </td>
 
                             <td class="border-b px-4 py-3">
@@ -68,7 +65,7 @@
                             </td>
                             <td class="border-b px-4 py-3">
                                 <div class="flex flex-wrap gap-3 items-center">
-                                    @if ($appt->status != 'completed')
+                                    @if (!in_array($appt->status, ['completed', 'canceled']))
                                         @if (Auth::user()->hasRole('Sales person'))
                                             @if (Auth::id() == $appt->salesperson_id)
                                                 <a href="{{ route('sales.perosn', ['id' => $appt->id]) }}"
