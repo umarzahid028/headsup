@@ -21,7 +21,8 @@
                 <thead>
                     <tr class="bg-gray-100">
                         <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">#</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Customer Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Customer Name
+                        </th>
                         <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Assigned At</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Activities</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Disposition</th>
@@ -38,9 +39,10 @@
                                 {{ optional($sale->created_at)->format('d M Y h:i A') ?? 'N/A' }}
                             </td>
                             <td class="px-6 py-3">
-                                @if(!empty($sale->process) && is_array($sale->process))
+                                @if (!empty($sale->process) && is_array($sale->process))
                                     @foreach ($sale->process as $process)
-                                        <span class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">
+                                        <span
+                                            class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">
                                             {{ $process }}
                                         </span>
                                     @endforeach
@@ -49,33 +51,49 @@
                                 @endif
                             </td>
                             <td class="px-6 py-3">
-                                <span class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">
-                                    {{ $sale->disposition ?? 'N/A' }}
+                                @php
+                                    $dispositions = json_decode($sale->disposition, true);
+                                @endphp
+
+                                @if (is_array($dispositions) && count($dispositions))
+                                    @foreach ($dispositions as $item)
+                                        <span
+                                            class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded mr-1 mb-1">
+                                            {{ $item }}
+                                        </span>
+                                    @endforeach
+                                @else
+                                    <span
+                                        class="inline-block px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded">
+                                        N/A
+                                    </span>
+                                @endif
+
+                            </td>
+                            @php
+                                $duration = 'N/A';
+
+                                // Find the latest queue for this customer that has took_turn_at (ignore user_id filter)
+                                $queue = \App\Models\Queue::where('customer_id', $sale->customer_id ?? null)
+                                    ->whereNotNull('took_turn_at')
+                                    ->latest('took_turn_at')
+                                    ->first();
+
+                                // If we have both times, calculate duration
+                                if (!empty($queue) && $sale->ended_at) {
+                                    $start = \Carbon\Carbon::parse($queue->took_turn_at);
+                                    $end = \Carbon\Carbon::parse($sale->ended_at);
+                                    $duration = $start->diff($end)->format('%Hh %Im %Ss');
+                                }
+                            @endphp
+
+
+                            <td class="px-6 py-3">
+                                <span
+                                    class="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded">
+                                    {{ $duration }}
                                 </span>
                             </td>
-@php
-$duration = 'N/A';
-
-// Find the latest queue for this customer that has took_turn_at (ignore user_id filter)
-$queue = \App\Models\Queue::where('customer_id', $sale->customer_id ?? null)
-    ->whereNotNull('took_turn_at')
-    ->latest('took_turn_at')
-    ->first();
-
-// If we have both times, calculate duration
-if (!empty($queue) && $sale->ended_at) {
-    $start = \Carbon\Carbon::parse($queue->took_turn_at);
-    $end = \Carbon\Carbon::parse($sale->ended_at);
-    $duration = $start->diff($end)->format('%Hh %Im %Ss');
-}
-@endphp
-
-
-<td class="px-6 py-3">
-  <span class="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded">
-    {{ $duration }}
-  </span>
-</td>
 
                         </tr>
                     @empty
@@ -91,6 +109,6 @@ if (!empty($queue) && $sale->ended_at) {
     </div>
 
     @push('scripts')
-    {{-- You can add JS scripts here if needed --}}
+        {{-- You can add JS scripts here if needed --}}
     @endpush
 </x-app-layout>
