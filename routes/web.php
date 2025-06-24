@@ -123,6 +123,9 @@ Route::post('/customer/complete-form/{id}', [CustomerSaleController::class, 'com
 
 // Customer Save to manager
 Route::post('/customer-form', [CustomerSaleController::class, 'customerform'])->name('customer.form.store');
+// routes/web.php
+
+Route::post('/sales-person/{id}/checkout', [CustomerSaleController::class, 'checkout'])->name('sales.person.checkout');
 
 
 

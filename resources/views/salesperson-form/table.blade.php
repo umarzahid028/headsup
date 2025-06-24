@@ -101,6 +101,27 @@
                                         Delete
                                     </button>
                                 </div>
+                                 <div class="flex items-center justify-between">
+         
+<form class="check-out-form" action="{{ route('sales.person.checkout', $person->id) }}" method="POST">
+  @csrf
+  <button type="submit"
+    class="check-out-btn bg-red-500 hover:bg-red-600 px-6 py-2 text-sm font-semibold flex items-center gap-2 rounded-full text-white shadow-md">
+    
+    <span class="btn-text">Check Out</span>
+
+    <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+      fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+      <path class="opacity-75" fill="currentColor"
+        d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+    </svg>
+  </button>
+</form>
+
+
+
+
                             </td>
                         </tr>
                         @empty
@@ -141,6 +162,60 @@
         });
     </script>
     @endif
+
+<script>
+  $.ajaxSetup({
+    headers: {
+      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+  });
+
+  $(document).on('submit', '.check-out-form', function (e) {
+    e.preventDefault();
+
+    const form = $(this);
+    const btn = form.find('.check-out-btn');
+    const btnText = btn.find('.btn-text');
+    const spinner = btn.find('.btn-spinner');
+
+    btn.prop('disabled', true);
+    btnText.addClass('hidden');
+    spinner.removeClass('hidden');
+
+    $.ajax({
+      url: form.attr('action'),
+      method: 'POST',
+      data: form.serialize(),
+      success: function (response) {
+        btn.prop('disabled', false);
+        btnText.removeClass('hidden');
+        spinner.addClass('hidden');
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Checked Out!',
+          text: response.message || 'You have been checked out.',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        // Optionally: Disable button or remove it
+        // btn.prop('disabled', true).addClass('opacity-50').text('Checked Out');
+      },
+      error: function () {
+        btn.prop('disabled', false);
+        btnText.removeClass('hidden');
+        spinner.addClass('hidden');
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Something went wrong. Please try again.',
+        });
+      }
+    });
+  });
+</script>
 
     <!-- ✅ Delete Confirmation JS -->
     <script>

@@ -309,6 +309,25 @@ public function customerform(Request $request)
         'redirect' => route('to.customers', ['id' => auth()->id()]),
     ]);
 }
+// app/Http/Controllers/SalesPersonController.php
+
+public function checkout(Request $request, $id)
+{
+    $person = Queue::findOrFail($id);
+    if (!$person->is_checked_in) {
+        return response()->json([
+            'message' => 'This salesperson is already checked out.'
+        ], 400);
+    }
+
+    $person->is_checked_in = false;
+    $person->save();
+
+    return response()->json([
+        'message' => 'Checked out successfully!',
+    ]);
+}
+
 }
 
   
