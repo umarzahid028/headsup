@@ -55,9 +55,9 @@
                             <td class="border-b px-4 py-3">
                                 @php
                                     $statusClasses = [
-                                        'processing' => 'bg-yellow-200 text-yellow-800',
+                                        'Scheduled' => 'bg-yellow-200 text-yellow-800',
                                         'completed' => 'bg-green-200 text-green-800',
-                                        'no_show' => 'bg-red-200 text-red-800',
+                                        'Canceled' => 'bg-red-200 text-red-800',
                                     ];
                                     $statusClass = $statusClasses[$appt->status] ?? 'bg-gray-200 text-gray-800';
                                 @endphp

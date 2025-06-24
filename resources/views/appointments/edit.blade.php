@@ -81,7 +81,7 @@
               class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
               <option value="scheduled" {{ $appointment->status == 'scheduled' ? 'selected' : '' }}>Scheduled</option>
               <option value="completed" {{ $appointment->status == 'completed' ? 'selected' : '' }}>Completed</option>
-              <option value="cancel" {{ $appointment->status == 'cancel' ? 'selected' : '' }}>Cancel</option>
+              <option value="cancel" {{ $appointment->status == 'cancel' ? 'selected' : '' }}>Canceled</option>
             </select>
           </div>
 
