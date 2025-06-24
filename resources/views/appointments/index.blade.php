@@ -57,7 +57,7 @@
                                     $statusClasses = [
                                         'Scheduled' => 'bg-yellow-200 text-yellow-800',
                                         'completed' => 'bg-green-200 text-green-800',
-                                        'Canceled' => 'bg-red-200 text-red-800',
+                                        'canceled' => 'bg-red-200 text-red-800',
                                     ];
                                     $statusClass = $statusClasses[$appt->status] ?? 'bg-gray-200 text-gray-800';
                                 @endphp
