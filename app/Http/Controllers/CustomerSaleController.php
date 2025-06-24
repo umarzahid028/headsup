@@ -321,11 +321,14 @@ public function checkout(Request $request, $id)
     }
 
     $person->is_checked_in = false;
+    $person->checked_out_at = now();
     $person->save();
 
-    return response()->json([
-        'message' => 'Checked out successfully!',
-    ]);
+    // return response()->json([
+    //     'message' => 'Checked out successfully!',
+    // ]);
+
+    return redirect()->back()->with('success', 'Checked out successfully!');
 }
 
 }
