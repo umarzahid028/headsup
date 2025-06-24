@@ -91,7 +91,7 @@
                                             $end = \Carbon\Carbon::parse($endAt);
                                             $diff = $start->diff($end);
 
-                                            $duration = sprintf('%01dh %02dm %02ds', $diff->h, $diff->i, $diff->s);
+                                            $duration = sprintf('%01dh %01dm %01ds', $diff->h, $diff->i, $diff->s);
                                         }
                                     }
                                 @endphp
