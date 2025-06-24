@@ -22,7 +22,6 @@
                 <table class="min-w-full bg-white divide-y divide-gray-200">
                     <thead>
                         <tr class="bg-gray-100">
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">#</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Customer Name
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Assigned At</th>
@@ -35,7 +34,6 @@
                     <tbody class="divide-y divide-gray-100 text-left">
                         @forelse ($customerSales as $index => $sale)
                             <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-3">{{ $index + 1 }}</td>
                                 <td class="px-6 py-3">{{ $sale->name ?? 'Unknown' }}</td>
                                 <td class="px-6 py-3">
                                     {{ optional($sale->created_at)->format('d M Y h:i A') ?? 'N/A' }}
@@ -55,7 +53,7 @@
                                 <td class="px-6 py-3">
                                 
                                     <span
-                                        class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded mr-1 mb-1">
+                                        class="inline-block px-2 py-1 text-xs font-semibold bg-gray-800 text-white rounded mr-1 mb-1">
                                     {{ $sale->disposition ?? 'N/A' }}
                                     </span>
                                       
