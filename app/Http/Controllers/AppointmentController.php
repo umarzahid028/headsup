@@ -85,7 +85,7 @@ public function update(Request $request, Appointment $appointment)
         'customer_phone'  => 'required|string',
         'date'            => 'required|date',
         'time'            => 'required',
-        'status'          => 'required|in:scheduled,completed,cancel',
+        'status'          => 'required|in:scheduled,completed,canceled',
         'salesperson_id'  => 'required|exists:users,id',  
         'notes'           => 'nullable|string',
     ]);
