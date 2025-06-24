@@ -45,82 +45,84 @@
         </p>
     </x-slot>
 
-    <div class="px-6">
-        @role('Admin|Sales Manager')
-        <div class="flex items-center justify-end mb-4 px-6">
-            <a href="{{ route('create.saleperson') }}" class="bg-black text-white px-4 py-2 rounded">
-                Add User
-            </a>
-        </div>
-        @endrole
-
-        <div class="px-6 py-4">
-            <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
-                <table class="min-w-full bg-white divide-y divide-gray-200">
-                    <thead>
-                        <tr class="bg-gray-100">
-                            <th class="px-4 py-2 text-left">#</th>
-                            <th class="px-4 py-2 text-left">Name</th>
-                            <th class="px-4 py-2 text-left">Email</th>
-                            <th class="px-4 py-2 text-left">Customer</th>
-                            <th class="px-4 py-2 text-left">User Type</th>
-                            <th class="px-4 py-2 text-left">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-sm text-gray-700">
-                        @forelse($salespersons as $index => $person)
-                        <tr class="border-t">
-                            <td class="px-4 py-2">{{ $index + 1 }}</td>
-                            <td class="px-4 py-2">{{ $person->name }}</td>
-                            <td class="px-4 py-2">{{ $person->email }}</td>
-                            <td class="px-4 py-2">{{ $person->customer_sales_count }}</td>
-                            <td class="px-4 py-2">
-                                {{ $person->roles->first()->name ?? 'No Role' }}
-                            </td>
-
-                            <td class="px-4 py-2">
-                                <div class="flex gap-2">
-                                    <a href="{{ route('edit.saleperson', $person->id) }}"
-                                        class="px-4 py-2 text-xs font-medium text-white rounded hover:bg-yellow-600"
-                                        style="background-color:#111827;">
-                                        Edit
-                                    </a>
-                                    <button data-id="{{ $person->id }}"
-                                        class="delete-user px-4 py-2 text-xs font-medium text-white rounded hover:bg-red-700"
-                                        style="background-color:#111827;">
-                                        Delete
-                                    </button>
-                                </div>
-                                 <div class="flex items-center justify-between">
-         
-<form class="check-out-form" action="{{ route('sales.person.checkout', $person->id) }}" method="POST">
-  @csrf
-  <button type="submit"
-    class="check-out-btn bg-red-500 hover:bg-red-600 px-6 py-2 text-sm font-semibold flex items-center gap-2 rounded-full text-white shadow-md">
+   <div class="py-6">
+        <div class="container mx-auto space-y-6 py-6 px-4">
+            @role('Admin|Sales Manager')
+                <div class="flex items-center justify-end mb-4 px-6">
+                    <a href="{{ route('create.saleperson') }}" class="bg-black text-white px-4 py-2 rounded">
+                        Add User
+                    </a>
+                </div>
+            @endrole
     
-    <span class="btn-text">Check Out</span>
-
-    <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
-      fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-      <path class="opacity-75" fill="currentColor"
-        d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
-    </svg>
-  </button>
-</form>
-
-
-
-
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="5" class="text-center py-4 text-gray-500">No salespersons found.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <div class="px-6 py-4">
+                <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
+                    <table class="min-w-full bg-white divide-y divide-gray-200">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="px-4 py-2 text-left">#</th>
+                                <th class="px-4 py-2 text-left">Name</th>
+                                <th class="px-4 py-2 text-left">Email</th>
+                                <th class="px-4 py-2 text-left">Customer</th>
+                                <th class="px-4 py-2 text-left">User Type</th>
+                                <th class="px-4 py-2 text-left">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm text-gray-700">
+                            @forelse($salespersons as $index => $person)
+                                <tr class="border-t">
+                                    <td class="px-4 py-2">{{ $index + 1 }}</td>
+                                    <td class="px-4 py-2">{{ $person->name }}</td>
+                                    <td class="px-4 py-2">{{ $person->email }}</td>
+                                    <td class="px-4 py-2">{{ $person->customer_sales_count }}</td>
+                                    <td class="px-4 py-2">
+                                        {{ $person->roles->first()->name ?? 'No Role' }}
+                                    </td>
+    
+                                    <td class="px-4 py-2">
+                                        <div class="flex gap-1">
+                                            <a href="{{ route('edit.saleperson', $person->id) }}"
+                                                class="px-4 py-2 text-xs font-medium text-white rounded hover:bg-yellow-600"
+                                                style="background-color:#111827;">
+                                                Edit
+                                            </a>
+                                            <button data-id="{{ $person->id }}"
+                                                class="delete-user px-4 py-2 text-xs font-medium text-white rounded hover:bg-red-700"
+                                                style="background-color:#111827;">
+                                                Delete
+                                            </button>
+                                            @if( isset($person->latestQueue) && $person->latestQueue->checked_in_at && is_null($person->latestQueue->checked_out_at))
+                                                <form class="check-out-form"
+                                                    action="{{ route('sales.person.checkout', $person->latestQueue->id) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit"
+                                                        class="check-out-btn px-4 py-2 text-xs text-white rounded hover:bg-red-700" style="background-color:#111827;">
+        
+                                                        <span class="btn-text">Check Out</span>
+        
+                                                        <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white"
+                                                            xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                            viewBox="0 0 24 24">
+                                                            <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                                stroke="currentColor" stroke-width="4" />
+                                                            <path class="opacity-75" fill="currentColor"
+                                                                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
+    
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-gray-500">No salespersons found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -129,83 +131,83 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- ✅ Flash Messages -->
-    @if(session('success'))
-    <script>
-        Swal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: '{{ session('
-            success ') }}',
-            confirmButtonColor: '#111827',
-        });
-    </script>
+    @if (session('success'))
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: '{{ session('
+                            success ') }}',
+                confirmButtonColor: '#111827',
+            });
+        </script>
     @endif
 
-    @if(session('error'))
-    <script>
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: '{{ session('
-            error ') }}',
-            confirmButtonColor: '#d33',
-        });
-    </script>
+    @if (session('error'))
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '{{ session('
+                            error ') }}',
+                confirmButtonColor: '#d33',
+            });
+        </script>
     @endif
 
-<script>
-  $.ajaxSetup({
-    headers: {
-      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-    }
-  });
-
-  $(document).on('submit', '.check-out-form', function (e) {
-    e.preventDefault();
-
-    const form = $(this);
-    const btn = form.find('.check-out-btn');
-    const btnText = btn.find('.btn-text');
-    const spinner = btn.find('.btn-spinner');
-
-    btn.prop('disabled', true);
-    btnText.addClass('hidden');
-    spinner.removeClass('hidden');
-
-    $.ajax({
-      url: form.attr('action'),
-      method: 'POST',
-      data: form.serialize(),
-      success: function (response) {
-        btn.prop('disabled', false);
-        btnText.removeClass('hidden');
-        spinner.addClass('hidden');
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Checked Out!',
-          text: response.message || 'You have been checked out.',
-          timer: 2000,
-          showConfirmButton: false,
+    <script>
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
         });
 
-        // Optionally: Disable button or remove it
-        // btn.prop('disabled', true).addClass('opacity-50').text('Checked Out');
-      },
-      error: function () {
-        btn.prop('disabled', false);
-        btnText.removeClass('hidden');
-        spinner.addClass('hidden');
+        $(document).on('submit', '.check-out-form', function(e) {
+            e.preventDefault();
 
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Something went wrong. Please try again.',
+            const form = $(this);
+            const btn = form.find('.check-out-btn');
+            const btnText = btn.find('.btn-text');
+            const spinner = btn.find('.btn-spinner');
+
+            btn.prop('disabled', true);
+            btnText.addClass('hidden');
+            spinner.removeClass('hidden');
+
+            $.ajax({
+                url: form.attr('action'),
+                method: 'POST',
+                data: form.serialize(),
+                success: function(response) {
+                    btn.prop('disabled', false);
+                    btnText.removeClass('hidden');
+                    spinner.addClass('hidden');
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Checked Out!',
+                        text: response.message || 'You have been checked out.',
+                        timer: 2000,
+                        showConfirmButton: false,
+                    });
+
+                    // Optionally: Disable button or remove it
+                    // btn.prop('disabled', true).addClass('opacity-50').text('Checked Out');
+                },
+                error: function() {
+                    btn.prop('disabled', false);
+                    btnText.removeClass('hidden');
+                    spinner.addClass('hidden');
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Something went wrong. Please try again.',
+                    });
+                }
+            });
         });
-      }
-    });
-  });
-</script>
+    </script>
 
 
     {{-- ✅ Delete Confirmation --}}
@@ -240,7 +242,8 @@
                                         .then(() => location.reload());
                                 })
                                 .catch(err => {
-                                    Swal.fire('Error', 'Failed to delete user.', 'error');
+                                    Swal.fire('Error', 'Failed to delete user.',
+                                        'error');
                                 });
                         }
                     });
