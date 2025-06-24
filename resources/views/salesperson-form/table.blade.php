@@ -101,7 +101,7 @@
                                                 style="background-color:#111827;">
                                                 Delete
                                             </button>
-                                            @if($person->latestQueue->checked_in_at && is_null($person->latestQueue->checked_out_at))
+                                            @if( isset($person->latestQueue) && $person->latestQueue->checked_in_at && is_null($person->latestQueue->checked_out_at))
                                                 <form class="check-out-form"
                                                     action="{{ route('sales.person.checkout', $person->id) }}" method="POST">
                                                     @csrf
