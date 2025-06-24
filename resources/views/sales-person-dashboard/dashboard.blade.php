@@ -71,6 +71,22 @@
       .swal2-popup {
         overflow-x: hidden !important;
       }
+
+      /* SweetAlert2 OK button default background */
+.swal2-container button.swal2-confirm {
+  background-color: #111827 !important;
+  color: white !important;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+  box-shadow: none !important;
+}
+
+/* Hover effect for OK button */
+.swal2-container button.swal2-confirm:hover {
+  background-color: #0f172a !important; /* Thoda dark shade */
+  color: white !important;
+}
+
     </style>
   </x-slot>
 
@@ -89,7 +105,7 @@
   <div id="formContainer">
     <form id="salesForm" method="POST" action="{{ route('customer.sales.store') }}" class=" grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
       @csrf
-       <input type="hidden" name="appointment_id" value="{{ $appointment->id ?? '' }}">
+  <input type="hidden" name="appointment_id" value="{{ $appointment->id ?? '' }}">
 
 <div class="md:col-span-2">
   <h3 class="text-2xl font-bold text-gray-800 leading-tight mb-0">Customer Sales Form</h3>
@@ -254,7 +270,7 @@
         @include('partials.customers', ['customers' => $customers])
 
 @if($appointment && $appointment->status !== 'completed')
-  <div id="customer-list">
+  <div id="customer-list" class="transition-opacity duration-300">
     <div
       class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
       data-name="{{ $appointment->customer_name }}"
@@ -303,6 +319,28 @@
       form.classList.toggle('hidden');
     }
   </script>
+
+<script>
+  $(document).ready(() => {
+    // Existing init calls
+    toggleButton();
+    updateTurnStatus();
+    setInterval(updateTurnStatus, 10000);
+
+    // ✅ Auto-fill form if appointment card exists
+    const appointmentCard = document.querySelector('.customer-card');
+    if (appointmentCard) {
+      const name  = appointmentCard.dataset.name || '';
+      const phone = appointmentCard.dataset.phone || '';
+
+      document.getElementById('nameInput').value  = name;
+      document.getElementById('phoneInput').value = phone;
+
+      toggleButton();
+      updateNameInputState();
+    }
+  });
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -454,8 +492,6 @@ function completeForm(customerId) {
   });
 </script>
 
-
-<!-- T/O buttons -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const toBtn   = document.getElementById('toBtn');
@@ -464,9 +500,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const form    = document.getElementById('salesForm');
 
   async function forwardCard() {
-    const id = form.querySelector('input[name="id"]').value;
-    if (!id) {
-      Swal.fire('Error', 'No customer selected.', 'error');
+    const id             = form.querySelector('input[name="id"]')?.value.trim();
+    const appointment_id = form.querySelector('input[name="appointment_id"]')?.value.trim();
+
+    if (!id && !appointment_id) {
+      Swal.fire('Error', 'No customer or appointment selected.', 'error');
       return;
     }
 
@@ -484,15 +522,19 @@ document.addEventListener('DOMContentLoaded', () => {
           'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
         },
-        body: JSON.stringify({ id })
+        body: JSON.stringify({ 
+          id: id || null, 
+          appointment_id: appointment_id || null 
+        })
       });
 
       if (!response.ok) throw new Error('Server error');
       const result = await response.json();
 
-      // ✅ Send notification for next page
+      // ✅ Local notification
       localStorage.setItem('manager_notification', 'T/O Customer forwarded to Sales Manager.');
 
+      // ✅ Show success and hide card
       Swal.fire({
         icon: 'success',
         title: 'Transferred!',
@@ -500,7 +542,19 @@ document.addEventListener('DOMContentLoaded', () => {
         timer: 1500,
         showConfirmButton: false
       }).then(() => {
-        window.location.reload(); // 🔄 refresh
+        const card = document.querySelector(`#customer-list`);
+        if (card) {
+          card.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+          setTimeout(() => card.remove(), 300);
+        }
+
+        // ✅ Clear form
+        form.reset();
+
+        // ⏳ Auto refresh page after 5 seconds
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       });
 
     } catch (error) {
@@ -516,97 +570,95 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
+
   <!-- Turn Status -->
 <script>
   let currentTurnUserId = null;
-  const salesForm       = document.getElementById('salesForm');
-  const nameInput       = document.getElementById('nameInput');
-  const newCustomerBtn  = document.getElementById('newCustomerBtn');
+  let isMyTurn = false;
+  let cardClicked = false;
 
-  function setFormEnabled(enabled) {
-    salesForm.querySelectorAll('input, textarea, select, button')
-      .forEach(el => {
-        if (el.id === 'newCustomerBtn') return;
-        el.disabled = !enabled;
-      });
+  const salesForm      = document.getElementById('salesForm');
+  const nameInput      = document.getElementById('nameInput');
+  const newCustomerBtn = document.getElementById('newCustomerBtn');
 
-    if (!enabled) {
-      nameInput.classList.add('bg-gray-100', 'cursor-not-allowed');
-    } else {
-      nameInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
-    }
-
-    toggleButton();
-  }
+  nameInput.readOnly = true;
 
   function toggleButton() {
-    if (nameInput.disabled) {
-      newCustomerBtn.disabled = true;
-      newCustomerBtn.classList.add('bg-gray-400');
-      newCustomerBtn.classList.remove('bg-[#111827]');
-      return;
-    }
-
     const hasValue = nameInput.value.trim().length > 0;
-    newCustomerBtn.disabled = !hasValue;
+
+    // ✅ Button always enabled
+    newCustomerBtn.disabled = false;
+
     newCustomerBtn.classList.toggle('bg-gray-400', !hasValue);
     newCustomerBtn.classList.toggle('bg-[#111827]', hasValue);
   }
 
-  // Name input listener:
+  function updateNameInputState() {
+    // ✅ Allow edit if it's your turn OR you clicked a card
+    nameInput.readOnly = !(isMyTurn || cardClicked);
+  }
+
+  // 🔁 Card click handler
+  document.addEventListener('click', function (e) {
+    const card = e.target.closest('.customer-card');
+    if (!card) return;
+
+    cardClicked = true;
+
+    const name = card.dataset.customerName || '';
+    const customerId = card.dataset.customerId || '';
+
+    nameInput.value = name;
+    document.getElementById('customerId').value = customerId;
+
+    toggleButton();
+    updateNameInputState();
+  });
+
   nameInput.addEventListener('input', toggleButton);
 
   function updateTurnStatus() {
     $.get('/next-turn-status')
       .done(res => {
-        const isMyTurn      = res.is_your_turn;
-        const anyOneElse    = res.any_one_else;
+        isMyTurn = res.is_your_turn;
         const newTurnUserId = res.current_turn_user_id;
-        const userName      = res.user_name || '';
+        const userName = res.user_name || '';
 
-        /* 1️⃣ not my turn & someone else pending */
-        if (!anyOneElse && !isMyTurn) {
-          $('#turn-status').text('');
-          setFormEnabled(false);
-          currentTurnUserId = newTurnUserId;
-          return;
-        }
-
-        /* 2️⃣ my turn */
         if (isMyTurn) {
           $('#turn-status').text('🟢 It’s your turn now!');
-          setFormEnabled(true);
-
           if (currentTurnUserId !== newTurnUserId) {
             const msg = `It's your turn now${userName ? ', ' + userName : ''}!`;
             speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
-
-            // Reset form for fresh entry
-            salesForm.reset();
-            document.getElementById('customerId').value = '';
-            localStorage.removeItem('activeCustomerId');
           }
-        }
-        /* 3️⃣ someone else’s turn */
-        else if (anyOneElse) {
-          $('#turn-status').text('⏳ Waiting for the other salesperson to finish turn…');
-          setFormEnabled(false);
         } else {
-          $('#turn-status').text('');
-          setFormEnabled(false);
+          $('#turn-status').text('⏳ Waiting for your turn...');
         }
 
         currentTurnUserId = newTurnUserId;
+        updateNameInputState();
       })
       .fail(() => {
         $('#turn-status').text('⚠️ Error checking turn status.');
-        setFormEnabled(false);
+        isMyTurn = false;
+        updateNameInputState();
       });
   }
 
-  /* ---------- Take Customer button click ---------- */
-  $('#newCustomerBtn').on('click', function () {
+  // ✅ Button click: validate, prevent form reset, check turn
+  $('#newCustomerBtn').on('click', function (e) {
+    e.preventDefault();
+
     const nameVal = nameInput.value.trim();
+
+    if (!isMyTurn) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Not your turn!',
+        text: 'You can only take a customer when it’s your turn.',
+        showConfirmButton: true
+      });
+      return;
+    }
 
     if (!nameVal) {
       Swal.fire({
@@ -622,25 +674,35 @@ document.addEventListener('DOMContentLoaded', () => {
     $.ajax({
       url: '{{ route("sales.person.takeTurn") }}',
       method: 'POST',
-      data: { _token: $('meta[name="csrf-token"]').attr('content') },
+      data: {
+        _token: $('meta[name="csrf-token"]').attr('content')
+      },
       success: () => {
-        Swal.fire({ icon: 'success', title: 'Done!', timer: 1500, showConfirmButton: false });
-        // keep name visible so user sees what was submitted
+        Swal.fire({
+          icon: 'success',
+          title: 'Done!',
+          timer: 1500,
+          showConfirmButton: false
+        });
+
+        // ✅ DO NOT clear name input or customerId
         updateTurnStatus();
       },
-      error: () => Swal.fire({ icon: 'error', title: 'Error occurred!' })
+      error: () => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error occurred!'
+        });
+      }
     });
   });
 
-  /* ---------- Initialise ---------- */
   $(document).ready(() => {
-    // Start with form disabled until first status check
-    setFormEnabled(false);
+    toggleButton();
     updateTurnStatus();
-    setInterval(updateTurnStatus, 10000); // Every 10 s
+    setInterval(updateTurnStatus, 10000);
   });
 </script>
-
 
 <script>
     const modal = document.getElementById('customerModal');
@@ -740,10 +802,10 @@ document.addEventListener('DOMContentLoaded', () => {
             showConfirmButton: false
           });
 
-          // 🔄 Page will reload after 1.5 seconds
+          // 2 second ke baad page reload
           setTimeout(() => {
             location.reload();
-          }, 1500);
+          }, 2000);
         })
         .catch(error => {
           console.error(error);
@@ -753,6 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 </script>
+
   <!-- form auto save -->
 
 <script>

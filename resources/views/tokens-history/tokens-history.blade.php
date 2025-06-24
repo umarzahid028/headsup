@@ -56,9 +56,8 @@
 @php
 $duration = 'N/A';
 
-// Find the latest queue for this user + customer that has took_turn_at
-$queue = \App\Models\Queue::where('user_id', $sale->user_id ?? auth()->id())
-    ->where('customer_id', $sale->customer_id ?? null)
+// Find the latest queue for this customer that has took_turn_at (ignore user_id filter)
+$queue = \App\Models\Queue::where('customer_id', $sale->customer_id ?? null)
     ->whereNotNull('took_turn_at')
     ->latest('took_turn_at')
     ->first();
@@ -70,6 +69,7 @@ if (!empty($queue) && $sale->ended_at) {
     $duration = $start->diff($end)->format('%Hh %Im %Ss');
 }
 @endphp
+
 
 <td class="px-6 py-3">
   <span class="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded">

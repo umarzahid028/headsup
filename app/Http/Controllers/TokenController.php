@@ -110,12 +110,7 @@ public function checkinSalespersons(Request $request)
 
 public function addusers()
 {
-    $user = Auth::user();
-
-    $customerSales = CustomerSale::where('user_id', $user->id)
-        
-        ->latest()
-        ->get();
+    $customerSales = CustomerSale::latest()->get();
 
     return view('tokens-history.tokens-history', compact('customerSales'));
 }

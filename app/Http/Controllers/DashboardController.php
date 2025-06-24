@@ -37,7 +37,6 @@ public function index(): mixed
         return redirect()->route('sales.perosn');
     }
 
-    // Totals
     $queues = User::role('Sales person')->count();
     $lastMonthCount = User::role('Sales person')
         ->whereBetween('created_at', [
@@ -52,31 +51,28 @@ public function index(): mixed
     $appointment = Appointment::count();
     $customerdetail = CustomerSale::where('disposition', 'Sold!')->count();
 
-    // Sold vs Unsold chart
     $unsold = $customer - $customerdetail;
     $soldChart = [
         'Sold' => $customerdetail,
         'Unsold' => $unsold < 0 ? 0 : $unsold,
     ];
 
-    // Month labels
     $months = collect(range(5, 0))->map(fn($i) => now()->subMonths($i)->format('M'))->all();
 
-    // Charts data
-    $salesGrowthChart = collect(range(5, 0))->map(fn($i) =>
-        User::role('Sales person')->whereMonth('created_at', now()->subMonths($i)->month)->count())->values()->all();
-
     $customerChart = collect(range(5, 0))->map(fn($i) =>
-        CustomerSale::whereMonth('created_at', now()->subMonths($i)->month)->count())->values()->all();
+        CustomerSale::whereMonth('created_at', now()->subMonths($i)->month)->count()
+    )->values()->all();
 
     $appointmentChart = collect(range(5, 0))->map(fn($i) =>
-        Appointment::whereMonth('created_at', now()->subMonths($i)->month)->count())->values()->all();
+        Appointment::whereMonth('created_at', now()->subMonths($i)->month)->count()
+    )->values()->all();
 
     return view('dashboard', compact(
         'queues', 'queueGrowth', 'customer', 'appointment', 'customerdetail',
-        'salesGrowthChart', 'customerChart', 'appointmentChart', 'soldChart', 'months'
+        'customerChart', 'appointmentChart', 'soldChart', 'months'
     ));
 }
+
 
     //Sales perosn
    public function salesdashboard($id = null)

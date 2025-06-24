@@ -46,7 +46,10 @@
         : ($customer->disposition ?? null);
     @endphp
 
-   @if (is_null($customer->disposition) && !$customer->forwarded_to_manager)
+   @if (is_null($customer->disposition) 
+    && !$customer->forwarded_to_manager
+    && (is_null($customer->transferred_to_user_id) || $customer->transferred_to_user_id == auth()->id()) )
+
       <div
         id="card-{{ $customer->id }}"
         class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
