@@ -15,96 +15,98 @@
         </a>
     </div>
 
-    <div class="mt-10 px-6 space-y-6">
-        <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
-            <table class="min-w-full bg-white divide-y divide-gray-200">
-                <thead>
-                    <tr class="bg-gray-100">
-                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">#</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Customer Name
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Assigned At</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Activities</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Disposition</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Duration</th>
-
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100 text-left">
-                    @forelse ($customerSales as $index => $sale)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-3">{{ $index + 1 }}</td>
-                            <td class="px-6 py-3">{{ $sale->name ?? 'Unknown' }}</td>
-                            <td class="px-6 py-3">
-                                {{ optional($sale->created_at)->format('d M Y h:i A') ?? 'N/A' }}
-                            </td>
-                            <td class="px-6 py-3">
-                                @if (!empty($sale->process) && is_array($sale->process))
-                                    @foreach ($sale->process as $process)
+    <div class="py-6">
+        <div class="container mx-auto space-y-6 py-6 px-4">
+            <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
+                <table class="min-w-full bg-white divide-y divide-gray-200">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">#</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Customer Name
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Assigned At</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Activities</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Disposition</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Duration</th>
+    
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-left">
+                        @forelse ($customerSales as $index => $sale)
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-3">{{ $index + 1 }}</td>
+                                <td class="px-6 py-3">{{ $sale->name ?? 'Unknown' }}</td>
+                                <td class="px-6 py-3">
+                                    {{ optional($sale->created_at)->format('d M Y h:i A') ?? 'N/A' }}
+                                </td>
+                                <td class="px-6 py-3">
+                                    @if (!empty($sale->process) && is_array($sale->process))
+                                        @foreach ($sale->process as $process)
+                                            <span
+                                                class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">
+                                                {{ $process }}
+                                            </span>
+                                        @endforeach
+                                    @else
+                                        <span class="text-gray-400 text-xs">No Activities</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-3">
+                                    @php
+                                        $dispositions = json_decode($sale->disposition, true);
+                                    @endphp
+    
+                                    @if (is_array($dispositions) && count($dispositions))
+                                        @foreach ($dispositions as $item)
+                                            <span
+                                                class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded mr-1 mb-1">
+                                                {{ $item }}
+                                            </span>
+                                        @endforeach
+                                    @else
                                         <span
-                                            class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">
-                                            {{ $process }}
+                                            class="inline-block px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded">
+                                            N/A
                                         </span>
-                                    @endforeach
-                                @else
-                                    <span class="text-gray-400 text-xs">No Activities</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-3">
+                                    @endif
+    
+                                </td>
                                 @php
-                                    $dispositions = json_decode($sale->disposition, true);
+                                    $duration = 'N/A';
+    
+                                    // Find the latest queue for this customer that has took_turn_at (ignore user_id filter)
+                                    $queue = \App\Models\Queue::where('customer_id', $sale->customer_id ?? null)
+                                        ->whereNotNull('took_turn_at')
+                                        ->latest('took_turn_at')
+                                        ->first();
+    
+                                    // If we have both times, calculate duration
+                                    if (!empty($queue) && $sale->ended_at) {
+                                        $start = \Carbon\Carbon::parse($queue->took_turn_at);
+                                        $end = \Carbon\Carbon::parse($sale->ended_at);
+                                        $duration = $start->diff($end)->format('%Hh %Im %Ss');
+                                    }
                                 @endphp
-
-                                @if (is_array($dispositions) && count($dispositions))
-                                    @foreach ($dispositions as $item)
-                                        <span
-                                            class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded mr-1 mb-1">
-                                            {{ $item }}
-                                        </span>
-                                    @endforeach
-                                @else
+    
+    
+                                <td class="px-6 py-3">
                                     <span
-                                        class="inline-block px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded">
-                                        N/A
+                                        class="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded">
+                                        {{ $duration }}
                                     </span>
-                                @endif
-
-                            </td>
-                            @php
-                                $duration = 'N/A';
-
-                                // Find the latest queue for this customer that has took_turn_at (ignore user_id filter)
-                                $queue = \App\Models\Queue::where('customer_id', $sale->customer_id ?? null)
-                                    ->whereNotNull('took_turn_at')
-                                    ->latest('took_turn_at')
-                                    ->first();
-
-                                // If we have both times, calculate duration
-                                if (!empty($queue) && $sale->ended_at) {
-                                    $start = \Carbon\Carbon::parse($queue->took_turn_at);
-                                    $end = \Carbon\Carbon::parse($sale->ended_at);
-                                    $duration = $start->diff($end)->format('%Hh %Im %Ss');
-                                }
-                            @endphp
-
-
-                            <td class="px-6 py-3">
-                                <span
-                                    class="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded">
-                                    {{ $duration }}
-                                </span>
-                            </td>
-
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">
-                                No assigned customers found.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                                </td>
+    
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                    No assigned customers found.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 

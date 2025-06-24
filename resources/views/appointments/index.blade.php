@@ -9,7 +9,7 @@
 
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-6">
         <div class="container mx-auto space-y-6 py-6 px-4">
             <div class="flex items-center justify-end mb-4 px-6">
     
