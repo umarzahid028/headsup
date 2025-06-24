@@ -112,4 +112,5 @@ public function update(Request $request, Appointment $appointment)
            ->with('success', 'Appointment updated successfully.');
 }
 
+
 }

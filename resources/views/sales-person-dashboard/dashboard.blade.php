@@ -116,27 +116,66 @@
 <input type="hidden" name="user_id" value="{{ auth()->id() }}" />
 
       <!-- Customer Info -->
-<div class="space-y-4">
-  @foreach (['name', 'email', 'phone', 'interest'] as $field)
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">
-        {{ ucfirst($field) }}
-        @if($field === 'name')
-          <span class="text-red-600">*</span>
-        @endif
-      </label>
 
+  <div class="space-y-4">
+    {{-- Name Field --}}
+    <div>
+      <label for="nameInput" class="block text-sm font-medium text-gray-700 mb-1">
+        Name <span class="text-red-600">*</span>
+      </label>
       <input
-        id="{{ $field === 'name' ? 'nameInput' : $field . 'Input' }}"
-        name="{{ $field }}"
-        type="{{ $field === 'email' ? 'email' : 'text' }}"
+        id="nameInput"
+        name="name"
+        type="text"
         class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
-        value="{{ $sale->$field ?? '' }}"
-        @if($field === 'name') required @endif
+        value="{{ old('name', $appointment->customer_name ?? '') }}"
+        required
       />
     </div>
-  @endforeach
-</div>
+
+    {{-- Email Field --}}
+    <div>
+      <label for="emailInput" class="block text-sm font-medium text-gray-700 mb-1">
+        Email
+      </label>
+      <input
+        id="emailInput"
+        name="email"
+        type="email"
+        class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
+        value="{{ old('email', $sale->email ?? '') }}"
+      />
+    </div>
+
+    {{-- Phone Field --}}
+    <div>
+      <label for="phoneInput" class="block text-sm font-medium text-gray-700 mb-1">
+        Phone
+      </label>
+      <input
+        id="phoneInput"
+        name="phone"
+        type="text"
+        class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
+        value="{{ old('phone', $appointment->customer_phone ?? '') }}"
+      />
+    </div>
+
+    {{-- Interest Field --}}
+    <div>
+      <label for="interestInput" class="block text-sm font-medium text-gray-700 mb-1">
+        Interest
+      </label>
+      <input
+        id="interestInput"
+        name="interest"
+        type="text"
+        class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
+        value="{{ old('interest', $sale->interest ?? '') }}"
+      />
+    </div>
+  </div>
+
 
       <!-- Sales Details -->
       <div class="space-y-4">
@@ -269,7 +308,7 @@
       <div class="flex-1 overflow-y-auto pr-2" id="customerCards">
         @include('partials.customers', ['customers' => $customers])
 
-@if($appointment && $appointment->status !== 'completed')
+<!-- @if($appointment && $appointment->status !== 'completed')
   <div id="customer-list" class="transition-opacity duration-300">
     <div
       class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
@@ -301,7 +340,7 @@
       </div>
     </div>
   </div>
-@endif
+@endif -->
 
      
 </div>

@@ -71,7 +71,7 @@
         @if($appt->status != 'completed')
             @if(Auth::user()->hasRole('Sales person'))
                 @if(Auth::id() == $appt->salesperson_id)
-                    <a href="{{ route('sales.perosn', ['id' => $appt->id]) }}"
+                    <a href="{{ route('sales.perosn', ['id' => $appt->id]) }}" id="newCustomerBtn"
                         class="text-white font-bold py-2 px-4 rounded"
                         style="background-color: #111827;">
                         Customer Arrive
@@ -87,7 +87,7 @@
 
             @if(Auth::user()->hasRole(['Admin', 'Sales Manager']))
                 <a href="{{ route('sales.perosn', ['id' => $appt->id]) }}"
-                    class="text-white font-bold py-2 px-4 rounded"
+                    id="newCustomerBtn" class="text-white font-bold py-2 px-4 rounded"
                     style="background-color: #111827;">
                     Customer Arrive
                 </a>
