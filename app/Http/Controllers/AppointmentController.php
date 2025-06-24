@@ -9,14 +9,13 @@ use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
 {
-    public function index()
-    {
-        $user = auth()->user();
+public function index(Request $request)
+{
+    $appointments = Appointment::latest()->paginate(10);
+    return view('appointments.index', compact('appointments'));
+}
 
-        $appointments = Appointment::latest()->get();
 
-        return view('appointments.index', compact('appointments'));
-    }
 
     public function create()
     {

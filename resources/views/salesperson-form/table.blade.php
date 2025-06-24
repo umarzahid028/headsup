@@ -45,80 +45,88 @@
         </p>
     </x-slot>
 
-   <div class="py-6">
+    <div class="py-6">
         <div class="container mx-auto space-y-6 py-6 px-4">
             @role('Admin|Sales Manager')
-                <div class="flex items-center justify-end mb-4 px-6">
-                    <a href="{{ route('create.saleperson') }}" class="bg-black text-white px-4 py-2 rounded">
-                        Add User
-                    </a>
-                </div>
+            <div class="flex items-center justify-end mb-4 px-6">
+                <a href="{{ route('create.saleperson') }}" class="bg-black text-white px-4 py-2 rounded">
+                    Add User
+                </a>
+            </div>
             @endrole
-    
-            <div class="px-6 py-4">
+
+            <div class="py-6">
+
+
                 <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
                     <table class="min-w-full bg-white divide-y divide-gray-200">
                         <thead>
                             <tr class="bg-gray-100">
-                                <th class="px-4 py-2 text-left">#</th>
-                                <th class="px-4 py-2 text-left">Name</th>
-                                <th class="px-4 py-2 text-left">Email</th>
-                                <th class="px-4 py-2 text-left">Customer</th>
-                                <th class="px-4 py-2 text-left">User Type</th>
-                                <th class="px-4 py-2 text-left">Action</th>
+                                <th class="border-b px-4 py-2 text-left">Name</th>
+                                <th class="border-b px-4 py-2 text-left">Email</th>
+                                <th class="border-b px-4 py-2 text-left">Customer</th>
+                                <th class="border-b px-4 py-2 text-left">User Type</th>
+                                <th class="border-b px-4 py-2 text-left">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="text-sm text-gray-700">
+                        <tbody>
                             @forelse($salespersons as $index => $person)
-                                <tr class="border-t">
-                                    <td class="px-4 py-2">{{ $index + 1 }}</td>
-                                    <td class="px-4 py-2">{{ $person->name }}</td>
-                                    <td class="px-4 py-2">{{ $person->email }}</td>
-                                    <td class="px-4 py-2">{{ $person->customer_sales_count }}</td>
-                                    <td class="px-4 py-2">
-                                        {{ $person->roles->first()->name ?? 'No Role' }}
-                                    </td>
-    
-                                    <td class="px-4 py-2">
-                                        <div class="flex gap-1">
-                                            <a href="{{ route('edit.saleperson', $person->id) }}"
-                                                class="px-4 py-2 text-xs font-medium text-white rounded hover:bg-yellow-600"
-                                                style="background-color:#111827;">
-                                                Edit
-                                            </a>
-                                            <button data-id="{{ $person->id }}"
-                                                class="delete-user px-4 py-2 text-xs font-medium text-white rounded hover:bg-red-700"
-                                                style="background-color:#111827;">
-                                                Delete
+                            <tr class="border-t">
+                                <td class="border-b px-4 py-3">{{ $person->name }}</td>
+                                <td class="border-b px-4 py-3">{{ $person->email }}</td>
+                                <td class="border-b px-4 py-3">{{ $person->customer_sales_count }}</td>
+                                <td class="border-b px-4 py-3">
+                                    {{ $person->roles->first()->name ?? 'No Role' }}
+                                </td>
+
+                                <td class="border-b px-4 py-3">
+                                    <div class="flex gap-1">
+                                        <a href="{{ route('edit.saleperson', $person->id) }}"
+                                            class="border-b px-4 py-3 text-xs font-medium text-white rounded hover:bg-yellow-600"
+                                            style="background-color:#111827;">
+                                            Edit
+                                        </a>
+                                        <button data-id="{{ $person->id }}"
+                                            class="delete-user border-b px-4 py-3 text-xs font-medium text-white rounded hover:bg-red-700"
+                                            style="background-color:#111827;">
+                                            Delete
+                                        </button>
+                                        <a href="{{ route('activity.report', ['user_id' => $person->id]) }}"
+                                            class="border-b px-4 py-3 text-xs font-medium text-white rounded hover:bg-red-700"
+                                            style="background-color:#111827;">
+                                            Activity
+                                        </a>
+
+
+                                        @if( isset($person->latestQueue) && $person->latestQueue->checked_in_at && is_null($person->latestQueue->checked_out_at))
+                                        <form class="check-out-form"
+                                            action="{{ route('sales.person.checkout', $person->latestQueue->id) }}" method="POST">
+                                            @csrf
+                                            <button type="submit"
+                                                class="check-out-btn border-b px-4 py-3 text-xs text-white rounded hover:bg-red-700" style="background-color:#111827;">
+
+                                                <span class="btn-text">Check Out</span>
+
+                                                <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white"
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                    viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                        stroke="currentColor" stroke-width="4" />
+                                                    <path class="opacity-75" fill="currentColor"
+                                                        d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+                                                </svg>
                                             </button>
-                                            @if( isset($person->latestQueue) && $person->latestQueue->checked_in_at && is_null($person->latestQueue->checked_out_at))
-                                                <form class="check-out-form"
-                                                    action="{{ route('sales.person.checkout', $person->latestQueue->id) }}" method="POST">
-                                                    @csrf
-                                                    <button type="submit"
-                                                        class="check-out-btn px-4 py-2 text-xs text-white rounded hover:bg-red-700" style="background-color:#111827;">
-        
-                                                        <span class="btn-text">Check Out</span>
-        
-                                                        <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white"
-                                                            xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                            viewBox="0 0 24 24">
-                                                            <circle class="opacity-25" cx="12" cy="12" r="10"
-                                                                stroke="currentColor" stroke-width="4" />
-                                                            <path class="opacity-75" fill="currentColor"
-                                                                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
-                                                        </svg>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-    
-                                    </td>
-                                </tr>
+                                        </form>
+                                        @endif
+
+                                    </div>
+
+                                </td>
+                            </tr>
                             @empty
-                                <tr>
-                                    <td colspan="5" class="text-center py-4 text-gray-500">No salespersons found.</td>
-                                </tr>
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-gray-500">No salespersons found.</td>
+                            </tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -132,27 +140,27 @@
 
     <!-- ✅ Flash Messages -->
     @if (session('success'))
-        <script>
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: '{{ session('
-                            success ') }}',
-                confirmButtonColor: '#111827',
-            });
-        </script>
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: '{{ session('
+            success ') }}',
+            confirmButtonColor: '#111827',
+        });
+    </script>
     @endif
 
     @if (session('error'))
-        <script>
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: '{{ session('
-                            error ') }}',
-                confirmButtonColor: '#d33',
-            });
-        </script>
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: '{{ session('
+            error ') }}',
+            confirmButtonColor: '#d33',
+        });
+    </script>
     @endif
 
     <script>

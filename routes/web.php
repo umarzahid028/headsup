@@ -95,7 +95,8 @@ Route::post('create/saleperson', [UserController::class, 'store'])->name('store.
 Route::delete('/salesperson/delete/{id}', [UserController::class, 'deleteSalesperson'])->name('salesperson.delete');
 
 //Activity Records
-Route::get('activity-report', [SalesDashboardController::class, 'activityReport'])->name('activity.report');
+
+Route::get('/activity-report', [SalesDashboardController::class, 'activityReport'])->name('activity.report');
 
 Route::post('/sales-person/take-turn', [QueuesController::class, 'takeTurn'])
     ->name('sales.person.takeTurn');
@@ -124,6 +125,7 @@ Route::post('/customer/complete-form/{id}', [CustomerSaleController::class, 'com
 // Customer Save to manager
 Route::post('/customer-form', [CustomerSaleController::class, 'customerform'])->name('customer.form.store');
 
+Route::post('sales/person-checkout/{id}', [CustomerSaleController::class, 'checkout'])->name('sales.person.checkout');
 
 
 

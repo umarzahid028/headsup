@@ -646,56 +646,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ✅ Button click: validate, prevent form reset, check turn
   $('#newCustomerBtn').on('click', function (e) {
-    e.preventDefault();
+  e.preventDefault();
 
-    const nameVal = nameInput.value.trim();
+  const nameVal = nameInput.value.trim();
 
-    if (!isMyTurn) {
+  if (!isMyTurn) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Not your turn!',
+      text: 'You can only take a customer when it’s your turn.',
+      showConfirmButton: true
+    });
+    return;
+  }
+
+  if (!nameVal) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Name field required!',
+      text: 'Please fill in the customer name before proceeding.',
+      showConfirmButton: false,
+      timer: 2000
+    });
+    return;
+  }
+
+  $.ajax({
+    url: '{{ route("sales.person.takeTurn") }}',
+    method: 'POST',
+    data: {
+      _token: $('meta[name="csrf-token"]').attr('content')
+    },
+    success: () => {
+      Swal.fire({
+        icon: 'success',
+        title: 'Done!',
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      // ✅ Clear the customerId so a NEW record is created when form is submitted
+      document.getElementById('customerId').value = '';
+
+      // ✅ Optional: prevent accidental edit without selecting again
+      cardClicked = false;
+
+      // ✅ Don't clear the form fields like name, email, etc.
+      updateTurnStatus();
+    },
+    error: () => {
       Swal.fire({
         icon: 'error',
-        title: 'Not your turn!',
-        text: 'You can only take a customer when it’s your turn.',
-        showConfirmButton: true
+        title: 'Error occurred!'
       });
-      return;
     }
-
-    if (!nameVal) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Name field required!',
-        text: 'Please fill in the customer name before proceeding.',
-        showConfirmButton: false,
-        timer: 2000
-      });
-      return;
-    }
-
-    $.ajax({
-      url: '{{ route("sales.person.takeTurn") }}',
-      method: 'POST',
-      data: {
-        _token: $('meta[name="csrf-token"]').attr('content')
-      },
-      success: () => {
-        Swal.fire({
-          icon: 'success',
-          title: 'Done!',
-          timer: 1500,
-          showConfirmButton: false
-        });
-
-        // ✅ DO NOT clear name input or customerId
-        updateTurnStatus();
-      },
-      error: () => {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error occurred!'
-        });
-      }
-    });
   });
+});
 
   $(document).ready(() => {
     toggleButton();
