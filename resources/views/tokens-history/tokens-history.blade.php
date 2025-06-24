@@ -53,23 +53,12 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-3">
-                                    @php
-                                        $dispositions = json_decode($sale->disposition, true);
-                                    @endphp
-    
-                                    @if (is_array($dispositions) && count($dispositions))
-                                        @foreach ($dispositions as $item)
-                                            <span
-                                                class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded mr-1 mb-1">
-                                                {{ $item }}
-                                            </span>
-                                        @endforeach
-                                    @else
-                                        <span
-                                            class="inline-block px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-800 rounded">
-                                            N/A
-                                        </span>
-                                    @endif
+                                
+                                    <span
+                                        class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded mr-1 mb-1">
+                                    {{ $sale->disposition ?? 'N/A' }}
+                                    </span>
+                                      
     
                                 </td>
                                @php
