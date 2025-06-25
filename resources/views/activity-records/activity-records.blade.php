@@ -11,7 +11,7 @@
     <div class="px-6 py-6 space-y-10">
   <!-- Summary Section -->
   <section>
-    <h3 class="text-2xl font-bold text-gray-800 mb-6">Summary</h3>
+    <h3 class="text-2xl font-bold text-gray-800 mb-6">Activity Records</h3>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
       <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-md">
         <p class="text-sm text-gray-500 mb-1">Total Check-ins</p>
@@ -32,7 +32,6 @@
 
   <!-- Detailed Report Section -->
   <section>
-    <h3 class="text-2xl font-bold text-gray-800 mb-6 mt-5">Detailed Report</h3>
     <div class="overflow-x-auto bg-white border border-gray-200 rounded-2xl shadow-md">
       <table class="min-w-full text-sm text-gray-700">
         <thead class="bg-gray-100 text-xs font-semibold uppercase text-gray-600">
