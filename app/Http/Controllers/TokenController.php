@@ -110,7 +110,7 @@ public function checkinSalespersons(Request $request)
 
 public function addusers()
 {
-    $customerSales = CustomerSale::latest()->paginate(6);
+    $customerSales = CustomerSale::latest()->paginate(10);
 
     return view('tokens-history.tokens-history', compact('customerSales'));
 }

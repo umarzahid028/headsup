@@ -11,7 +11,7 @@ use Carbon\Carbon;
 class SalesDashboardController extends Controller
 {
 
-    public function activityReport(Request $request)
+public function activityReport(Request $request)
 {
     $loggedInUser = Auth::user();
     $isManager = $loggedInUser->hasRole('Sales Manager');
@@ -26,10 +26,12 @@ class SalesDashboardController extends Controller
         abort(403, 'Unauthorized access.');
     }
 
-    // ✅ Filter queue records by the correct user_id
+    // ✅ Filter queue records by current month & year
     $queueRecords = Queue::where('user_id', $targetUserId)
         ->whereNotNull('checked_in_at')
         ->whereNotNull('checked_out_at')
+        ->whereMonth('checked_in_at', now()->month)
+        ->whereYear('checked_in_at', now()->year)
         ->orderByDesc('created_at')
         ->get();
 

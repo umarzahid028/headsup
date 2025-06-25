@@ -450,8 +450,18 @@ function completeForm(customerId) {
 
     const btn = $('#checkToggleButton');
     const btnText = btn.find('.btn-text');
-    const spinner = btn.find('.btn-spinner');
 
+    // ✅ Block check-out if cards exist
+    if (btnText.text().trim() === 'Check Out' && $('#customer-list .customer-card').length > 0) {
+      Swal.fire({
+        icon: 'error',
+         title: 'Pending Customer Cards',
+  text: 'Please complete or transfer all customer cards before checking out.',
+      });
+      return; // 🛑 stop the form from submitting
+    }
+
+    const spinner = btn.find('.btn-spinner');
     btn.prop('disabled', true);
     btnText.addClass('hidden');
     spinner.removeClass('hidden');
@@ -519,6 +529,7 @@ function completeForm(customerId) {
     });
   });
 </script>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -1025,6 +1036,14 @@ document.addEventListener('DOMContentLoaded', () => {
   bindCardClickEvents();
   applyActiveCard();
 });
+
+ const addCustomerBtn = document.getElementById('addCustomerBtn');
+  addCustomerBtn.addEventListener('click', () => {
+    const activeCard = document.querySelector('.active-card');
+    if (activeCard) {
+      activeCard.classList.add('pause-animation');
+    }
+  });
 </script>
 
   <!-- Form Show  -->

@@ -223,44 +223,49 @@
 
 
     {{-- ✅ Delete Confirmation --}}
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.delete-user').forEach(button => {
-                button.addEventListener('click', () => {
-                    const userId = button.getAttribute('data-id');
+   <script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.delete-user').forEach(button => {
+        button.addEventListener('click', () => {
+            const userId = button.getAttribute('data-id');
 
-                    Swal.fire({
-                        title: 'Are you sure?',
-                        text: "This action cannot be undone.",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#d33',
-                        cancelButtonColor: '#3085d6',
-                        confirmButtonText: 'Yes, delete it!',
-                        cancelButtonText: 'Cancel'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            fetch(`/salesperson/delete/${userId}`, {
-                                    method: 'DELETE',
-                                    headers: {
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                        'Accept': 'application/json',
-                                        'Content-Type': 'application/json',
-                                    },
-                                })
-                                .then(response => response.json())
-                                .then(data => {
-                                    Swal.fire('Deleted!', data.message, 'success')
-                                        .then(() => location.reload());
-                                })
-                                .catch(err => {
-                                    Swal.fire('Error', 'Failed to delete user.',
-                                        'error');
-                                });
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This action cannot be undone.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/salesperson/delete/${userId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to delete user');
                         }
+                        return response.json();
+                    })
+                    .then(data => {
+                        Swal.fire('Deleted!', data.message, 'success')
+                            .then(() => location.reload());
+                    })
+                    .catch(error => {
+                        Swal.fire('Error', error.message, 'error');
                     });
-                });
+                }
             });
         });
-    </script>
+    });
+});
+</script>
+
 </x-app-layout>
