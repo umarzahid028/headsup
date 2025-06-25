@@ -24,7 +24,6 @@ class TokenController extends Controller
             ->get()
             ->unique('user_id');
 
-            dd($latestQueues);
 
         $activeData = $latestQueues->map(function ($queue) {
             $salesPersonName = $queue->user->name ?? 'Unassigned';
