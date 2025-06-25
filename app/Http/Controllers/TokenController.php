@@ -18,12 +18,21 @@ class TokenController extends Controller
 
     public function queuelist(Request $request)
     {
-        $latestQueues = Queue::with('user')
-            ->where('is_checked_in', true)->whereNotNull('checked_out_at')
-            ->latest()
-            ->get()
-            ->unique('user_id');
+        // $latestQueues = Queue::with('user')
+        //     ->where('is_checked_in', true)->whereNotNull('checked_out_at')
+        //     ->latest()
+        //     ->get();
 
+        $user = User::with('latestQueue')
+            ->whereHas('latestQueue', function ($query) {
+                $query->where('is_checked_in', true)
+                    ->whereNotNull('checked_out_at');
+            })
+            ->get();
+
+        $latestQueues = $user->map(function ($user) {
+                    return $user->latestQueue;
+                })->filter()->values();
 
         $activeData = $latestQueues->map(function ($queue) {
             $salesPersonName = $queue->user->name ?? 'Unassigned';
