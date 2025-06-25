@@ -148,7 +148,7 @@
 
                 setTimeout(() => {
                     window.location.href = '/appointments';
-                }, 20000);
+                }, 2000);
             })
             .catch(error => {
                 let errorMsg = "Something went wrong.";
