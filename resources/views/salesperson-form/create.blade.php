@@ -1,4 +1,41 @@
 <x-app-layout>
+    <style>
+        .swal2-popup .swal2-actions button.swal2-confirm,
+        .swal2-popup .swal2-actions button.swal2-cancel {
+            display: inline-block !important;
+            padding: 0.5rem 1.25rem !important;
+            border-radius: 0.375rem !important;
+            font-size: 0.875rem !important;
+            font-weight: 500 !important;
+            color: #fff !important;
+            border: none !important;
+            cursor: pointer !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        .swal2-popup .swal2-actions .swal2-confirm {
+            background-color: #d33 !important;
+        }
+
+        .swal2-popup .swal2-actions .swal2-confirm:hover {
+            background-color: #b91c1c !important;
+        }
+
+        .swal2-popup .swal2-actions .swal2-cancel {
+            background-color: #3085d6 !important;
+        }
+
+        .swal2-popup .swal2-actions .swal2-cancel:hover {
+            background-color: #2563eb !important;
+        }
+
+        .swal2-popup .swal2-actions {
+            display: flex !important;
+            justify-content: center !important;
+            gap: 12px !important;
+        }
+    </style>
     <x-slot name="header">
     <h1 class="text-2xl font-semibold px-4">Create User</h1>
     <p class="text-gray-600 px-4">Add a new Sale Person to the system.</p>

@@ -186,7 +186,7 @@
 
             <div class="text-right mt-4">
               <button type="submit" style="background-color: #111827;"
-                class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-3 rounded-xl">
+                class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-md">
                 Save
               </button>
             </div>
@@ -197,11 +197,11 @@
       <!-- Modal Trigger -->
       <div class="md:col-span-2 text-right mt-4">
        <button id="openModalBtn" style="background-color: #111827;" type="button"
-          class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl">
+          class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-md">
           Close
         </button>
 <button id="toBtn" type="button" style="background-color: #111827;"
-  class=" text-white font-semibold px-6 py-3 rounded-xl gap-2">
+  class=" text-white font-semibold px-6 py-3 rounded-md gap-2">
   
   <span class="btn-label">T/O</span>
 
@@ -223,16 +223,32 @@
 
         <!-- Status + Button -->
         <div class="flex items-center justify-between">
-          <span class="status-text text-sm font-semibold px-3 py-1 rounded-full
-            {{ $isCheckedIn ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700' }}">
-            {{ $isCheckedIn ? '✅ Checked In' : '❌ Checked Out' }}
-          </span>
+         <span class="status-text text-sm font-semibold px-3 py-1 rounded-md flex items-center gap-1
+    {{ $isCheckedIn ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700' }}">
+  
+  @if($isCheckedIn)
+    <!-- Check Icon -->
+    <svg class="w-4 h-4 text-green-800" fill="none" stroke="currentColor" stroke-width="2"
+         viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+    </svg>
+    Checked In
+  @else
+    <!-- X Icon -->
+    <svg class="w-4 h-4 text-red-700" fill="none" stroke="currentColor" stroke-width="2"
+         viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+    Checked Out
+  @endif
+</span>
+
 
           <form id="checkToggleForm" action="{{ route('sales.person.store') }}" method="POST">
             @csrf
             <button type="submit"
               id="checkToggleButton"
-              class="check-toggle-btn px-6 py-2 text-sm font-semibold flex items-center gap-2 rounded-full text-white shadow-md
+              class="check-toggle-btn px-6 py-2 text-sm font-semibold flex items-center gap-2 rounded-md text-white shadow-md
               {{ $isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' }}">
               <span class="btn-text">{{ $isCheckedIn ? 'Check Out' : 'Check In' }}</span>
               <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
@@ -254,13 +270,22 @@
         </div>
 
         <div>
+<!-- Take Customer Button (Initially hidden) -->
 <button
   id="newCustomerBtn"
   type="button"
-  disabled
-  class="w-full bg-gray-400 text-white font-semibold px-6 py-2 rounded-xl mb-4">
+  class="w-full bg-gray-400 text-white font-semibold px-6 py-2 rounded-md mb-4 hidden">
   Take Customer
 </button>
+
+<button
+  id="addCustomerBtn"
+  type="button" style="background-color: #111827;"
+  class="w-full bg-gray-400 text-white font-semibold px-6 py-2 rounded-md mb-4 hidden">
+  Add Customer
+</button>
+
+
 
         </div>
       </div>
@@ -319,6 +344,9 @@
       form.classList.toggle('hidden');
     }
   </script>
+
+
+
 
 <script>
   $(document).ready(() => {
@@ -575,25 +603,53 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
   let currentTurnUserId = null;
   let isMyTurn = false;
+  let wasTurnBefore = false; // 🛠️ Track previous turn state
   let cardClicked = false;
 
-  const salesForm      = document.getElementById('salesForm');
-  const nameInput      = document.getElementById('nameInput');
-  const newCustomerBtn = document.getElementById('newCustomerBtn');
+  const form = document.getElementById('salesForm');
+  const nameInput = document.getElementById('nameInput');
+  const addBtn = document.getElementById('addCustomerBtn');
+  const takeBtn = document.getElementById('newCustomerBtn');
 
   nameInput.readOnly = true;
 
-  function toggleButton() {
-    const hasValue = nameInput.value.trim().length > 0;
-    newCustomerBtn.disabled = false;
-    newCustomerBtn.classList.toggle('bg-gray-400', !hasValue);
-    newCustomerBtn.classList.toggle('bg-[#111827]', hasValue);
+  const inputs = form.querySelectorAll('input[type="text"], input[type="email"], textarea');
+
+  // Check if name is filled and any other field has value
+  function isFormReadyForAdd() {
+    const nameVal = nameInput.value.trim();
+    let otherFieldFilled = false;
+
+    inputs.forEach(input => {
+      if (input.id !== 'nameInput' && input.value.trim() !== '') {
+        otherFieldFilled = true;
+      }
+    });
+
+    return nameVal !== '' && otherFieldFilled;
   }
 
+  // Control which button is visible
+  function toggleButtons() {
+    const ready = isFormReadyForAdd();
+
+    if (ready) {
+      addBtn.classList.remove('hidden');
+      takeBtn.classList.add('hidden');
+    } else {
+      addBtn.classList.add('hidden');
+      takeBtn.classList.remove('hidden');
+    }
+
+    takeBtn.disabled = false; // Always keep button enabled for SweetAlert logic
+  }
+
+  // Set name input read-only based on turn/click
   function updateNameInputState() {
     nameInput.readOnly = !(isMyTurn || cardClicked);
   }
 
+  // When a customer card is clicked
   document.addEventListener('click', function (e) {
     const card = e.target.closest('.customer-card');
     if (!card) return;
@@ -606,78 +662,64 @@ document.addEventListener('DOMContentLoaded', () => {
     nameInput.value = name;
     document.getElementById('customerId').value = customerId;
 
-    toggleButton();
+    toggleButtons();
     updateNameInputState();
   });
 
-  nameInput.addEventListener('input', toggleButton);
+  // Watch input changes to toggle buttons
+  inputs.forEach(input => {
+    input.addEventListener('input', toggleButtons);
+  });
 
-  function updateTurnStatus() {
-    $.get('/next-turn-status')
-      .done(res => {
-        isMyTurn = res.is_your_turn;
-        const newTurnUserId = res.current_turn_user_id;
-        const userName = res.user_name || '';
+  // Handle "Add Customer"
+  addBtn.addEventListener('click', function () {
+    form.reset();
 
-        if (isMyTurn) {
-          $('#turn-status').text('🟢 It’s your turn now!');
-          if (currentTurnUserId !== newTurnUserId) {
-            const msg = `It's your turn now${userName ? ', ' + userName : ''}!`;
-            speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
-          }
-        } else {
-          $('#turn-status').text('⏳ Waiting for your turn...');
-        }
+    document.getElementById('customerId').value = "";
+    document.getElementById('nameInput').value = "";
+    document.getElementById('emailInput').value = "";
+    document.getElementById('phoneInput').value = "";
+    document.getElementById('interestInput').value = "";
 
-        currentTurnUserId = newTurnUserId;
-        updateNameInputState();
-      })
-      .fail(() => {
-        $('#turn-status').text('⚠️ Error checking turn status.');
-        isMyTurn = false;
-        updateNameInputState();
-      });
-  }
+    toggleButtons();
+  });
 
-  $('#newCustomerBtn').on('click', function (e) {
+  // Handle "Take Customer"
+  takeBtn.addEventListener('click', function (e) {
     e.preventDefault();
 
     const nameVal = nameInput.value.trim();
 
-    // Check if user is checked in first
+    if (!isMyTurn) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Not your turn!',
+        text: 'Please wait for your turn before taking a customer.'
+      });
+      return;
+    }
+
+    if (!nameVal) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Name required!',
+        text: 'Please enter customer name before taking.',
+      });
+      return;
+    }
+
     $.get('/check-in-status')
       .done(res => {
         if (!res.is_checked_in) {
           Swal.fire({
             icon: 'warning',
             title: 'Not checked in!',
-            text: 'Please check in before taking a customer.',
-            showConfirmButton: true
+            text: 'Please check in first.',
           });
           return;
         }
 
-        if (!isMyTurn) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Not your turn!',
-            text: 'You can only take a customer when it’s your turn.',
-            showConfirmButton: true
-          });
-          return;
-        }
-
-        if (!nameVal) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Name field required!',
-            text: 'Please fill in the customer name before proceeding.',
-            showConfirmButton: true,
-            timer: 2000
-          });
-          return;
-        }
-
+        // Proceed to take turn
         $.ajax({
           url: '{{ route("sales.person.takeTurn") }}',
           method: 'POST',
@@ -687,12 +729,10 @@ document.addEventListener('DOMContentLoaded', () => {
           success: () => {
             Swal.fire({
               icon: 'success',
-              title: 'Done!',
-              showConfirmButton: true,
+              title: 'Customer Taken!',
               timer: 2000
             });
 
-            document.getElementById('customerId').value = '';
             cardClicked = false;
             updateTurnStatus();
           },
@@ -707,19 +747,53 @@ document.addEventListener('DOMContentLoaded', () => {
       .fail(() => {
         Swal.fire({
           icon: 'error',
-          title: 'Check-in status failed!',
-          text: 'Unable to verify your check-in status. Please try again.',
-          showConfirmButton: true
+          title: 'Check-in failed!',
+          text: 'Please try again.'
         });
       });
   });
 
+  // 🔄 Get current turn status and refresh UI
+  function updateTurnStatus() {
+    $.get('/next-turn-status')
+      .done(res => {
+        isMyTurn = res.is_your_turn;
+        currentTurnUserId = res.current_turn_user_id;
+        const userName = res.user_name || "User"; // ✅ NEW: Get name
+
+        // ✅ Speak only if turn just started
+        if (isMyTurn && !wasTurnBefore) {
+          const message = new SpeechSynthesisUtterance(`it's your turn now, ${userName}`);
+          message.lang = 'en-US';
+          speechSynthesis.speak(message);
+        }
+
+        wasTurnBefore = isMyTurn;
+
+        $('#turn-status').text(
+          isMyTurn ? `🟢 It’s your turn now!` : '⏳ Waiting for your turn...'
+        );
+
+        updateNameInputState();
+        toggleButtons();
+      })
+      .fail(() => {
+        $('#turn-status').text('⚠️ Error checking turn.');
+        isMyTurn = false;
+        updateNameInputState();
+        toggleButtons();
+      });
+  }
+
+  // 🚀 Initialize on page load
   $(document).ready(() => {
-    toggleButton();
+    toggleButtons();
     updateTurnStatus();
-    setInterval(updateTurnStatus, 10000);
+    setInterval(updateTurnStatus, 10000); // Refresh every 10s
   });
 </script>
+
+
 
 <script>
     const modal = document.getElementById('customerModal');
