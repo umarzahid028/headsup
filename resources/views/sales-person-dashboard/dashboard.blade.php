@@ -585,20 +585,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function toggleButton() {
     const hasValue = nameInput.value.trim().length > 0;
-
-    // ✅ Button always enabled
     newCustomerBtn.disabled = false;
-
     newCustomerBtn.classList.toggle('bg-gray-400', !hasValue);
     newCustomerBtn.classList.toggle('bg-[#111827]', hasValue);
   }
 
   function updateNameInputState() {
-    // ✅ Allow edit if it's your turn OR you clicked a card
     nameInput.readOnly = !(isMyTurn || cardClicked);
   }
 
-  // 🔁 Card click handler
   document.addEventListener('click', function (e) {
     const card = e.target.closest('.customer-card');
     if (!card) return;
@@ -644,64 +639,80 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  // ✅ Button click: validate, prevent form reset, check turn
   $('#newCustomerBtn').on('click', function (e) {
-  e.preventDefault();
+    e.preventDefault();
 
-  const nameVal = nameInput.value.trim();
+    const nameVal = nameInput.value.trim();
 
-  if (!isMyTurn) {
-    Swal.fire({
-      icon: 'error',
-      title: 'Not your turn!',
-      text: 'You can only take a customer when it’s your turn.',
-      showConfirmButton: true
-    });
-    return;
-  }
+    // Check if user is checked in first
+    $.get('/check-in-status')
+      .done(res => {
+        if (!res.is_checked_in) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Not checked in!',
+            text: 'Please check in before taking a customer.',
+            showConfirmButton: true
+          });
+          return;
+        }
 
-  if (!nameVal) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Name field required!',
-      text: 'Please fill in the customer name before proceeding.',
-      showConfirmButton: false,
-      timer: 2000
-    });
-    return;
-  }
+        if (!isMyTurn) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Not your turn!',
+            text: 'You can only take a customer when it’s your turn.',
+            showConfirmButton: true
+          });
+          return;
+        }
 
-  $.ajax({
-    url: '{{ route("sales.person.takeTurn") }}',
-    method: 'POST',
-    data: {
-      _token: $('meta[name="csrf-token"]').attr('content')
-    },
-    success: () => {
-      Swal.fire({
-        icon: 'success',
-        title: 'Done!',
-        timer: 1500,
-        showConfirmButton: false
+        if (!nameVal) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Name field required!',
+            text: 'Please fill in the customer name before proceeding.',
+            showConfirmButton: true,
+            timer: 2000
+          });
+          return;
+        }
+
+        $.ajax({
+          url: '{{ route("sales.person.takeTurn") }}',
+          method: 'POST',
+          data: {
+            _token: $('meta[name="csrf-token"]').attr('content')
+          },
+          success: () => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Done!',
+              showConfirmButton: true,
+              timer: 2000
+            });
+
+            document.getElementById('customerId').value = '';
+            cardClicked = false;
+            updateTurnStatus();
+          },
+          error: () => {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error occurred!'
+            });
+          }
+        });
+      })
+      .fail(() => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Check-in status failed!',
+          text: 'Unable to verify your check-in status. Please try again.',
+          showConfirmButton: true
+        });
       });
-
-      // ✅ Clear the customerId so a NEW record is created when form is submitted
-      document.getElementById('customerId').value = '';
-
-      // ✅ Optional: prevent accidental edit without selecting again
-      cardClicked = false;
-
-      // ✅ Don't clear the form fields like name, email, etc.
-      updateTurnStatus();
-    },
-    error: () => {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error occurred!'
-      });
-    }
   });
-});
 
   $(document).ready(() => {
     toggleButton();

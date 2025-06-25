@@ -1,4 +1,20 @@
 <x-app-layout>
+    <style>
+.swal2-confirm {
+  background-color: #111827 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.swal2-confirm:hover,
+.swal2-confirm:focus,
+.swal2-confirm:active {
+  background-color: #111827 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+      
+    </style>
     <x-slot name="header">
         <h2 class="text-2xl font-bold text-gray-800 mb-1 px-4">
             Create Appointment
@@ -6,12 +22,14 @@
         <p class="text-gray-500 text-sm px-4">
             Schedule a new appointment by filling out the form below.
         </p>
+
     </x-slot>
+
     <div class="">
         <!-- Page Heading -->
         <div class="max-w-full mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow rounded-lg p-6">
-                <form method="POST" action="/appointments">
+                <form id="appointment-form">
                     @csrf
 
                     <!-- Section: Customer Information -->
@@ -99,4 +117,53 @@
     };
         </script>
     @endpush
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('appointment-form');
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+
+            fetch('/appointments', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) return response.json().then(err => Promise.reject(err));
+                return response.json();
+            })
+            .then(data => {
+                Swal.fire({
+                    icon: 'success',
+                    title: data.message,
+                    showConfirmButton: true,
+                });
+
+                setTimeout(() => {
+                    window.location.href = '/appointments';
+                }, 20000);
+            })
+            .catch(error => {
+                let errorMsg = "Something went wrong.";
+                if (error?.errors) {
+                    errorMsg = Object.values(error.errors).flat().join("<br>");
+                }
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    html: errorMsg
+                });
+            });
+        });
+    });
+</script>
+
 </x-app-layout>

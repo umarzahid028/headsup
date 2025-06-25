@@ -1,4 +1,17 @@
 <x-app-layout>
+  <!-- Tailwind CSS CDN (v3) -->
+<script src="https://cdn.tailwindcss.com"></script>
+    <style>
+.swal2-confirm {
+  background-color: #111827 !important;
+  color: #fff !important;
+}
+.swal2-confirm:hover,
+.swal2-confirm:focus,
+.swal2-confirm:active {
+  background-color: #111827 !important;
+}
+</style>
   <x-slot name="header">
     <div class="md:col-span-2">
       <h3 class="text-2xl font-bold text-gray-800 leading-tight mb-0">Customer Sales Form</h3>
@@ -56,38 +69,43 @@
         </fieldset>
 
         {{-- Disposition Modal --}}
-        <div id="customerModal"
-          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-          <div class="bg-white p-6 rounded-xl w-full max-w-md relative">
-            <button type="button" id="closeModalBtn"
+<div id="customerModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+  <div class="bg-white p-6 rounded-xl w-full max-w-[700px] max-h-[90vh] overflow-y-auto relative">
+
+    <!-- Close Button -->
+     <button type="button" id="closeModalBtn"
               class="absolute top-3 right-3 text-gray-500 hover:text-black text-xl font-bold">&times;</button>
 
-            <fieldset class="border border-gray-300 rounded-xl p-4">
-              <legend class="text-sm font-semibold text-gray-700 mb-3">Disposition</legend>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                @foreach([
-                'Sold!', 'Walked Away', 'Challenged Credit', "Didn't Like Vehicle",
-                "Didn't Like Price", "Didn't Like Finance Terms", 'Insurance Expensive',
-                'Wants to keep looking', 'Wants to think about it', 'Needs Co-Signer'
-                ] as $disposition)
-                <label class="flex items-center space-x-2">
-                  <input type="radio" name="disposition" value="{{ $disposition }}"
-                    {{ isset($sale) && $sale->disposition === $disposition ? 'checked' : '' }}
-                    class="form-radio h-5 w-5 text-indigo-600">
-                  <span class="text-gray-700 text-sm">{{ $disposition }}</span>
-                </label>
-                @endforeach
-              </div>
-            </fieldset>
+    <!-- Disposition Fieldset -->
+    <fieldset class="border border-gray-300 rounded-xl p-5">
+      <legend class="text-sm font-semibold text-gray-700 mb-4">Disposition</legend>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        @foreach([
+          'Sold!', 'Walked Away', 'Challenged Credit', "Didn't Like Vehicle",
+          "Didn't Like Price", "Didn't Like Finance Terms", 'Insurance Expensive',
+          'Wants to keep looking', 'Wants to think about it', 'Needs Co-Signer'
+        ] as $disposition)
+        <label class="flex items-center space-x-2">
+          <input type="radio" name="disposition" value="{{ $disposition }}"
+            {{ isset($sale) && $sale->disposition === $disposition ? 'checked' : '' }}
+            class="form-radio h-5 w-5 text-indigo-600">
+          <span class="text-gray-700 text-sm">{{ $disposition }}</span>
+        </label>
+        @endforeach
+      </div>
+    </fieldset>
 
-            <div class="text-right mt-4">
-              <button type="submit" style="background-color: #111827;"
-                class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-3 rounded-xl">
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
+    <!-- Save Button -->
+    <div class="text-right mt-6">
+      <button type="submit"
+        class="bg-[#111827] hover:bg-gray-800 text-white font-semibold px-5 py-3 rounded-xl">
+        Save
+      </button>
+    </div>
+
+  </div>
+</div>
+
       </div>
 
       {{-- Modal Trigger --}}
@@ -135,13 +153,13 @@
       .then(data => {
       if (data.status === 'success') {
   Swal.fire({
-    title: 'Success!',
-    text: data.message,
-    icon: 'success',
-    showConfirmButton: false,  
-    timer: 2000,              
-    timerProgressBar: true     
-  });
+                icon: 'success',
+                title: 'Success!',
+                text: data.message,
+                confirmButtonColor: '#111827',
+            }).then(() => {
+                window.location.href = data.redirect;
+            });
 
   modal.classList.add('hidden');
   salesForm.reset();

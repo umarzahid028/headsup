@@ -18,27 +18,28 @@
                     Add Customer
                 </a>
             </div>
-            <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
-                <table class="min-w-full bg-white divide-y divide-gray-200">
+            <div>
+                <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
+                    <table class="min-w-full bg-white divide-y divide-gray-200">
                     <thead>
                         <tr class="bg-gray-100">
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Customer Name
+                            <th class="border-b px-4 py-2 text-left">Customer Name
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Assigned At</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Activities</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Disposition</th>
-                            <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Duration</th>
+                            <th class="border-b px-4 py-2 text-left">Assigned At</th>
+                            <th class="border-b px-4 py-2 text-left">Activities</th>
+                            <th class="border-b px-4 py-2 text-left">Disposition</th>
+                            <th class="border-b px-4 py-2 text-left">Duration</th>
     
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 text-left">
+                    <tbody>
                         @forelse ($customerSales as $index => $sale)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-3">{{ $sale->name ?? 'Unknown' }}</td>
-                                <td class="px-6 py-3">
+                            <tr>
+                                <td class="border-b px-4 py-3">{{ $sale->name ?? 'Unknown' }}</td>
+                                <td class="border-b px-4 py-3">
                                     {{ optional($sale->created_at)->format('d M Y h:i A') ?? 'N/A' }}
                                 </td>
-                                <td class="px-6 py-3">
+                                <td class="border-b px-4 py-3">
                                     @if (!empty($sale->process) && is_array($sale->process))
                                         @foreach ($sale->process as $process)
                                             <span
@@ -50,7 +51,7 @@
                                         <span class="text-gray-400 text-xs">No Activities</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-3">
+                                <td class="border-b px-4 py-3">
                                 
                                     <span
                                         class="inline-block px-2 py-1 text-xs font-semibold bg-gray-800 text-white rounded mr-1 mb-1">
@@ -84,7 +85,7 @@
                                 @endphp
     
     
-                                <td class="px-6 py-3">
+                                <td class="border-b px-4 py-3">
                                     {{ $duration }}
                                 </td>
     
@@ -98,6 +99,9 @@
                         @endforelse
                     </tbody>
                 </table>
+                 <div class="mt-4 px-4">
+                        {{ $customerSales->links() }}
+                    </div>
             </div>
         </div>
     </div>

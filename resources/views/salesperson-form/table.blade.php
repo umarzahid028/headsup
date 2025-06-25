@@ -49,7 +49,8 @@
         <div class="container mx-auto space-y-6 py-6 px-4">
             @role('Admin|Sales Manager')
             <div class="flex items-center justify-end mb-4 px-6">
-                <a href="{{ route('create.saleperson') }}" class="bg-black text-white px-4 py-2 rounded">
+                <a href="{{ route('create.saleperson') }}" class="text-white px-4 py-2 rounded"
+                   style="background-color: #111827;">
                     Add User
                 </a>
             </div>
@@ -82,18 +83,18 @@
                                 <td class="border-b px-4 py-3">
                                     <div class="flex gap-1">
                                         <a href="{{ route('edit.saleperson', $person->id) }}"
-                                            class="border-b px-4 py-3 text-xs font-medium text-white rounded hover:bg-yellow-600"
-                                            style="background-color:#111827;">
+                                             class="text-white font-bold py-2 px-4 rounded"
+                                                       style="background-color: #111827;">
                                             Edit
                                         </a>
                                         <button data-id="{{ $person->id }}"
-                                            class="delete-user border-b px-4 py-3 text-xs font-medium text-white rounded hover:bg-red-700"
-                                            style="background-color:#111827;">
+                                              class="text-white font-bold py-2 px-4 rounded"
+                                                       style="background-color: #111827;">
                                             Delete
                                         </button>
                                         <a href="{{ route('activity.report', ['user_id' => $person->id]) }}"
-                                            class="border-b px-4 py-3 text-xs font-medium text-white rounded hover:bg-red-700"
-                                            style="background-color:#111827;">
+                                              class="text-white font-bold py-2 px-4 rounded"
+                                                       style="background-color: #111827;">
                                             Activity
                                         </a>
 
@@ -103,7 +104,9 @@
                                             action="{{ route('sales.person.checkout', $person->latestQueue->id) }}" method="POST">
                                             @csrf
                                             <button type="submit"
-                                                class="check-out-btn border-b px-4 py-3 text-xs text-white rounded hover:bg-red-700" style="background-color:#111827;">
+                                                  class="check-out-btn text-white font-bold py-2 px-4 rounded"
+                                                       style="background-color: #111827;"
+                                                >
 
                                                 <span class="btn-text">Check Out</span>
 
@@ -130,6 +133,7 @@
                             @endforelse
                         </tbody>
                     </table>
+                    
                 </div>
             </div>
         </div>

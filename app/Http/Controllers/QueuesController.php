@@ -87,7 +87,33 @@ public function takeTurn(Request $request)
     return response()->json(['message' => 'Turn completed.']);
 }
 
+ public function checkInStatus(Request $request)
+    {
+        try {
+            $user = Auth::user();
 
+            if (!$user) {
+                return response()->json(['is_checked_in' => false], 401);
+            }
+
+            $latestQueue = Queue::where('user_id', $user->id)
+                ->latest('created_at')
+                ->first();
+
+            $isCheckedIn = $latestQueue && $latestQueue->is_checked_in;
+
+            return response()->json([
+                'is_checked_in' => $isCheckedIn
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Check-in status error: ' . $e->getMessage());
+
+            return response()->json([
+                'error' => true,
+                'message' => 'Server error'
+            ], 500);
+        }
+    }
 // app/Http/Controllers/QueueController.php
 
 public function nextTurnStatus()

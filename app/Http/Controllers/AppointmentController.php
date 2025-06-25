@@ -23,11 +23,10 @@ public function index(Request $request)
         return view('appointments.create', compact('salespersons'));
     }
 
-    public function store(Request $request)
+public function store(Request $request)
 {
     $user = auth()->user();
 
-    // Validate basic fields
     $rules = [
         'customer_name' => 'required',
         'customer_phone' => 'required',
@@ -35,19 +34,16 @@ public function index(Request $request)
         'time' => 'required',
     ];
 
-    // Only validate salesperson_id if user is Admin or Sales Manager
     if (in_array($user->getRoleNames()->first(), ['Admin', 'Sales Manager'])) {
         $rules['salesperson_id'] = 'required|exists:users,id';
     }
 
-    $request->validate($rules);
+    $validated = $request->validate($rules);
 
-    // Determine salesperson_id
     $salespersonId = in_array($user->getRoleNames()->first(), ['Admin', 'Sales Manager']) 
-    ? $request->salesperson_id 
-    : $user->id;
-    
-    // Create appointment
+        ? $request->salesperson_id 
+        : $user->id;
+
     Appointment::create([
         'created_by' => $user->id,
         'salesperson_id' => $salespersonId,
@@ -59,8 +55,11 @@ public function index(Request $request)
         'status' => 'scheduled',
     ]);
 
-    return redirect('/appointments')->with('success', 'Appointment booked successfully.');
+    return response()->json([
+        'message' => 'Appointment booked successfully.'
+    ]);
 }
+
 
 
 public function edit(Appointment $appointment)
@@ -106,9 +105,11 @@ public function update(Request $request, Appointment $appointment)
         'notes'           => $validated['notes'] ?? null,
     ]);
 
-    return redirect()
-           ->route('appointment.records')
-           ->with('success', 'Appointment updated successfully.');
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Appointment updated successfully.',
+        'redirect' => route('appointment.records')
+    ]);
 }
 
 

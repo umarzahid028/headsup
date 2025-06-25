@@ -1,4 +1,16 @@
 <x-app-layout>
+    <style>
+.swal2-confirm {
+  background-color: #111827 !important;
+  color: #fff !important;
+}
+.swal2-confirm:hover,
+.swal2-confirm:focus,
+.swal2-confirm:active {
+  background-color: #111827 !important;
+}
+</style>
+
     <x-slot name="header">
         <h2 class="text-2xl font-bold text-gray-800 mb-1 px-4">
             Update Appointment
@@ -12,7 +24,7 @@
         <div class="max-w-full mx-auto sm:px-6 lg:px-8">
             <div class="bg-white shadow rounded-lg p-6">
 
-                <form method="POST" action="{{ route('appointments.update', $appointment->id) }}">
+                <form method="POST" action="{{ route('appointments.update', $appointment->id) }}" id="updateForm">
                     @csrf
                     @method('PUT')
 
@@ -103,4 +115,53 @@
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.getElementById('updateForm').addEventListener('submit', function (e) {
+    e.preventDefault(); // Prevent normal form submit
+
+    const form = e.target;
+    const formData = new FormData(form);
+    const actionUrl = form.action;
+
+    fetch(actionUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+            'Accept': 'application/json',
+        },
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            Swal.fire({
+                icon: 'success',
+                title: 'Updated!',
+                text: data.message,
+                confirmButtonColor: '#111827',
+            }).then(() => {
+                window.location.href = data.redirect;
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: data.message || 'Something went wrong!',
+            });
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Validation Error',
+            text: 'Please check your input and try again.',
+        });
+        console.error(error);
+    });
+});
+</script>
+
 </x-app-layout>

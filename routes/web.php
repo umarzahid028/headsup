@@ -50,7 +50,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 //Queues Routes
 Route::get('/sales/{id?}', [DashboardController::class, 'salesdashboard'])->name('sales.perosn');
 Route::post('/sales-person', [QueuesController::class, 'dashboardstore'])->name('sales.person.store');
-
+Route::get('/check-in-status', [QueuesController::class, 'checkInStatus']);
 //Sales person status
 Route::get('/status', [StatusController::class, 'showStatus']);
 

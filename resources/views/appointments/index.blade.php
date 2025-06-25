@@ -61,8 +61,8 @@
                                                     </a>
 
                                                     <a href="{{ route('appointments.edit', ['appointment' => $appt->id]) }}"
-                                                       class="text-yellow-600 border border-yellow-600 font-bold py-2 px-4 rounded hover:bg-yellow-600 hover:text-white transition"
-                                                       style="background-color:#111827; color:white;">
+                                                         class="text-white font-bold py-2 px-4 rounded"
+                                                       style="background-color: #111827;">
                                                         Edit
                                                     </a>
                                                 @endif
