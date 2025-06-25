@@ -25,8 +25,8 @@ class TokenController extends Controller
 
         $user = User::with('latestQueue')
             ->whereHas('latestQueue', function ($query) {
-                $query->where('is_checked_in', true)
-                    ->whereNotNull('checked_out_at');
+                $query->where('is_checked_in', true);
+                    // ->whereNotNull('checked_out_at');
             })
             ->get();
 
