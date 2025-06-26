@@ -5,82 +5,84 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Queue;
+use App\Models\Appointment;
 use App\Models\CustomerSale;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class TokenController extends Controller
 {
 
+public function queuelist(Request $request)
+{
+    $users = User::with(['latestQueue.appointment'])
+        ->whereHas('latestQueue', function ($query) {
+            $query->where('is_checked_in', true);
+        })->get();
 
-    // app/Http/Controllers/YourController.php
+    $latestQueues = $users->map(function ($user) {
+        return $user->latestQueue;
+    })->filter()->values();
 
-    public function queuelist(Request $request)
-    {
-        // $latestQueues = Queue::with('user')
-        //     ->where('is_checked_in', true)->whereNotNull('checked_out_at')
-        //     ->latest()
-        //     ->get();
+    $activeData = $latestQueues->map(function ($queue) {
+        $salesPersonName = $queue->user->name ?? 'Unassigned';
 
-        $user = User::with('latestQueue')
-            ->whereHas('latestQueue', function ($query) {
-                $query->where('is_checked_in', true);
-                    // ->whereNotNull('checked_out_at');
-            })
-            ->get();
-
-        $latestQueues = $user->map(function ($user) {
-                    return $user->latestQueue;
-                })->filter()->values();
-
-        $activeData = $latestQueues->map(function ($queue) {
-            $salesPersonName = $queue->user->name ?? 'Unassigned';
-
-            $customerSales = CustomerSale::where('user_id', $queue->user_id)
-                ->latest()
-                ->get();
+       $customerSales = CustomerSale::where('user_id', $queue->user_id)
+    ->whereNull('disposition') 
+    ->latest()
+    ->get();
 
 
-            $customers = $customerSales->map(function ($sale) {
-                $customerName = $sale->name ?? 'Unknown Customer';
+        $appointment = $queue->appointment;
 
-                $lastProcess = [];
-                if (!empty($sale->process)) {
-                    $processArray = is_array($sale->process)
-                        ? $sale->process
-                        : json_decode($sale->process, true);
+        $customers = $customerSales->map(function ($sale) {
+            $customerName = $sale->name ?? 'Unknown Customer';
 
-                    if (is_array($processArray)) {
-                        $last = end($processArray);
-                        if (!empty($last)) {
-                            $lastProcess = [$last];
-                        }
+            $lastProcess = [];
+            if (!empty($sale->process)) {
+                $processArray = is_array($sale->process)
+                    ? $sale->process
+                    : json_decode($sale->process, true);
+
+                if (is_array($processArray)) {
+                    $last = end($processArray);
+                    if (!empty($last)) {
+                        $lastProcess = [$last];
                     }
                 }
-
-                return [
-                    'customer_name' => $customerName,
-                    'process'       => $lastProcess,
-                    'forwarded'     => (bool) $sale->forwarded_to_manager,
-                    'forwarded_at'  => $sale->forwarded_at,
-                ];
-            });
+            }
 
             return [
-                'sales_person' => $salesPersonName,
-                'customers'    => $customers,
+                'customer_name' => $customerName,
+                'process'       => $lastProcess,
+                'forwarded'     => (bool) $sale->forwarded_to_manager,
+                'forwarded_at'  => $sale->forwarded_at,
             ];
-        })->values();
+        });
 
-        if ($request->wantsJson()) {
-            return response()->json(['active' => $activeData]);
+        // If appointment exists and is not completed, add it
+        if ($appointment && $appointment->status !== 'completed') {
+            $customers->prepend([
+                'customer_name' => $appointment->customer_name ?? 'N/A',
+                'process'       => ['Appointment'],
+                'forwarded'     => false,
+                'forwarded_at'  => null,
+            ]);
         }
 
-        return view('screen.active-tokens', ['tokens' => $activeData]);
+        return [
+            'sales_person' => $salesPersonName,
+            'customers'    => $customers,
+        ];
+    })->values();
+
+    if ($request->wantsJson()) {
+        return response()->json(['active' => $activeData]);
     }
 
-
+    return view('screen.active-tokens', ['tokens' => $activeData]);
+}
     //Check in
     // Controller Method (already discussed)
     public function checkinSalespersons(Request $request)

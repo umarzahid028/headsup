@@ -240,7 +240,7 @@ public function customerform(Request $request)
             'customer_id'    => 'nullable|exists:customers,id',
             'name'           => 'required|string|max:255',
             'email'          => 'nullable|email|max:255',
-            'phone'          => 'required|string|max:20',
+            'phone'          => 'nullable|string|max:20',
             'interest'       => 'nullable|string|max:255',
             'notes'          => 'nullable|string',
             'process'        => 'nullable|array',

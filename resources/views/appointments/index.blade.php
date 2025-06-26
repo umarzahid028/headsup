@@ -94,9 +94,12 @@
                         </tbody>
                     </table>
 
-                    <div class="mt-4 px-4">
-                        {{ $appointments->links() }}
-                    </div>
+                   @if ($appointments->total() >= 10)
+    <div class="mt-4 px-4">
+        {{ $appointments->links() }}
+    </div>
+@endif
+
                 </div>
             </div>
         </div>

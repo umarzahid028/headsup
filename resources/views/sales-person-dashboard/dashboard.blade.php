@@ -88,6 +88,15 @@
 }
 
     </style>
+    <style>
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+</style>
+
   </x-slot>
 
   @php
@@ -118,6 +127,18 @@
       <!-- Customer Info -->
 <div class="space-y-4">
   @foreach (['name', 'email', 'phone', 'interest'] as $field)
+    @php
+      // Check if we should prefill from appointment
+      $value = $sale->$field ?? '';
+      if (isset($appointment)) {
+        if ($field === 'name') {
+          $value = $appointment->customer_name ?? $value;
+        } elseif ($field === 'phone') {
+          $value = $appointment->customer_phone ?? $value;
+        }
+      }
+    @endphp
+
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">
         {{ ucfirst($field) }}
@@ -131,12 +152,13 @@
         name="{{ $field }}"
         type="{{ $field === 'email' ? 'email' : 'text' }}"
         class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
-        value="{{ $sale->$field ?? '' }}"
+        value="{{ $value }}"
         @if($field === 'name') required @endif
       />
     </div>
   @endforeach
 </div>
+
 
       <!-- Sales Details -->
       <div class="space-y-4">
@@ -273,10 +295,13 @@
 <!-- Take Customer Button (Initially hidden) -->
 <button
   id="newCustomerBtn"
-  type="button"
-  class="w-full bg-gray-400 text-white font-semibold px-6 py-2 rounded-md mb-4 hidden">
-  Take Customer
+  type="button" style="background-color: #111827;"
+  class="w-full bg-gray-400 text-white font-semibold px-6 py-2 rounded-md mb-4 hidden flex items-center justify-center gap-2"
+>
+  <span class="spinner hidden w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+  <span class="btn-text">Take Customer</span>
 </button>
+
 
 <button
   id="addCustomerBtn"
@@ -294,39 +319,9 @@
       <div class="flex-1 overflow-y-auto pr-2" id="customerCards">
         @include('partials.customers', ['customers' => $customers])
 
-@if($appointment && $appointment->status !== 'completed')
-  <div id="customer-list" class="transition-opacity duration-300">
-    <div
-      class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
-      data-name="{{ $appointment->customer_name }}"
-      data-phone="{{ $appointment->customer_phone }}"
-    >
-      <div class="flex justify-between items-center">
-        <h2 class="text-xl font-semibold text-gray-800">Appointment Details</h2>
-      </div>
-
-      <div class="space-y-2 text-gray-500 text-sm mt-3">
-        <p>
-          <span class="font-medium text-gray-400">Sales Person:</span>
-          <span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full ml-2">
-             {{ $appointment->salesperson->name ?? 'N/A' }}
-          </span>
-        </p>
-        <p><span class="font-medium text-gray-400">Name:</span> {{ $appointment->customer_name }}</p>
-        <p><span class="font-medium text-gray-400">Phone No :</span> {{ $appointment->customer_phone ?? '–' }}</p>
-        <p><span class="font-medium text-gray-400">Date & Time:</span> {{ $appointment->date }} {{ $appointment->time }}</p>
-      </div>
-
-      <div class="w-full">
-        <button
-          class="transfer-btn w-full mt-4 bg-[#111827] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#0f172a] transition">
-          Transfer
-        </button>
-
-      </div>
-    </div>
-  </div>
-@endif
+<div id="appointment-wrapper">
+    @include('partials.appointment-card', ['appointment' => $appointment])
+</div>
 
      
 </div>
@@ -344,8 +339,35 @@
       form.classList.toggle('hidden');
     }
   </script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const appointmentCard = document.querySelector("#appointment-card");
 
+    if (!appointmentCard) return;
 
+    const appointmentName = appointmentCard.dataset.name?.trim().toLowerCase();
+
+    const customerCards = document.querySelectorAll(".customer-card");
+
+    customerCards.forEach(card => {
+      const customerName = card.dataset.name?.trim().toLowerCase();
+
+      if (card.id !== 'appointment-card' && customerName === appointmentName) {
+        appointmentCard.classList.add("border-red-500");
+        appointmentCard.classList.remove("border-gray-200");
+      }
+    });
+
+    // Auto-refresh appointment section every 10 seconds
+    setInterval(() => {
+      fetch('/appointment/section') // Make sure this route returns HTML
+        .then(res => res.text())
+        .then(html => {
+          document.getElementById("appointment-wrapper").innerHTML = html;
+        });
+    }, 10000);
+  });
+</script>
 
 
 <script>
@@ -512,7 +534,7 @@ function completeForm(customerId) {
           title: 'Success',
           text: response.message,
           timer: 2000,
-          showConfirmButton: false,
+          showConfirmButton: true,
         });
       },
       error: function() {
@@ -614,7 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
   let currentTurnUserId = null;
   let isMyTurn = false;
-  let wasTurnBefore = false; // 🛠️ Track previous turn state
+  let wasTurnBefore = false;
   let cardClicked = false;
 
   const form = document.getElementById('salesForm');
@@ -626,7 +648,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const inputs = form.querySelectorAll('input[type="text"], input[type="email"], textarea');
 
-  // Check if name is filled and any other field has value
   function isFormReadyForAdd() {
     const nameVal = nameInput.value.trim();
     let otherFieldFilled = false;
@@ -640,7 +661,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return nameVal !== '' && otherFieldFilled;
   }
 
-  // Control which button is visible
   function toggleButtons() {
     const ready = isFormReadyForAdd();
 
@@ -652,15 +672,13 @@ document.addEventListener('DOMContentLoaded', () => {
       takeBtn.classList.remove('hidden');
     }
 
-    takeBtn.disabled = false; // Always keep button enabled for SweetAlert logic
+    takeBtn.disabled = false;
   }
 
-  // Set name input read-only based on turn/click
   function updateNameInputState() {
     nameInput.readOnly = !(isMyTurn || cardClicked);
   }
 
-  // When a customer card is clicked
   document.addEventListener('click', function (e) {
     const card = e.target.closest('.customer-card');
     if (!card) return;
@@ -677,12 +695,10 @@ document.addEventListener('DOMContentLoaded', () => {
     updateNameInputState();
   });
 
-  // Watch input changes to toggle buttons
   inputs.forEach(input => {
     input.addEventListener('input', toggleButtons);
   });
 
-  // Handle "Add Customer"
   addBtn.addEventListener('click', function () {
     form.reset();
 
@@ -695,54 +711,63 @@ document.addEventListener('DOMContentLoaded', () => {
     toggleButtons();
   });
 
-  // Handle "Take Customer"
   takeBtn.addEventListener('click', function (e) {
     e.preventDefault();
 
     const nameVal = nameInput.value.trim();
 
-    if (!isMyTurn) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Not your turn!',
-        text: 'Please wait for your turn before taking a customer.'
-      });
-      return;
-    }
-
-    if (!nameVal) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Name required!',
-        text: 'Please enter customer name before taking.',
-      });
-      return;
-    }
+    // Show spinner
+    $('#newCustomerBtn .spinner').removeClass('hidden');
+    $('#newCustomerBtn .btn-text').text('Taking...');
+    $('#newCustomerBtn').prop('disabled', true);
 
     $.get('/check-in-status')
       .done(res => {
         if (!res.is_checked_in) {
           Swal.fire({
-            icon: 'warning',
+            icon: 'error',
             title: 'Not checked in!',
             text: 'Please check in first.',
           });
+          resetTakeButtonUI();
           return;
         }
 
-        // Proceed to take turn
+        if (!isMyTurn) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Not your turn!',
+            text: 'Please wait for your turn before taking a customer.'
+          });
+          resetTakeButtonUI();
+          return;
+        }
+
+        if (!nameVal) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Name required!',
+            text: 'Please enter customer name before taking.',
+          });
+          resetTakeButtonUI();
+          return;
+        }
+
         $.ajax({
           url: '{{ route("sales.person.takeTurn") }}',
           method: 'POST',
           data: {
             _token: $('meta[name="csrf-token"]').attr('content')
           },
-          success: () => {
-            Swal.fire({
-              icon: 'success',
-              title: 'Customer Taken!',
-              timer: 2000
-            });
+        success: () => {
+  Swal.fire({
+    icon: 'success',
+    title: 'Customer Taken!',
+    text: 'You have successfully taken this customer.',
+    timer: 2000,
+  });
+
+
 
             cardClicked = false;
             updateTurnStatus();
@@ -752,6 +777,9 @@ document.addEventListener('DOMContentLoaded', () => {
               icon: 'error',
               title: 'Error occurred!'
             });
+          },
+          complete: () => {
+            resetTakeButtonUI();
           }
         });
       })
@@ -761,30 +789,39 @@ document.addEventListener('DOMContentLoaded', () => {
           title: 'Check-in failed!',
           text: 'Please try again.'
         });
+        resetTakeButtonUI();
       });
   });
 
-  // 🔄 Get current turn status and refresh UI
+  function resetTakeButtonUI() {
+    $('#newCustomerBtn .spinner').addClass('hidden');
+    $('#newCustomerBtn .btn-text').text('Take Customer');
+    $('#newCustomerBtn').prop('disabled', false);
+  }
+
   function updateTurnStatus() {
     $.get('/next-turn-status')
       .done(res => {
         isMyTurn = res.is_your_turn;
         currentTurnUserId = res.current_turn_user_id;
-        const userName = res.user_name || "User"; // ✅ NEW: Get name
+        const userName = res.user_name || "User";
 
-        // ✅ Speak only if turn just started
         if (isMyTurn && !wasTurnBefore) {
           const message = new SpeechSynthesisUtterance(`it's your turn now, ${userName}`);
           message.lang = 'en-US';
           speechSynthesis.speak(message);
         }
 
+     if (!res.is_checked_in) {
+  $('#turn-status').text('❗ Please check in to activate your turn queue.');
+} else if (isMyTurn) {
+  $('#turn-status').text(`🟢 It’s your turn now!`);
+} else {
+  $('#turn-status').text('⏳ Waiting for your turn...');
+}
+
+
         wasTurnBefore = isMyTurn;
-
-        $('#turn-status').text(
-          isMyTurn ? `🟢 It’s your turn now!` : '⏳ Waiting for your turn...'
-        );
-
         updateNameInputState();
         toggleButtons();
       })
@@ -796,15 +833,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  // 🚀 Initialize on page load
   $(document).ready(() => {
     toggleButtons();
     updateTurnStatus();
-    setInterval(updateTurnStatus, 10000); // Refresh every 10s
+    setInterval(updateTurnStatus, 10000);
   });
 </script>
-
-
 
 <script>
     const modal = document.getElementById('customerModal');
@@ -1117,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', () => {
             title: 'Success',
             text: result.message || 'Form submitted successfully',
             timer: 2000,
-            showConfirmButton: false,
+            showConfirmButton: true,
             willClose: () => {
               // 👇 Redirect after SweetAlert closes
               window.location.href = result.redirect;

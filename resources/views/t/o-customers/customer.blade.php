@@ -1,4 +1,19 @@
 <x-app-layout>
+        <style>
+.swal2-confirm {
+  background-color: #111827 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.swal2-confirm:hover,
+.swal2-confirm:focus,
+.swal2-confirm:active {
+  background-color: #111827 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+    </style>
     <x-slot name="header">
         <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
         <h3 class="text-2xl font-bold text-gray-800 leading-tight mb-0 px-2">Takeover Customer Form</h3>
@@ -25,21 +40,24 @@
                       <input type="hidden" name="user_id" value="{{ auth()->id() }}" />
       
                       <!-- Customer Info -->
-                      <div class="space-y-4">
-                          @foreach (['name', 'email', 'phone', 'interest'] as $field)
-                              <div>
-                                  <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">
-                                      {{ ucfirst($field) }}
-                                      @if (in_array($field, ['name', 'phone']))
-                                          <span class="text-red-600">*</span>
-                                      @endif
-                                  </label>
-                                  <input name="{{ $field }}" type="{{ $field == 'email' ? 'email' : 'text' }}"
-                                      class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
-                                      value="{{ $sale->$field ?? '' }}" @if (in_array($field, ['name', 'phone'])) required @endif />
-                              </div>
-                          @endforeach
-                      </div>
+<div class="space-y-4">
+    @foreach (['name', 'email', 'phone', 'interest'] as $field)
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">
+                {{ ucfirst($field) }}
+                @if ($field === 'name')
+                    <span class="text-red-600">*</span>
+                @endif
+            </label>
+            <input name="{{ $field }}" 
+                   type="{{ $field === 'email' ? 'email' : 'text' }}"
+                   class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
+                   value="{{ $sale->$field ?? '' }}"
+                   @if ($field === 'name') required @endif />
+        </div>
+    @endforeach
+</div>
+
       
                       <!-- Sales Details -->
                       <div class="space-y-4">
@@ -151,7 +169,7 @@
                         title: 'Success',
                         text: result.message || 'Form submitted successfully',
                         timer: 2000,
-                        showConfirmButton: false,
+                        showConfirmButton: true,
                         willClose: () => {
                             // 👇 Redirect after SweetAlert closes
                             window.location.href = result.redirect;

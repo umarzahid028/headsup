@@ -12,9 +12,20 @@ protected $fillable = [
 
 public function user()
 {
-    return $this->belongsTo(User::class);
+    return $this->belongsTo(User::class, 'user_id');
+
 }
 
+
+public function queue()
+{
+    return $this->belongsTo(Queue::class);
+}
+
+public function appointment()
+{
+    return $this->belongsTo(Appointment::class);
+}
 
 
 

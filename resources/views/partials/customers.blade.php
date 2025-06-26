@@ -69,6 +69,7 @@
         data-customer-id="{{ $customer->id }}"
         data-customer-name="{{ $customer->name }}"
       >
+
         <div class="flex justify-between items-center">
           <h2 class="text-xl font-semibold text-gray-800">Customer Info</h2>
         </div>

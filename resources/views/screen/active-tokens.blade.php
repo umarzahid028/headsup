@@ -7,8 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 
-
-
   <style>
     @font-face {
       font-family: 'Digital';
@@ -18,10 +16,24 @@
     html, body {
       margin: 0;
       padding: 0;
-      background-color: #000;
       font-family: 'Digital', monospace;
       color: #fff;
       height: 100vh;
+      background: linear-gradient(270deg, #000000, #111111, #1a1a1a);
+      background-size: 600% 600%;
+      animation: gradientBackground 15s ease infinite;
+    }
+
+    @keyframes gradientBackground {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
     }
 
     #container {
@@ -42,16 +54,39 @@
       display: flex;
       flex-direction: column;
       height: 100%;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+      animation: sectionGlow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes sectionGlow {
+      0% {
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+      }
+      100% {
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+      }
     }
 
     h1 {
       user-select: none;
       font-size: 3.5rem;
       font-weight: bold;
-      color: #fff;
-      text-shadow: 0 0 10px #fff, 0 0 20px #999;
       text-align: center;
       margin-bottom: 1.5rem;
+      background: linear-gradient(90deg, #fff, #999, #fff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      animation: shimmerText 4s infinite linear;
+    }
+
+    @keyframes shimmerText {
+      0% {
+        background-position: -100% 0;
+      }
+      100% {
+        background-position: 100% 0;
+      }
     }
 
     .scrollable {
@@ -67,23 +102,21 @@
 
     .token-heading,
     .active-token-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  align-items: center;
-  font-weight: 700;
-  gap: 1rem;
-  text-align: center;
-  margin-bottom: 1rem; 
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #333;
-}
-
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      align-items: center;
+      font-weight: 700;
+      gap: 1rem;
+      text-align: center;
+      margin-bottom: 1rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #333;
+    }
 
     .token-heading {
       font-size: 1.75rem;
       color: #ff4444;
       border-bottom: 2px solid #555;
-      margin-bottom: 1rem;
     }
 
     .active-token-row div {
@@ -129,26 +162,24 @@
     }
 
     .active-token-row.bg-yellow-900 {
-  animation: pulse-glow 2s infinite;
-}
+      animation: pulse-glow 2s infinite;
+    }
 
-@keyframes pulse-glow {
-  0% {
-    box-shadow: 0 0 0px #facc15;
-  }
-  50% {
-    box-shadow: 0 0 20px #facc15;
-  }
-  100% {
-    box-shadow: 0 0 0px #facc15;
-  }
-}
-
+    @keyframes pulse-glow {
+      0% {
+        box-shadow: 0 0 0px #facc15;
+      }
+      50% {
+        box-shadow: 0 0 20px #facc15;
+      }
+      100% {
+        box-shadow: 0 0 0px #facc15;
+      }
+    }
   </style>
 </head>
 <body>
   <div id="container">
-
     <!-- Left Section: Active Tokens -->
     <section class="flex-1">
       <h1>Status</h1>
@@ -172,7 +203,6 @@
         <div class="text-center text-white text-xl">Loading check-ins...</div>
       </div>
     </section>
-
   </div>
 
 <script>
@@ -202,46 +232,56 @@
       tokenList.innerHTML = '';
 
       if (!data.active || data.active.length === 0) {
-        tokenList.innerHTML = `<div class="text-center text-white text-xl">No active records</div>`;
+        tokenList.innerHTML = `<div class="text-center text-white text-xl py-10">No active customers found</div>`;
         return;
       }
+
+      let hasCustomer = false;
 
       data.active.forEach((token) => {
         const name = token.sales_person || 'Unknown';
 
-        token.customers.forEach((customer) => {
-          const customerName = customer.customer_name || 'Unknown Customer';
-          const processes = customer.process || [];
+        if (token.customers && token.customers.length > 0) {
+          hasCustomer = true;
 
-          const forwardedAt = new Date(customer.forwarded_at);
-          const now = new Date();
-          const isForwarded = customer.forwarded === true && (now - forwardedAt) < (5 * 60 * 1000); // 5 minutes
+          token.customers.forEach((customer) => {
+            const customerName = customer.customer_name || 'Unknown Customer';
+            const processes = customer.process || [];
 
-          const row = document.createElement('div');
-          row.className = 'active-token-row';
-          if (isForwarded) {
-            row.style.backgroundColor = '#222d44'; // 💡 highlight style
-            row.style.boxShadow = '0 0 15px #44f';  // optional
-          }
+            const forwardedAt = new Date(customer.forwarded_at);
+            const now = new Date();
+            const isForwarded = customer.forwarded === true && (now - forwardedAt) < (5 * 60 * 1000); // 5 mins
 
-          row.innerHTML = `
-            <div><span class="whitespace-nowrap">${name}</span></div>
-            <div><span class="inline-block text-base">${customerName}</span></div>
-            <div>
-              ${
-                processes.length
-                  ? processes.map(p => `<span class="status-badge">${p}</span>`).join('')
-                  : '<span class="text-gray-500">No status</span>'
-              }
-            </div>
-          `;
-          tokenList.appendChild(row);
-        });
+            const row = document.createElement('div');
+            row.className = 'active-token-row';
+            if (isForwarded) {
+              row.style.backgroundColor = '#222d44';
+              row.style.boxShadow = '0 0 15px #44f';
+            }
+
+            row.innerHTML = `
+              <div><span class="whitespace-nowrap">${name}</span></div>
+              <div><span class="inline-block text-base">${customerName}</span></div>
+              <div>
+                ${
+                  processes.length
+                    ? processes.map(p => `<span class="status-badge">${p}</span>`).join('')
+                    : '<span class="text-gray-500">No status</span>'
+                }
+              </div>
+            `;
+            tokenList.appendChild(row);
+          });
+        }
       });
+
+      if (!hasCustomer) {
+        tokenList.innerHTML = `<div class="text-center text-white text-xl py-10">No active customers at the moment</div>`;
+      }
 
     } catch (error) {
       console.error('Error fetching tokens:', error);
-      document.getElementById('tokenList').innerHTML = `<div class="text-red-500 text-center">Error loading data</div>`;
+      document.getElementById('tokenList').innerHTML = `<div class="text-red-500 text-center">Error loading customer data</div>`;
     }
   }
 
@@ -256,7 +296,7 @@
       checkinList.innerHTML = '';
 
       if (!data || data.length === 0) {
-        checkinList.innerHTML = `<div class="text-center text-white text-xl">No check-ins</div>`;
+        checkinList.innerHTML = `<div class="text-center text-white text-xl py-10">No check-ins yet</div>`;
         return;
       }
 

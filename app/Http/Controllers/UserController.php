@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Illuminate\Validation\Rules;
+use Illuminate\Http\JsonResponse;
 use DataTables;
 
 class UserController extends Controller
@@ -92,19 +93,22 @@ public function saletable()
 public function updatesales(Request $request, $id)
 {
     $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email,' . $id,
+        'name'     => 'required|string|max:255',
+        'email'    => 'required|email|unique:users,email,' . $id,
         'password' => 'nullable|min:6|confirmed',
-        'role' => 'required|in:manager,admin', // role validation
+        'role'     => 'required|in:manager,admin',
     ]);
 
     $user = User::find($id);
 
     if (!$user) {
-        return redirect()->back()->with('error', 'User not found');
+        return response()->json([
+            'success' => false,
+            'message' => 'User not found',
+        ], 404);
     }
 
-    $user->name = $request->name;
+    $user->name  = $request->name;
     $user->email = $request->email;
 
     if ($request->filled('password')) {
@@ -113,14 +117,18 @@ public function updatesales(Request $request, $id)
 
     $user->save();
 
+    // Assign role if not admin
     if (!$user->hasRole('admin')) {
         $selectedRole = $request->role === 'manager' ? 'Sales Manager' : 'Sales person';
-
         $user->syncRoles([$selectedRole]);
     }
 
-    return redirect()->route('saleperson.table')->with('success', 'User Updated Successfully');
+    return response()->json([
+        'success' => true,
+        'message' => 'User updated successfully.',
+    ]);
 }
+
 
 
 public function deleteSalesperson($id)
@@ -138,54 +146,40 @@ public function deleteSalesperson($id)
 
 public function store(Request $request)
 {
-    $this->validate($request, [
+    $validated = $request->validate([
         'name' => ['required', 'string', 'max:255'],
         'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
         'password' => ['required', 'confirmed', Rules\Password::defaults()],
         'phone' => ['nullable', 'string', 'max:20'],
-        'role' => ['required', 'in:admin,manager'], 
+        'role' => ['required', 'in:admin,manager'],
     ]);
 
-    if (User::where('email', $request->input('email'))->exists()) {
-        return redirect()->back()->withInput()
-            ->with('error', 'A user with this email already exists.');
-    }
-
-    DB::beginTransaction();
-
     try {
+        DB::beginTransaction();
+
         $user = User::create([
-            'name' => $request->input('name'),
-            'email' => $request->input('email'),
-            'password' => Hash::make($request->input('password')),
-            'phone' => $request->input('phone'),
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'phone' => $validated['phone'],
         ]);
 
-        // Assign role dynamically from the request
-        if ($request->role === 'admin') {
-            $user->assignRole('Sales person');
-        } elseif ($request->role === 'manager') {
-            $user->assignRole('Sales Manager');
-        }
+        $user->assignRole($validated['role'] === 'admin' ? 'Sales person' : 'Sales Manager');
 
         DB::commit();
 
-        return redirect()->route('saleperson.table')
-            ->with('success', 'User created successfully');
-    } catch (\Illuminate\Database\QueryException $e) {
-        DB::rollBack();
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User created successfully!',
+        ], 201);
 
-        if ($e->errorInfo[1] == 1062) {
-            return redirect()->route('saleperson.table')->with('success', 'Sale Person created successfully!');
-        }
-
-        return redirect()->back()->withInput()
-            ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
     } catch (\Exception $e) {
         DB::rollBack();
 
-        return redirect()->back()->withInput()
-            ->with('error', 'An error occurred while creating the user: ' . $e->getMessage());
+        return response()->json([
+            'status' => 'error',
+            'message' => 'An error occurred: ' . $e->getMessage(),
+        ], 500);
     }
 }
 

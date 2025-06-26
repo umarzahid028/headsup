@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Queue;
+use App\Models\Appointment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -13,7 +15,6 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\CreatePersonController;
 use App\Http\Controllers\CustomerSaleController;
 use App\Http\Controllers\SalesDashboardController;
-use App\Models\Queue;
 // Register Broadcasting Routes
 Broadcast::routes(['middleware' => ['web', 'auth']]);
 
@@ -126,6 +127,10 @@ Route::post('/customer/complete-form/{id}', [CustomerSaleController::class, 'com
 Route::post('/customer-form', [CustomerSaleController::class, 'customerform'])->name('customer.form.store');
 
 Route::post('sales/person-checkout/{id}', [CustomerSaleController::class, 'checkout'])->name('sales.person.checkout');
+Route::get('/appointment/section', function () {
+    $appointment = Appointment::where('status', '!=', 'completed')->latest()->first();
+    return view('partials.appointment-card', compact('appointment'));
+});
 
 
 

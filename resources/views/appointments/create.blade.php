@@ -139,12 +139,16 @@
                 if (!response.ok) return response.json().then(err => Promise.reject(err));
                 return response.json();
             })
-            .then(data => {
-                Swal.fire({
-                    icon: 'success',
-                    title: data.message,
-                    showConfirmButton: true,
-                });
+          .then(data => {
+  Swal.fire({
+    icon: 'success',
+    title: `Success!`,
+    html: `${data.message}`,
+    showConfirmButton: true,
+});
+
+
+
 
                 setTimeout(() => {
                     window.location.href = '/appointments';

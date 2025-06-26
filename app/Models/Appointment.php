@@ -17,4 +17,15 @@ class Appointment extends Model
     public function salesperson() {
         return $this->belongsTo(User::class, 'salesperson_id');
     }
+
+public function queue()
+{
+    return $this->belongsTo(Queue::class, 'queue_id'); // optional if linked
+}
+
+public function customerSales()
+{
+    return $this->hasMany(CustomerSale::class, 'appointment_id');
+}
+
 }

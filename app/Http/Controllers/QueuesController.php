@@ -139,14 +139,22 @@ public function nextTurnStatus()
     // Boolean: is anyone else checked in (excluding you)
     $anyoneElse = $othersPending > 0;
 
+    // ✅ Get current user's check-in status from the Queue table
+    $userQueue = Queue::where('user_id', $user->id)
+        ->where('is_checked_in', true)
+        ->whereNull('took_turn_at')
+        ->first();
+
     return response()->json([
         'is_your_turn' => $isYourTurn,
         'others_pending' => $othersPending,
         'user_name' => $nextInQueue && $nextInQueue->user ? $nextInQueue->user->name : null,
         'current_turn_user_id' => $nextInQueue ? $nextInQueue->user_id : null,
         'any_one_else' => $anyoneElse,
+        'is_checked_in' => $userQueue ? true : false, // ✅ Return true if current user is in queue and checked-in
     ]);
 }
+
 
 public function completeForm(Request $request)
 {

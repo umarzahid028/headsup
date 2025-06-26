@@ -1,4 +1,48 @@
 <x-app-layout>
+    <style>
+        :root {
+  --swal2-confirm-button-background-color: #111827;
+  --swal2-confirm-button-color: #fff;
+  --swal2-confirm-button-border-radius: 0.25em;
+  --swal2-action-button-focus-box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.5);
+  --swal2-width: 32em;
+  --swal2-border-radius: 0.3125rem;
+  --swal2-background: #fff;
+  --swal2-color: #545454;
+}
+
+div.swal2-container button.swal2-styled:not([disabled]) {
+  cursor: pointer;
+}
+
+div.swal2-container button.swal2-confirm {
+  background-color: var(--swal2-confirm-button-background-color);
+  color: var(--swal2-confirm-button-color);
+  border-radius: var(--swal2-confirm-button-border-radius);
+  box-shadow: var(--swal2-confirm-button-box-shadow);
+}
+
+div.swal2-container button.swal2-styled {
+  margin: 0.3125em;
+  padding: 0.625em 1.1em;
+  border: none;
+  font-weight: 500;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+div.swal2-container div.swal2-popup {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: var(--swal2-width);
+  max-width: 100%;
+  padding: 1.25em;
+  background: var(--swal2-background);
+  color: var(--swal2-color);
+  border-radius: var(--swal2-border-radius);
+}
+
+    </style>
     <x-slot name="header">
        <h1 class="text-2xl font-semibold px-3">Edit User</h1>
     <p class="text-gray-600 px-3">Add a new Sale Person to the system.</p>
@@ -8,7 +52,7 @@
 <div class="px-6">
    
 
-    <form action="{{ route('update.saleperon', ['id' => $edit->id]) }}" method="POST" class="bg-white shadow rounded-lg p-6">
+ <form id="updateUserForm" method="POST" class="bg-white shadow rounded-lg p-6" data-id="{{ $edit->id }}">
         @csrf
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -139,26 +183,58 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-@if(session('success'))
 <script>
-    Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: '{{ session('success') }}',
-        confirmButtonColor: '#111827',
-    });
-</script>
-@endif
+    document.getElementById('updateUserForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
 
-@if(session('error'))
-<script>
-    Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: '{{ session('error') }}',
-        confirmButtonColor: '#d33',
+        const form = e.target;
+        const formData = new FormData(form);
+        const userId = form.getAttribute('data-id');
+        const actionUrl = `/edit/sales/${userId}`;
+
+        try {
+            const response = await fetch(actionUrl, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: result.message || 'User updated successfully.',
+                    confirmButtonColor: '#111827'
+                }).then(() => {
+                    window.location.href = `{{ route('saleperson.table') }}`;
+                });
+            } else {
+                let msg = result.message || 'Something went wrong.';
+                if (result.errors) {
+                    msg = Object.values(result.errors).flat().join('\n');
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: msg,
+                    confirmButtonColor: '#d33'
+                });
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Server Error',
+                text: error.message || 'Unexpected error occurred.',
+                confirmButtonColor: '#d33'
+            });
+        }
     });
 </script>
-@endif
+
 
 </x-app-layout>

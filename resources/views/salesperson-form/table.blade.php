@@ -1,42 +1,57 @@
 <x-app-layout>
     {{-- ✅ SweetAlert2 Buttons Styling --}}
-    <style>
-        .swal2-popup .swal2-actions button.swal2-confirm,
-        .swal2-popup .swal2-actions button.swal2-cancel {
-            display: inline-block !important;
-            padding: 0.5rem 1.25rem !important;
-            border-radius: 0.375rem !important;
-            font-size: 0.875rem !important;
-            font-weight: 500 !important;
-            color: #fff !important;
-            border: none !important;
-            cursor: pointer !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-        }
+<style>
+/* Common confirm button style (used for both alerts) */
+.swal2-confirm.custom-ok-button {
+    background-color: #111827 !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 10px 20px !important;
+    border-radius: 5px !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+}
 
-        .swal2-popup .swal2-actions .swal2-confirm {
-            background-color: #d33 !important;
-        }
+/* Only for confirmation cancel button */
+.swal2-cancel.custom-cancel-button {
+    background-color: #111827 !important;
+    color: white !important;
+    padding: 10px 20px !important;
+    border-radius: 5px !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+}
 
-        .swal2-popup .swal2-actions .swal2-confirm:hover {
-            background-color: #b91c1c !important;
-        }
+/* Button spacing */
+.swal2-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+</style>
+<style>
+/* Custom confirm button */
+.swal2-confirm.custom-confirm-button {
+    background-color: #111827 !important;
+    color: white !important;
+    padding: 10px 20px !important;
+    border-radius: 5px !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    border: none !important;
+    box-shadow: none !important;
+}
 
-        .swal2-popup .swal2-actions .swal2-cancel {
-            background-color: #3085d6 !important;
-        }
+/* Optional: Prevent hover color flickering */
+.swal2-confirm.custom-confirm-button:hover {
+    background-color: #0f172a !important;
+    color: #fff !important;
+    opacity: 0.95;
+    transition: 0.2s ease-in-out;
+}
+</style>
 
-        .swal2-popup .swal2-actions .swal2-cancel:hover {
-            background-color: #2563eb !important;
-        }
-
-        .swal2-popup .swal2-actions {
-            display: flex !important;
-            justify-content: center !important;
-            gap: 12px !important;
-        }
-    </style>
 
     <x-slot name="header">
         <h1 class="text-2xl font-semibold text-gray-800 px-4">Users</h1>
@@ -88,10 +103,11 @@
                                             Edit
                                         </a>
                                         <button data-id="{{ $person->id }}"
-                                              class="text-white font-bold py-2 px-4 rounded"
-                                                       style="background-color: #111827;">
-                                            Delete
-                                        </button>
+    class="delete-user text-white font-bold py-2 px-4 rounded"
+    style="background-color: #111827;">
+    Delete
+</button>
+
                                         <a href="{{ route('activity.report', ['user_id' => $person->id]) }}"
                                               class="text-white font-bold py-2 px-4 rounded"
                                                        style="background-color: #111827;">
@@ -143,29 +159,34 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- ✅ Flash Messages -->
-    @if (session('success'))
-    <script>
-        Swal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: '{{ session('
-            success ') }}',
-            confirmButtonColor: '#111827',
-        });
-    </script>
-    @endif
+@if (session('success'))
+<script>
+    Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: @json(session('success')), 
+        confirmButtonColor: '#111827',
+        customClass: {
+            confirmButton: 'custom-confirm-button'
+        }
+    });
+</script>
+@endif
 
-    @if (session('error'))
-    <script>
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: '{{ session('
-            error ') }}',
-            confirmButtonColor: '#d33',
-        });
-    </script>
-    @endif
+@if (session('error'))
+<script>
+    Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: @json(session('error')),
+        confirmButtonColor: '#d33',
+        customClass: {
+            confirmButton: 'custom-confirm-button'
+        }
+    });
+</script>
+@endif
+
 
     <script>
         $.ajaxSetup({
@@ -195,13 +216,17 @@
                     btnText.removeClass('hidden');
                     spinner.addClass('hidden');
 
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Checked Out!',
-                        text: response.message || 'You have been checked out.',
-                        timer: 2000,
-                        showConfirmButton: false,
-                    });
+                   Swal.fire({
+    icon: 'success',
+    title: 'Checked Out!',
+    text: response.message || 'You have been checked out.',
+    confirmButtonText: 'OK',
+    confirmButtonColor: '#111827',
+    customClass: {
+        confirmButton: 'custom-confirm-button'
+    }
+});
+
 
                     // Optionally: Disable button or remove it
                     // btn.prop('disabled', true).addClass('opacity-50').text('Checked Out');
@@ -223,7 +248,7 @@
 
 
     {{-- ✅ Delete Confirmation --}}
-   <script>
+<script>
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.delete-user').forEach(button => {
         button.addEventListener('click', () => {
@@ -237,7 +262,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#3085d6',
                 confirmButtonText: 'Yes, delete it!',
-                cancelButtonText: 'Cancel'
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    confirmButton: 'custom-ok-button',
+                    cancelButton: 'custom-cancel-button'
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
                     fetch(`/salesperson/delete/${userId}`, {
@@ -255,8 +284,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         return response.json();
                     })
                     .then(data => {
-                        Swal.fire('Deleted!', data.message, 'success')
-                            .then(() => location.reload());
+                        Swal.fire({
+                            title: 'Deleted!',
+                            text: data.message,
+                            icon: 'success',
+                            confirmButtonText: 'OK',
+                            customClass: {
+                                confirmButton: 'custom-ok-button'
+                            }
+                        }).then(() => location.reload());
                     })
                     .catch(error => {
                         Swal.fire('Error', error.message, 'error');
@@ -267,5 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+
 
 </x-app-layout>
