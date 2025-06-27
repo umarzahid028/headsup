@@ -1,36 +1,23 @@
 <style>
   .active-card {
-    animation: pulseActive 1s infinite;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+  animation: pulseActive 1s infinite;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+}
+
+@keyframes pulseActive {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
   }
-
-  @keyframes pulseActive {
-    0% {
-      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
-    }
-
-    70% {
-      box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
-    }
-
-    100% {
-      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
-    }
+  70% {
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
   }
-
-  .fade-out {
-    animation: fadeOut 0.5s forwards;
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
   }
+}
 
-  @keyframes fadeOut {
-    to {
-
-      opacity: 0;
-      transform: scale(0.95);
-    }
-  }
-  .pause-animation {
+.pause-animation {
   animation: none !important;
   box-shadow: none !important;
 }

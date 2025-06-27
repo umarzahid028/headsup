@@ -27,5 +27,10 @@ public function customerSales()
 {
     return $this->hasMany(CustomerSale::class, 'appointment_id');
 }
+// In Appointment.php
+public function customerSale()
+{
+    return $this->hasOne(CustomerSale::class);
+}
 
 }

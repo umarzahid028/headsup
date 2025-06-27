@@ -54,11 +54,16 @@
                                         <div class="flex flex-wrap gap-3 items-center">
                                             @if (!in_array($appt->status, ['completed', 'canceled']))
                                                 @if (Auth::user()->hasRole('Sales person') && Auth::id() == $appt->salesperson_id)
-                                                    <a href="{{ route('sales.perosn', ['id' => $appt->id]) }}"
-                                                       class="text-white font-bold py-2 px-4 rounded"
-                                                       style="background-color: #111827;">
-                                                        Customer Arrive
-                                                    </a>
+                                                   <form action="{{ route('appointment.arrive') }}" method="POST" style="display: inline;">
+    @csrf
+    <input type="hidden" name="appointment_id" value="{{ $appt->id }}">
+    <button type="submit"
+            class="text-white font-bold py-2 px-4 rounded"
+            style="background-color: #111827;">
+        Customer Arrive
+    </button>
+</form>
+
 
                                                     <a href="{{ route('appointments.edit', ['appointment' => $appt->id]) }}"
                                                          class="text-white font-bold py-2 px-4 rounded"
@@ -110,82 +115,6 @@
 
     @push('scripts')
 
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const TIMER_KEY = 'customer_timer_start';
-                const CUSTOMER_ID_KEY = 'customer_id';
-                let intervalId = null;
-
-                function formatDuration(seconds) {
-                    const hrs = String(Math.floor(seconds / 3600)).padStart(2, '0');
-                    const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-                    const secs = String(seconds % 60).padStart(2, '0');
-                    return `${hrs}:${mins}:${secs}`;
-                }
-
-                function updateTimers() {
-                    const start = localStorage.getItem(TIMER_KEY);
-                    if (!start) return;
-
-                    const startTime = new Date(parseInt(start));
-                    const now = new Date();
-                    const diff = Math.floor((now - startTime) / 1000);
-                    const formatted = formatDuration(diff);
-
-                    document.querySelectorAll('.live-duration').forEach(el => {
-                        el.textContent = formatted;
-                    });
-                }
-
-                window.startCustomerTimer = function(customerId) {
-                    localStorage.setItem(TIMER_KEY, Date.now());
-                    localStorage.setItem(CUSTOMER_ID_KEY, customerId);
-
-                    if (intervalId) clearInterval(intervalId);
-                    intervalId = setInterval(updateTimers, 1000);
-                    updateTimers();
-                }
-
-                window.stopCustomerTimer = async function() {
-                    const start = localStorage.getItem(TIMER_KEY);
-                    const customerId = localStorage.getItem(CUSTOMER_ID_KEY);
-
-                    if (intervalId) {
-                        clearInterval(intervalId);
-                        intervalId = null;
-                    }
-
-                    if (start && customerId) {
-                        try {
-                            const response = await fetch(`/stop-timer/${customerId}`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                                },
-                                body: JSON.stringify({
-                                    start_time: parseInt(start)
-                                })
-                            });
-
-                            const data = await response.json();
-                            document.querySelectorAll('.live-duration').forEach(el => {
-                                el.textContent = data.duration + ' (Saved)';
-                            });
-
-                            localStorage.removeItem(TIMER_KEY);
-                            localStorage.removeItem(CUSTOMER_ID_KEY);
-                        } catch (error) {
-                            console.error('Error saving duration:', error);
-                        }
-                    }
-                }
-
-                if (localStorage.getItem(TIMER_KEY)) {
-                    updateTimers();
-                    intervalId = setInterval(updateTimers, 1000);
-                }
-            });
-        </script>
+ 
     @endpush
 </x-app-layout>

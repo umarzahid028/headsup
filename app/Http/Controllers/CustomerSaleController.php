@@ -156,39 +156,69 @@ public function completeForm(Request $request, $id)
 {
     $user = Auth::user();
 
-    // 1. Find or create sale record
-    $sale = CustomerSale::firstOrNew([
+    $sale = \App\Models\CustomerSale::firstOrNew([
         'user_id' => $user->id,
         'customer_id' => $id
     ]);
 
-    // 2. Get latest took_turn_at based on user_id + customer_id
-    $queue = Queue::where('user_id', $user->id)
-                  ->where('customer_id', $id)
-                  ->whereNotNull('took_turn_at')
-                  ->latest('took_turn_at')
-                  ->first();
-
-    if (!$queue) {
-        return response()->json(['message' => 'No queue turn found.'], 404);
-    }
-
-    // 3. Save form fields
     $sale->notes = $request->input('notes');
     $sale->disposition = $request->input('disposition');
     $sale->ended_at = now();
     $sale->save();
 
-    // 4. Calculate duration
-    $start = \Carbon\Carbon::parse($queue->took_turn_at);
-    $end = \Carbon\Carbon::parse($sale->ended_at);
-    $duration = $start->diff($end)->format('%Hh %Im %Ss');
+    $startAt = null;
+
+    // 1. Check queue
+    $queue = Queue::where('user_id', $user->id)
+        ->where('customer_id', $id)
+        ->whereNotNull('took_turn_at')
+        ->latest('took_turn_at')
+        ->first();
+
+    if ($queue) {
+        $startAt = $queue->took_turn_at;
+    }
+
+    // 2. Fallback to Appointment
+    if (!$startAt) {
+        $appointment = Appointment::where('customer_id', $id)
+            ->whereNotNull('arrival_time')
+            ->latest('arrival_time')
+            ->first();
+
+        if ($appointment) {
+            $startAt = $appointment->arrival_time;
+        }
+    }
+
+    $duration = 'N/A';
+    $endAt = $sale->ended_at;
+
+    // Log times to debug
+    Log::info('StartAt: ' . ($startAt ?? 'null'));
+    Log::info('EndAt: ' . ($endAt ?? 'null'));
+
+    if ($startAt && $endAt) {
+        $start = Carbon::parse($startAt);
+        $end = Carbon::parse($endAt);
+
+        if ($start->lte($end)) {
+            $diffSeconds = $start->diffInSeconds($end);
+            $hours = floor($diffSeconds / 3600);
+            $minutes = floor(($diffSeconds % 3600) / 60);
+            $seconds = $diffSeconds % 60;
+            $duration = sprintf('%02dh %02dm %02ds', $hours, $minutes, $seconds);
+        } else {
+            $duration = 'Start > End';
+        }
+    }
 
     return response()->json([
         'message' => 'Form saved successfully.',
         'duration' => $duration
     ]);
 }
+
 
 public function forwardToManager(Request $request)
 {
@@ -357,18 +387,15 @@ public function checkout(Request $request, $id)
 
 public function saveArrivalTime(Request $request)
 {
-    \Log::info('ARRIVAL TIME REQUEST', $request->all());
-
     $request->validate([
         'appointment_id' => 'required|exists:appointments,id',
-        'time' => 'required|date',
     ]);
 
     $appointment = Appointment::find($request->appointment_id);
-    $appointment->arrival_time = $request->time;
+    $appointment->arrival_time = now(); // Server time
     $appointment->save();
 
-    return response()->json(['message' => 'Arrival time saved successfully.']);
+    return redirect()->route('sales.perosn', ['id' => $appointment->id]);
 }
 
 }

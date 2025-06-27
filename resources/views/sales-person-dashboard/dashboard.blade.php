@@ -340,30 +340,63 @@
     }
   </script>
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const appointmentCard = document.querySelector("#appointment-card");
+  function bindAppointmentCardLogic() {
+    const form = document.getElementById('salesForm');
+    const appointmentCard = document.querySelector('#appointment-card');
+    const nameInput = document.getElementById('nameInput');
+    const phoneInput = document.getElementById('phoneInput');
+    const idInput = document.getElementById('customerId');
 
+    if (appointmentCard && form) {
+      appointmentCard.addEventListener('click', () => {
+        nameInput.value = '';
+        phoneInput.value = '';
+        idInput.value = '';
+
+        setTimeout(() => {
+          nameInput.value = appointmentCard.dataset.name || '';
+          phoneInput.value = appointmentCard.dataset.phone || '';
+          idInput.value = appointmentCard.dataset.customerId || '';
+
+          document.querySelectorAll('.customer-card').forEach(card => {
+            card.classList.remove('active-card');
+          });
+          appointmentCard.classList.add('active-card');
+        }, 50);
+      });
+
+      appointmentCard.click(); 
+    }
+  }
+
+  function checkDuplicateName() {
+    const appointmentCard = document.querySelector('#appointment-card');
     if (!appointmentCard) return;
 
     const appointmentName = appointmentCard.dataset.name?.trim().toLowerCase();
-
-    const customerCards = document.querySelectorAll(".customer-card");
+    const customerCards = document.querySelectorAll('.customer-card');
 
     customerCards.forEach(card => {
       const customerName = card.dataset.name?.trim().toLowerCase();
-
       if (card.id !== 'appointment-card' && customerName === appointmentName) {
         appointmentCard.classList.add("border-red-500");
         appointmentCard.classList.remove("border-gray-200");
       }
     });
+  }
 
-    // Auto-refresh appointment section every 10 seconds
+  document.addEventListener('DOMContentLoaded', () => {
+    bindAppointmentCardLogic();    
+    checkDuplicateName();         
+
     setInterval(() => {
-      fetch('/appointment/section') // Make sure this route returns HTML
+      fetch('/appointment/section')
         .then(res => res.text())
         .then(html => {
           document.getElementById("appointment-wrapper").innerHTML = html;
+
+          bindAppointmentCardLogic();
+          checkDuplicateName();
         });
     }, 10000);
   });
@@ -372,23 +405,52 @@
 
 <script>
   $(document).ready(() => {
-    // Existing init calls
     toggleButton();
     updateTurnStatus();
     setInterval(updateTurnStatus, 10000);
 
-    // ✅ Auto-fill form if appointment card exists
-    const appointmentCard = document.querySelector('.customer-card');
-    if (appointmentCard) {
-      const name  = appointmentCard.dataset.name || '';
-      const phone = appointmentCard.dataset.phone || '';
+    const form = document.getElementById('salesForm');
 
-      document.getElementById('nameInput').value  = name;
-      document.getElementById('phoneInput').value = phone;
+    function fillFormFromCard(card) {
+      const name = card.dataset.name || '';
+      const phone = card.dataset.phone || '';
+      const customerId = card.dataset.customerId || '';
+
+      // Set values to inputs
+      const nameInput = document.getElementById('nameInput');
+      const phoneInput = document.getElementById('phoneInput');
+      const idInput = form.querySelector('input[name="id"]');
+
+      if (nameInput) nameInput.value = name;
+      if (phoneInput) phoneInput.value = phone;
+      if (idInput) idInput.value = customerId;
+
+      // Clear previous animation
+      document.querySelectorAll('.customer-card').forEach(c => {
+        c.classList.remove('active-card');
+        c.classList.remove('pause-animation');
+      });
+
+      // Re-trigger animation
+      card.classList.remove('active-card');
+      void card.offsetWidth; // Force reflow to restart animation
+      card.classList.add('active-card');
 
       toggleButton();
       updateNameInputState();
     }
+
+    const appointmentCard = document.querySelector('#appointment-card');
+    if (appointmentCard) {
+      fillFormFromCard(appointmentCard);
+    }
+
+    // Click event in case card is clicked again
+    document.querySelectorAll('.customer-card').forEach(card => {
+      card.addEventListener('click', () => {
+        fillFormFromCard(card);
+      });
+    });
   });
 </script>
 
@@ -629,7 +691,6 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 
-  <!-- Turn Status -->
 
 <script>
     const modal = document.getElementById('customerModal');
@@ -964,42 +1025,30 @@ document.addEventListener('DOMContentLoaded', () => {
       customerSavedThisTurn = false;
     }, 3000);
 
-    // 🔁 Input listeners for all EXCEPT 'name' field
+    // Input listeners for autosave
     fields.forEach(field => {
-      if (field.name !== 'name') {
-        field.addEventListener('input', () => {
-          clearTimeout(debounceTimeout);
-          debounceTimeout = setTimeout(() => autoSaveForm(), 700);
-        });
-      }
+      field.addEventListener('input', () => {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+          const nameInput = form.querySelector('input[name="name"]');
+          const idInput = form.querySelector('input[name="id"]');
+
+          if (field.name === 'name' && !idInput.value) return;
+
+          autoSaveForm();
+        }, 700);
+      });
     });
 
-    // 🟩 "Take Customer" button click saves name
+    // New Customer Button
     newCustomerBtn.addEventListener('click', async () => {
       const nameInput = form.querySelector('input[name="name"]');
-
-      if (!nameInput.value.trim()) {
-        console.warn("Name is empty, not saving.");
-        return;
-      }
-
-      // Optional: show spinner
-      const spinner = newCustomerBtn.querySelector('.spinner');
-      const btnText = newCustomerBtn.querySelector('.btn-text');
-      if (spinner && btnText) {
-        spinner.classList.remove('hidden');
-        btnText.classList.add('hidden');
-      }
+      if (!nameInput.value.trim()) return;
 
       await autoSaveForm();
-
-      // Hide spinner again
-      if (spinner && btnText) {
-        spinner.classList.add('hidden');
-        btnText.classList.remove('hidden');
-      }
     });
 
+    // Auto Save Function
     async function autoSaveForm() {
       const nameInput = form.querySelector('input[name="name"]');
       const idInput = form.querySelector('input[name="id"]');
@@ -1029,14 +1078,13 @@ document.addEventListener('DOMContentLoaded', () => {
           }
 
           customerSavedThisTurn = true;
-        } else if (result.errors) {
-          console.warn('Validation failed:', result.errors);
         }
       } catch (err) {
         console.error('Auto-save failed', err);
       }
     }
 
+    // Load Customers from Backend
     async function loadCustomers() {
       try {
         const resp = await fetch('{{ route('customer.index') }}?partial=1', {
@@ -1053,11 +1101,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // 🔄 Bind card click and form fill
     function bindCardClickEvents() {
       document.querySelectorAll('.customer-card').forEach(card => {
         card.addEventListener('click', () => {
           const customerId = card.dataset.customerId;
-          form.querySelector('input[name="id"]').value = customerId || '';
+
+          if (!customerId) return;
+
+          // Fill the form with card data
+          form.querySelector('input[name="id"]').value = customerId;
           form.querySelector('input[name="name"]').value = card.dataset.name || '';
           form.querySelector('input[name="email"]').value = card.dataset.email || '';
           form.querySelector('input[name="phone"]').value = card.dataset.phone || '';
@@ -1073,35 +1126,59 @@ document.addEventListener('DOMContentLoaded', () => {
             });
           }
 
-          document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
-          card.classList.add('active-card');
-          localStorage.setItem('activeCustomerId', customerId);
+          // Remove animation from all cards
+          document.querySelectorAll('.customer-card').forEach(c => {
+            c.classList.remove('active-card');
+            c.classList.remove('pause-animation');
+          });
+
+          // ✅ Apply animation only if this card is in form
+          const formId = form.querySelector('input[name="id"]').value;
+          if (formId === customerId) {
+            card.classList.add('active-card');
+            localStorage.setItem('activeCustomerId', customerId);
+          }
         });
       });
     }
 
+    // 🔁 Apply animation to card if still active after reload
     function applyActiveCard() {
       const savedId = localStorage.getItem('activeCustomerId');
       const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
 
+      // Remove all card animations first
+      document.querySelectorAll('.customer-card').forEach(c => {
+        c.classList.remove('active-card');
+        c.classList.remove('pause-animation');
+      });
+
       if (savedCard) {
-        document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
-        savedCard.classList.add('active-card');
-      } else {
-        const first = document.querySelector('.customer-card');
-        if (first) {
-          first.classList.add('active-card');
-          localStorage.setItem('activeCustomerId', first.dataset.customerId);
+        // Load saved card data into form
+        form.querySelector('input[name="id"]').value = savedCard.dataset.customerId || '';
+        form.querySelector('input[name="name"]').value = savedCard.dataset.name || '';
+        form.querySelector('input[name="email"]').value = savedCard.dataset.email || '';
+        form.querySelector('input[name="phone"]').value = savedCard.dataset.phone || '';
+        form.querySelector('input[name="interest"]').value = savedCard.dataset.interest || '';
+
+        form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+        if (savedCard.dataset.process) {
+          savedCard.dataset.process.split(',').forEach(proc => {
+            const checkbox = Array.from(form.querySelectorAll('input[name="process[]"]'))
+              .find(cb => cb.value.trim() === proc.trim());
+            if (checkbox) checkbox.checked = true;
+          });
         }
+
+        // Apply animation
+        savedCard.classList.add('active-card');
       }
     }
 
     bindCardClickEvents();
     applyActiveCard();
   });
-
-  // Optional pause animation on new customer
-  const addCustomerBtn = document.getElementById('addCustomerBtn');
+    const addCustomerBtn = document.getElementById('addCustomerBtn');
   addCustomerBtn.addEventListener('click', () => {
     const activeCard = document.querySelector('.active-card');
     if (activeCard) {
@@ -1110,6 +1187,45 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 </script>
 
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('salesForm');
+    const appointmentCard = document.querySelector('#appointment-card');
+
+    const nameInput = document.getElementById('nameInput');
+    const phoneInput = document.getElementById('phoneInput');
+    const idInput = document.getElementById('customerId');
+
+    // 🔁 Bind click manually so every click re-applies data
+    if (appointmentCard && form) {
+      appointmentCard.addEventListener('click', () => {
+        // Clear values first to ensure update
+        nameInput.value = '';
+        phoneInput.value = '';
+        idInput.value = '';
+
+        // Small delay ensures DOM update
+        setTimeout(() => {
+          nameInput.value = appointmentCard.dataset.name || '';
+          phoneInput.value = appointmentCard.dataset.phone || '';
+          idInput.value = appointmentCard.dataset.customerId || '';
+
+          // Mark active
+          document.querySelectorAll('.customer-card').forEach(card => {
+            card.classList.remove('active-card');
+          });
+          appointmentCard.classList.add('active-card');
+        }, 50); // Delay helps ensure refresh on same value
+      });
+
+      // Trigger first click automatically if needed
+      appointmentCard.click();
+    }
+  });
+</script>
+
+
+
 
   <!-- Form Show  -->
  <!-- <script>
@@ -1117,31 +1233,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('salesForm').classList.remove('hidden');
   });
 </script> -->
-
-
-
-
-  <!-- Form Reset -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const newCustomerBtn = document.getElementById('newCustomerBtn');
-      const form = document.getElementById('salesForm');
-
-      newCustomerBtn.addEventListener('click', function() {
-        form.reset();
-
-        form.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-
-        // form.querySelector('input[name="user_id"]').value = "{{ auth()->id() }}";
-
-        document.getElementById('formContainer')?.classList.remove('hidden');
-
-        document.getElementById('customerModal')?.classList.add('hidden');
-      });
-    });
-  </script>
-
-
 
   <!-- customer form -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

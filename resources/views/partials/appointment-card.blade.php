@@ -1,3 +1,28 @@
+<style>
+  .active-card {
+  animation: pulseActive 1s infinite;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+}
+
+@keyframes pulseActive {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+}
+
+.pause-animation {
+  animation: none !important;
+  box-shadow: none !important;
+}
+
+</style>
 @if($appointment && $appointment->status !== 'completed')
   <div id="customer-list" class="transition-opacity duration-300">
    <div
