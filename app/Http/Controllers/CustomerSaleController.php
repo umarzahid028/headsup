@@ -46,24 +46,45 @@ public function store(Request $request)
         'disposition' => $validated['disposition'] ?? null,
     ];
 
-    $sale = !empty($validated['id']) ? CustomerSale::find($validated['id']) : null;
+    // ✅ Fixed logic starts here
+    $sale = null;
 
+    if (!empty($validated['id'])) {
+        $sale = CustomerSale::find($validated['id']);
+    }
+
+    if (!$sale && !empty($validated['customer_id'])) {
+        $existing = CustomerSale::where('user_id', $data['user_id'])
+            ->where('customer_id', $validated['customer_id'])
+            ->whereDate('created_at', now()->toDateString())
+            ->latest()
+            ->first();
+
+        if ($existing) {
+            $sale = $existing;
+        }
+    }
+
+    // ✅ If sale found, update — otherwise create new
     if ($sale) {
         $sale->update($data);
     } else {
         $sale = CustomerSale::create($data);
     }
 
+    // ✅ Handle end-of-turn disposition
     if (!empty($validated['disposition'])) {
         $sale->ended_at = now();
         $sale->save();
     }
 
+    // ✅ Mark appointment as completed if present
     if (!empty($validated['appointment_id'])) {
         \App\Models\Appointment::where('id', $validated['appointment_id'])
             ->update(['status' => 'completed']);
     }
 
+    // ✅ Calculate duration if turn was taken
     $queue = \App\Models\Queue::where('user_id', $data['user_id'])
         ->where('customer_id', $data['customer_id'])
         ->whereNotNull('took_turn_at')
@@ -85,6 +106,7 @@ public function store(Request $request)
         'redirect' => route('sales.perosn'),
     ]);
 }
+
 
 
 

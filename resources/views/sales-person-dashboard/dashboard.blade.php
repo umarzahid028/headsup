@@ -630,212 +630,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   <!-- Turn Status -->
-<script>
-  let currentTurnUserId = null;
-  let isMyTurn = false;
-  let wasTurnBefore = false;
-  let cardClicked = false;
-
-  const form = document.getElementById('salesForm');
-  const nameInput = document.getElementById('nameInput');
-  const addBtn = document.getElementById('addCustomerBtn');
-  const takeBtn = document.getElementById('newCustomerBtn');
-
-  nameInput.readOnly = true;
-
-  const inputs = form.querySelectorAll('input[type="text"], input[type="email"], textarea');
-
-  function isFormReadyForAdd() {
-    const nameVal = nameInput.value.trim();
-    let otherFieldFilled = false;
-
-    inputs.forEach(input => {
-      if (input.id !== 'nameInput' && input.value.trim() !== '') {
-        otherFieldFilled = true;
-      }
-    });
-
-    return nameVal !== '' && otherFieldFilled;
-  }
-
-  function toggleButtons() {
-    const ready = isFormReadyForAdd();
-
-    if (ready) {
-      addBtn.classList.remove('hidden');
-      takeBtn.classList.add('hidden');
-    } else {
-      addBtn.classList.add('hidden');
-      takeBtn.classList.remove('hidden');
-    }
-
-    takeBtn.disabled = false;
-  }
-
-  function updateNameInputState() {
-    nameInput.readOnly = !(isMyTurn || cardClicked);
-  }
-
-  document.addEventListener('click', function (e) {
-    const card = e.target.closest('.customer-card');
-    if (!card) return;
-
-    cardClicked = true;
-
-    const name = card.dataset.customerName || '';
-    const customerId = card.dataset.customerId || '';
-
-    nameInput.value = name;
-    document.getElementById('customerId').value = customerId;
-
-    toggleButtons();
-    updateNameInputState();
-  });
-
-  inputs.forEach(input => {
-    input.addEventListener('input', toggleButtons);
-  });
-
-  addBtn.addEventListener('click', function () {
-    form.reset();
-
-    document.getElementById('customerId').value = "";
-    document.getElementById('nameInput').value = "";
-    document.getElementById('emailInput').value = "";
-    document.getElementById('phoneInput').value = "";
-    document.getElementById('interestInput').value = "";
-
-    toggleButtons();
-  });
-
-  takeBtn.addEventListener('click', function (e) {
-    e.preventDefault();
-
-    const nameVal = nameInput.value.trim();
-
-    // Show spinner
-    $('#newCustomerBtn .spinner').removeClass('hidden');
-    $('#newCustomerBtn .btn-text').text('Taking...');
-    $('#newCustomerBtn').prop('disabled', true);
-
-    $.get('/check-in-status')
-      .done(res => {
-        if (!res.is_checked_in) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Not checked in!',
-            text: 'Please check in first.',
-          });
-          resetTakeButtonUI();
-          return;
-        }
-
-        if (!isMyTurn) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Not your turn!',
-            text: 'Please wait for your turn before taking a customer.'
-          });
-          resetTakeButtonUI();
-          return;
-        }
-
-        if (!nameVal) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Name required!',
-            text: 'Please enter customer name before taking.',
-          });
-          resetTakeButtonUI();
-          return;
-        }
-
-        $.ajax({
-          url: '{{ route("sales.person.takeTurn") }}',
-          method: 'POST',
-          data: {
-            _token: $('meta[name="csrf-token"]').attr('content')
-          },
-        success: () => {
-  Swal.fire({
-    icon: 'success',
-    title: 'Customer Taken!',
-    text: 'You have successfully taken this customer.',
-    timer: 2000,
-  });
-
-
-
-            cardClicked = false;
-            updateTurnStatus();
-          },
-          error: () => {
-            Swal.fire({
-              icon: 'error',
-              title: 'Error occurred!'
-            });
-          },
-          complete: () => {
-            resetTakeButtonUI();
-          }
-        });
-      })
-      .fail(() => {
-        Swal.fire({
-          icon: 'error',
-          title: 'Check-in failed!',
-          text: 'Please try again.'
-        });
-        resetTakeButtonUI();
-      });
-  });
-
-  function resetTakeButtonUI() {
-    $('#newCustomerBtn .spinner').addClass('hidden');
-    $('#newCustomerBtn .btn-text').text('Take Customer');
-    $('#newCustomerBtn').prop('disabled', false);
-  }
-
-  function updateTurnStatus() {
-    $.get('/next-turn-status')
-      .done(res => {
-        isMyTurn = res.is_your_turn;
-        currentTurnUserId = res.current_turn_user_id;
-        const userName = res.user_name || "User";
-
-        if (isMyTurn && !wasTurnBefore) {
-          const message = new SpeechSynthesisUtterance(`it's your turn now, ${userName}`);
-          message.lang = 'en-US';
-          speechSynthesis.speak(message);
-        }
-
-     if (!res.is_checked_in) {
-  $('#turn-status').text('❗ Please check in to activate your turn queue.');
-} else if (isMyTurn) {
-  $('#turn-status').text(`🟢 It’s your turn now!`);
-} else {
-  $('#turn-status').text('⏳ Waiting for your turn...');
-}
-
-
-        wasTurnBefore = isMyTurn;
-        updateNameInputState();
-        toggleButtons();
-      })
-      .fail(() => {
-        $('#turn-status').text('⚠️ Error checking turn.');
-        isMyTurn = false;
-        updateNameInputState();
-        toggleButtons();
-      });
-  }
-
-  $(document).ready(() => {
-    toggleButtons();
-    updateTurnStatus();
-    setInterval(updateTurnStatus, 10000);
-  });
-</script>
 
 <script>
     const modal = document.getElementById('customerModal');
@@ -949,8 +743,214 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 </script>
 
-  <!-- form auto save -->
 
+<script>
+  let currentTurnUserId = null;
+  let isMyTurn = false;
+  let wasTurnBefore = false;
+  let cardClicked = false;
+  let customerSavedThisTurn = false; // ✅ NEW FLAG
+  
+  const form = document.getElementById('salesForm');
+  const nameInput = document.getElementById('nameInput');
+  const addBtn = document.getElementById('addCustomerBtn');
+  const takeBtn = document.getElementById('newCustomerBtn');
+  
+  nameInput.readOnly = true;
+
+  const inputs = form.querySelectorAll('input[type="text"], input[type="email"], textarea');
+  
+  function isFormReadyForAdd() {
+    const nameVal = nameInput.value.trim();
+    let otherFieldFilled = false;
+
+    inputs.forEach(input => {
+      if (input.id !== 'nameInput' && input.value.trim() !== '') {
+        otherFieldFilled = true;
+      }
+    });
+
+    return nameVal !== '' && otherFieldFilled;
+  }
+  
+  function toggleButtons() {
+    const ready = isFormReadyForAdd();
+
+    if (ready) {
+      addBtn.classList.remove('hidden');
+      takeBtn.classList.add('hidden');
+    } else {
+      addBtn.classList.add('hidden');
+      takeBtn.classList.remove('hidden');
+    }
+
+    takeBtn.disabled = false;
+  }
+
+  function updateNameInputState() {
+    nameInput.readOnly = !(isMyTurn || cardClicked);
+  }
+
+  document.addEventListener('click', function (e) {
+    const card = e.target.closest('.customer-card');
+    if (!card) return;
+
+    cardClicked = true;
+    customerSavedThisTurn = false; // ✅ NEW: Reset on card click
+    
+    const name = card.dataset.customerName || '';
+    const customerId = card.dataset.customerId || '';
+    
+    nameInput.value = name;
+    document.getElementById('customerId').value = customerId;
+
+    toggleButtons();
+    updateNameInputState();
+  });
+  
+  inputs.forEach(input => {
+    input.addEventListener('input', toggleButtons);
+  });
+  
+  addBtn.addEventListener('click', function () {
+    form.reset();
+    
+    document.getElementById('customerId').value = "";
+    document.getElementById('nameInput').value = "";
+    document.getElementById('emailInput').value = "";
+    document.getElementById('phoneInput').value = "";
+    document.getElementById('interestInput').value = "";
+    
+    toggleButtons();
+  });
+
+  takeBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+
+    const nameVal = nameInput.value.trim();
+
+    $('#newCustomerBtn .spinner').removeClass('hidden');
+    $('#newCustomerBtn .btn-text').text('Taking...');
+    $('#newCustomerBtn').prop('disabled', true);
+    
+    $.get('/check-in-status')
+      .done(res => {
+        if (!res.is_checked_in) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Not checked in!',
+            text: 'Please check in first.',
+          });
+          resetTakeButtonUI();
+          return;
+        }
+
+        if (!isMyTurn) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Not your turn!',
+            text: 'Please wait for your turn before taking a customer.'
+          });
+          resetTakeButtonUI();
+          return;
+        }
+        
+        if (!nameVal) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Name required!',
+            text: 'Please enter customer name before taking.',
+          });
+          resetTakeButtonUI();
+          return;
+        }
+
+        $.ajax({
+          url: '{{ route("sales.person.takeTurn") }}',
+          method: 'POST',
+          data: {
+            _token: $('meta[name="csrf-token"]').attr('content')
+          },
+          success: () => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Customer Taken!',
+              text: 'You have successfully taken this customer.',
+              timer: 2000,
+            });
+
+            cardClicked = false;
+            customerSavedThisTurn = false; // ✅ ALLOW NEXT TURN TO SAVE
+            updateTurnStatus();
+          },
+          error: () => {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error occurred!'
+            });
+          },
+          complete: () => {
+            resetTakeButtonUI();
+          }
+        });
+      })
+      .fail(() => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Check-in failed!',
+          text: 'Please try again.'
+        });
+        resetTakeButtonUI();
+      });
+  });
+
+  function resetTakeButtonUI() {
+    $('#newCustomerBtn .spinner').addClass('hidden');
+    $('#newCustomerBtn .btn-text').text('Take Customer');
+    $('#newCustomerBtn').prop('disabled', false);
+  }
+
+  function updateTurnStatus() {
+    $.get('/next-turn-status')
+    .done(res => {
+        isMyTurn = res.is_your_turn;
+        currentTurnUserId = res.current_turn_user_id;
+        const userName = res.user_name || "User";
+
+        if (isMyTurn && !wasTurnBefore) {
+          const message = new SpeechSynthesisUtterance(`it's your turn now, ${userName}`);
+          message.lang = 'en-US';
+          speechSynthesis.speak(message);
+        }
+
+        if (!res.is_checked_in) {
+          $('#turn-status').text('❗ Please check in to activate your turn queue.');
+        } else if (isMyTurn) {
+          $('#turn-status').text(`🟢 It’s your turn now!`);
+        } else {
+          $('#turn-status').text('⏳ Waiting for your turn...');
+        }
+        
+        wasTurnBefore = isMyTurn;
+        updateNameInputState();
+        toggleButtons();
+      })
+      .fail(() => {
+        $('#turn-status').text('⚠️ Error checking turn.');
+        isMyTurn = false;
+        updateNameInputState();
+        toggleButtons();
+      });
+  }
+  
+  $(document).ready(() => {
+    toggleButtons();
+    updateTurnStatus();
+    setInterval(updateTurnStatus, 10000);
+  });
+</script>
+
+<!-- form auto save -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('salesForm');
@@ -969,7 +969,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const nameInput = form.querySelector('input[name="name"]');
     const idInput = form.querySelector('input[name="id"]');
 
-    if (!nameInput.value.trim()) return; // Don't save if name is empty
+    // ✅ Agar naam nahi diya gaya, to save mat karo
+    if (!nameInput.value.trim()) return;
 
     const formData = new FormData(form);
 
@@ -988,7 +989,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.status === 'success') {
         loadCustomers();
 
-        // ✅ Set returned ID only if not already set
+        // ✅ Sirf ek baar ID set karo, naye record create na ho baar baar
         if (result.id && !idInput.value) {
           idInput.value = result.id;
           localStorage.setItem('activeCustomerId', result.id);
@@ -1027,10 +1028,8 @@ document.addEventListener('DOMContentLoaded', () => {
         form.querySelector('input[name="phone"]').value = card.dataset.phone || '';
         form.querySelector('input[name="interest"]').value = card.dataset.interest || '';
 
-        // Clear all process checkboxes first
         form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
 
-        // Set checked processes if present
         if (card.dataset.process) {
           card.dataset.process.split(',').forEach(proc => {
             const checkbox = Array.from(form.querySelectorAll('input[name="process[]"]'))
@@ -1039,7 +1038,6 @@ document.addEventListener('DOMContentLoaded', () => {
           });
         }
 
-        // Highlight selected card
         document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
         card.classList.add('active-card');
         localStorage.setItem('activeCustomerId', customerId);
@@ -1063,19 +1061,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Initial bindings
   bindCardClickEvents();
   applyActiveCard();
 });
 
- const addCustomerBtn = document.getElementById('addCustomerBtn');
-  addCustomerBtn.addEventListener('click', () => {
-    const activeCard = document.querySelector('.active-card');
-    if (activeCard) {
-      activeCard.classList.add('pause-animation');
-    }
-  });
+// ✅ Add button animation pause
+const addCustomerBtn = document.getElementById('addCustomerBtn');
+addCustomerBtn.addEventListener('click', () => {
+  const activeCard = document.querySelector('.active-card');
+  if (activeCard) {
+    activeCard.classList.add('pause-animation');
+  }
+});
 </script>
+
 
   <!-- Form Show  -->
  <!-- <script>
