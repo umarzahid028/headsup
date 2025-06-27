@@ -355,6 +355,22 @@ public function checkout(Request $request, $id)
     return redirect()->back()->with('success', 'Checked out successfully!');
 }
 
+public function saveArrivalTime(Request $request)
+{
+    \Log::info('ARRIVAL TIME REQUEST', $request->all());
+
+    $request->validate([
+        'appointment_id' => 'required|exists:appointments,id',
+        'time' => 'required|date',
+    ]);
+
+    $appointment = Appointment::find($request->appointment_id);
+    $appointment->arrival_time = $request->time;
+    $appointment->save();
+
+    return response()->json(['message' => 'Arrival time saved successfully.']);
+}
+
 }
 
   

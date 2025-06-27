@@ -135,6 +135,6 @@ Route::get('/appointment/section', function () {
     return view('partials.appointment-card', compact('appointment'));
 });
 
-
+Route::post('/appointment/arrive', [CustomerSaleController::class, 'saveArrivalTime'])->name('appointment.arrive');
 
 require __DIR__ . '/auth.php';

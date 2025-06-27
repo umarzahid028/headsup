@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Appointment extends Model
 {
      protected $fillable = [
-        'created_by', 'salesperson_id', 'customer_name', 'customer_phone', 'date', 'time', 'status', 'notes'
+        'created_by', 'salesperson_id', 'customer_name', 'customer_phone', 'date', 'time', 'status', 'notes', 'arrival_time'
     ];
 
     public function manager() {
