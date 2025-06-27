@@ -296,7 +296,7 @@
       checkinList.innerHTML = '';
 
       if (!data || data.length === 0) {
-        checkinList.innerHTML = `<div class="text-center text-white text-xl py-10">No check-ins yet</div>`;
+        checkinList.innerHTML = `<div class="text-center text-white text-xl py-10">No check-in</div>`;
         return;
       }
 
