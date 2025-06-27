@@ -49,11 +49,24 @@
                     </thead>
                     <tbody>
                         @forelse ($report as $entry)
-                            <tr class="hover:bg-gray-50 transition-all">
-                                <td class="border-b px-4 py-3">{{ $entry['checked_in_at'] ?? '-' }}</td>
-                                <td class="border-b px-4 py-3">{{ $entry['checked_out_at'] ?? '-' }}</td>
-                                <td class="border-b px-4 py-3">{{ $entry['duration'] ?? '-' }}</td>
-                            </tr>
+                          @php
+    $checkIn = isset($entry['checked_in_at']) ? \Carbon\Carbon::parse($entry['checked_in_at']) : null;
+    $checkOut = isset($entry['checked_out_at']) ? \Carbon\Carbon::parse($entry['checked_out_at']) : null;
+@endphp
+
+<tr class="hover:bg-gray-50 transition-all">
+    <td class="border-b px-4 py-3">
+        {{ $checkIn ? $checkIn->format('d M Y, h:i A') : '-' }}
+    </td>
+    <td class="border-b px-4 py-3">
+        {{ $checkOut ? $checkOut->format('d M Y, h:i A') : '-' }}
+    </td>
+    <td class="border-b px-4 py-3">
+        {{ $entry['duration'] ?? '-' }}
+    </td>
+</tr>
+
+
                         @empty
                             <tr>
                                 <td colspan="3" class="px-6 py-6 text-center text-gray-500">

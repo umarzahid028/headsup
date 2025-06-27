@@ -25,7 +25,7 @@
           <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
       
               <!-- Customer Sales Form -->
-              <div class="md:col-span-8 mx-2">
+              <div class="md:col-span-9 mx-2">
                   <form id="salesForm" method="POST" action="{{ route('customer.form.store') }}"
                       class=" grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
                       @csrf
@@ -122,7 +122,7 @@
               </div>
       
               <!-- Customer Cards -->
-              <div class="md:col-span-4">
+              <div class="md:col-span-3">
                   <div id="customer-list">
                       @include('partials.customer-list')
                   </div>
@@ -284,62 +284,51 @@
             }
         });
     </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const cards = document.querySelectorAll('.customer-card');
-            const form = document.getElementById('salesForm');
-            const modal = document.getElementById('customerModal');
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('salesForm');
+  const customerList = document.getElementById('customer-list');
 
-            let activeCard = null;
+  customerList.addEventListener('click', function (e) {
+    const card = e.target.closest('.customer-card');
+    if (!card) return;
 
-            cards.forEach(card => {
-                card.addEventListener('click', () => {
-                    // Remove previous active animation
-                    if (activeCard && activeCard !== card) {
-                        activeCard.classList.remove('active-card');
-                    }
+    // Remove animation from all other cards
+    document.querySelectorAll('.customer-card').forEach(c => {
+      c.classList.remove('active-card');
+      c.style.animation = 'none';
+      void c.offsetWidth; // force reflow
+      c.style.animation = '';
+    });
 
-                    // Add active animation to clicked card
-                    card.classList.add('active-card');
-                    activeCard = card;
+    // Force restart animation on clicked card
+    card.classList.add('active-card');
+    card.style.animation = 'none';
+    void card.offsetWidth; // force browser to "forget" previous animation
+    card.style.animation = 'pulseActive 1s infinite'; // manually re-apply
 
-                    // Fill form fields
-                    document.getElementById('customerId').value = card.dataset.customerId || '';
-                    document.querySelector('input[name="name"]').value = card.dataset.name || '';
-                    document.querySelector('input[name="email"]').value = card.dataset.email || '';
-                    document.querySelector('input[name="phone"]').value = card.dataset.phone || '';
-                    document.querySelector('input[name="interest"]').value = card.dataset
-                        .interest || '';
+    // Fill form
+    document.getElementById('customerId').value = card.dataset.customerId || '';
+    document.querySelector('input[name="name"]').value = card.dataset.name || '';
+    document.querySelector('input[name="email"]').value = card.dataset.email || '';
+    document.querySelector('input[name="phone"]').value = card.dataset.phone || '';
+    document.querySelector('input[name="interest"]').value = card.dataset.interest || '';
 
-                    // Set process checkboxes
-                    const processes = (card.dataset.process || '').split(',');
-                    document.querySelectorAll('input[name="process[]"]').forEach(checkbox => {
-                        checkbox.checked = processes.includes(checkbox.value);
-                    });
+    const processes = (card.dataset.process || '').split(',');
+    document.querySelectorAll('input[name="process[]"]').forEach(cb => {
+      cb.checked = processes.includes(cb.value);
+    });
 
-                    // Set disposition radio button
-                    const disposition = card.dataset.disposition;
-                    if (disposition) {
-                        document.querySelectorAll('input[name="disposition"]').forEach(radio => {
-                            radio.checked = disposition === radio.value;
-                        });
-                    }
+    const disposition = card.dataset.disposition;
+    if (disposition) {
+      document.querySelectorAll('input[name="disposition"]').forEach(radio => {
+        radio.checked = disposition === radio.value;
+      });
+    }
 
-                    form.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
 
-                });
-            });
-
-            // Close modal
-            document.getElementById('closeModalBtn').addEventListener('click', () => {
-                modal.classList.add('hidden');
-            });
-        });
-    </script>
-
-
-
+</script>
 </x-app-layout>

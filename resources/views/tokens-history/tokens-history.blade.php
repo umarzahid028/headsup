@@ -99,9 +99,13 @@
                         @endforelse
                     </tbody>
                 </table>
-                 <div class="mt-4 px-4 py-2">
-                        {{ $customerSales->links() }}
-                    </div>
+                 
+
+         @if($customerSales->hasPages())
+            <div>
+                {{ $customerSales->links() }}
+            </div>
+        @endif
             </div>
         </div>
     </div>

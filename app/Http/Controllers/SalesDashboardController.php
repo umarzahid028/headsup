@@ -14,7 +14,7 @@ class SalesDashboardController extends Controller
 public function activityReport(Request $request)
 {
     $loggedInUser = Auth::user();
-    $isManager = $loggedInUser->hasRole('Sales Manager');
+    $isManager = $loggedInUser->hasRole('Sales Manager|Sales person', );
 
     // If Sales Manager and a user_id is passed, allow viewing that user's report
     $targetUserId = $isManager && $request->has('user_id')

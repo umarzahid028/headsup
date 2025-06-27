@@ -480,7 +480,7 @@ function completeForm(customerId) {
          title: 'Pending Customer Cards',
   text: 'Please complete or transfer all customer cards before checking out.',
       });
-      return; // 🛑 stop the form from submitting
+      return;
     }
 
     const spinner = btn.find('.btn-spinner');
@@ -600,8 +600,8 @@ document.addEventListener('DOMContentLoaded', () => {
         icon: 'success',
         title: 'Transferred!',
         text: result.message || 'Card moved to Sales Manager.',
-        timer: 1500,
-        showConfirmButton: false
+        timer: 2000,
+        showConfirmButton: true
       }).then(() => {
         const card = document.querySelector(`#customer-list`);
         if (card) {
@@ -609,10 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
           setTimeout(() => card.remove(), 300);
         }
 
-        // ✅ Clear form
         form.reset();
-
-        // ⏳ Auto refresh page after 5 seconds
         setTimeout(() => {
           window.location.reload();
         }, 2000);
@@ -935,7 +932,7 @@ document.addEventListener('DOMContentLoaded', () => {
             title: 'Customer Transferred',
             text: data.message,
             timer: 1500,
-            showConfirmButton: false
+            showConfirmButton: true
           });
 
           // 2 second ke baad page reload

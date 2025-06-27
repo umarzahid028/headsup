@@ -97,7 +97,10 @@ Route::delete('/salesperson/delete/{id}', [UserController::class, 'deleteSalespe
 
 //Activity Records
 
-Route::get('/activity-report', [SalesDashboardController::class, 'activityReport'])->name('activity.report');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/activity-report', [SalesDashboardController::class, 'activityReport'])->name('activity.report');
+});
+
 
 Route::post('/sales-person/take-turn', [QueuesController::class, 'takeTurn'])
     ->name('sales.person.takeTurn');

@@ -1,23 +1,15 @@
 <style>
-  .active-card {
-    animation: pulseActive 1s infinite;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
-  }
+@keyframes pulseActive {
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6); }
+  70% { box-shadow: 0 0 0 12px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
 
-  @keyframes pulseActive {
-    0% {
-      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
-    }
-
-    70% {
-      box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
-    }
-
-    100% {
-      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
-    }
-  }
+.active-card {
+  animation: pulseActive 1s infinite;
+  border: 2px solid #2563eb;
+  border-radius: 1rem;
+}
 
   .fade-out {
     animation: fadeOut 0.5s forwards;
@@ -46,18 +38,17 @@
         : ($customer->disposition ?? null);
     @endphp
 
-   @if ($customer->forwarded_to_manager && empty($customer->disposition))
+    @if ($customer->forwarded_to_manager && empty($customer->disposition))
       <div
-        id="card-{{ $customer->id }}"
         class="customer-card w-full mx-auto bg-white shadow-md rounded-2xl mb-4 border border-gray-200 p-4 cursor-pointer transition-all duration-300"
+        id="card-{{ $customer->id }}"
+        data-customer-id="{{ $customer->id }}"
         data-name="{{ $customer->name }}"
         data-email="{{ $customer->email }}"
         data-phone="{{ $customer->phone ?? '' }}"
         data-interest="{{ $customer->interest ?? '' }}"
         data-process="{{ is_array($customer->process) ? implode(',', $customer->process) : $customer->process }}"
         data-disposition="{{ $dispositions }}"
-        data-customer-id="{{ $customer->id }}"
-        data-customer-name="{{ $customer->name }}"
         data-to="{{ $customer->is_to ? 'true' : 'false' }}"
       >
         <div class="flex justify-between items-center">
@@ -80,3 +71,4 @@
     @endif
   @endforeach
 </div>
+
