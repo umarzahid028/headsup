@@ -952,127 +952,162 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- form auto save -->
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('salesForm');
-  const fields = form.querySelectorAll('input, textarea');
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('salesForm');
+    const fields = form.querySelectorAll('input, textarea');
+    const newCustomerBtn = document.getElementById('newCustomerBtn');
+    let debounceTimeout;
+    let customerSavedThisTurn = false;
 
-  let debounceTimeout;
+    // Reset save flag every 3 seconds
+    setInterval(() => {
+      customerSavedThisTurn = false;
+    }, 3000);
 
-  fields.forEach(field => {
-    field.addEventListener('input', () => {
-      clearTimeout(debounceTimeout);
-      debounceTimeout = setTimeout(() => autoSaveForm(), 700);
+    // 🔁 Input listeners for all EXCEPT 'name' field
+    fields.forEach(field => {
+      if (field.name !== 'name') {
+        field.addEventListener('input', () => {
+          clearTimeout(debounceTimeout);
+          debounceTimeout = setTimeout(() => autoSaveForm(), 700);
+        });
+      }
     });
+
+    // 🟩 "Take Customer" button click saves name
+    newCustomerBtn.addEventListener('click', async () => {
+      const nameInput = form.querySelector('input[name="name"]');
+
+      if (!nameInput.value.trim()) {
+        console.warn("Name is empty, not saving.");
+        return;
+      }
+
+      // Optional: show spinner
+      const spinner = newCustomerBtn.querySelector('.spinner');
+      const btnText = newCustomerBtn.querySelector('.btn-text');
+      if (spinner && btnText) {
+        spinner.classList.remove('hidden');
+        btnText.classList.add('hidden');
+      }
+
+      await autoSaveForm();
+
+      // Hide spinner again
+      if (spinner && btnText) {
+        spinner.classList.add('hidden');
+        btnText.classList.remove('hidden');
+      }
+    });
+
+    async function autoSaveForm() {
+      const nameInput = form.querySelector('input[name="name"]');
+      const idInput = form.querySelector('input[name="id"]');
+
+      if (!nameInput.value.trim() || customerSavedThisTurn) return;
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('{{ route('customer.sales.store') }}', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+          loadCustomers();
+
+          if (result.id && !idInput.value) {
+            idInput.value = result.id;
+            localStorage.setItem('activeCustomerId', result.id);
+          }
+
+          customerSavedThisTurn = true;
+        } else if (result.errors) {
+          console.warn('Validation failed:', result.errors);
+        }
+      } catch (err) {
+        console.error('Auto-save failed', err);
+      }
+    }
+
+    async function loadCustomers() {
+      try {
+        const resp = await fetch('{{ route('customer.index') }}?partial=1', {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+
+        const html = await resp.text();
+        document.getElementById('customer-list').innerHTML = html;
+
+        bindCardClickEvents();
+        applyActiveCard();
+      } catch (err) {
+        console.error('Failed to load customers', err);
+      }
+    }
+
+    function bindCardClickEvents() {
+      document.querySelectorAll('.customer-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const customerId = card.dataset.customerId;
+          form.querySelector('input[name="id"]').value = customerId || '';
+          form.querySelector('input[name="name"]').value = card.dataset.name || '';
+          form.querySelector('input[name="email"]').value = card.dataset.email || '';
+          form.querySelector('input[name="phone"]').value = card.dataset.phone || '';
+          form.querySelector('input[name="interest"]').value = card.dataset.interest || '';
+
+          form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+
+          if (card.dataset.process) {
+            card.dataset.process.split(',').forEach(proc => {
+              const checkbox = Array.from(form.querySelectorAll('input[name="process[]"]'))
+                .find(cb => cb.value.trim() === proc.trim());
+              if (checkbox) checkbox.checked = true;
+            });
+          }
+
+          document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
+          card.classList.add('active-card');
+          localStorage.setItem('activeCustomerId', customerId);
+        });
+      });
+    }
+
+    function applyActiveCard() {
+      const savedId = localStorage.getItem('activeCustomerId');
+      const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
+
+      if (savedCard) {
+        document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
+        savedCard.classList.add('active-card');
+      } else {
+        const first = document.querySelector('.customer-card');
+        if (first) {
+          first.classList.add('active-card');
+          localStorage.setItem('activeCustomerId', first.dataset.customerId);
+        }
+      }
+    }
+
+    bindCardClickEvents();
+    applyActiveCard();
   });
 
-  async function autoSaveForm() {
-    const nameInput = form.querySelector('input[name="name"]');
-    const idInput = form.querySelector('input[name="id"]');
-
-    // ✅ Agar naam nahi diya gaya, to save mat karo
-    if (!nameInput.value.trim()) return;
-
-    const formData = new FormData(form);
-
-    try {
-      const response = await fetch('{{ route('customer.sales.store') }}', {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: formData
-      });
-
-      const result = await response.json();
-
-      if (result.status === 'success') {
-        loadCustomers();
-
-        // ✅ Sirf ek baar ID set karo, naye record create na ho baar baar
-        if (result.id && !idInput.value) {
-          idInput.value = result.id;
-          localStorage.setItem('activeCustomerId', result.id);
-        }
-      } else if (result.errors) {
-        console.warn('Validation failed:', result.errors);
-      }
-    } catch (err) {
-      console.error('Auto-save failed', err);
+  // Optional pause animation on new customer
+  const addCustomerBtn = document.getElementById('addCustomerBtn');
+  addCustomerBtn.addEventListener('click', () => {
+    const activeCard = document.querySelector('.active-card');
+    if (activeCard) {
+      activeCard.classList.add('pause-animation');
     }
-  }
-
-  async function loadCustomers() {
-    try {
-      const resp = await fetch('{{ route('customer.index') }}?partial=1', {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-      });
-
-      const html = await resp.text();
-      document.getElementById('customer-list').innerHTML = html;
-
-      bindCardClickEvents();
-      applyActiveCard();
-    } catch (err) {
-      console.error('Failed to load customers', err);
-    }
-  }
-
-  function bindCardClickEvents() {
-    document.querySelectorAll('.customer-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const customerId = card.dataset.customerId;
-        form.querySelector('input[name="id"]').value = customerId || '';
-        form.querySelector('input[name="name"]').value = card.dataset.name || '';
-        form.querySelector('input[name="email"]').value = card.dataset.email || '';
-        form.querySelector('input[name="phone"]').value = card.dataset.phone || '';
-        form.querySelector('input[name="interest"]').value = card.dataset.interest || '';
-
-        form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
-
-        if (card.dataset.process) {
-          card.dataset.process.split(',').forEach(proc => {
-            const checkbox = Array.from(form.querySelectorAll('input[name="process[]"]'))
-              .find(cb => cb.value.trim() === proc.trim());
-            if (checkbox) checkbox.checked = true;
-          });
-        }
-
-        document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
-        card.classList.add('active-card');
-        localStorage.setItem('activeCustomerId', customerId);
-      });
-    });
-  }
-
-  function applyActiveCard() {
-    const savedId = localStorage.getItem('activeCustomerId');
-    const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
-
-    if (savedCard) {
-      document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
-      savedCard.classList.add('active-card');
-    } else {
-      const first = document.querySelector('.customer-card');
-      if (first) {
-        first.classList.add('active-card');
-        localStorage.setItem('activeCustomerId', first.dataset.customerId);
-      }
-    }
-  }
-
-  bindCardClickEvents();
-  applyActiveCard();
-});
-
-// ✅ Add button animation pause
-const addCustomerBtn = document.getElementById('addCustomerBtn');
-addCustomerBtn.addEventListener('click', () => {
-  const activeCard = document.querySelector('.active-card');
-  if (activeCard) {
-    activeCard.classList.add('pause-animation');
-  }
-});
+  });
 </script>
 
 
