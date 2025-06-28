@@ -136,6 +136,5 @@ Route::get('/appointment/section', function () {
 });
 
 Route::post('/appointment/arrive', [CustomerSaleController::class, 'saveArrivalTime'])->name('appointment.arrive');
-Route::get('/appointment/{id}/duration', [AppointmentController::class, 'showDuration'])->name('appointment.duration');
 
 require __DIR__ . '/auth.php';

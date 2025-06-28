@@ -9,45 +9,38 @@
         </p>
     </x-slot>
 
-    {{-- Functions declared only ONCE --}}
     @php
-        if (!function_exists('getCustomerStartTime')) {
-            function getCustomerStartTime($sale) {
-                $queue = \App\Models\Queue::where('customer_id', $sale->customer_id ?? null)
-                    ->whereNotNull('took_turn_at')
-                    ->latest('took_turn_at')
-                    ->first();
-
-                if ($queue && $queue->took_turn_at) {
-                    return ['start_at' => $queue->took_turn_at, 'source' => 'Queue'];
-                }
-
-                if (!empty($sale->appointment_id)) {
-                    $appointment = \App\Models\Appointment::find($sale->appointment_id);
-                    if ($appointment && $appointment->arrival_time) {
-                        return ['start_at' => $appointment->arrival_time, 'source' => 'Appointment'];
-                    }
-                }
-
-                return ['start_at' => null, 'source' => 'None'];
-            }
-        }
-
         if (!function_exists('calculateDuration')) {
-            function calculateDuration($startAt, $endAt) {
-                if ($startAt && $endAt) {
-                    $start = \Carbon\Carbon::parse($startAt);
-                    $end = \Carbon\Carbon::parse($endAt);
+            function calculateDuration($sale) {
+                $endAt = $sale->ended_at;
+                $startAt = null;
 
-                    if ($start->lte($end)) {
+                if ($endAt) {
+                    $queue = \App\Models\Queue::where('customer_id', $sale->customer_id)
+                        ->where('user_id', $sale->user_id)
+                        ->whereNotNull('took_turn_at')
+                        ->where('took_turn_at', '<=', $endAt)
+                        ->latest('took_turn_at')
+                        ->first();
+
+                    $startAt = $queue?->took_turn_at ?? $sale->created_at;
+
+                    try {
+                        $start = \Carbon\Carbon::parse($startAt);
+                        $end = \Carbon\Carbon::parse($endAt);
+
+                        if ($start->gt($end)) {
+                            return 'Invalid';
+                        }
+
                         $seconds = $start->diffInSeconds($end);
                         $h = floor($seconds / 3600);
                         $m = floor(($seconds % 3600) / 60);
                         $s = $seconds % 60;
 
                         return sprintf('%02dh %02dm %02ds', $h, $m, $s);
-                    } else {
-                        return 'Invalid';
+                    } catch (\Exception $e) {
+                        \Log::warning('Duration calculation failed', ['error' => $e->getMessage()]);
                     }
                 }
 
@@ -76,13 +69,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($customerSales as $index => $sale)
-                                @php
-                                    $endAt = $sale->ended_at ?? null;
-                                    $startInfo = getCustomerStartTime($sale);
-                                    $duration = calculateDuration($startInfo['start_at'], $endAt);
-                                @endphp
-
+                            @forelse ($customerSales as $sale)
                                 <tr>
                                     <td class="border-b px-4 py-3">{{ $sale->name ?? 'Unknown' }}</td>
                                     <td class="border-b px-4 py-3">
@@ -91,8 +78,7 @@
                                     <td class="border-b px-4 py-3">
                                         @if (!empty($sale->process) && is_array($sale->process))
                                             @foreach ($sale->process as $process)
-                                                <span
-                                                    class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">
+                                                <span class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">
                                                     {{ $process }}
                                                 </span>
                                             @endforeach
@@ -101,14 +87,12 @@
                                         @endif
                                     </td>
                                     <td class="border-b px-4 py-3">
-                                        <span
-                                            class="inline-block px-2 py-1 text-xs font-semibold bg-gray-800 text-white rounded mr-1 mb-1">
+                                        <span class="inline-block px-2 py-1 text-xs font-semibold bg-gray-800 text-white rounded mr-1 mb-1">
                                             {{ $sale->disposition ?? 'N/A' }}
                                         </span>
                                     </td>
                                     <td class="border-b px-4 py-3">
-                                        {{ $duration }}
-                                        {{-- <small class="text-gray-400">({{ $startInfo['source'] }})</small> --}}
+                                        {{ calculateDuration($sale) }}
                                     </td>
                                 </tr>
                             @empty
@@ -130,8 +114,4 @@
             </div>
         </div>
     </div>
-
-    @push('scripts')
-        {{-- JS scripts if needed --}}
-    @endpush
 </x-app-layout>

@@ -156,6 +156,7 @@ public function completeForm(Request $request, $id)
 {
     $user = Auth::user();
 
+    // Step 1: Create or get existing sale
     $sale = \App\Models\CustomerSale::firstOrNew([
         'user_id' => $user->id,
         'customer_id' => $id
@@ -166,56 +167,51 @@ public function completeForm(Request $request, $id)
     $sale->ended_at = now();
     $sale->save();
 
-    $startAt = null;
-
-    // 1. Check queue
-    $queue = Queue::where('user_id', $user->id)
+    // Step 2: Determine Start Time (Queue first, fallback to created_at)
+    $queue = \App\Models\Queue::where('user_id', $user->id)
         ->where('customer_id', $id)
         ->whereNotNull('took_turn_at')
         ->latest('took_turn_at')
         ->first();
 
-    if ($queue) {
-        $startAt = $queue->took_turn_at;
-    }
-
-    // 2. Fallback to Appointment
-    if (!$startAt) {
-        $appointment = Appointment::where('customer_id', $id)
-            ->whereNotNull('arrival_time')
-            ->latest('arrival_time')
-            ->first();
-
-        if ($appointment) {
-            $startAt = $appointment->arrival_time;
-        }
-    }
-
-    $duration = 'N/A';
+    $startAt = $queue?->took_turn_at ?? $sale->created_at;
+    $startSource = $queue ? 'Queue' : 'CreatedAt (Fallback)';
     $endAt = $sale->ended_at;
 
-    // Log times to debug
-    Log::info('StartAt: ' . ($startAt ?? 'null'));
-    Log::info('EndAt: ' . ($endAt ?? 'null'));
-
+    // Step 3: Calculate duration
+    $duration = 'N/A';
     if ($startAt && $endAt) {
-        $start = Carbon::parse($startAt);
-        $end = Carbon::parse($endAt);
+        $start = \Carbon\Carbon::parse($startAt);
+        $end = \Carbon\Carbon::parse($endAt);
 
         if ($start->lte($end)) {
             $diffSeconds = $start->diffInSeconds($end);
             $hours = floor($diffSeconds / 3600);
             $minutes = floor(($diffSeconds % 3600) / 60);
             $seconds = $diffSeconds % 60;
+
             $duration = sprintf('%02dh %02dm %02ds', $hours, $minutes, $seconds);
         } else {
             $duration = 'Start > End';
         }
     }
 
+    // Step 4: Log info (optional)
+    \Log::info('Customer Sale Complete Form Debug:', [
+        'sale_id' => $sale->id,
+        'user_id' => $user->id,
+        'customer_id' => $id,
+        'startAt' => $startAt,
+        'startSource' => $startSource,
+        'endAt' => $endAt,
+        'duration' => $duration
+    ]);
+
+    // Step 5: Response
     return response()->json([
         'message' => 'Form saved successfully.',
-        'duration' => $duration
+        'duration' => $duration,
+        'started_from' => $startSource
     ]);
 }
 
