@@ -25,7 +25,7 @@ public function store(Request $request)
             'notes'          => 'nullable|string',
             'process'        => 'nullable|array',
             'disposition'    => 'nullable|string',
-            'appointment_id' => 'nullable|exists:appointments,id',
+            'appointment_id' => 'nullable|exists:appointments,id', 
         ]);
     } catch (\Illuminate\Validation\ValidationException $e) {
         return response()->json([
@@ -35,18 +35,18 @@ public function store(Request $request)
     }
 
     $data = [
-        'user_id'     => $validated['user_id'] ?? auth()->id(),
-        'customer_id' => $validated['customer_id'] ?? null,
-        'name'        => $validated['name'],
-        'email'       => $validated['email'] ?? null,
-        'phone'       => $validated['phone'] ?? null,
-        'interest'    => $validated['interest'] ?? null,
-        'notes'       => $validated['notes'] ?? null,
-        'process'     => $validated['process'] ?? [],
-        'disposition' => $validated['disposition'] ?? null,
+        'user_id'       => $validated['user_id'] ?? auth()->id(),
+        'customer_id'   => $validated['customer_id'] ?? null,
+        'name'          => $validated['name'],
+        'email'         => $validated['email'] ?? null,
+        'phone'         => $validated['phone'] ?? null,
+        'interest'      => $validated['interest'] ?? null,
+        'notes'         => $validated['notes'] ?? null,
+        'process'       => $validated['process'] ?? [],
+        'disposition'   => $validated['disposition'] ?? null,
+        'appointment_id'=> $validated['appointment_id'] ?? null, 
     ];
 
-    // ✅ Fixed logic starts here
     $sale = null;
 
     if (!empty($validated['id'])) {
@@ -65,26 +65,22 @@ public function store(Request $request)
         }
     }
 
-    // ✅ If sale found, update — otherwise create new
     if ($sale) {
         $sale->update($data);
     } else {
         $sale = CustomerSale::create($data);
     }
 
-    // ✅ Handle end-of-turn disposition
     if (!empty($validated['disposition'])) {
         $sale->ended_at = now();
         $sale->save();
     }
 
-    // ✅ Mark appointment as completed if present
     if (!empty($validated['appointment_id'])) {
         \App\Models\Appointment::where('id', $validated['appointment_id'])
             ->update(['status' => 'completed']);
     }
 
-    // ✅ Calculate duration if turn was taken
     $queue = \App\Models\Queue::where('user_id', $data['user_id'])
         ->where('customer_id', $data['customer_id'])
         ->whereNotNull('took_turn_at')
@@ -106,9 +102,6 @@ public function store(Request $request)
         'redirect' => route('sales.perosn'),
     ]);
 }
-
-
-
 
   public function index(Request $request)
 {
@@ -162,24 +155,54 @@ public function completeForm(Request $request, $id)
         'customer_id' => $id
     ]);
 
+    // Step 2: Attempt to auto-link appointment (if not already linked)
+    if (!$sale->appointment_id) {
+        $appointment = \App\Models\Appointment::where('customer_id', $id)
+            ->whereNotNull('arrival_time')
+            ->latest('arrival_time')
+            ->first();
+
+        if ($appointment) {
+            $sale->appointment_id = $appointment->id;
+        }
+    }
+
+    // Step 3: Save sale info
     $sale->notes = $request->input('notes');
     $sale->disposition = $request->input('disposition');
     $sale->ended_at = now();
     $sale->save();
 
-    // Step 2: Determine Start Time (Queue first, fallback to created_at)
+    // Step 4: Determine Start Time (Queue > Appointment > CreatedAt)
+    $startAt = null;
+    $startSource = null;
+
     $queue = \App\Models\Queue::where('user_id', $user->id)
         ->where('customer_id', $id)
         ->whereNotNull('took_turn_at')
         ->latest('took_turn_at')
         ->first();
 
-    $startAt = $queue?->took_turn_at ?? $sale->created_at;
-    $startSource = $queue ? 'Queue' : 'CreatedAt (Fallback)';
-    $endAt = $sale->ended_at;
+    if ($queue) {
+        $startAt = $queue->took_turn_at;
+        $startSource = 'Queue';
+    } elseif ($sale->appointment_id) {
+        $appointment = \App\Models\Appointment::find($sale->appointment_id);
+        if ($appointment && $appointment->arrival_time) {
+            $startAt = $appointment->arrival_time;
+            $startSource = 'Appointment Arrival Time';
+        }
+    }
 
-    // Step 3: Calculate duration
+    if (!$startAt) {
+        $startAt = $sale->created_at;
+        $startSource = 'CreatedAt (Fallback)';
+    }
+
+    // Step 5: Calculate Duration
+    $endAt = $sale->ended_at;
     $duration = 'N/A';
+
     if ($startAt && $endAt) {
         $start = \Carbon\Carbon::parse($startAt);
         $end = \Carbon\Carbon::parse($endAt);
@@ -196,18 +219,19 @@ public function completeForm(Request $request, $id)
         }
     }
 
-    // Step 4: Log info (optional)
-    \Log::info('Customer Sale Complete Form Debug:', [
+    // Step 6: Logging (optional)
+    \Log::info('Customer Sale Completed:', [
         'sale_id' => $sale->id,
         'user_id' => $user->id,
         'customer_id' => $id,
+        'appointment_id' => $sale->appointment_id,
         'startAt' => $startAt,
         'startSource' => $startSource,
         'endAt' => $endAt,
         'duration' => $duration
     ]);
 
-    // Step 5: Response
+    // Step 7: Response
     return response()->json([
         'message' => 'Form saved successfully.',
         'duration' => $duration,
