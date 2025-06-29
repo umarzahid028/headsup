@@ -107,12 +107,12 @@
     style="background-color: #111827;">
     Delete
 </button>
-
-                                        <a href="{{ route('activity.report', ['user_id' => $person->id]) }}"
-                                              class="text-white font-bold py-2 px-4 rounded"
-                                                       style="background-color: #111827;">
-                                            Activity
-                                        </a>
+@if($person->hasRole('Sales person'))
+    <a href="{{ route('activity.report', ['user_id' => $person->id]) }}"
+       class="bg-gray-900 text-white font-bold py-2 px-4 rounded">
+        Activity
+    </a>
+@endif
 
 
                                         @if( isset($person->latestQueue) && $person->latestQueue->checked_in_at && is_null($person->latestQueue->checked_out_at))
