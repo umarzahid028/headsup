@@ -336,19 +336,12 @@
 <script>
   let selectedCardId = null;
 
-  function toggleForm() {
-    const form = document.getElementById('formContainer');
-    form.classList.toggle('hidden');
-  }
-
   function bindAppointmentCardLogic() {
-    const form = document.getElementById('salesForm');
-    const appointmentCards = document.querySelectorAll('.customer-card');
     const nameInput = document.getElementById('nameInput');
     const phoneInput = document.getElementById('phoneInput');
     const idInput = document.getElementById('customerId');
 
-    appointmentCards.forEach(card => {
+    document.querySelectorAll('.customer-card').forEach(card => {
       card.addEventListener('click', () => {
         const name = card.dataset.name || '';
         const phone = card.dataset.phone || '';
@@ -360,6 +353,7 @@
 
         document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
         card.classList.add('active-card');
+
         selectedCardId = card.id;
       });
     });
@@ -381,26 +375,30 @@
     });
   }
 
+  function refreshAppointments() {
+    fetch('/appointment/section')
+      .then(res => res.text())
+      .then(html => {
+        const wrapper = document.getElementById("appointment-wrapper");
+        wrapper.innerHTML = html;
+
+        // Bind logic to new cards
+        bindAppointmentCardLogic();
+        checkDuplicateName();
+
+        // Reapply active card style
+        if (selectedCardId) {
+          const selectedCard = document.getElementById(selectedCardId);
+          if (selectedCard) selectedCard.classList.add('active-card');
+        }
+      });
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
-    bindAppointmentCardLogic();    
+    bindAppointmentCardLogic();
     checkDuplicateName();
 
-    setInterval(() => {
-      fetch('/appointment/section')
-        .then(res => res.text())
-        .then(html => {
-          document.getElementById("appointment-wrapper").innerHTML = html;
-
-          bindAppointmentCardLogic();
-          checkDuplicateName();
-
-          // Restore selected card highlight, but don't refill form
-          if (selectedCardId) {
-            const selectedCard = document.getElementById(selectedCardId);
-            if (selectedCard) selectedCard.classList.add('active-card');
-          }
-        });
-    }, 3000);
+    setInterval(refreshAppointments, 3000);
   });
 </script>
 
