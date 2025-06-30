@@ -1109,13 +1109,13 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.customer-card').forEach(card => {
         card.addEventListener('click', () => {
           const customerId = card.dataset.customerId;
-          if (!customerId) return;
+          if (!customerId) return;  
 
           idInput.value = customerId;
           if (card.dataset.name) nameInput.value = card.dataset.name;
-          if (card.dataset.email) form.querySelector('input[name="email"]').value = card.dataset.email;
-          if (card.dataset.phone) form.querySelector('input[name="phone"]').value = card.dataset.phone;
-          if (card.dataset.interest) form.querySelector('input[name="interest"]').value = card.dataset.interest;
+          if (card.dataset.email) form.querySelector('input[name="email"]').value = card.dataset.email ?? '';
+          if (card.dataset.phone) form.querySelector('input[name="phone"]').value = card.dataset.phone ?? '';
+          if (card.dataset.interest) form.querySelector('input[name="interest"]').value = card.dataset.interest ?? '';
 
           // Process checkboxes
           form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
