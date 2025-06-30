@@ -95,7 +95,7 @@
                                                         View
                                                     </a>
                                                     @endif
-                                                    @if($appt->status !== 'Canceled')
+                                                    @if($appt->status !== 'canceled')
                                                      @if (Auth::user()->hasRole(['Admin', 'Sales Manager']) )
                                                       <a href="{{ route('appointment.view', ['appointment' => $appt->id]) }}"
                                                        class="bg-gray-800 text-white px-3 py-1.5 rounded">
