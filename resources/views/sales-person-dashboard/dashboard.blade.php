@@ -881,6 +881,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('phoneInput').value = "";
     document.getElementById('interestInput').value = "";
 
+    cardClicked = false; // ✅ FIX: Prevent typing name unless it's your turn or a card is selected
+    updateNameInputState(); // ✅ FIX: Enforce readonly on name field
     toggleButtons();
   });
 
@@ -1009,6 +1011,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateTurnStatus, 10000);
   });
 </script>
+
 
 
 <!-- form auto save -->
