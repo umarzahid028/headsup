@@ -1104,11 +1104,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Bind click to each customer card except appointment-card
+    // Bind click to each customer card
     function bindCardClickEvents() {
       document.querySelectorAll('.customer-card').forEach(card => {
-        if (card.id === 'appointment-card') return; // Skip appointment card
-
         card.addEventListener('click', () => {
           const customerId = card.dataset.customerId;
           if (!customerId) return;
@@ -1119,7 +1117,6 @@ document.addEventListener('DOMContentLoaded', () => {
           if (card.dataset.phone) form.querySelector('input[name="phone"]').value = card.dataset.phone ?? '';
           if (card.dataset.interest) form.querySelector('input[name="interest"]').value = card.dataset.interest ?? '';
 
-          // Process checkboxes
           form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
           if (card.dataset.process) {
             card.dataset.process.split(',').forEach(proc => {
@@ -1129,7 +1126,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
           }
 
-          // UI highlight
           document.querySelectorAll('.customer-card').forEach(c => {
             c.classList.remove('active-card');
             c.classList.remove('pause-animation');
@@ -1141,30 +1137,29 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Apply last selected customer card (skip appointment card)
+    // Apply last selected card (includes appointment-card now)
     function applyActiveCard() {
       const savedId = localStorage.getItem('activeCustomerId');
-      const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
+      const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`) ||
+                        document.querySelector(`#appointment-card[data-customer-id="${savedId}"]`);
 
-      if (!savedCard || savedCard.id === 'appointment-card') return;
+      if (!savedCard) return;
 
       savedCard.classList.add('active-card');
-      if (!idInput.value || idInput.value === savedId) {
-        idInput.value = savedId;
+      idInput.value = savedId;
 
-        if (savedCard.dataset.name) nameInput.value = savedCard.dataset.name;
-        if (savedCard.dataset.email) form.querySelector('input[name="email"]').value = savedCard.dataset.email;
-        if (savedCard.dataset.phone) form.querySelector('input[name="phone"]').value = savedCard.dataset.phone;
-        if (savedCard.dataset.interest) form.querySelector('input[name="interest"]').value = savedCard.dataset.interest;
+      if (savedCard.dataset.name) nameInput.value = savedCard.dataset.name;
+      if (savedCard.dataset.email) form.querySelector('input[name="email"]').value = savedCard.dataset.email ?? '';
+      if (savedCard.dataset.phone) form.querySelector('input[name="phone"]').value = savedCard.dataset.phone ?? '';
+      if (savedCard.dataset.interest) form.querySelector('input[name="interest"]').value = savedCard.dataset.interest ?? '';
 
-        form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
-        if (savedCard.dataset.process) {
-          savedCard.dataset.process.split(',').forEach(proc => {
-            const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
-              .find(cb => cb.value.trim() === proc.trim());
-            if (checkbox) checkbox.checked = true;
-          });
-        }
+      form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+      if (savedCard.dataset.process) {
+        savedCard.dataset.process.split(',').forEach(proc => {
+          const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
+            .find(cb => cb.value.trim() === proc.trim());
+          if (checkbox) checkbox.checked = true;
+        });
       }
     }
 
@@ -1183,6 +1178,7 @@ document.addEventListener('DOMContentLoaded', () => {
     applyActiveCard();
   });
 </script>
+
 
 
 <script>
