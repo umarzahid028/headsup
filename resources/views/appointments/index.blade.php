@@ -88,10 +88,19 @@
                                                 @endif
                                                
                                             @endif
+                                            
+                                                @if (Auth::user()->hasRole('Sales person') && Auth::id() == $appt->salesperson_id)
                                               <a href="{{ route('appointment.view', ['appointment' => $appt->id]) }}"
                                                        class="bg-gray-800 text-white px-3 py-1.5 rounded">
                                                         View
                                                     </a>
+                                                    @endif
+                                                     @if (Auth::user()->hasRole(['Admin', 'Sales Manager']))
+                                                      <a href="{{ route('appointment.view', ['appointment' => $appt->id]) }}"
+                                                       class="bg-gray-800 text-white px-3 py-1.5 rounded">
+                                                        View
+                                                    </a>
+                                                    @endif
                                         </div>
                                     </td>
                                 </tr>

@@ -2,10 +2,10 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="text-xl font-semibold leading-tight text-foreground">
-            {{ __('Customers') }}
+            {{ __('Appointment') }}
         </h2>
         <p class="text-sm text-muted-foreground mt-1">
-            View the list of customers.
+            View the record of Appointment.
         </p>
     </x-slot>
 
@@ -79,11 +79,7 @@
 
     <div class="py-6">
         <div class="container mx-auto space-y-6 py-6 px-4">
-            <div class="flex items-center justify-end mb-4 px-6">
-                <a href="{{ route('add.customer') }}" class="bg-gray-800 text-white px-3 py-1.5 rounded ">
-                    Add Customer
-                </a>
-            </div>
+           
             <div>
                 <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
                     <table class="min-w-full bg-white divide-y divide-gray-200">
