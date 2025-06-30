@@ -23,7 +23,8 @@
 }
 
 </style>
-@if($appointment && $appointment->status !== 'completed' && auth()->id() === $appointment->salesperson_id)
+@if($appointment && !in_array($appointment->status, ['completed', 'canceled']) && auth()->id() === $appointment->salesperson_id)
+
 
   {{-- SHOW appointment card --}}
   <div id="customer-list" class="transition-opacity duration-300">
