@@ -23,9 +23,12 @@
 }
 
 </style>
-@if($appointment && !in_array($appointment->status, ['completed', 'canceled']) && auth()->id() === $appointment->salesperson_id)
-
-
+@if(
+    $appointment &&
+    !in_array($appointment->status, ['completed', 'canceled']) &&
+    auth()->id() === $appointment->salesperson_id &&
+    auth()->user()->role === 'salesperson'
+)
   {{-- SHOW appointment card --}}
   <div id="customer-list" class="transition-opacity duration-300">
     <div
@@ -33,6 +36,9 @@
       class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
       data-name="{{ $appointment->customer_name }}"
       data-phone="{{ $appointment->customer_phone }}"
+      data-customer-id="{{ $appointment->customer_id }}"
+      data-status="{{ $appointment->status }}"
+      data-salesperson-id="{{ $appointment->salesperson_id }}"
     >
 
       <div class="flex justify-between items-center">
@@ -43,21 +49,22 @@
         <p>
           <span class="font-medium text-gray-400">Sales Person:</span>
           <span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full ml-2">
-             {{ $appointment->salesperson->name ?? 'N/A' }}
+            {{ $appointment->salesperson->name ?? 'N/A' }}
           </span>
         </p>
         <p><span class="font-medium text-gray-400">Name:</span> {{ $appointment->customer_name }}</p>
-        <p><span class="font-medium text-gray-400">Phone No :</span> {{ $appointment->customer_phone ?? '–' }}</p>
+        <p><span class="font-medium text-gray-400">Phone No:</span> {{ $appointment->customer_phone ?? '–' }}</p>
         <p><span class="font-medium text-gray-400">Date & Time:</span> {{ $appointment->date }} {{ $appointment->time }}</p>
       </div>
 
       <div class="w-full">
         <button
-          class="w-full mt-4 bg-gray-800 text-white rounded text-sm transition font-semibold px-6 py-2 rounded">
+          class="w-full mt-4 bg-gray-800 text-white rounded text-sm transition font-semibold px-6 py-2">
           Transfer
         </button>
       </div>
     </div>
   </div>
 @endif
+
 
