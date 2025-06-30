@@ -11,8 +11,8 @@
     <div class="py-6">
         <div class="container mx-auto space-y-6 py-6 px-4">
             <div class="flex items-center justify-end mb-4 px-6">
-                <a href="{{ route('appointment.create') }}" class="text-white px-4 py-2 rounded"
-                   style="background-color: #111827;">
+                <a href="{{ route('appointment.create') }}" class="text-white px-3 bg-gray-800 py-1.5 rounded"
+                   >
                     Add Appointments
                 </a>
             </div>
@@ -58,30 +58,30 @@
     @csrf
     <input type="hidden" name="appointment_id" value="{{ $appt->id }}">
     <button type="submit"
-            class="text-white font-bold py-2 px-4 rounded"
-            style="background-color: #111827;">
+            class="bg-gray-800 text-white px-3 py-1.5 rounded "
+            >
         Customer Arrive
     </button>
 </form>
 
 
                                                     <a href="{{ route('appointments.edit', ['appointment' => $appt->id]) }}"
-                                                         class="text-white font-bold py-2 px-4 rounded"
-                                                       style="background-color: #111827;">
+                                                         class="bg-gray-800 text-white px-3 py-1.5 rounded"
+                                                       >
                                                         Edit
                                                     </a>
                                                 @endif
 
                                                 @if (Auth::user()->hasRole(['Admin', 'Sales Manager']))
                                                     <a href="{{ route('sales.perosn', ['id' => $appt->id]) }}"
-                                                       class="text-white font-bold py-2 px-4 rounded"
-                                                       style="background-color: #111827;">
+                                                       class="bg-gray-800 text-white px-3 py-1.5 rounded "
+                                                       >
                                                         Customer Arrive
                                                     </a>
 
                                                     <a href="{{ route('appointments.edit', ['appointment' => $appt->id]) }}"
-                                                       class="text-yellow-600 border border-yellow-600 font-bold py-2 px-4 rounded hover:bg-yellow-600 hover:text-white transition"
-                                                       style="background-color:#111827; color:white;">
+                                                       class="bg-gray-800 text-white px-3 py-1.5 rounded"
+                                                      >
                                                         Edit
                                                     </a>
                                                 @endif

@@ -106,7 +106,7 @@
                     <!-- Submit -->
                     <div class="flex justify-end">
                         <button type="submit"
-                            class="py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            class="bg-gray-800 text-white px-3 py-1.5 rounded ">
                             Update Appointment
                         </button>
                     </div>

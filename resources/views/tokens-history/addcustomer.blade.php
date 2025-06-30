@@ -98,7 +98,7 @@
     <!-- Save Button -->
     <div class="text-right mt-6">
       <button type="submit"
-        class="bg-[#111827] hover:bg-gray-800 text-white font-semibold px-5 py-3 rounded-xl">
+        class="bg-gray-800 text-white px-3 py-1.5 rounded">
         Save
       </button>
     </div>
@@ -110,8 +110,8 @@
 
       {{-- Modal Trigger --}}
       <div class="md:col-span-2 text-right mt-4">
-        <button id="openModalBtn" type="button" style="background-color: #111827;"
-          class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl">
+        <button id="openModalBtn" type="button" 
+          class="bg-gray-800 text-white px-3 py-1.5 rounded ">
           Close
         </button>
       </div>

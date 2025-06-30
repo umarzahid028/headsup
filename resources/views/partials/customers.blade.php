@@ -76,7 +76,7 @@
 
         <div class="w-full">
           <button
-  class="transfer-btn w-full mt-4 bg-[#111827] text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-[#0f172a] transition"
+  class="w-full mt-4 bg-gray-800 text-white rounded text-sm  transition  font-semibold px-6 py-2 rounded "
   data-customer-id="{{ $customer->id }}"
   data-customer-name="{{ $customer->name }}"
 >

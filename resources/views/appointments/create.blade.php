@@ -92,8 +92,8 @@
 
                     <!-- Submit Button -->
                     <div style="display: flex; justify-content:end;">
-                        <button type="submit" style="background-color: #111827; margin-top: auto;"
-                            class="py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <button type="submit" style="margin-top: auto;"
+                            class="text-white px-3 py-1.5 rounded bg-gray-800">
                             Book Appointment
                         </button>
                     </div>

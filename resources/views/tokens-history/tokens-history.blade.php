@@ -80,7 +80,7 @@
     <div class="py-6">
         <div class="container mx-auto space-y-6 py-6 px-4">
             <div class="flex items-center justify-end mb-4 px-6">
-                <a href="{{ route('add.customer') }}" class="bg-black text-white px-4 py-2 rounded">
+                <a href="{{ route('add.customer') }}" class="bg-gray-800 text-white px-3 py-1.5 rounded ">
                     Add Customer
                 </a>
             </div>

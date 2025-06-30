@@ -64,7 +64,7 @@
         <div class="container mx-auto space-y-6 py-6 px-4">
             @role('Admin|Sales Manager')
             <div class="flex items-center justify-end mb-4 px-6">
-                <a href="{{ route('create.saleperson') }}" class="text-white px-4 py-2 rounded bg-gray-800"
+                <a href="{{ route('create.saleperson') }}" class="text-white px-3 py-1.5 rounded bg-gray-800"
                   >
                     Add User
                 </a>

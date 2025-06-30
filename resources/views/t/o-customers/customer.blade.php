@@ -102,8 +102,8 @@
                                   </fieldset>
       
                                   <div class="text-right mt-4">
-                                      <button type="submit" style="background-color: #111827;"
-                                          class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-3 rounded-xl">
+                                      <button type="submit"
+                                          class="bg-gray-800 text-white px-3 py-1.5 rounded">
                                           Save
                                       </button>
                                   </div>
@@ -113,8 +113,8 @@
       
                       <!-- Modal Trigger -->
                       <div class="md:col-span-2 text-right mt-4">
-                          <button id="openModalBtn" style="background-color: #111827;" type="button"
-                              class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl">
+                          <button id="openModalBtn" type="button"
+                              class="bg-gray-800 text-white px-3 py-1.5 rounded">
                               Close
                           </button>
                       </div>

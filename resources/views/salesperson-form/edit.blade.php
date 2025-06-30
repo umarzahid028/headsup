@@ -174,7 +174,7 @@ div.swal2-container div.swal2-popup {
         <!-- Submit Button -->
         <div class="mt-6" style="display:flex; justify-content: end;">
             <button type="submit" style="background-color: #111827;"
-                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 shadow">
+                    class="bg-gray-800 text-white px-3 py-1.5 rounded">
                 Update
             </button>
         </div>

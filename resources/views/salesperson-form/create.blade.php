@@ -148,8 +148,8 @@
 
             <!-- Submit Button -->
             <div class="mt-6 flex justify-end">
-                <button type="submit" style="background-color: #111827;"
-                    class="text-white px-4 py-2 rounded-md hover:bg-gray-900 shadow">
+                <button type="submit"
+                    class="text-white px-3 py-1.5 rounded bg-gray-800">
                     Create User
                 </button>
             </div>

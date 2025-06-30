@@ -207,8 +207,8 @@
             </fieldset>
 
             <div class="text-right mt-4">
-              <button type="submit" style="background-color: #111827;"
-                class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-md">
+              <button type="submit"
+                class="bg-gray-800 text-white px-3 py-1.5 rounded ">
                 Save
               </button>
             </div>
@@ -218,12 +218,12 @@
 
       <!-- Modal Trigger -->
       <div class="md:col-span-2 text-right mt-4">
-       <button id="openModalBtn" style="background-color: #111827;" type="button"
-          class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-md">
+       <button id="openModalBtn"  type="button"
+          class="bg-gray-800 text-white px-3 py-1.5 rounded">
           Close
         </button>
-<button id="toBtn" type="button" style="background-color: #111827;"
-  class=" text-white font-semibold px-6 py-3 rounded-md gap-2">
+<button id="toBtn" type="button" 
+  class="bg-gray-800 text-white px-3 py-1.5 rounded">
   
   <span class="btn-label">T/O</span>
 
@@ -295,18 +295,18 @@
 <!-- Take Customer Button (Initially hidden) -->
 <button
   id="newCustomerBtn"
-  type="button" style="background-color: #111827;"
-  class="w-full bg-gray-400 text-white font-semibold px-6 py-2 rounded-md mb-4 hidden flex items-center justify-center gap-2"
+  type="button" 
+  class="w-full bg-gray-800 text-white font-semibold px-6 py-2 rounded mb-4 hidden flex items-center justify-center gap-2"
 >
-  <span class="spinner hidden w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+  <span class="spinner hidden w-5 h-5 border-2 border-white border-t-transparent rounded animate-spin"></span>
   <span class="btn-text">Take Customer</span>
 </button>
 
 
 <button
   id="addCustomerBtn"
-  type="button" style="background-color: #111827;"
-  class="w-full bg-gray-400 text-white font-semibold px-6 py-2 rounded-md mb-4 hidden">
+  type="button" 
+  class="w-full bg-gray-800 text-white  px-6 py-2 rounded mb-4 hidden">
   Add Customer
 </button>
 
