@@ -64,8 +64,8 @@
         <div class="container mx-auto space-y-6 py-6 px-4">
             @role('Admin|Sales Manager')
             <div class="flex items-center justify-end mb-4 px-6">
-                <a href="{{ route('create.saleperson') }}" class="text-white px-4 py-2 rounded"
-                   style="background-color: #111827;">
+                <a href="{{ route('create.saleperson') }}" class="text-white px-4 py-2 rounded bg-gray-800"
+                  >
                     Add User
                 </a>
             </div>
@@ -98,18 +98,18 @@
                                 <td class="border-b px-4 py-3">
                                     <div class="flex gap-1">
                                         <a href="{{ route('edit.saleperson', $person->id) }}"
-                                             class="text-white font-bold py-2 px-4 rounded"
-                                                       style="background-color: #111827;">
+                                             class="text-white font-bold py-2 px-4 rounded bg-gray-800"
+                                                      >
                                             Edit
                                         </a>
                                         <button data-id="{{ $person->id }}"
-    class="delete-user text-white font-bold py-2 px-4 rounded"
-    style="background-color: #111827;">
+    class="delete-user text-white font-bold py-2 px-4 rounded bg-gray-800"
+   >
     Delete
 </button>
 @if($person->hasRole('Sales person'))
     <a href="{{ route('activity.report', ['user_id' => $person->id]) }}"
-       class="bg-gray-900 text-white font-bold py-2 px-4 rounded">
+       class="bg-gray-800 text-white font-bold py-2 px-4 rounded ">
         Activity
     </a>
 @endif
@@ -120,8 +120,8 @@
                                             action="{{ route('sales.person.checkout', $person->latestQueue->id) }}" method="POST">
                                             @csrf
                                             <button type="submit"
-                                                  class="check-out-btn text-white font-bold py-2 px-4 rounded"
-                                                       style="background-color: #111827;"
+                                                  class="check-out-btn text-white font-bold py-2 px-4 rounded bg-gray-800"
+                                                       
                                                 >
 
                                                 <span class="btn-text">Check Out</span>
