@@ -333,40 +333,36 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script>
-    function toggleForm() {
-      const form = document.getElementById('formContainer');
-      form.classList.toggle('hidden');
-    }
-  </script>
 <script>
+  let selectedCardId = null;
+
+  function toggleForm() {
+    const form = document.getElementById('formContainer');
+    form.classList.toggle('hidden');
+  }
+
   function bindAppointmentCardLogic() {
     const form = document.getElementById('salesForm');
-    const appointmentCard = document.querySelector('#appointment-card');
+    const appointmentCards = document.querySelectorAll('.customer-card');
     const nameInput = document.getElementById('nameInput');
     const phoneInput = document.getElementById('phoneInput');
     const idInput = document.getElementById('customerId');
 
-    if (appointmentCard && form) {
-      appointmentCard.addEventListener('click', () => {
-        nameInput.value = '';
-        phoneInput.value = '';
-        idInput.value = '';
+    appointmentCards.forEach(card => {
+      card.addEventListener('click', () => {
+        const name = card.dataset.name || '';
+        const phone = card.dataset.phone || '';
+        const id = card.dataset.customerId || '';
 
-        setTimeout(() => {
-          nameInput.value = appointmentCard.dataset.name || '';
-          phoneInput.value = appointmentCard.dataset.phone || '';
-          idInput.value = appointmentCard.dataset.customerId || '';
+        nameInput.value = name;
+        phoneInput.value = phone;
+        idInput.value = id;
 
-          document.querySelectorAll('.customer-card').forEach(card => {
-            card.classList.remove('active-card');
-          });
-          appointmentCard.classList.add('active-card');
-        }, 50);
+        document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
+        card.classList.add('active-card');
+        selectedCardId = card.id;
       });
-
-      appointmentCard.click(); 
-    }
+    });
   }
 
   function checkDuplicateName() {
@@ -387,7 +383,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     bindAppointmentCardLogic();    
-    checkDuplicateName();         
+    checkDuplicateName();
 
     setInterval(() => {
       fetch('/appointment/section')
@@ -397,10 +393,17 @@
 
           bindAppointmentCardLogic();
           checkDuplicateName();
+
+          // Restore selected card highlight, but don't refill form
+          if (selectedCardId) {
+            const selectedCard = document.getElementById(selectedCardId);
+            if (selectedCard) selectedCard.classList.add('active-card');
+          }
         });
     }, 3000);
   });
 </script>
+
 
 
 <script>
