@@ -805,6 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 
+
 <script>
   let currentTurnUserId = null;
   let isMyTurn = false;
@@ -824,7 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function toggleButtons() {
     const nameVal = nameInput.value.trim();
     const hasCustomerId = document.getElementById('customerId').value.trim() !== '';
-    const hasAppointmentId = document.getElementById('appointmentId')?.value.trim() !== ''; // ✅ check for appointment ID
+    const hasAppointmentId = document.getElementById('appointmentId')?.value.trim() !== '';
     let otherFieldFilled = false;
 
     inputs.forEach(input => {
@@ -836,7 +837,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ready =
       (nameVal !== '' && otherFieldFilled) ||
       (nameVal !== '' && hasCustomerId) ||
-      (nameVal !== '' && hasAppointmentId); // ✅ new condition added
+      (nameVal !== '' && hasAppointmentId); // ✅ appointment id logic
 
     if (ready) {
       addBtn.classList.remove('hidden');
