@@ -398,7 +398,7 @@
           bindAppointmentCardLogic();
           checkDuplicateName();
         });
-    }, 10000);
+    }, 3000);
   });
 </script>
 
