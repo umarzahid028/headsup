@@ -333,13 +333,12 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script>
-    function toggleForm() {
-      const form = document.getElementById('formContainer');
-      form.classList.toggle('hidden');
-    }
-  </script>
 <script>
+  function toggleForm() {
+    const form = document.getElementById('formContainer');
+    form.classList.toggle('hidden');
+  }
+
   function bindAppointmentCardLogic() {
     const form = document.getElementById('salesForm');
     const appointmentCard = document.querySelector('#appointment-card');
@@ -362,10 +361,19 @@
             card.classList.remove('active-card');
           });
           appointmentCard.classList.add('active-card');
+
+          // Save in localStorage
+          if (appointmentCard.dataset.customerId) {
+            localStorage.setItem('activeCustomerId', appointmentCard.dataset.customerId);
+          }
         }, 50);
       });
 
-      appointmentCard.click(); 
+      // If this appointment is active in localStorage, click it
+      const activeId = localStorage.getItem('activeCustomerId');
+      if (activeId && appointmentCard.dataset.customerId === activeId) {
+        appointmentCard.click();
+      }
     }
   }
 
@@ -395,12 +403,20 @@
         .then(html => {
           document.getElementById("appointment-wrapper").innerHTML = html;
 
-          bindAppointmentCardLogic();
-          checkDuplicateName();
+          bindAppointmentCardLogic();  // re-bind
+          checkDuplicateName();        // re-check
+
+          // auto-select appointment card again
+          const activeId = localStorage.getItem('activeCustomerId');
+          const card = document.querySelector(`.customer-card[data-customer-id="${activeId}"]`);
+          if (card && card.id === "appointment-card") {
+            card.click();
+          }
         });
     }, 3000);
   });
 </script>
+
 
 
 <script>
@@ -1104,9 +1120,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Bind click to each customer card
+    // Bind click to each customer card except appointment-card
     function bindCardClickEvents() {
       document.querySelectorAll('.customer-card').forEach(card => {
+        if (card.id === 'appointment-card') return; // Skip appointment card
+
         card.addEventListener('click', () => {
           const customerId = card.dataset.customerId;
           if (!customerId) return;
@@ -1117,6 +1135,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (card.dataset.phone) form.querySelector('input[name="phone"]').value = card.dataset.phone ?? '';
           if (card.dataset.interest) form.querySelector('input[name="interest"]').value = card.dataset.interest ?? '';
 
+          // Process checkboxes
           form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
           if (card.dataset.process) {
             card.dataset.process.split(',').forEach(proc => {
@@ -1126,6 +1145,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
           }
 
+          // UI highlight
           document.querySelectorAll('.customer-card').forEach(c => {
             c.classList.remove('active-card');
             c.classList.remove('pause-animation');
@@ -1137,29 +1157,30 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Apply last selected card (includes appointment-card now)
+    // Apply last selected customer card (skip appointment card)
     function applyActiveCard() {
       const savedId = localStorage.getItem('activeCustomerId');
-      const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`) ||
-                        document.querySelector(`#appointment-card[data-customer-id="${savedId}"]`);
+      const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
 
-      if (!savedCard) return;
+      if (!savedCard || savedCard.id === 'appointment-card') return;
 
       savedCard.classList.add('active-card');
-      idInput.value = savedId;
+      if (!idInput.value || idInput.value === savedId) {
+        idInput.value = savedId;
 
-      if (savedCard.dataset.name) nameInput.value = savedCard.dataset.name;
-      if (savedCard.dataset.email) form.querySelector('input[name="email"]').value = savedCard.dataset.email ?? '';
-      if (savedCard.dataset.phone) form.querySelector('input[name="phone"]').value = savedCard.dataset.phone ?? '';
-      if (savedCard.dataset.interest) form.querySelector('input[name="interest"]').value = savedCard.dataset.interest ?? '';
+        if (savedCard.dataset.name) nameInput.value = savedCard.dataset.name;
+        if (savedCard.dataset.email) form.querySelector('input[name="email"]').value = savedCard.dataset.email;
+        if (savedCard.dataset.phone) form.querySelector('input[name="phone"]').value = savedCard.dataset.phone;
+        if (savedCard.dataset.interest) form.querySelector('input[name="interest"]').value = savedCard.dataset.interest;
 
-      form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
-      if (savedCard.dataset.process) {
-        savedCard.dataset.process.split(',').forEach(proc => {
-          const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
-            .find(cb => cb.value.trim() === proc.trim());
-          if (checkbox) checkbox.checked = true;
-        });
+        form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+        if (savedCard.dataset.process) {
+          savedCard.dataset.process.split(',').forEach(proc => {
+            const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
+              .find(cb => cb.value.trim() === proc.trim());
+            if (checkbox) checkbox.checked = true;
+          });
+        }
       }
     }
 
@@ -1178,7 +1199,6 @@ document.addEventListener('DOMContentLoaded', () => {
     applyActiveCard();
   });
 </script>
-
 
 
 <script>
