@@ -1023,6 +1023,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const nameInput = form.querySelector('input[name="name"]');
     const newCustomerBtn = document.getElementById('newCustomerBtn');
     const addCustomerBtn = document.getElementById('addCustomerBtn');
+    const appointmentInput = form.querySelector('input[name="appointment_id"]');
 
     let debounceTimeout;
     let customerSavedThisTurn = false;
@@ -1123,8 +1124,7 @@ document.addEventListener('DOMContentLoaded', () => {
           form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
           if (card.dataset.process) {
             card.dataset.process.split(',').forEach(proc => {
-              const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
-                .find(cb => cb.value.trim() === proc.trim());
+              const checkbox = [...form.querySelectorAll('input[name="process[]"]')].find(cb => cb.value.trim() === proc.trim());
               if (checkbox) checkbox.checked = true;
             });
           }
@@ -1160,8 +1160,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
         if (savedCard.dataset.process) {
           savedCard.dataset.process.split(',').forEach(proc => {
-            const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
-              .find(cb => cb.value.trim() === proc.trim());
+            const checkbox = [...form.querySelectorAll('input[name="process[]"]')].find(cb => cb.value.trim() === proc.trim());
             if (checkbox) checkbox.checked = true;
           });
         }
@@ -1176,6 +1175,12 @@ document.addEventListener('DOMContentLoaded', () => {
           activeCard.classList.add('pause-animation');
         }
       });
+    }
+
+    // ✅ Show Add Customer if appointment_id exists
+    if (appointmentInput && appointmentInput.value.trim() !== '') {
+      if (addCustomerBtn) addCustomerBtn.classList.remove('hidden');
+      if (newCustomerBtn) newCustomerBtn.classList.add('hidden');
     }
 
     // Init
