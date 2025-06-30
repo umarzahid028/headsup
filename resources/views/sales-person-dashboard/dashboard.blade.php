@@ -333,12 +333,13 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    function toggleForm() {
+      const form = document.getElementById('formContainer');
+      form.classList.toggle('hidden');
+    }
+  </script>
 <script>
-  function toggleForm() {
-    const form = document.getElementById('formContainer');
-    form.classList.toggle('hidden');
-  }
-
   function bindAppointmentCardLogic() {
     const form = document.getElementById('salesForm');
     const appointmentCard = document.querySelector('#appointment-card');
@@ -361,19 +362,10 @@
             card.classList.remove('active-card');
           });
           appointmentCard.classList.add('active-card');
-
-          // Save in localStorage
-          if (appointmentCard.dataset.customerId) {
-            localStorage.setItem('activeCustomerId', appointmentCard.dataset.customerId);
-          }
         }, 50);
       });
 
-      // If this appointment is active in localStorage, click it
-      const activeId = localStorage.getItem('activeCustomerId');
-      if (activeId && appointmentCard.dataset.customerId === activeId) {
-        appointmentCard.click();
-      }
+      appointmentCard.click(); 
     }
   }
 
@@ -403,20 +395,12 @@
         .then(html => {
           document.getElementById("appointment-wrapper").innerHTML = html;
 
-          bindAppointmentCardLogic();  // re-bind
-          checkDuplicateName();        // re-check
-
-          // auto-select appointment card again
-          const activeId = localStorage.getItem('activeCustomerId');
-          const card = document.querySelector(`.customer-card[data-customer-id="${activeId}"]`);
-          if (card && card.id === "appointment-card") {
-            card.click();
-          }
+          bindAppointmentCardLogic();
+          checkDuplicateName();
         });
     }, 3000);
   });
 </script>
-
 
 
 <script>
