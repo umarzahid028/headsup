@@ -1017,6 +1017,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('salesForm');
     const fields = form.querySelectorAll('input, textarea');
     const newCustomerBtn = document.getElementById('newCustomerBtn');
+    const addCustomerBtn = document.getElementById('addCustomerBtn');
+
     let debounceTimeout;
     let customerSavedThisTurn = false;
 
@@ -1070,14 +1072,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = await response.json();
 
         if (result.status === 'success') {
-          loadCustomers();
-
           if (result.id && !idInput.value) {
             idInput.value = result.id;
             localStorage.setItem('activeCustomerId', result.id);
           }
 
           customerSavedThisTurn = true;
+
+          // Load updated customer list
+          await loadCustomers();
         }
       } catch (err) {
         console.error('Auto-save failed', err);
@@ -1101,23 +1104,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // 🔄 Bind card click and form fill
+    // Bind click events to customer cards
     function bindCardClickEvents() {
       document.querySelectorAll('.customer-card').forEach(card => {
         card.addEventListener('click', () => {
           const customerId = card.dataset.customerId;
-
           if (!customerId) return;
 
-          // Fill the form with card data
+          // Fill form fields from card dataset
           form.querySelector('input[name="id"]').value = customerId;
-          form.querySelector('input[name="name"]').value = card.dataset.name || '';
-          form.querySelector('input[name="email"]').value = card.dataset.email || '';
-          form.querySelector('input[name="phone"]').value = card.dataset.phone || '';
-          form.querySelector('input[name="interest"]').value = card.dataset.interest || '';
+          if (card.dataset.name) form.querySelector('input[name="name"]').value = card.dataset.name;
+          if (card.dataset.email) form.querySelector('input[name="email"]').value = card.dataset.email;
+          if (card.dataset.phone) form.querySelector('input[name="phone"]').value = card.dataset.phone;
+          if (card.dataset.interest) form.querySelector('input[name="interest"]').value = card.dataset.interest;
 
           form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
-
           if (card.dataset.process) {
             card.dataset.process.split(',').forEach(proc => {
               const checkbox = Array.from(form.querySelectorAll('input[name="process[]"]'))
@@ -1132,60 +1133,62 @@ document.addEventListener('DOMContentLoaded', () => {
             c.classList.remove('pause-animation');
           });
 
-          // ✅ Apply animation only if this card is in form
-          const formId = form.querySelector('input[name="id"]').value;
-          if (formId === customerId) {
-            card.classList.add('active-card');
-            localStorage.setItem('activeCustomerId', customerId);
-          }
+          // Set active card
+          card.classList.add('active-card');
+          localStorage.setItem('activeCustomerId', customerId);
         });
       });
     }
 
-    // 🔁 Apply animation to card if still active after reload
+    // Apply active card after reload
     function applyActiveCard() {
       const savedId = localStorage.getItem('activeCustomerId');
       const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
 
-      // Remove all card animations first
+      // Remove animations first
       document.querySelectorAll('.customer-card').forEach(c => {
         c.classList.remove('active-card');
         c.classList.remove('pause-animation');
       });
 
       if (savedCard) {
-        // Load saved card data into form
-        form.querySelector('input[name="id"]').value = savedCard.dataset.customerId || '';
-        form.querySelector('input[name="name"]').value = savedCard.dataset.name || '';
-        form.querySelector('input[name="email"]').value = savedCard.dataset.email || '';
-        form.querySelector('input[name="phone"]').value = savedCard.dataset.phone || '';
-        form.querySelector('input[name="interest"]').value = savedCard.dataset.interest || '';
+        const formId = form.querySelector('input[name="id"]').value;
+        if (!formId || formId === savedCard.dataset.customerId) {
+          form.querySelector('input[name="id"]').value = savedCard.dataset.customerId || '';
 
-        form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
-        if (savedCard.dataset.process) {
-          savedCard.dataset.process.split(',').forEach(proc => {
-            const checkbox = Array.from(form.querySelectorAll('input[name="process[]"]'))
-              .find(cb => cb.value.trim() === proc.trim());
-            if (checkbox) checkbox.checked = true;
-          });
+          if (savedCard.dataset.name) form.querySelector('input[name="name"]').value = savedCard.dataset.name;
+          if (savedCard.dataset.email) form.querySelector('input[name="email"]').value = savedCard.dataset.email;
+          if (savedCard.dataset.phone) form.querySelector('input[name="phone"]').value = savedCard.dataset.phone;
+          if (savedCard.dataset.interest) form.querySelector('input[name="interest"]').value = savedCard.dataset.interest;
+
+          form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+          if (savedCard.dataset.process) {
+            savedCard.dataset.process.split(',').forEach(proc => {
+              const checkbox = Array.from(form.querySelectorAll('input[name="process[]"]'))
+                .find(cb => cb.value.trim() === proc.trim());
+              if (checkbox) checkbox.checked = true;
+            });
+          }
+
+          savedCard.classList.add('active-card');
         }
-
-        // Apply animation
-        savedCard.classList.add('active-card');
       }
     }
 
+    // Pause animation when adding new customer
+    addCustomerBtn.addEventListener('click', () => {
+      const activeCard = document.querySelector('.active-card');
+      if (activeCard) {
+        activeCard.classList.add('pause-animation');
+      }
+    });
+
+    // Init
     bindCardClickEvents();
     applyActiveCard();
   });
-    const addCustomerBtn = document.getElementById('addCustomerBtn');
-  addCustomerBtn.addEventListener('click', () => {
-    const activeCard = document.querySelector('.active-card');
-    if (activeCard) {
-      activeCard.classList.add('pause-animation');
-    }
-  });
 </script>
+
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
