@@ -25,10 +25,11 @@
 </style>
 @if(
     $appointment &&
-    $appointment->id &&
+    request('id') == $appointment->id && {{-- ✅ Show only when URL has the correct appointment ID --}}
     !in_array($appointment->status, ['completed', 'canceled']) &&
     auth()->id() === $appointment->salesperson_id
 )
+
   {{-- SHOW appointment card --}}
   <div id="customer-list" class="transition-opacity duration-300">
     <div
