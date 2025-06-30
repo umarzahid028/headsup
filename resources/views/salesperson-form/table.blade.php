@@ -95,52 +95,47 @@
                                     {{ $person->roles->first()->name ?? 'No Role' }}
                                 </td>
 
-                                <td class="border-b px-4 py-3">
-                                    <div class="flex gap-1">
-                                        <a href="{{ route('edit.saleperson', $person->id) }}"
-                                             class="text-white font-bold py-2 px-4 rounded bg-gray-800"
-                                                      >
-                                            Edit
-                                        </a>
-                                        <button data-id="{{ $person->id }}"
-    class="delete-user text-white font-bold py-2 px-4 rounded bg-gray-800"
-   >
-    Delete
-</button>
-@if($person->hasRole('Sales person'))
-    <a href="{{ route('activity.report', ['user_id' => $person->id]) }}"
-       class="bg-gray-800 text-white font-bold py-2 px-4 rounded ">
-        Activity
-    </a>
-@endif
+                             <td class="border-b px-4 py-3">
+    <div class="flex gap-1">
+        <a href="{{ route('edit.saleperson', $person->id) }}"
+           class="text-white font-bold px-3 py-1.5 rounded bg-gray-800">
+            Edit
+        </a>
 
+        <button data-id="{{ $person->id }}"
+                class="delete-user text-white font-bold px-3 py-1.5 rounded bg-gray-800">
+            Delete
+        </button>
 
-                                        @if( isset($person->latestQueue) && $person->latestQueue->checked_in_at && is_null($person->latestQueue->checked_out_at))
-                                        <form class="check-out-form"
-                                            action="{{ route('sales.person.checkout', $person->latestQueue->id) }}" method="POST">
-                                            @csrf
-                                            <button type="submit"
-                                                  class="check-out-btn text-white font-bold py-2 px-4 rounded bg-gray-800"
-                                                       
-                                                >
+        @if($person->hasRole('Sales person'))
+            <a href="{{ route('activity.report', ['user_id' => $person->id]) }}"
+               class="bg-gray-800 text-white font-bold px-3 py-1.5 rounded">
+                Activity
+            </a>
+        @endif
 
-                                                <span class="btn-text">Check Out</span>
+        @if(isset($person->latestQueue) && $person->latestQueue->checked_in_at && is_null($person->latestQueue->checked_out_at))
+            <form class="check-out-form"
+                  action="{{ route('sales.person.checkout', $person->latestQueue->id) }}" method="POST">
+                @csrf
+                <button type="submit"
+                        class="check-out-btn text-white font-bold px-3 py-1.5 rounded bg-gray-800">
+                    <span class="btn-text">Check Out</span>
 
-                                                <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white"
-                                                    xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                    viewBox="0 0 24 24">
-                                                    <circle class="opacity-25" cx="12" cy="12" r="10"
-                                                        stroke="currentColor" stroke-width="4" />
-                                                    <path class="opacity-75" fill="currentColor"
-                                                        d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
-                                                </svg>
-                                            </button>
-                                        </form>
-                                        @endif
+                    <svg class="btn-spinner hidden animate-spin h-4 w-4 text-white"
+                         xmlns="http://www.w3.org/2000/svg" fill="none"
+                         viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10"
+                                stroke="currentColor" stroke-width="4" />
+                        <path class="opacity-75" fill="currentColor"
+                              d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+                    </svg>
+                </button>
+            </form>
+        @endif
+    </div>
+</td>
 
-                                    </div>
-
-                                </td>
                             </tr>
                             @empty
                             <tr>
