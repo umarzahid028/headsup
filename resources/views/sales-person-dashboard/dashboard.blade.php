@@ -811,17 +811,17 @@ document.addEventListener('DOMContentLoaded', () => {
   let isMyTurn = false;
   let wasTurnBefore = false;
   let cardClicked = false;
-  let customerSavedThisTurn = false;
-
+  let customerSavedThisTurn = false; // ✅ NEW FLAG
+  
   const form = document.getElementById('salesForm');
   const nameInput = document.getElementById('nameInput');
   const addBtn = document.getElementById('addCustomerBtn');
   const takeBtn = document.getElementById('newCustomerBtn');
-
+  
   nameInput.readOnly = true;
 
   const inputs = form.querySelectorAll('input[type="text"], input[type="email"], textarea');
-
+  
   function isFormReadyForAdd() {
     const nameVal = nameInput.value.trim();
     let otherFieldFilled = false;
@@ -834,12 +834,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return nameVal !== '' && otherFieldFilled;
   }
-
+  
   function toggleButtons() {
     const ready = isFormReadyForAdd();
-    const hasCustomerId = document.getElementById('customerId').value.trim() !== '';
 
-    if (ready && hasCustomerId) {
+    if (ready) {
       addBtn.classList.remove('hidden');
       takeBtn.classList.add('hidden');
     } else {
@@ -859,31 +858,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!card) return;
 
     cardClicked = true;
-    customerSavedThisTurn = false;
-
+    customerSavedThisTurn = false; // ✅ NEW: Reset on card click
+    
     const name = card.dataset.customerName || '';
     const customerId = card.dataset.customerId || '';
-
+    
     nameInput.value = name;
     document.getElementById('customerId').value = customerId;
 
     toggleButtons();
     updateNameInputState();
   });
-
+  
   inputs.forEach(input => {
     input.addEventListener('input', toggleButtons);
   });
-
+  
   addBtn.addEventListener('click', function () {
     form.reset();
-
+    
     document.getElementById('customerId').value = "";
     document.getElementById('nameInput').value = "";
     document.getElementById('emailInput').value = "";
     document.getElementById('phoneInput').value = "";
     document.getElementById('interestInput').value = "";
-
+    
     toggleButtons();
   });
 
@@ -895,7 +894,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#newCustomerBtn .spinner').removeClass('hidden');
     $('#newCustomerBtn .btn-text').text('Taking...');
     $('#newCustomerBtn').prop('disabled', true);
-
+    
     $.get('/check-in-status')
       .done(res => {
         if (!res.is_checked_in) {
@@ -917,7 +916,7 @@ document.addEventListener('DOMContentLoaded', () => {
           resetTakeButtonUI();
           return;
         }
-
+        
         if (!nameVal) {
           Swal.fire({
             icon: 'warning',
@@ -943,7 +942,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             cardClicked = false;
-            customerSavedThisTurn = false;
+            customerSavedThisTurn = false; // ✅ ALLOW NEXT TURN TO SAVE
             updateTurnStatus();
           },
           error: () => {
@@ -975,7 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateTurnStatus() {
     $.get('/next-turn-status')
-      .done(res => {
+    .done(res => {
         isMyTurn = res.is_your_turn;
         currentTurnUserId = res.current_turn_user_id;
         const userName = res.user_name || "User";
@@ -993,7 +992,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           $('#turn-status').text('⏳ Waiting for your turn...');
         }
-
+        
         wasTurnBefore = isMyTurn;
         updateNameInputState();
         toggleButtons();
@@ -1005,14 +1004,13 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleButtons();
       });
   }
-
+  
   $(document).ready(() => {
     toggleButtons();
     updateTurnStatus();
     setInterval(updateTurnStatus, 10000);
   });
 </script>
-
 
 <!-- form auto save -->
 <script>
