@@ -824,6 +824,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function toggleButtons() {
     const nameVal = nameInput.value.trim();
     const hasCustomerId = document.getElementById('customerId').value.trim() !== '';
+    const hasAppointmentId = document.getElementById('appointmentId')?.value.trim() !== ''; // ✅ check for appointment ID
     let otherFieldFilled = false;
 
     inputs.forEach(input => {
@@ -833,8 +834,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const ready =
-      (nameVal !== '' && otherFieldFilled) || // original logic
-      (nameVal !== '' && hasCustomerId);      // new condition: name + ID
+      (nameVal !== '' && otherFieldFilled) ||
+      (nameVal !== '' && hasCustomerId) ||
+      (nameVal !== '' && hasAppointmentId); // ✅ new condition added
 
     if (ready) {
       addBtn.classList.remove('hidden');
@@ -881,8 +883,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('phoneInput').value = "";
     document.getElementById('interestInput').value = "";
 
-    cardClicked = false; // ✅ FIX: Prevent typing name unless it's your turn or a card is selected
-    updateNameInputState(); // ✅ FIX: Enforce readonly on name field
+    cardClicked = false;
+    updateNameInputState();
     toggleButtons();
   });
 
@@ -1011,6 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateTurnStatus, 10000);
   });
 </script>
+
 
 
 
