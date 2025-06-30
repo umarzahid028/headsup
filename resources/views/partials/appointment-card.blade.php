@@ -23,14 +23,14 @@
 }
 
 </style>
-@if($appointment && $appointment->status !== 'completed')
+@if($appointment && $appointment->status !== 'completed' && auth()->id() === $appointment->salesperson_id)
   <div id="customer-list" class="transition-opacity duration-300">
-   <div
-  id="appointment-card"
-  class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
-  data-name="{{ $appointment->customer_name }}"
-  data-phone="{{ $appointment->customer_phone }}"
->
+    <div
+      id="appointment-card"
+      class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
+      data-name="{{ $appointment->customer_name }}"
+      data-phone="{{ $appointment->customer_phone }}"
+    >
 
       <div class="flex justify-between items-center">
         <h2 class="text-xl font-semibold text-gray-800">Appointment Details</h2>
@@ -50,11 +50,11 @@
 
       <div class="w-full">
         <button
-          class="w-full mt-4 bg-gray-800 text-white rounded text-sm  transition  font-semibold px-6 py-2 rounded ">
+          class="w-full mt-4 bg-gray-800 text-white rounded text-sm transition font-semibold px-6 py-2 rounded">
           Transfer
         </button>
-
       </div>
     </div>
   </div>
 @endif
+
