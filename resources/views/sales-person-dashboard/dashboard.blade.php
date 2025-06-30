@@ -351,23 +351,21 @@
       appointmentCard.addEventListener('click', () => {
         const status = appointmentCard.dataset.status;
 
-        // Clear form fields first
+        // Always clear fields
         nameInput.value = '';
         phoneInput.value = '';
         idInput.value = '';
 
-        // Remove active card highlight from all
         document.querySelectorAll('.customer-card').forEach(card => {
           card.classList.remove('active-card');
         });
 
-        // If appointment is completed, don't autofill
-        if (status === 'completed') {
+        // Only allow form fill if status is 'arrived'
+        if (status !== 'arrived') {
           appointmentCard.classList.remove('active-card');
           return;
         }
 
-        // Otherwise, autofill after short delay
         setTimeout(() => {
           nameInput.value = appointmentCard.dataset.name || '';
           phoneInput.value = appointmentCard.dataset.phone || '';
@@ -376,8 +374,10 @@
         }, 50);
       });
 
-      // Trigger click once on load
-      appointmentCard.click(); 
+      // Trigger auto-click only if status is 'arrived'
+      if (appointmentCard.dataset.status === 'arrived') {
+        appointmentCard.click();
+      }
     }
   }
 
@@ -407,7 +407,7 @@
         .then(html => {
           document.getElementById("appointment-wrapper").innerHTML = html;
 
-          // Re-apply logic after new content loads
+          // Re-bind events after reload
           bindAppointmentCardLogic();
           checkDuplicateName();
         });

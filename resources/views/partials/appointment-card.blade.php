@@ -23,13 +23,7 @@
 }
 
 </style>
-@if(
-    $appointment &&
-    !in_array($appointment->status, ['completed', 'canceled']) &&
-    auth()->id() === $appointment->salesperson_id &&
-    auth()->user()->role === 'salesperson'
-)
-  {{-- SHOW appointment card --}}
+@if($appointment && !in_array($appointment->status, ['completed', 'canceled']) && auth()->id() === $appointment->salesperson_id && $appointment->status === 'arrived')
   <div id="customer-list" class="transition-opacity duration-300">
     <div
       id="appointment-card"
@@ -38,9 +32,7 @@
       data-phone="{{ $appointment->customer_phone }}"
       data-customer-id="{{ $appointment->customer_id }}"
       data-status="{{ $appointment->status }}"
-      data-salesperson-id="{{ $appointment->salesperson_id }}"
     >
-
       <div class="flex justify-between items-center">
         <h2 class="text-xl font-semibold text-gray-800">Appointment Details</h2>
       </div>
@@ -53,18 +45,18 @@
           </span>
         </p>
         <p><span class="font-medium text-gray-400">Name:</span> {{ $appointment->customer_name }}</p>
-        <p><span class="font-medium text-gray-400">Phone No:</span> {{ $appointment->customer_phone ?? '–' }}</p>
+        <p><span class="font-medium text-gray-400">Phone No :</span> {{ $appointment->customer_phone ?? '–' }}</p>
         <p><span class="font-medium text-gray-400">Date & Time:</span> {{ $appointment->date }} {{ $appointment->time }}</p>
       </div>
 
       <div class="w-full">
-        <button
-          class="w-full mt-4 bg-gray-800 text-white rounded text-sm transition font-semibold px-6 py-2">
+        <button class="w-full mt-4 bg-gray-800 text-white rounded text-sm transition font-semibold px-6 py-2 rounded">
           Transfer
         </button>
       </div>
     </div>
   </div>
 @endif
+
 
 
