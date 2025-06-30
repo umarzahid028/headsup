@@ -1099,6 +1099,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('customer-list').innerHTML = html;
 
         bindCardClickEvents();
+        bindAppointmentCardClick();
         applyActiveCard();
       } catch (err) {
         console.error('Failed to load customers', err);
@@ -1108,7 +1109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Bind click to each customer card except appointment-card
     function bindCardClickEvents() {
       document.querySelectorAll('.customer-card').forEach(card => {
-        if (card.id === 'appointment-card') return; // Skip appointment card
+        if (card.id === 'appointment-card') return;
 
         card.addEventListener('click', () => {
           const customerId = card.dataset.customerId;
@@ -1120,7 +1121,6 @@ document.addEventListener('DOMContentLoaded', () => {
           if (card.dataset.phone) form.querySelector('input[name="phone"]').value = card.dataset.phone ?? '';
           if (card.dataset.interest) form.querySelector('input[name="interest"]').value = card.dataset.interest ?? '';
 
-          // Process checkboxes
           form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
           if (card.dataset.process) {
             card.dataset.process.split(',').forEach(proc => {
@@ -1130,7 +1130,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
           }
 
-          // UI highlight
           document.querySelectorAll('.customer-card').forEach(c => {
             c.classList.remove('active-card');
             c.classList.remove('pause-animation');
@@ -1139,6 +1138,40 @@ document.addEventListener('DOMContentLoaded', () => {
           card.classList.add('active-card');
           localStorage.setItem('activeCustomerId', customerId);
         });
+      });
+    }
+
+    // ✅ Appointment Card Click Handler
+    function bindAppointmentCardClick() {
+      const appointmentCard = document.querySelector('#appointment-card');
+      if (!appointmentCard) return;
+
+      appointmentCard.addEventListener('click', () => {
+        const customerId = appointmentCard.dataset.customerId;
+        if (!customerId) return;
+
+        idInput.value = customerId;
+        nameInput.value = appointmentCard.dataset.name || '';
+        form.querySelector('input[name="email"]').value = appointmentCard.dataset.email ?? '';
+        form.querySelector('input[name="phone"]').value = appointmentCard.dataset.phone ?? '';
+        form.querySelector('input[name="interest"]').value = appointmentCard.dataset.interest ?? '';
+
+        form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+        if (appointmentCard.dataset.process) {
+          appointmentCard.dataset.process.split(',').forEach(proc => {
+            const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
+              .find(cb => cb.value.trim() === proc.trim());
+            if (checkbox) checkbox.checked = true;
+          });
+        }
+
+        document.querySelectorAll('.customer-card').forEach(c => {
+          c.classList.remove('active-card');
+          c.classList.remove('pause-animation');
+        });
+
+        appointmentCard.classList.add('active-card');
+        localStorage.setItem('activeCustomerId', customerId);
       });
     }
 
@@ -1181,9 +1214,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Init
     bindCardClickEvents();
+    bindAppointmentCardClick();
     applyActiveCard();
   });
 </script>
+
 
 
 <script>
