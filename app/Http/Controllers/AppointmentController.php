@@ -112,5 +112,10 @@ public function update(Request $request, Appointment $appointment)
     ]);
 }
 
+public function view($id)
+{
+    $customerSales = \App\Models\CustomerSale::where('appointment_id', $id)->paginate(10); 
+    return view('appointments.appointment.view', compact('customerSales'));
+}
 
 }

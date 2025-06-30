@@ -84,8 +84,14 @@
                                                       >
                                                         Edit
                                                     </a>
+                                                   
                                                 @endif
+                                               
                                             @endif
+                                              <a href="{{ route('appointment.view', ['appointment' => $appt->id]) }}"
+                                                       class="bg-gray-800 text-white px-3 py-1.5 rounded">
+                                                        View
+                                                    </a>
                                         </div>
                                     </td>
                                 </tr>

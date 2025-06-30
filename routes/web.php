@@ -73,7 +73,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])->name('appointments.update');
     Route::get('/appointments/{appointment}/form', [AppointmentController::class, 'form'])->name('appointments.form');
     Route::post('/appointments/form', [AppointmentController::class, 'formstore'])->name('appointments.form.store');
-
+   Route::get('/apppointment/view/{appointment}', [AppointmentController::class, 'view'])->name('appointment.view');
 
     // Only Sales Person
 
