@@ -1028,16 +1028,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let debounceTimeout;
     let customerSavedThisTurn = false;
 
-    // Reset save flag every 3 seconds
-    setInterval(() => {
-      customerSavedThisTurn = false;
-    }, 3000);
+    // Restore saved form data
+    fields.forEach(field => {
+      const savedValue = localStorage.getItem(`salesForm_${field.name}`);
+      if (savedValue !== null && field.type !== 'checkbox' && field.type !== 'radio') {
+        field.value = savedValue;
+      }
+    });
 
-    // Autosave on input change
+    // Save on input change
     fields.forEach(field => {
       field.addEventListener('input', () => {
+        if (field.type !== 'checkbox' && field.type !== 'radio') {
+          localStorage.setItem(`salesForm_${field.name}`, field.value);
+        }
+
         customerSavedThisTurn = false;
-        localStorage.setItem(`form_${field.name}`, field.value); // Save field data
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {
           if (!nameInput.value.trim()) return;
@@ -1047,13 +1053,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Restore field data from localStorage on load
-    fields.forEach(field => {
-      const saved = localStorage.getItem(`form_${field.name}`);
-      if (saved && !field.value) {
-        field.value = saved;
-      }
-    });
+    // Reset save flag every 3 seconds
+    setInterval(() => {
+      customerSavedThisTurn = false;
+    }, 3000);
 
     // New Customer Button
     if (newCustomerBtn) {
@@ -1063,7 +1066,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Auto Save Function
     async function autoSaveForm() {
       if (!nameInput.value.trim() || customerSavedThisTurn) return;
 
@@ -1086,7 +1088,6 @@ document.addEventListener('DOMContentLoaded', () => {
             idInput.value = result.id;
             localStorage.setItem('activeCustomerId', result.id);
           }
-
           customerSavedThisTurn = true;
           await loadCustomers();
         } else {
@@ -1097,7 +1098,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Load Customers
     async function loadCustomers() {
       try {
         const resp = await fetch('{{ route('customer.index') }}?partial=1', {
@@ -1105,10 +1105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const html = await resp.text();
-        const customerList = document.getElementById('customer-list');
-        if (customerList) {
-          customerList.innerHTML = html;
-        }
+        document.getElementById('customer-list').innerHTML = html;
 
         bindCardClickEvents();
         bindAppointmentCardClick();
@@ -1118,6 +1115,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    function clearFormExceptHidden() {
+      fields.forEach(field => {
+        if (field.name === 'id' || field.name === 'appointment_id' || field.name === 'user_id') return;
+        if (field.type === 'checkbox' || field.type === 'radio') {
+          field.checked = false;
+        } else {
+          field.value = '';
+        }
+        localStorage.removeItem(`salesForm_${field.name}`);
+      });
+    }
+
     function bindCardClickEvents() {
       document.querySelectorAll('.customer-card').forEach(card => {
         if (card.id === 'appointment-card') return;
@@ -1125,6 +1134,8 @@ document.addEventListener('DOMContentLoaded', () => {
         card.addEventListener('click', () => {
           const customerId = card.dataset.customerId;
           if (!customerId) return;
+
+          clearFormExceptHidden();
 
           idInput.value = customerId;
           if (card.dataset.name) nameInput.value = card.dataset.name;
@@ -1160,6 +1171,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const customerId = appointmentCard.dataset.customerId;
         if (!customerId) return;
 
+        clearFormExceptHidden();
+
         idInput.value = customerId;
         nameInput.value = appointmentCard.dataset.name || '';
         form.querySelector('input[name="email"]').value = appointmentCard.dataset.email ?? '';
@@ -1193,8 +1206,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       savedCard.classList.add('active-card');
       if (!idInput.value || idInput.value === savedId) {
-        idInput.value = savedId;
+        clearFormExceptHidden();
 
+        idInput.value = savedId;
         if (savedCard.dataset.name) nameInput.value = savedCard.dataset.name;
         if (savedCard.dataset.email) form.querySelector('input[name="email"]').value = savedCard.dataset.email;
         if (savedCard.dataset.phone) form.querySelector('input[name="phone"]').value = savedCard.dataset.phone;
@@ -1225,6 +1239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     applyActiveCard();
   });
 </script>
+
 
 
 
