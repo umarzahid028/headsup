@@ -728,12 +728,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const button = e.target.closest('.transfer-btn');
       if (!button) return;
 
-      e.stopPropagation(); // 🔒 Prevent click bubbling to card
+      e.stopPropagation();
 
-      // Check if it's appointment or customer
       const customerId = button.dataset.customerId;
       const appointmentId = button.dataset.appointmentId;
-      const customerName = button.dataset.customerName || 'Unknown';
+      const customerName = button.dataset.customerName || 'N/A';
 
       const transferUrl = customerId
         ? `/customers/${customerId}/transfer`
@@ -747,7 +746,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       Swal.fire({
-        title: `<div class="text-xl font-bold text-[#111827] mb-2">Transfer</div>`,
+        title: `<div class="text-xl font-bold text-[#111827] mb-2">Transfer Customer</div>`,
         html: `
           <div class="text-sm text-[#111827] mb-4">
             You are about to transfer
@@ -793,12 +792,13 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
           Swal.fire({
             icon: 'success',
-            title: 'Transferred',
-            text: data.message || 'Transfer successful.',
+            title: 'Transferred Successfully',
+            text: data.message || 'Customer has been transferred successfully.',
             timer: 1500,
             showConfirmButton: false
           });
 
+          // ✅ Clear form fields (if form exists)
           const form = document.getElementById('salesForm');
           if (form) {
             form.reset();
@@ -808,6 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
             form.querySelector('input[name="appointment_id"]')?.value = '';
           }
 
+          // ✅ Refresh after 2 seconds
           setTimeout(() => {
             location.reload();
           }, 2000);
@@ -820,7 +821,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 </script>
-
 
 
 
