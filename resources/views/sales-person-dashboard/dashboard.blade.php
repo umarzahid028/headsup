@@ -335,17 +335,6 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
   let selectedCardId = null;
-  let previousAppointmentId = null;
-
-  function clearForm() {
-    const nameInput = document.getElementById('nameInput');
-    const phoneInput = document.getElementById('phoneInput');
-    const idInput = document.getElementById('customerId');
-
-    if (nameInput) nameInput.value = '';
-    if (phoneInput) phoneInput.value = '';
-    if (idInput) idInput.value = '';
-  }
 
   function bindAppointmentCardLogic() {
     const nameInput = document.getElementById('nameInput');
@@ -387,50 +376,31 @@
   }
 
   function refreshAppointments() {
-    const wrapper = document.getElementById("appointment-wrapper");
-
     fetch('/appointment/section')
       .then(res => res.text())
       .then(html => {
+        const wrapper = document.getElementById("appointment-wrapper");
         wrapper.innerHTML = html;
 
-        const newAppointmentCard = document.getElementById("appointment-card");
-        const newAppointmentId = newAppointmentCard?.dataset?.appointmentId;
-
-        // ✅ Only clear form if appointment was removed or ID changed
-        if (previousAppointmentId && (!newAppointmentId || newAppointmentId !== previousAppointmentId)) {
-          clearForm();
-          selectedCardId = null;
-        }
-
-        // ✅ Update previous ID
-        previousAppointmentId = newAppointmentId || null;
-
+        // Bind logic to new cards
         bindAppointmentCardLogic();
         checkDuplicateName();
 
-        // 🔄 Restore previously selected card
+        // Reapply active card style
         if (selectedCardId) {
           const selectedCard = document.getElementById(selectedCardId);
           if (selectedCard) selectedCard.classList.add('active-card');
         }
-      })
-      .catch(err => {
-        console.error("Appointment refresh failed:", err);
       });
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    const currentAppointmentCard = document.getElementById('appointment-card');
-    previousAppointmentId = currentAppointmentCard?.dataset?.appointmentId || null;
-
     bindAppointmentCardLogic();
     checkDuplicateName();
 
     setInterval(refreshAppointments, 3000);
   });
 </script>
-
 
 
 
