@@ -107,7 +107,6 @@ public function index(): mixed
             ->latest('created_at')
             ->first();
     }
-
     $appointment = null;
     if ($id !== null) {
         $appointment = Appointment::find($id);

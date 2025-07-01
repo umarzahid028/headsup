@@ -1070,7 +1070,6 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('salesForm');
-    const fields = form.querySelectorAll('input, textarea, select');
     const idInput = form.querySelector('input[name="id"]');
     const nameInput = form.querySelector('input[name="name"]');
     const newCustomerBtn = document.getElementById('newCustomerBtn');
@@ -1078,34 +1077,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let debounceTimeout;
     let customerSavedThisTurn = false;
+    let autosaveEnabled = false; // ← Only becomes true when newCustomerBtn is clicked
 
     // Reset save flag every 3 seconds
     setInterval(() => {
       customerSavedThisTurn = false;
     }, 3000);
 
-    // Autosave on input change
-    fields.forEach(field => {
-      field.addEventListener('input', () => {
-        customerSavedThisTurn = false;
-        clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => {
-          if (!nameInput.value.trim()) return;
-          if (field.name === 'name' && !idInput.value) return;
-          autoSaveForm();
-        }, 700);
+    // Apply input listeners only when autosaveEnabled = true
+    const attachFieldListeners = () => {
+      const fields = form.querySelectorAll('input, textarea, select');
+
+      fields.forEach(field => {
+        if (field.name === 'name') return;
+
+        field.addEventListener('input', () => {
+          if (!autosaveEnabled || !idInput.value) return;
+
+          customerSavedThisTurn = false;
+          clearTimeout(debounceTimeout);
+          debounceTimeout = setTimeout(() => {
+            autoSaveForm();
+          }, 700);
+        });
       });
+    };
+
+    // Listen only to name field for now
+    nameInput.addEventListener('input', () => {
+      if (autosaveEnabled) return; // skip if already enabled
+
+      customerSavedThisTurn = false;
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(() => {
+        if (!nameInput.value.trim()) return;
+        // Do nothing until button is clicked
+      }, 700);
     });
 
-    // New Customer Button
+    // When "Take Customer" button is clicked
     if (newCustomerBtn) {
       newCustomerBtn.addEventListener('click', async () => {
         if (!nameInput.value.trim()) return;
+
         await autoSaveForm();
+
+        // If ID generated, activate autosave
+        if (idInput.value) {
+          autosaveEnabled = true;
+          attachFieldListeners();
+        }
       });
     }
 
-    // Auto Save Function
     async function autoSaveForm() {
       if (!nameInput.value.trim() || customerSavedThisTurn) return;
 
@@ -1139,7 +1163,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Load Customers
     async function loadCustomers() {
       try {
         const resp = await fetch('{{ route('customer.index') }}?partial=1', {
@@ -1157,7 +1180,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Bind click to each customer card except appointment-card
     function bindCardClickEvents() {
       document.querySelectorAll('.customer-card').forEach(card => {
         if (card.id === 'appointment-card') return;
@@ -1193,7 +1215,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Appointment Card Click Handler
     function bindAppointmentCardClick() {
       const appointmentCard = document.querySelector('#appointment-card');
       if (!appointmentCard) return;
@@ -1231,13 +1252,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function clearFormFields() {
       form.reset();
       form.querySelectorAll('input[type="hidden"]').forEach(el => {
-        if (el.name !== 'id' && el.name !== 'user_id' && el.name !== 'appointment_id') {
+        if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
           el.value = '';
         }
       });
     }
 
-    // Apply last selected customer card (skip appointment card)
     function applyActiveCard() {
       const savedId = localStorage.getItem('activeCustomerId');
       const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
@@ -1264,7 +1284,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Pause animation on Add Customer
     if (addCustomerBtn) {
       addCustomerBtn.addEventListener('click', () => {
         const activeCard = document.querySelector('.active-card');
