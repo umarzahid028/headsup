@@ -336,6 +336,16 @@
 <script>
   let selectedCardId = null;
 
+  function clearForm() {
+    const nameInput = document.getElementById('nameInput');
+    const phoneInput = document.getElementById('phoneInput');
+    const idInput = document.getElementById('customerId');
+
+    if (nameInput) nameInput.value = '';
+    if (phoneInput) phoneInput.value = '';
+    if (idInput) idInput.value = '';
+  }
+
   function bindAppointmentCardLogic() {
     const nameInput = document.getElementById('nameInput');
     const phoneInput = document.getElementById('phoneInput');
@@ -376,21 +386,36 @@
   }
 
   function refreshAppointments() {
+    const wrapper = document.getElementById("appointment-wrapper");
+    const oldAppointmentCard = document.getElementById("appointment-card");
+    const oldAppointmentId = oldAppointmentCard?.dataset?.appointmentId;
+
     fetch('/appointment/section')
       .then(res => res.text())
       .then(html => {
-        const wrapper = document.getElementById("appointment-wrapper");
         wrapper.innerHTML = html;
 
-        // Bind logic to new cards
+        const newAppointmentCard = document.getElementById("appointment-card");
+        const newAppointmentId = newAppointmentCard?.dataset?.appointmentId;
+
+        // ✅ If appointment is gone OR ID changed => transfer/T.O done
+        if (!newAppointmentCard || oldAppointmentId !== newAppointmentId) {
+          clearForm();
+          selectedCardId = null;
+        }
+
+        // 🔄 Re-bind logic
         bindAppointmentCardLogic();
         checkDuplicateName();
 
-        // Reapply active card style
+        // 🔁 Restore selection if still valid
         if (selectedCardId) {
           const selectedCard = document.getElementById(selectedCardId);
           if (selectedCard) selectedCard.classList.add('active-card');
         }
+      })
+      .catch(err => {
+        console.error("Appointment refresh failed:", err);
       });
   }
 
@@ -401,6 +426,7 @@
     setInterval(refreshAppointments, 3000);
   });
 </script>
+
 
 
 
