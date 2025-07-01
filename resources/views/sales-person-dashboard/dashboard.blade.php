@@ -335,6 +335,7 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
   let selectedCardId = null;
+  let previousAppointmentId = null;
 
   function clearForm() {
     const nameInput = document.getElementById('nameInput');
@@ -387,8 +388,6 @@
 
   function refreshAppointments() {
     const wrapper = document.getElementById("appointment-wrapper");
-    const oldAppointmentCard = document.getElementById("appointment-card");
-    const oldAppointmentId = oldAppointmentCard?.dataset?.appointmentId;
 
     fetch('/appointment/section')
       .then(res => res.text())
@@ -398,17 +397,20 @@
         const newAppointmentCard = document.getElementById("appointment-card");
         const newAppointmentId = newAppointmentCard?.dataset?.appointmentId;
 
-        // ✅ If appointment is gone OR ID changed => transfer/T.O done
-        if (!newAppointmentCard || oldAppointmentId !== newAppointmentId) {
+        // ✅ Only clear form if appointment was removed or ID changed
+        if (previousAppointmentId && (!newAppointmentId || newAppointmentId !== previousAppointmentId)) {
           clearForm();
           selectedCardId = null;
         }
 
-        // 🔄 Re-bind logic
+        // Update the ID for next check
+        previousAppointmentId = newAppointmentId || null;
+
+        // Re-bind logic
         bindAppointmentCardLogic();
         checkDuplicateName();
 
-        // 🔁 Restore selection if still valid
+        // Restore active card if exists
         if (selectedCardId) {
           const selectedCard = document.getElementById(selectedCardId);
           if (selectedCard) selectedCard.classList.add('active-card');
@@ -420,6 +422,9 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    const currentAppointmentCard = document.getElementById('appointment-card');
+    previousAppointmentId = currentAppointmentCard?.dataset?.appointmentId || null;
+
     bindAppointmentCardLogic();
     checkDuplicateName();
 
