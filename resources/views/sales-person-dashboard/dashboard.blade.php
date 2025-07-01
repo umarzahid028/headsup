@@ -222,17 +222,22 @@
           class="bg-gray-800 text-white px-3 py-1.5 rounded">
           Close
         </button>
-<button id="toBtn" type="button" 
-  class="bg-gray-800 text-white px-3 py-1.5 rounded">
-  
-  <span class="btn-label">T/O</span>
-
-  <!-- Spinner inside a button or container -->
-<div id="toSpinner" class="hidden absolute inset-0 bg-black/50 flex items-center justify-center z-50 rounded-xl">
-  <div class="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-</div>
-
+<button 
+    type="button"
+    class="toBtn relative bg-gray-800 text-white px-4 py-1.5 rounded"
+    data-customer-id="{{ $customers->first()->id ?? '' }}"
+>
+    <span class="btn-label">T/O</span>
+    <div class="toSpinner hidden absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded">
+        <div class="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+    </div>
 </button>
+
+
+
+
+
+
       </div>
     </form>
   </div>
@@ -333,6 +338,56 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- T/O request -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const toButton = document.querySelector('.toBtn');
+    const spinner = toButton.querySelector('.toSpinner');
+    const customerIdInput = document.getElementById('customerId');
+
+    toButton.addEventListener('click', async () => {
+      const customerId = customerIdInput.value;
+
+      if (!customerId) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'No Customer Selected',
+          text: 'Please select or load a customer first.'
+        });
+        return;
+      }
+
+      spinner.classList.remove('hidden');
+
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        localStorage.setItem('highlightCustomerId', customerId);
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'T/O Requested',
+          text: ` T/O successfully.`,
+          timer: 2000,
+          showConfirmButton: true
+        });
+
+      } catch (err) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: err.message || 'Something went wrong.'
+        });
+      } finally {
+        spinner.classList.add('hidden');
+      }
+    });
+  });
+</script>
+
+
+
 <script>
   let selectedCardId = null;
 
@@ -616,7 +671,7 @@ function completeForm(customerId) {
 </script>
 
 
-<script>
+<!-- <script>
 document.addEventListener('DOMContentLoaded', () => {
   const toBtn   = document.getElementById('toBtn');
   const spinner = document.getElementById('toSpinner');
@@ -689,7 +744,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   toBtn.addEventListener('click', forwardCard);
 });
-</script>
+</script> -->
 
 
 
@@ -980,11 +1035,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTurnUserId = res.current_turn_user_id;
         const userName = res.user_name || "User";
 
-        if (isMyTurn && !wasTurnBefore) {
-          const message = new SpeechSynthesisUtterance(`it's your turn now, ${userName}`);
-          message.lang = 'en-US';
-          speechSynthesis.speak(message);
-        }
+       
 
         if (!res.is_checked_in) {
           $('#turn-status').text('❗ Please check in to activate your turn queue.');

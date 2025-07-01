@@ -91,7 +91,7 @@
             </div>
 
             <!-- T/O -->
-            @hasrole('Sales Manager')
+            <!-- @hasrole('Sales Manager')
             <div class="pt-2">
 
                 <a href="{{ route('to.customers') }}" class="{{ request()->routeIs('to.customers') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md">
@@ -102,7 +102,7 @@
                     <span class="flex-1">T/O Customers</span>
                 </a>
             </div>
-            @endhasrole
+            @endhasrole -->
             <!-- Activity Records -->
             @hasrole('Sales person')
             <div class="pt-2">

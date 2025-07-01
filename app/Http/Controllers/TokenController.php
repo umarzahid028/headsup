@@ -28,11 +28,10 @@ public function queuelist(Request $request)
     $activeData = $latestQueues->map(function ($queue) {
         $salesPersonName = $queue->user->name ?? 'Unassigned';
 
-       $customerSales = CustomerSale::where('user_id', $queue->user_id)
-    ->whereNull('disposition') 
-    ->latest()
-    ->get();
-
+        $customerSales = CustomerSale::where('user_id', $queue->user_id)
+            ->whereNull('disposition')
+            ->latest()
+            ->get();
 
         $appointment = $queue->appointment;
 
@@ -53,17 +52,20 @@ public function queuelist(Request $request)
                 }
             }
 
-            return [
-                'customer_name' => $customerName,
-                'process'       => $lastProcess,
-                'forwarded'     => (bool) $sale->forwarded_to_manager,
-                'forwarded_at'  => $sale->forwarded_at,
-            ];
+           return [
+    'id'            => $sale->id, // ADD THIS
+    'customer_name' => $customerName,
+    'process'       => $lastProcess,
+    'forwarded'     => (bool) $sale->forwarded_to_manager,
+    'forwarded_at'  => $sale->forwarded_at,
+];
+
         });
 
-        // If appointment exists and is not completed, add it
+        // Include appointment if not completed
         if ($appointment && $appointment->status !== 'completed') {
             $customers->prepend([
+                'id'            => 'appointment_' . $appointment->id, // ✅ assign unique string ID
                 'customer_name' => $appointment->customer_name ?? 'N/A',
                 'process'       => ['Appointment'],
                 'forwarded'     => false,
@@ -83,6 +85,7 @@ public function queuelist(Request $request)
 
     return view('screen.active-tokens', ['tokens' => $activeData]);
 }
+
     //Check in
     // Controller Method (already discussed)
     public function checkinSalespersons(Request $request)
