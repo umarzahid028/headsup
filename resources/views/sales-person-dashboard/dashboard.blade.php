@@ -728,16 +728,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const button = e.target.closest('.transfer-btn');
       if (!button) return;
 
-      const customerId = button.dataset.customerId;
       const appointmentId = button.dataset.appointmentId;
-      const customerName = button.dataset.customerName || 'N/A';
+      const customerName = button.dataset.customerName;
 
-      // Set correct transfer URL
-      const transferUrl = appointmentId
-        ? `/appointments/${appointmentId}/transfer`
-        : `/customers/${customerId}/transfer`;
-
-      // Build options for dropdown
       let options = '<option disabled selected value="">Choose a sales person</option>';
       salespeople.forEach(sales => {
         if (sales.id !== currentUserId) {
@@ -745,9 +738,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // Show SweetAlert
       Swal.fire({
-        title: `<div class="text-xl font-bold text-[#111827] mb-2">Transfer Customer</div>`,
+        title: `<div class="text-xl font-bold text-[#111827] mb-2">Transfer Appointment</div>`,
         html: `
           <div class="text-sm text-[#111827] mb-4">
             You are about to transfer
@@ -779,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const selectedSalesId = result.value;
 
-        fetch(transferUrl, {
+        fetch(`/appointments/${appointmentId}/transfer`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -793,26 +785,25 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
           Swal.fire({
             icon: 'success',
-            title: 'Transferred Successfully',
-            text: data.message || 'Customer/Appointment transferred successfully.',
+            title: 'Appointment Transferred',
+            text: data.message,
             timer: 1500,
-            showConfirmButton: false
+            showConfirmButton: true
           });
 
-          // ✅ Reset sales form if exists
+          // ✅ Pause animation
+          document.getElementById('appointment-card')?.classList.add('pause-animation');
+
+          // ✅ Clear form if exists
           const form = document.getElementById('salesForm');
           if (form) {
             form.reset();
-
-            // Optional: explicitly clear known hidden inputs if needed
             form.querySelector('input[name="appointment_id"]')?.value = '';
-            form.querySelector('input[name="customer_id"]')?.value = '';
-            form.querySelector('input[name="id"]')?.value = '';
             form.querySelector('input[name="name"]')?.value = '';
             form.querySelector('input[name="phone"]')?.value = '';
           }
 
-          // ✅ Reload page after 2 seconds
+          // ✅ Refresh after 2s
           setTimeout(() => {
             location.reload();
           }, 2000);
