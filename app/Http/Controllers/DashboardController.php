@@ -75,27 +75,18 @@ public function index(): mixed
 
 
     //Sales perosn
-public function salesdashboard($id = null)
+   public function salesdashboard($id = null)
 {
     $user = Auth::user();
 
-    // ✅ Get IDs of all checked-in salespersons
-    $checkedInUserIds = Queue::where('is_checked_in', true)
-        ->pluck('user_id');
-
-    // ✅ Get customers of all those users who are not forwarded to manager
-    $customers = CustomerSale::whereIn('user_id', $checkedInUserIds)
+    $customers = CustomerSale::where('user_id', auth()->id())
         ->where('forwarded_to_manager', false)
-        ->whereNull('disposition')
-        ->latest()
         ->get();
 
-    // ✅ Get list of other salespeople (excluding current user)
     $salespeople = \App\Models\User::role('Sales person')
         ->where('id', '!=', $user->id)
         ->get();
 
-    // ✅ Check if current user is checked-in
     $isCheckedIn = Queue::where('user_id', $user->id)
         ->where('is_checked_in', true)
         ->exists();
@@ -117,7 +108,6 @@ public function salesdashboard($id = null)
             ->first();
     }
 
-    // ✅ If appointment ID is passed, fetch it
     $appointment = null;
     if ($id !== null) {
         $appointment = Appointment::find($id);
@@ -126,14 +116,7 @@ public function salesdashboard($id = null)
         }
     }
 
-    return view('sales-person-dashboard.dashboard', compact(
-        'token',
-        'onHoldToken',
-        'customers',
-        'salespeople',
-        'appointment'
-    ));
+    return view('sales-person-dashboard.dashboard', compact('token', 'onHoldToken', 'customers', 'salespeople', 'appointment'));
 }
-
 
 }
