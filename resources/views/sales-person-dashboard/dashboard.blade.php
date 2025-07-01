@@ -725,18 +725,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentUserId = @json(auth()->id());
 
     document.body.addEventListener('click', function (e) {
-      const button = e.target.closest('.transfer-btn');
-      if (!button) return;
+      if (!e.target.classList.contains('transfer-btn')) return;
 
-      e.stopPropagation();
-
+      const button = e.target;
       const customerId = button.dataset.customerId;
-      const appointmentId = button.dataset.appointmentId;
-      const customerName = button.dataset.customerName || 'N/A';
-
-      const transferUrl = customerId
-        ? `/customers/${customerId}/transfer`
-        : `/appointments/${appointmentId}/transfer`;
+      const customerName = button.dataset.customerName;
 
       let options = '<option disabled selected value="">Choose a sales person</option>';
       salespeople.forEach(sales => {
@@ -778,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const selectedSalesId = result.value;
 
-        fetch(transferUrl, {
+        fetch(`/customers/${customerId}/transfer`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -792,23 +785,13 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
           Swal.fire({
             icon: 'success',
-            title: 'Transferred Successfully',
-            text: data.message || 'Customer has been transferred successfully.',
+            title: 'Customer Transferred',
+            text: data.message,
             timer: 1500,
-            showConfirmButton: false
+            showConfirmButton: true
           });
 
-          // ✅ Clear form fields (if form exists)
-          const form = document.getElementById('salesForm');
-          if (form) {
-            form.reset();
-            form.querySelector('input[name="id"]')?.value = '';
-            form.querySelector('input[name="name"]')?.value = '';
-            form.querySelector('input[name="phone"]')?.value = '';
-            form.querySelector('input[name="appointment_id"]')?.value = '';
-          }
-
-          // ✅ Refresh after 2 seconds
+          // 2 second ke baad page reload
           setTimeout(() => {
             location.reload();
           }, 2000);
@@ -821,7 +804,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 </script>
-
 
 
 <script>
