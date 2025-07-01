@@ -347,9 +347,9 @@ function refreshScreen() {
 }
 
 window.onload = () => {
-  document.body.addEventListener('click', prepareVoiceEngine, { once: true });
+  prepareVoiceEngine(); // initialize immediately, no click needed
   refreshScreen();
-  setInterval(refreshScreen, 5000);
+  setInterval(refreshScreen, 3000);
 };
 </script>
 
