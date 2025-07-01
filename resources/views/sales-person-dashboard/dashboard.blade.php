@@ -403,14 +403,13 @@
           selectedCardId = null;
         }
 
-        // Update the ID for next check
+        // ✅ Update previous ID
         previousAppointmentId = newAppointmentId || null;
 
-        // Re-bind logic
         bindAppointmentCardLogic();
         checkDuplicateName();
 
-        // Restore active card if exists
+        // 🔄 Restore previously selected card
         if (selectedCardId) {
           const selectedCard = document.getElementById(selectedCardId);
           if (selectedCard) selectedCard.classList.add('active-card');
