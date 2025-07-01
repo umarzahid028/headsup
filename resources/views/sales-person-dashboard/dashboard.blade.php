@@ -725,11 +725,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentUserId = @json(auth()->id());
 
     document.body.addEventListener('click', function (e) {
-      if (!e.target.classList.contains('transfer-btn')) return;
+      const button = e.target.closest('.transfer-btn');
+      if (!button) return;
 
-      const button = e.target;
+      e.stopPropagation(); // 🔒 Prevent click bubbling to card
+
+      // Check if it's appointment or customer
       const customerId = button.dataset.customerId;
-      const customerName = button.dataset.customerName;
+      const appointmentId = button.dataset.appointmentId;
+      const customerName = button.dataset.customerName || 'Unknown';
+
+      const transferUrl = customerId
+        ? `/customers/${customerId}/transfer`
+        : `/appointments/${appointmentId}/transfer`;
 
       let options = '<option disabled selected value="">Choose a sales person</option>';
       salespeople.forEach(sales => {
@@ -739,7 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       Swal.fire({
-        title: `<div class="text-xl font-bold text-[#111827] mb-2">Transfer Customer</div>`,
+        title: `<div class="text-xl font-bold text-[#111827] mb-2">Transfer</div>`,
         html: `
           <div class="text-sm text-[#111827] mb-4">
             You are about to transfer
@@ -771,7 +779,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const selectedSalesId = result.value;
 
-        fetch(`/customers/${customerId}/transfer`, {
+        fetch(transferUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -785,32 +793,21 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
           Swal.fire({
             icon: 'success',
-            title: 'Customer Transferred',
-            text: data.message,
+            title: 'Transferred',
+            text: data.message || 'Transfer successful.',
             timer: 1500,
-            showConfirmButton: true
+            showConfirmButton: false
           });
 
-          // ✅ Clear Form Fields
-          const form = document.getElementById('salesForm'); // make sure your form has this ID
+          const form = document.getElementById('salesForm');
           if (form) {
-            form.reset(); // reset all fields
-            // OR manually clear fields if needed:
+            form.reset();
             form.querySelector('input[name="id"]')?.value = '';
             form.querySelector('input[name="name"]')?.value = '';
             form.querySelector('input[name="phone"]')?.value = '';
             form.querySelector('input[name="appointment_id"]')?.value = '';
           }
 
-          // ✅ Optional: remove highlight from cards
-          document.querySelectorAll('.customer-card').forEach(card => {
-            card.classList.remove('active-card', 'pause-animation');
-          });
-
-          // ✅ Optional: Clear localStorage saved ID
-          localStorage.removeItem('activeCustomerId');
-
-          // 🔁 Optional: reload after 2 seconds
           setTimeout(() => {
             location.reload();
           }, 2000);
@@ -823,6 +820,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 </script>
+
 
 
 
