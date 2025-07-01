@@ -725,12 +725,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentUserId = @json(auth()->id());
 
     document.body.addEventListener('click', function (e) {
-      if (!e.target.classList.contains('transfer-btn')) return;
+      const button = e.target.closest('.transfer-btn');
+      if (!button) return;
 
-      const button = e.target;
       const customerId = button.dataset.customerId;
-      const customerName = button.dataset.customerName;
+      const appointmentId = button.dataset.appointmentId;
+      const customerName = button.dataset.customerName || 'N/A';
 
+      // Set correct transfer URL
+      const transferUrl = appointmentId
+        ? `/appointments/${appointmentId}/transfer`
+        : `/customers/${customerId}/transfer`;
+
+      // Build options for dropdown
       let options = '<option disabled selected value="">Choose a sales person</option>';
       salespeople.forEach(sales => {
         if (sales.id !== currentUserId) {
@@ -738,6 +745,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
+      // Show SweetAlert
       Swal.fire({
         title: `<div class="text-xl font-bold text-[#111827] mb-2">Transfer Customer</div>`,
         html: `
@@ -771,7 +779,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const selectedSalesId = result.value;
 
-        fetch(`/customers/${customerId}/transfer`, {
+        fetch(transferUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -785,13 +793,26 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
           Swal.fire({
             icon: 'success',
-            title: 'Customer Transferred',
-            text: data.message,
+            title: 'Transferred Successfully',
+            text: data.message || 'Customer/Appointment transferred successfully.',
             timer: 1500,
-            showConfirmButton: true
+            showConfirmButton: false
           });
 
-          // 2 second ke baad page reload
+          // ✅ Reset sales form if exists
+          const form = document.getElementById('salesForm');
+          if (form) {
+            form.reset();
+
+            // Optional: explicitly clear known hidden inputs if needed
+            form.querySelector('input[name="appointment_id"]')?.value = '';
+            form.querySelector('input[name="customer_id"]')?.value = '';
+            form.querySelector('input[name="id"]')?.value = '';
+            form.querySelector('input[name="name"]')?.value = '';
+            form.querySelector('input[name="phone"]')?.value = '';
+          }
+
+          // ✅ Reload page after 2 seconds
           setTimeout(() => {
             location.reload();
           }, 2000);
@@ -804,6 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 </script>
+
 
 
 <script>
