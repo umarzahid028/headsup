@@ -118,7 +118,7 @@
                     </table>
 
                    @if ($appointments->total() >= 10)
-    <div class="mt-4 px-4">
+    <div class="mt-4 px-4 mb-2">
         {{ $appointments->links() }}
     </div>
 @endif
