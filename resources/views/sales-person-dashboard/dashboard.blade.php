@@ -872,14 +872,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const nameInput = document.getElementById('nameInput');
   const addBtn = document.getElementById('addCustomerBtn');
   const takeBtn = document.getElementById('newCustomerBtn');
+  const customerIdInput = document.getElementById('customerId');
 
   nameInput.readOnly = true;
 
   const inputs = form.querySelectorAll('input[type="text"], input[type="email"], textarea');
 
+  // Toggle buttons based on input status
   function toggleButtons() {
     const nameVal = nameInput.value.trim();
-    const hasCustomerId = document.getElementById('customerId').value.trim() !== '';
+    const hasCustomerId = customerIdInput.value.trim() !== '';
     let otherFieldFilled = false;
 
     inputs.forEach(input => {
@@ -888,9 +890,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    const ready =
-      (nameVal !== '' && otherFieldFilled) || // original logic
-      (nameVal !== '' && hasCustomerId);      // new condition: name + ID
+    const ready = nameVal !== '' && hasCustomerId && otherFieldFilled;
 
     if (ready) {
       addBtn.classList.remove('hidden');
@@ -903,10 +903,12 @@ document.addEventListener('DOMContentLoaded', () => {
     takeBtn.disabled = false;
   }
 
+  // Toggle readonly on name field
   function updateNameInputState() {
     nameInput.readOnly = !(isMyTurn || cardClicked);
   }
 
+  // Customer card clicked
   document.addEventListener('click', function (e) {
     const card = e.target.closest('.customer-card');
     if (!card) return;
@@ -914,34 +916,33 @@ document.addEventListener('DOMContentLoaded', () => {
     cardClicked = true;
     customerSavedThisTurn = false;
 
-    const name = card.dataset.customerName || '';
-    const customerId = card.dataset.customerId || '';
-
-    nameInput.value = name;
-    document.getElementById('customerId').value = customerId;
+    nameInput.value = card.dataset.customerName || '';
+    customerIdInput.value = card.dataset.customerId || '';
 
     toggleButtons();
     updateNameInputState();
   });
 
+  // Inputs trigger toggle
   inputs.forEach(input => {
     input.addEventListener('input', toggleButtons);
   });
 
+  // Reset form and hide addBtn
   addBtn.addEventListener('click', function () {
     form.reset();
-
-    document.getElementById('customerId').value = "";
-    document.getElementById('nameInput').value = "";
+    customerIdInput.value = "";
+    nameInput.value = "";
     document.getElementById('emailInput').value = "";
     document.getElementById('phoneInput').value = "";
     document.getElementById('interestInput').value = "";
 
-    cardClicked = false; // ✅ FIX: Prevent typing name unless it's your turn or a card is selected
-    updateNameInputState(); // ✅ FIX: Enforce readonly on name field
+    cardClicked = false;
+    updateNameInputState();
     toggleButtons();
   });
 
+  // Take Customer button logic
   takeBtn.addEventListener('click', function (e) {
     e.preventDefault();
 
@@ -999,7 +1000,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             cardClicked = false;
             customerSavedThisTurn = false;
+
+            // Simulate assigning customerId if successful
+            customerIdInput.value = Math.floor(Math.random() * 100000); // For demo purpose
             updateTurnStatus();
+            updateNameInputState();
+            toggleButtons();
           },
           error: () => {
             Swal.fire({
@@ -1028,14 +1034,12 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#newCustomerBtn').prop('disabled', false);
   }
 
+  // Turn status polling
   function updateTurnStatus() {
     $.get('/next-turn-status')
       .done(res => {
         isMyTurn = res.is_your_turn;
         currentTurnUserId = res.current_turn_user_id;
-        const userName = res.user_name || "User";
-
-       
 
         if (!res.is_checked_in) {
           $('#turn-status').text('❗ Please check in to activate your turn queue.');
