@@ -119,7 +119,7 @@
                                             {{ $sale->disposition ?? 'N/A' }}
                                         </span>
                                     </td>
-<td class="mt-4 px-4 mb-2">
+<td class="border-b px-4 py-3">
     {{ calculateDuration($sale) }}
 </td>
 
@@ -135,7 +135,7 @@
                     </table>
 
                     @if ($customerSales->hasPages())
-                        <div class="mt-4 px-4">
+                        <div class="mt-4 px-4 mb-2">
                             {{ $customerSales->links() }}
                         </div>
                     @endif
