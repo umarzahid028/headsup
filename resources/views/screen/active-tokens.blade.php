@@ -153,7 +153,7 @@
         <div>Name & Time</div>
       </div>
       <div id="checkinList" class="scrollable">
-        <div class="text-center text-white text-xl">Loading check-ins...</div>
+        <div class="text-center text-white text-xl">No Activity</div>
       </div>
     </section>
   </div>
