@@ -53,7 +53,7 @@
 
       <div class="w-full">
         <button
-  class="w-full mt-4 bg-gray-800 text-white rounded text-sm transition font-semibold px-6 py-2 rounded transfer-appointment-btn"
+  class="w-full mt-4 bg-gray-800 text-white rounded text-sm transition font-semibold px-6 py-2 rounded transfer-btn"
   data-appointment-id="{{ $appointment->id }}"
   data-customer-name="{{ $appointment->customer_name }}"
   data-customer-name="{{ $appointment->customer_phone }}"
