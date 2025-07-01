@@ -791,30 +791,26 @@ document.addEventListener('DOMContentLoaded', () => {
             showConfirmButton: true
           });
 
-          // ✅ Clear form after successful transfer
-          const form = document.getElementById('salesForm');
+          // ✅ Clear Form Fields
+          const form = document.getElementById('salesForm'); // make sure your form has this ID
           if (form) {
-            form.reset(); // clear all fields
-
-            // Clear hidden inputs manually
-            form.querySelector('input[name="id"]').value = '';
-            const appointmentInput = form.querySelector('input[name="appointment_id"]');
-            if (appointmentInput) appointmentInput.value = '';
-
-            // Uncheck all checkboxes (if not cleared by reset)
-            form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+            form.reset(); // reset all fields
+            // OR manually clear fields if needed:
+            form.querySelector('input[name="id"]')?.value = '';
+            form.querySelector('input[name="name"]')?.value = '';
+            form.querySelector('input[name="phone"]')?.value = '';
+            form.querySelector('input[name="appointment_id"]')?.value = '';
           }
 
-          // ✅ Remove active-card from all cards
+          // ✅ Optional: remove highlight from cards
           document.querySelectorAll('.customer-card').forEach(card => {
-            card.classList.remove('active-card');
-            card.classList.remove('pause-animation');
+            card.classList.remove('active-card', 'pause-animation');
           });
 
-          // ✅ Remove saved ID from localStorage
+          // ✅ Optional: Clear localStorage saved ID
           localStorage.removeItem('activeCustomerId');
 
-          // 🔄 Reload after 2 seconds
+          // 🔁 Optional: reload after 2 seconds
           setTimeout(() => {
             location.reload();
           }, 2000);
