@@ -344,10 +344,11 @@ async function fetchCheckins() {
 function refreshScreen() {
   fetchCurrentTurnUser();
   fetchAndUpdateTokens();
+  prepareVoiceEngine();
 }
 
 window.onload = () => {
-  prepareVoiceEngine(); // initialize immediately, no click needed
+ // initialize immediately, no click needed
   refreshScreen();
   setInterval(refreshScreen, 3000);
 };
