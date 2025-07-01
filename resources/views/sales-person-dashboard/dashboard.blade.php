@@ -1028,21 +1028,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let debounceTimeout;
     let customerSavedThisTurn = false;
 
-    // Restore saved form data
-    fields.forEach(field => {
-      const savedValue = localStorage.getItem(`salesForm_${field.name}`);
-      if (savedValue !== null && field.type !== 'checkbox' && field.type !== 'radio') {
-        field.value = savedValue;
-      }
-    });
+    // Reset save flag every 3 seconds
+    setInterval(() => {
+      customerSavedThisTurn = false;
+    }, 3000);
 
-    // Save on input change
+    // Autosave on input change
     fields.forEach(field => {
       field.addEventListener('input', () => {
-        if (field.type !== 'checkbox' && field.type !== 'radio') {
-          localStorage.setItem(`salesForm_${field.name}`, field.value);
-        }
-
         customerSavedThisTurn = false;
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {
@@ -1053,11 +1046,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Reset save flag every 3 seconds
-    setInterval(() => {
-      customerSavedThisTurn = false;
-    }, 3000);
-
     // New Customer Button
     if (newCustomerBtn) {
       newCustomerBtn.addEventListener('click', async () => {
@@ -1066,6 +1054,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Auto Save Function
     async function autoSaveForm() {
       if (!nameInput.value.trim() || customerSavedThisTurn) return;
 
@@ -1088,6 +1077,7 @@ document.addEventListener('DOMContentLoaded', () => {
             idInput.value = result.id;
             localStorage.setItem('activeCustomerId', result.id);
           }
+
           customerSavedThisTurn = true;
           await loadCustomers();
         } else {
@@ -1098,6 +1088,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // Load Customers
     async function loadCustomers() {
       try {
         const resp = await fetch('{{ route('customer.index') }}?partial=1', {
@@ -1115,18 +1106,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    function clearFormExceptHidden() {
-      fields.forEach(field => {
-        if (field.name === 'id' || field.name === 'appointment_id' || field.name === 'user_id') return;
-        if (field.type === 'checkbox' || field.type === 'radio') {
-          field.checked = false;
-        } else {
-          field.value = '';
-        }
-        localStorage.removeItem(`salesForm_${field.name}`);
-      });
-    }
-
+    // Bind click to each customer card except appointment-card
     function bindCardClickEvents() {
       document.querySelectorAll('.customer-card').forEach(card => {
         if (card.id === 'appointment-card') return;
@@ -1135,15 +1115,14 @@ document.addEventListener('DOMContentLoaded', () => {
           const customerId = card.dataset.customerId;
           if (!customerId) return;
 
-          clearFormExceptHidden();
+          clearFormFields();
 
           idInput.value = customerId;
-          if (card.dataset.name) nameInput.value = card.dataset.name;
-          if (card.dataset.email) form.querySelector('input[name="email"]').value = card.dataset.email ?? '';
-          if (card.dataset.phone) form.querySelector('input[name="phone"]').value = card.dataset.phone ?? '';
-          if (card.dataset.interest) form.querySelector('input[name="interest"]').value = card.dataset.interest ?? '';
+          nameInput.value = card.dataset.name || '';
+          form.querySelector('input[name="email"]').value = card.dataset.email ?? '';
+          form.querySelector('input[name="phone"]').value = card.dataset.phone ?? '';
+          form.querySelector('input[name="interest"]').value = card.dataset.interest ?? '';
 
-          form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
           if (card.dataset.process) {
             card.dataset.process.split(',').forEach(proc => {
               const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
@@ -1163,6 +1142,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Appointment Card Click Handler
     function bindAppointmentCardClick() {
       const appointmentCard = document.querySelector('#appointment-card');
       if (!appointmentCard) return;
@@ -1171,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const customerId = appointmentCard.dataset.customerId;
         if (!customerId) return;
 
-        clearFormExceptHidden();
+        clearFormFields();
 
         idInput.value = customerId;
         nameInput.value = appointmentCard.dataset.name || '';
@@ -1179,7 +1159,6 @@ document.addEventListener('DOMContentLoaded', () => {
         form.querySelector('input[name="phone"]').value = appointmentCard.dataset.phone ?? '';
         form.querySelector('input[name="interest"]').value = appointmentCard.dataset.interest ?? '';
 
-        form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
         if (appointmentCard.dataset.process) {
           appointmentCard.dataset.process.split(',').forEach(proc => {
             const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
@@ -1198,6 +1177,16 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    function clearFormFields() {
+      form.reset();
+      form.querySelectorAll('input[type="hidden"]').forEach(el => {
+        if (el.name !== 'id' && el.name !== 'user_id' && el.name !== 'appointment_id') {
+          el.value = '';
+        }
+      });
+    }
+
+    // Apply last selected customer card (skip appointment card)
     function applyActiveCard() {
       const savedId = localStorage.getItem('activeCustomerId');
       const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
@@ -1206,15 +1195,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       savedCard.classList.add('active-card');
       if (!idInput.value || idInput.value === savedId) {
-        clearFormExceptHidden();
+        clearFormFields();
 
         idInput.value = savedId;
-        if (savedCard.dataset.name) nameInput.value = savedCard.dataset.name;
-        if (savedCard.dataset.email) form.querySelector('input[name="email"]').value = savedCard.dataset.email;
-        if (savedCard.dataset.phone) form.querySelector('input[name="phone"]').value = savedCard.dataset.phone;
-        if (savedCard.dataset.interest) form.querySelector('input[name="interest"]').value = savedCard.dataset.interest;
+        nameInput.value = savedCard.dataset.name || '';
+        form.querySelector('input[name="email"]').value = savedCard.dataset.email ?? '';
+        form.querySelector('input[name="phone"]').value = savedCard.dataset.phone ?? '';
+        form.querySelector('input[name="interest"]').value = savedCard.dataset.interest ?? '';
 
-        form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
         if (savedCard.dataset.process) {
           savedCard.dataset.process.split(',').forEach(proc => {
             const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
@@ -1225,6 +1213,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // Pause animation on Add Customer
     if (addCustomerBtn) {
       addCustomerBtn.addEventListener('click', () => {
         const activeCard = document.querySelector('.active-card');
@@ -1234,15 +1223,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Init
     bindCardClickEvents();
     bindAppointmentCardClick();
     applyActiveCard();
   });
 </script>
-
-
-
-
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
