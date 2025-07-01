@@ -791,7 +791,30 @@ document.addEventListener('DOMContentLoaded', () => {
             showConfirmButton: true
           });
 
-          // 2 second ke baad page reload
+          // ✅ Clear form after successful transfer
+          const form = document.getElementById('salesForm');
+          if (form) {
+            form.reset(); // clear all fields
+
+            // Clear hidden inputs manually
+            form.querySelector('input[name="id"]').value = '';
+            const appointmentInput = form.querySelector('input[name="appointment_id"]');
+            if (appointmentInput) appointmentInput.value = '';
+
+            // Uncheck all checkboxes (if not cleared by reset)
+            form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+          }
+
+          // ✅ Remove active-card from all cards
+          document.querySelectorAll('.customer-card').forEach(card => {
+            card.classList.remove('active-card');
+            card.classList.remove('pause-animation');
+          });
+
+          // ✅ Remove saved ID from localStorage
+          localStorage.removeItem('activeCustomerId');
+
+          // 🔄 Reload after 2 seconds
           setTimeout(() => {
             location.reload();
           }, 2000);
@@ -804,6 +827,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 </script>
+
 
 
 <script>
