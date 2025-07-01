@@ -119,7 +119,7 @@
                                             {{ $sale->disposition ?? 'N/A' }}
                                         </span>
                                     </td>
-<td class="border-b px-4 py-3">
+<td class="mt-4 px-4 mb-2">
     {{ calculateDuration($sale) }}
 </td>
 
