@@ -53,8 +53,11 @@
 
       <div class="w-full">
         <button
-          class="w-full mt-4 bg-gray-800 text-white rounded text-sm transition font-semibold px-6 py-2 rounded">
+          class="w-full mt-4 bg-gray-800 text-white rounded text-sm transition font-semibold px-6 py-2 rounded"
+                      data-appointment-id="{{ $appointment->id }}"
+  data-customer-name="{{ $appointment->customer_name }}">
           Transfer
+
         </button>
       </div>
     </div>
