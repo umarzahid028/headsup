@@ -163,7 +163,6 @@ let currentTurnUser = '';
 let previousTurnUser = '';
 let synthReady = false;
 let lastForwardedCustomerIds = [];
-const highlightTimers = {}; // Track highlight timeouts
 
 function prepareVoiceEngine() {
   if (synthReady) return;
@@ -219,6 +218,7 @@ async function fetchAndUpdateTokens() {
     const res = await fetch('{{ route('tokens.active') }}', {
       headers: { 'Accept': 'application/json' }
     });
+
     const data = await res.json();
     const tokenList = document.getElementById('tokenList');
     tokenList.innerHTML = '';
@@ -228,44 +228,33 @@ async function fetchAndUpdateTokens() {
       return;
     }
 
-    // ✅ Multiple highlighted customer IDs
-    const highlightCustomerIds = JSON.parse(localStorage.getItem('highlightCustomerIds') || '[]');
-    let forwardedIds = [];
     let hasCustomer = false;
     const now = Date.now();
+    let newForwardedIds = [];
 
-    data.active.forEach((token) => {
+    data.active.forEach(token => {
       const name = token.sales_person || 'Unknown';
 
-      (token.customers || []).forEach((customer) => {
+      (token.customers || []).forEach(customer => {
         if (!customer || !customer.id) return;
 
         hasCustomer = true;
         const customerId = String(customer.id);
         const customerName = customer.customer_name || 'Unknown Customer';
         const processes = customer.process || [];
+
         const isForwarded = customer.forwarded;
         const forwardedAt = new Date(customer.forwarded_at).getTime();
-        const isLocalHighlight = highlightCustomerIds.includes(customerId);
+        const withinFiveMinutes = now - forwardedAt < 5 * 60 * 1000;
+        const shouldHighlight = isForwarded && withinFiveMinutes;
 
         const row = document.createElement('div');
         row.className = 'active-token-row';
         row.dataset.customerId = customerId;
 
-        // ✅ Highlight logic
-        const shouldHighlight = (isForwarded && now - forwardedAt < 5 * 60 * 1000) || isLocalHighlight;
-        const inTimer = highlightTimers[customerId] && now < highlightTimers[customerId];
-
-        if (shouldHighlight || inTimer) {
+        if (shouldHighlight) {
           row.classList.add('highlight-turn');
-          forwardedIds.push(customerId);
-
-          if (!highlightTimers[customerId]) {
-            highlightTimers[customerId] = now + 5 * 60 * 1000;
-            setTimeout(() => {
-              delete highlightTimers[customerId];
-            }, 5 * 60 * 1000);
-          }
+          newForwardedIds.push(customerId);
         }
 
         row.innerHTML = `
@@ -281,27 +270,21 @@ async function fetchAndUpdateTokens() {
         `;
 
         tokenList.appendChild(row);
-
-        // ✅ Play voice and remove individual ID from storage
-        if (isLocalHighlight) {
-          speak('Manager T O Requested');
-          const remaining = highlightCustomerIds.filter(id => id !== customerId);
-          localStorage.setItem('highlightCustomerIds', JSON.stringify(remaining));
-        }
       });
     });
 
-    // ✅ Speak only if new forwarded customers found
-    const newForwarded = forwardedIds.filter(id => !lastForwardedCustomerIds.includes(id));
-    if (newForwarded.length > 0) {
+    // 🔊 Speak once for newly forwarded customer(s)
+    const newHighlights = newForwardedIds.filter(id => !lastForwardedCustomerIds.includes(id));
+    if (newHighlights.length > 0) {
       speak('Manager T O Requested');
     }
 
-    lastForwardedCustomerIds = forwardedIds;
+    lastForwardedCustomerIds = newForwardedIds;
 
     if (!hasCustomer) {
       tokenList.innerHTML = `<div class="text-center text-white text-xl py-10">No active customers at the moment</div>`;
     }
+
   } catch (err) {
     console.error('Error fetching tokens:', err);
     document.getElementById('tokenList').innerHTML = `<div class="text-red-500 text-center">Error loading customer data</div>`;
@@ -313,6 +296,7 @@ async function fetchCheckins() {
     const res = await fetch('{{ route('salespersons.checkin') }}', {
       headers: { 'Accept': 'application/json' }
     });
+
     const data = await res.json();
     const checkinList = document.getElementById('checkinList');
     checkinList.innerHTML = '';
@@ -322,7 +306,7 @@ async function fetchCheckins() {
       return;
     }
 
-    data.forEach((person) => {
+    data.forEach(person => {
       const isCurrent = person.name?.toLowerCase() === currentTurnUser;
       const row = document.createElement('div');
       row.className = `checkin-row ${isCurrent ? 'highlight-turn' : ''}`;
@@ -347,11 +331,11 @@ function refreshScreen() {
 }
 
 window.onload = () => {
- // initialize immediately, no click needed
   refreshScreen();
   setInterval(refreshScreen, 3000);
 };
 </script>
+
 
 
 
