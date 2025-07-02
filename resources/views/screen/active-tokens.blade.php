@@ -163,6 +163,7 @@ let currentTurnUser = '';
 let previousTurnUser = '';
 let synthReady = false;
 let lastForwardedCustomerIds = [];
+const highlightTimers = {}; // Track highlight timeouts
 
 function prepareVoiceEngine() {
   if (synthReady) return;
@@ -230,12 +231,12 @@ async function fetchAndUpdateTokens() {
 
     let hasCustomer = false;
     const now = Date.now();
-    let newForwardedIds = [];
+    let forwardedIds = [];
 
-    data.active.forEach(token => {
+    data.active.forEach((token) => {
       const name = token.sales_person || 'Unknown';
 
-      (token.customers || []).forEach(customer => {
+      (token.customers || []).forEach((customer) => {
         if (!customer || !customer.id) return;
 
         hasCustomer = true;
@@ -245,8 +246,7 @@ async function fetchAndUpdateTokens() {
 
         const isForwarded = customer.forwarded;
         const forwardedAt = new Date(customer.forwarded_at).getTime();
-        const withinFiveMinutes = now - forwardedAt < 5 * 60 * 1000;
-        const shouldHighlight = isForwarded && withinFiveMinutes;
+        const shouldHighlight = isForwarded && now - forwardedAt < 5 * 60 * 1000;
 
         const row = document.createElement('div');
         row.className = 'active-token-row';
@@ -254,7 +254,7 @@ async function fetchAndUpdateTokens() {
 
         if (shouldHighlight) {
           row.classList.add('highlight-turn');
-          newForwardedIds.push(customerId);
+          forwardedIds.push(customerId);
         }
 
         row.innerHTML = `
@@ -273,13 +273,12 @@ async function fetchAndUpdateTokens() {
       });
     });
 
-    // 🔊 Speak once for newly forwarded customer(s)
-    const newHighlights = newForwardedIds.filter(id => !lastForwardedCustomerIds.includes(id));
-    if (newHighlights.length > 0) {
+    const newForwarded = forwardedIds.filter(id => !lastForwardedCustomerIds.includes(id));
+    if (newForwarded.length > 0) {
       speak('Manager T O Requested');
     }
 
-    lastForwardedCustomerIds = newForwardedIds;
+    lastForwardedCustomerIds = forwardedIds;
 
     if (!hasCustomer) {
       tokenList.innerHTML = `<div class="text-center text-white text-xl py-10">No active customers at the moment</div>`;
@@ -296,7 +295,6 @@ async function fetchCheckins() {
     const res = await fetch('{{ route('salespersons.checkin') }}', {
       headers: { 'Accept': 'application/json' }
     });
-
     const data = await res.json();
     const checkinList = document.getElementById('checkinList');
     checkinList.innerHTML = '';
@@ -306,7 +304,7 @@ async function fetchCheckins() {
       return;
     }
 
-    data.forEach(person => {
+    data.forEach((person) => {
       const isCurrent = person.name?.toLowerCase() === currentTurnUser;
       const row = document.createElement('div');
       row.className = `checkin-row ${isCurrent ? 'highlight-turn' : ''}`;
@@ -331,11 +329,11 @@ function refreshScreen() {
 }
 
 window.onload = () => {
+ // initialize immediately, no click needed
   refreshScreen();
   setInterval(refreshScreen, 3000);
 };
 </script>
-
 
 
 

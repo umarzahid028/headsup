@@ -313,7 +313,6 @@ public function forward(Request $request)
     return response()->json(['status' => 'success']);
 }
 
-
  public function fetch()
 {
     $customers = CustomerSale::with('user')->get();
