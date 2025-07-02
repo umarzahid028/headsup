@@ -342,8 +342,7 @@
 
   <!-- T/O request -->
    <meta name="csrf-token" content="{{ csrf_token() }}">
-
-<script>
+   <script>
   document.addEventListener('DOMContentLoaded', () => {
     const toButton = document.querySelector('.toBtn');
     const spinner = toButton.querySelector('.toSpinner');
@@ -364,7 +363,7 @@
       spinner.classList.remove('hidden');
 
       try {
-        const res = await fetch('/api/forward-customer', {
+        const response = await fetch('/api/forward-customer', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -373,13 +372,7 @@
           body: JSON.stringify({ customer_id: customerId })
         });
 
-        const contentType = res.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) {
-          const text = await res.text();
-          throw new Error('Unexpected HTML response: \n' + text.slice(0, 200));
-        }
-
-        const result = await res.json();
+        const result = await response.json();
 
         if (result.status === 'success') {
           await Swal.fire({
@@ -390,7 +383,7 @@
             showConfirmButton: false
           });
         } else {
-          throw new Error('Forward failed');
+          throw new Error('Forwarding failed.');
         }
 
       } catch (err) {
