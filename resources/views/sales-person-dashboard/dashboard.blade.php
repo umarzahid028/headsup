@@ -1090,7 +1090,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const attachFieldListeners = () => {
       const fields = form.querySelectorAll('input, textarea, select');
       fields.forEach(field => {
-        if (field.name === 'name') return;
+       
 
         field.addEventListener('input', () => {
           if (!autosaveEnabled || !idInput.value) return;
