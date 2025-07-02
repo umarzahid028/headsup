@@ -120,8 +120,7 @@ Route::post('/forward-to-manager', [CustomerSaleController::class, 'forwardToMan
 Route::get('/t/o-customers/customer', [CustomerSaleController::class, 'customer'])->name('to.customers');
 // web.php
 Route::get('/customers/fetch', [CustomerSaleController::class, 'fetch'])->name('customers.fetch');
-Route::middleware('web')->post('/api/forward-customer', [CustomerSaleController::class, 'forward'])->name('forward.customer');
-
+Route::post('/api/forward-customer', [CustomerSaleController::class, 'forward']);
 
 
 // Time customer

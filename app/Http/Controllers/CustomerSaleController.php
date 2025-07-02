@@ -300,28 +300,18 @@ public function completeForm(Request $request, $id)
 // CustomerController.php
 public function forward(Request $request)
 {
-    \Log::info('Request Received', [
-        'headers' => $request->headers->all(),
-        'body' => $request->all(),
-        'isJson' => $request->isJson()
-    ]);
-
-    if (!$request->isJson()) {
-        return response()->json(['status' => 'error', 'message' => 'Expected JSON'], 400);
-    }
-
     $request->validate([
         'customer_id' => 'required|integer|exists:customers,id',
     ]);
 
-    $customer = CustomerSale::findOrFail($request->customer_id);
+    $customer = CustomerSale::find($request->customer_id);
+    
     $customer->forwarded = true;
     $customer->forwarded_at = now();
     $customer->save();
 
     return response()->json(['status' => 'success']);
 }
-
 
  public function fetch()
 {

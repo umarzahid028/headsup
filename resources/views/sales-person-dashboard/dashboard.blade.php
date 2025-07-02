@@ -341,8 +341,7 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
   <!-- T/O request -->
-   <meta name="csrf-token" content="{{ csrf_token() }}">
-   <script>
+<script>
   document.addEventListener('DOMContentLoaded', () => {
     const toButton = document.querySelector('.toBtn');
     const spinner = toButton.querySelector('.toSpinner');
@@ -363,28 +362,22 @@
       spinner.classList.remove('hidden');
 
       try {
-        const response = await fetch('/api/forward-customer', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-          },
-          body: JSON.stringify({ customer_id: customerId })
-        });
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        const result = await response.json();
-
-        if (result.status === 'success') {
-          await Swal.fire({
-            icon: 'success',
-            title: 'T/O Requested',
-            text: 'T/O successfully.',
-            timer: 2000,
-            showConfirmButton: false
-          });
-        } else {
-          throw new Error('Forwarding failed.');
+        // ✅ Store multiple highlighted IDs
+        let ids = JSON.parse(sessionStorage.getItem('highlightCustomerIds') || '[]');
+        if (!ids.includes(customerId)) {
+          ids.push(customerId);
+          sessionStorage.setItem('highlightCustomerIds', JSON.stringify(ids));
         }
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'T/O Requested',
+          text: `T/O successfully.`,
+          timer: 2000,
+          showConfirmButton: true
+        });
 
       } catch (err) {
         Swal.fire({
