@@ -365,10 +365,10 @@
         await new Promise(resolve => setTimeout(resolve, 1500));
 
         // ✅ Store multiple highlighted IDs
-        let ids = JSON.parse(sessionStorage.getItem('highlightCustomerIds') || '[]');
+        let ids = JSON.parse(localStorage.getItem('highlightCustomerIds') || '[]');
         if (!ids.includes(customerId)) {
           ids.push(customerId);
-          sessionStorage.setItem('highlightCustomerIds', JSON.stringify(ids));
+          localStorage.setItem('highlightCustomerIds', JSON.stringify(ids));
         }
 
         await Swal.fire({
