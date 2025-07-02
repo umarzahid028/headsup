@@ -341,6 +341,8 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
   <!-- T/O request -->
+   <meta name="csrf-token" content="{{ csrf_token() }}">
+
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const toButton = document.querySelector('.toBtn');
