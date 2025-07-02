@@ -229,7 +229,7 @@ async function fetchAndUpdateTokens() {
     }
 
     // ✅ Multiple highlighted customer IDs
-    const highlightCustomerIds = JSON.parse(sessionStorage.getItem('highlightCustomerIds') || '[]');
+    const highlightCustomerIds = JSON.parse(localStorage.getItem('highlightCustomerIds') || '[]');
     let forwardedIds = [];
     let hasCustomer = false;
     const now = Date.now();
@@ -286,7 +286,7 @@ async function fetchAndUpdateTokens() {
         if (isLocalHighlight) {
           speak('Manager T O Requested');
           const remaining = highlightCustomerIds.filter(id => id !== customerId);
-          sessionStorage.setItem('highlightCustomerIds', JSON.stringify(remaining));
+          localStorage.setItem('highlightCustomerIds', JSON.stringify(remaining));
         }
       });
     });
