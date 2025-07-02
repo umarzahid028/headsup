@@ -373,6 +373,12 @@
           body: JSON.stringify({ customer_id: customerId })
         });
 
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          const text = await res.text();
+          throw new Error('Unexpected HTML response: \n' + text.slice(0, 200));
+        }
+
         const result = await res.json();
 
         if (result.status === 'success') {
@@ -384,7 +390,7 @@
             showConfirmButton: false
           });
         } else {
-          throw new Error('Failed to forward');
+          throw new Error('Forward failed');
         }
 
       } catch (err) {

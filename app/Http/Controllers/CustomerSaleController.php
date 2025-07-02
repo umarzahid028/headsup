@@ -304,13 +304,14 @@ public function forward(Request $request)
         'customer_id' => 'required|integer|exists:customers,id',
     ]);
 
-    $customer = CustomerSale::find($request->customer_id);
-    
+    $customer = CustomerSale::findOrFail($request->customer_id);
     $customer->forwarded = true;
     $customer->forwarded_at = now();
     $customer->save();
 
     return response()->json(['status' => 'success']);
+}
+return response()->json(['status' => 'success']);
 }
 
  public function fetch()
