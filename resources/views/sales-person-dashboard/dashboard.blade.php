@@ -8,9 +8,11 @@
         <p class="text-sm text-gray-500">Manage your check-in activity.</p>
       </div>
       <div>
+        @if(auth()->user()->hasrole('Sales person'))
         <p id="turn-status" style="text-align:center;" class="text-sm text-gray-700 font-medium my-2 animate-pulse-text">
           Checking status...
         </p>
+        @endif
       </div>
     </div>
 
@@ -110,7 +112,7 @@
 
   <div class="w-full grid grid-cols-1 xl:grid-cols-4 gap-6 px-4 mt-4">
     <!-- LEFT SIDE: Customer Form -->
-   <div class="xl:col-span-3 overflow-visible">
+   <div class="xl:col-span-3 {{ Auth()->user()->hasRole('Sales person') ? 'xl:col-span-3' : 'xl:col-span-4' }} overflow-visible">
   <div id="formContainer">
     <form id="salesForm" method="POST" action="{{ route('customer.sales.store') }}" class=" grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
       @csrf
@@ -223,15 +225,15 @@
           Close
         </button>
 <button 
-    type="button"
-    id="TO-button"
-    class="toBtn relative bg-gray-800 text-white px-4 py-1.5 rounded"
-    data-customer-id=""
+  type="button"
+  id="TO-button"
+  class="toBtn relative bg-gray-800 text-white px-4 py-1.5 rounded"
+  data-customer-id=""
 >
-    <span class="btn-label">T/O</span>
-    <div class="toSpinner hidden absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded">
-        <div class="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-    </div>
+  <span class="btn-label">T/O</span>
+  <div class="toSpinner hidden absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded">
+    <div class="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+  </div>
 </button>
 
 
@@ -244,94 +246,96 @@
   </div>
 </div>
 
-
-    <!-- RIGHT SIDE -->
-    <div class="xl:col-span-1 flex flex-col h-[calc(100vh-10rem)]">
-      <div class="bg-white rounded-xl shadow p-3 w-full max-w-md mx-auto space-y-4 border mb-4">
-
-        <!-- Status + Button -->
-        <div class="flex items-center justify-between">
-         <span class="status-text text-sm font-semibold px-3 py-1 rounded-md flex items-center gap-1
-    {{ $isCheckedIn ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700' }}">
+@if (Auth()->user()->hasRole('Sales person'))
   
-  @if($isCheckedIn)
-    <!-- Check Icon -->
-    <svg class="w-4 h-4 text-green-800" fill="none" stroke="currentColor" stroke-width="2"
-         viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
-    </svg>
-    Checked In
-  @else
-    <!-- X Icon -->
-    <svg class="w-4 h-4 text-red-700" fill="none" stroke="currentColor" stroke-width="2"
-         viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-    </svg>
-    Checked Out
-  @endif
+<!-- RIGHT SIDE -->
+<div class="xl:col-span-1 flex flex-col h-[calc(100vh-10rem)]">
+  <div class="bg-white rounded-xl shadow p-3 w-full max-w-md mx-auto space-y-4 border mb-4">
+
+    <!-- Status + Button -->
+    <div class="flex items-center justify-between">
+     <span class="status-text text-sm font-semibold px-3 py-1 rounded-md flex items-center gap-1
+{{ $isCheckedIn ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700' }}">
+
+@if($isCheckedIn)
+<!-- Check Icon -->
+<svg class="w-4 h-4 text-green-800" fill="none" stroke="currentColor" stroke-width="2"
+     viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+</svg>
+Checked In
+@else
+<!-- X Icon -->
+<svg class="w-4 h-4 text-red-700" fill="none" stroke="currentColor" stroke-width="2"
+     viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+</svg>
+Checked Out
+@endif
 </span>
 
 
-          <form id="checkToggleForm" action="{{ route('sales.person.store') }}" method="POST">
-            @csrf
-            <button type="submit"
-              id="checkToggleButton"
-              class="check-toggle-btn px-6 py-2 text-sm font-semibold flex items-center gap-2 rounded-md text-white shadow-md
-              {{ $isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' }}">
-              <span class="btn-text">{{ $isCheckedIn ? 'Check Out' : 'Check In' }}</span>
-              <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
-                fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10"
-                  stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor"
-                  d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
-              </svg>
-            </button>
-          </form>
-        </div>
+      <form id="checkToggleForm" action="{{ route('sales.person.store') }}" method="POST">
+        @csrf
+        <button type="submit"
+          id="checkToggleButton"
+          class="check-toggle-btn px-6 py-2 text-sm font-semibold flex items-center gap-2 rounded-md text-white shadow-md
+          {{ $isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' }}">
+          <span class="btn-text">{{ $isCheckedIn ? 'Check Out' : 'Check In' }}</span>
+          <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+            fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10"
+              stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+          </svg>
+        </button>
+      </form>
+    </div>
 
-        <!-- Time Info -->
-        <div class="text-left space-y-1">
-          <p class="text-xs text-gray-600"><strong>Check In:</strong> <span id="check-in-time">{{ $checkInTimeFormatted }}</span></p>
-          <p class="text-xs text-gray-600"><strong>Check Out:</strong> <span id="check-out-time">{{ $checkOutTimeFormatted }}</span></p>
-          <p class="text-xs text-gray-600 {{ $isCheckedIn ? '' : 'hidden' }}" id="duration-wrapper"><strong>Duration:</strong> <span id="duration">Loading...</span></p>
-        </div>
+    <!-- Time Info -->
+    <div class="text-left space-y-1">
+      <p class="text-xs text-gray-600"><strong>Check In:</strong> <span id="check-in-time">{{ $checkInTimeFormatted }}</span></p>
+      <p class="text-xs text-gray-600"><strong>Check Out:</strong> <span id="check-out-time">{{ $checkOutTimeFormatted }}</span></p>
+      <p class="text-xs text-gray-600 {{ $isCheckedIn ? '' : 'hidden' }}" id="duration-wrapper"><strong>Duration:</strong> <span id="duration">Loading...</span></p>
+    </div>
 
-        <div>
+    <div>
 <!-- Take Customer Button (Initially hidden) -->
 <button
-  id="newCustomerBtn"
-  type="button" 
-  class="w-full bg-gray-800 text-white font-semibold px-6 py-2 rounded mb-4 hidden flex items-center justify-center gap-2"
+id="newCustomerBtn"
+type="button" 
+class="w-full bg-gray-800 text-white font-semibold px-6 py-2 rounded mb-4 hidden flex items-center justify-center gap-2"
 >
-  <span class="spinner hidden w-5 h-5 border-2 border-white border-t-transparent rounded animate-spin"></span>
-  <span class="btn-text">Take Customer</span>
+<span class="spinner hidden w-5 h-5 border-2 border-white border-t-transparent rounded animate-spin"></span>
+<span class="btn-text">Take Customer</span>
 </button>
 
 
 <button
-  id="addCustomerBtn"
-  type="button" 
-  class="w-full bg-gray-800 text-white  px-6 py-2 rounded mb-4 hidden">
-  Add Customer
+id="addCustomerBtn"
+type="button" 
+class="w-full bg-gray-800 text-white  px-6 py-2 rounded mb-4 hidden">
+Add Customer
 </button>
 
 
 
-        </div>
-      </div>
-
-      <!-- Scrollable Customers -->
-      <div class="flex-1 overflow-y-auto pr-2" id="customerCards">
-        @include('partials.customers', ['customers' => $customers])
-
-<div id="appointment-wrapper">
-    @include('partials.appointment-card', ['appointment' => $appointment])
-</div>
-
-     
-</div>
     </div>
+  </div>
+  <!-- Scrollable Customers -->
+  <div class="flex-1 overflow-y-auto pr-2" id="customerCards">
+    @include('partials.customers', ['customers' => $customers])
+  
+  <div id="appointment-wrapper">
+  @include('partials.appointment-card', ['appointment' => $appointment])
+  </div>
+  
+  
+  </div>
+  </div>
+@endif
+
   </div>
 
   @push('scripts')
@@ -341,14 +345,17 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
   <!-- T/O request -->
+
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const toButton = document.querySelector('.toBtn');
+    if (!toButton) return; // safety check
+
     const spinner = toButton.querySelector('.toSpinner');
     const customerIdInput = document.getElementById('customerId');
 
     toButton.addEventListener('click', async () => {
-      const customerId = customerIdInput.value;
+      const customerId = customerIdInput?.value;
 
       if (!customerId) {
         Swal.fire({
@@ -362,23 +369,31 @@
       spinner.classList.remove('hidden');
 
       try {
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Optional delay
 
-        // ✅ Store multiple highlighted IDs
-        let ids = JSON.parse(localStorage.getItem('highlightCustomerIds') || '[]');
-        if (!ids.includes(customerId)) {
-          ids.push(customerId);
-          localStorage.setItem('highlightCustomerIds', JSON.stringify(ids));
-        }
-
-        await Swal.fire({
-          icon: 'success',
-          title: 'T/O Requested',
-          text: `T/O successfully.`,
-          timer: 2000,
-          showConfirmButton: true
+        const response = await fetch('forward-customer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({ customer_id: customerId })
         });
 
+        const result = await response.json();
+
+        if (result.status === 'success') {
+          await Swal.fire({
+            icon: 'success',
+            title: 'T/O Requested',
+            text: 'T/O successfully.',
+            timer: 2000,
+            showConfirmButton: true
+          });
+        } else {
+          throw new Error('Forward failed.');
+        }
       } catch (err) {
         Swal.fire({
           icon: 'error',
@@ -885,29 +900,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputs = form.querySelectorAll('input[type="text"], input[type="email"], textarea');
 
   // Toggle buttons based on input status
-  function toggleButtons() {
-    const nameVal = nameInput.value.trim();
-    const hasCustomerId = customerIdInput.value.trim() !== '';
-    let otherFieldFilled = false;
+function toggleButtons() {
+  const nameVal = nameInput.value.trim();
+  const hasCustomerId = customerIdInput.value.trim() !== '';
+  let otherFieldFilled = false;
 
-    inputs.forEach(input => {
-      if (input.id !== 'nameInput' && input.value.trim() !== '') {
-        otherFieldFilled = true;
-      }
-    });
-
-    const ready = nameVal !== '' && hasCustomerId && otherFieldFilled;
-
-    if (ready) {
-      addBtn.classList.remove('hidden');
-      takeBtn.classList.add('hidden');
-    } else {
-      addBtn.classList.add('hidden');
-      takeBtn.classList.remove('hidden');
+  inputs.forEach(input => {
+    if (input.id !== 'nameInput' && input.value.trim() !== '') {
+      otherFieldFilled = true;
     }
+  });
 
-    takeBtn.disabled = false;
+  // Show Add button ONLY when there's an ID
+  if (hasCustomerId) {
+    addBtn.classList.remove('hidden');
+    takeBtn.classList.add('hidden');
+  } else {
+    addBtn.classList.add('hidden');
+    takeBtn.classList.remove('hidden');
   }
+
+  takeBtn.disabled = false;
+}
+
 
   // Toggle readonly on name field
   function updateNameInputState() {

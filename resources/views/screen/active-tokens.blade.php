@@ -246,7 +246,7 @@ async function fetchAndUpdateTokens() {
         const processes = customer.process || [];
         const isForwarded = customer.forwarded;
         const forwardedAt = new Date(customer.forwarded_at).getTime();
-        const isLocalHighlight = highlightCustomerIds.includes(customerId);
+        const isLocalHighlight = customer.forwarded_at;
 
         const row = document.createElement('div');
         row.className = 'active-token-row';

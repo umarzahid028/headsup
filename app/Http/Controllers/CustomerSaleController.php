@@ -301,17 +301,18 @@ public function completeForm(Request $request, $id)
 public function forward(Request $request)
 {
     $request->validate([
-        'customer_id' => 'required|integer|exists:customers,id',
+        'customer_id' => 'required|integer|exists:customer_sales,id',
     ]);
 
     $customer = CustomerSale::find($request->customer_id);
     
-    $customer->forwarded = true;
-    $customer->forwarded_at = now();
+    // $customer->forwarded = true;
+    $customer->forwarded_at = now(); // use `now()` instead of `today()` to include time
     $customer->save();
 
     return response()->json(['status' => 'success']);
 }
+
 
  public function fetch()
 {
