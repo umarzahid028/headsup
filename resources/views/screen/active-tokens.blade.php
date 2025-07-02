@@ -228,7 +228,6 @@ async function fetchAndUpdateTokens() {
       return;
     }
 
-    // ✅ Multiple highlighted customer IDs
     const highlightCustomerIds = JSON.parse(localStorage.getItem('highlightCustomerIds') || '[]');
     let forwardedIds = [];
     let hasCustomer = false;
@@ -252,7 +251,6 @@ async function fetchAndUpdateTokens() {
         row.className = 'active-token-row';
         row.dataset.customerId = customerId;
 
-        // ✅ Highlight logic
         const shouldHighlight = (isForwarded && now - forwardedAt < 5 * 60 * 1000) || isLocalHighlight;
         const inTimer = highlightTimers[customerId] && now < highlightTimers[customerId];
 
@@ -266,6 +264,16 @@ async function fetchAndUpdateTokens() {
               delete highlightTimers[customerId];
             }, 5 * 60 * 1000);
           }
+
+          // ✅ Speak only if this ID hasn't been spoken before
+          const alreadySpoken = lastForwardedCustomerIds.includes(customerId);
+          if (!alreadySpoken) {
+            speak('Manager T O Requested');
+          }
+
+          // ✅ Remove from localStorage if exists
+          const remaining = highlightCustomerIds.filter(id => id !== customerId);
+          localStorage.setItem('highlightCustomerIds', JSON.stringify(remaining));
         }
 
         row.innerHTML = `
@@ -281,22 +289,10 @@ async function fetchAndUpdateTokens() {
         `;
 
         tokenList.appendChild(row);
-
-        // ✅ Play voice and remove individual ID from storage
-        if (isLocalHighlight) {
-          speak('Manager T O Requested');
-          const remaining = highlightCustomerIds.filter(id => id !== customerId);
-          localStorage.setItem('highlightCustomerIds', JSON.stringify(remaining));
-        }
       });
     });
 
-    // ✅ Speak only if new forwarded customers found
-    const newForwarded = forwardedIds.filter(id => !lastForwardedCustomerIds.includes(id));
-    if (newForwarded.length > 0) {
-      speak('Manager T O Requested');
-    }
-
+    // ✅ Update tracked forwarded IDs
     lastForwardedCustomerIds = forwardedIds;
 
     if (!hasCustomer) {
