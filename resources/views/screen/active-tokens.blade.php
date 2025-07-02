@@ -228,10 +228,7 @@ async function fetchAndUpdateTokens() {
       return;
     }
 
-    // ✅ Multiple highlighted customer IDs
-    const highlightCustomerIds = JSON.parse(localStorage.getItem('highlightCustomerIds') || '[]');
     let forwardedIds = [];
-    let hasCustomer = false;
     const now = Date.now();
 
     data.active.forEach((token) => {
@@ -240,32 +237,22 @@ async function fetchAndUpdateTokens() {
       (token.customers || []).forEach((customer) => {
         if (!customer || !customer.id) return;
 
-        hasCustomer = true;
         const customerId = String(customer.id);
         const customerName = customer.customer_name || 'Unknown Customer';
         const processes = customer.process || [];
         const isForwarded = customer.forwarded;
         const forwardedAt = new Date(customer.forwarded_at).getTime();
-        const isLocalHighlight = highlightCustomerIds.includes(customerId);
 
         const row = document.createElement('div');
         row.className = 'active-token-row';
         row.dataset.customerId = customerId;
 
-        // ✅ Highlight logic
-        const shouldHighlight = (isForwarded && now - forwardedAt < 5 * 60 * 1000) || isLocalHighlight;
-        const inTimer = highlightTimers[customerId] && now < highlightTimers[customerId];
+        // ✅ Highlight logic (based on DB)
+        const shouldHighlight = isForwarded && (now - forwardedAt < 5 * 60 * 1000);
 
-        if (shouldHighlight || inTimer) {
+        if (shouldHighlight) {
           row.classList.add('highlight-turn');
           forwardedIds.push(customerId);
-
-          if (!highlightTimers[customerId]) {
-            highlightTimers[customerId] = now + 5 * 60 * 1000;
-            setTimeout(() => {
-              delete highlightTimers[customerId];
-            }, 5 * 60 * 1000);
-          }
         }
 
         row.innerHTML = `
@@ -281,27 +268,13 @@ async function fetchAndUpdateTokens() {
         `;
 
         tokenList.appendChild(row);
-
-        // ✅ Play voice and remove individual ID from storage
-        if (isLocalHighlight) {
-          speak('Manager T O Requested');
-          const remaining = highlightCustomerIds.filter(id => id !== customerId);
-          localStorage.setItem('highlightCustomerIds', JSON.stringify(remaining));
-        }
       });
     });
 
-    // ✅ Speak only if new forwarded customers found
-    const newForwarded = forwardedIds.filter(id => !lastForwardedCustomerIds.includes(id));
-    if (newForwarded.length > 0) {
+    if (forwardedIds.length > 0) {
       speak('Manager T O Requested');
     }
 
-    lastForwardedCustomerIds = forwardedIds;
-
-    if (!hasCustomer) {
-      tokenList.innerHTML = `<div class="text-center text-white text-xl py-10">No active customers at the moment</div>`;
-    }
   } catch (err) {
     console.error('Error fetching tokens:', err);
     document.getElementById('tokenList').innerHTML = `<div class="text-red-500 text-center">Error loading customer data</div>`;

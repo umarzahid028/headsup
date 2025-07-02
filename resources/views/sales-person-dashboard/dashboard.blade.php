@@ -362,22 +362,28 @@
       spinner.classList.remove('hidden');
 
       try {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        // ✅ Store multiple highlighted IDs
-        let ids = JSON.parse(localStorage.getItem('highlightCustomerIds') || '[]');
-        if (!ids.includes(customerId)) {
-          ids.push(customerId);
-          localStorage.setItem('highlightCustomerIds', JSON.stringify(ids));
-        }
-
-        await Swal.fire({
-          icon: 'success',
-          title: 'T/O Requested',
-          text: `T/O successfully.`,
-          timer: 2000,
-          showConfirmButton: true
+        const res = await fetch('/api/forward-customer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify({ customer_id: customerId })
         });
+
+        const result = await res.json();
+
+        if (result.status === 'success') {
+          await Swal.fire({
+            icon: 'success',
+            title: 'T/O Requested',
+            text: 'T/O successfully.',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        } else {
+          throw new Error('Failed to forward');
+        }
 
       } catch (err) {
         Swal.fire({
