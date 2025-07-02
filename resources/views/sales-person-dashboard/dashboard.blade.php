@@ -224,8 +224,9 @@
         </button>
 <button 
     type="button"
+    id="TO-button"
     class="toBtn relative bg-gray-800 text-white px-4 py-1.5 rounded"
-    data-customer-id="{{ $tolist->first()->id ?? '' }}"
+    data-customer-id=""
 >
     <span class="btn-label">T/O</span>
     <div class="toSpinner hidden absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded">
@@ -363,12 +364,17 @@
       try {
         await new Promise(resolve => setTimeout(resolve, 1500));
 
-        localStorage.setItem('highlightCustomerId', customerId);
+        // ✅ Store multiple highlighted IDs
+        let ids = JSON.parse(localStorage.getItem('highlightCustomerIds') || '[]');
+        if (!ids.includes(customerId)) {
+          ids.push(customerId);
+          localStorage.setItem('highlightCustomerIds', JSON.stringify(ids));
+        }
 
         await Swal.fire({
           icon: 'success',
           title: 'T/O Requested',
-          text: ` T/O successfully.`,
+          text: `T/O successfully.`,
           timer: 2000,
           showConfirmButton: true
         });
@@ -1208,6 +1214,16 @@ document.addEventListener('DOMContentLoaded', () => {
           form.querySelector('input[name="phone"]').value = card.dataset.phone ?? '';
           form.querySelector('input[name="interest"]').value = card.dataset.interest ?? '';
 
+          const button = document.getElementById('TO-button');
+          console.log('card.dataset.id', card.dataset.customerId);
+          if (button) {
+            // Replace the data-customer-id attribute value
+            button.setAttribute('data-customer-id',card.dataset.customerId ); // Replace 'NEW_VALUE' with the desired value
+          } else {
+            console.error('Button with ID "TO-button" not found.');
+          }
+
+
           if (card.dataset.process) {
             card.dataset.process.split(',').forEach(proc => {
               const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
@@ -1231,6 +1247,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function bindAppointmentCardClick() {
+    
       const appointmentCard = document.querySelector('#appointment-card');
       if (!appointmentCard) return;
 
@@ -1246,6 +1263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.querySelector('input[name="phone"]').value = appointmentCard.dataset.phone ?? '';
         form.querySelector('input[name="interest"]').value = appointmentCard.dataset.interest ?? '';
 
+      
         if (appointmentCard.dataset.process) {
           appointmentCard.dataset.process.split(',').forEach(proc => {
             const checkbox = [...form.querySelectorAll('input[name="process[]"]')]

@@ -81,11 +81,13 @@ public function index(): mixed
 
     $customers = CustomerSale::where('user_id', auth()->id())
         ->where('forwarded_to_manager', false)
+        ->latest()
         ->get();
 
     $salespeople = \App\Models\User::role('Sales person')
         ->where('id', '!=', $user->id)
         ->get();
+        
    $tolist = CustomerSale::where('forwarded_to_manager', false)
         ->get();
 

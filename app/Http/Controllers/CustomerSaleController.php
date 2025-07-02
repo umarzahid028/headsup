@@ -305,6 +305,7 @@ public function forward(Request $request)
     ]);
 
     $customer = CustomerSale::find($request->customer_id);
+    
     $customer->forwarded = true;
     $customer->forwarded_at = now();
     $customer->save();

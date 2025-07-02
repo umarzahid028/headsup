@@ -228,7 +228,8 @@ async function fetchAndUpdateTokens() {
       return;
     }
 
-    const highlightCustomerId = localStorage.getItem('highlightCustomerId');
+    // ✅ Multiple highlighted customer IDs
+    const highlightCustomerIds = JSON.parse(localStorage.getItem('highlightCustomerIds') || '[]');
     let forwardedIds = [];
     let hasCustomer = false;
     const now = Date.now();
@@ -245,27 +246,22 @@ async function fetchAndUpdateTokens() {
         const processes = customer.process || [];
         const isForwarded = customer.forwarded;
         const forwardedAt = new Date(customer.forwarded_at).getTime();
-        const isLocalHighlight = highlightCustomerId === customerId;
+        const isLocalHighlight = highlightCustomerIds.includes(customerId);
 
         const row = document.createElement('div');
         row.className = 'active-token-row';
         row.dataset.customerId = customerId;
 
-        // Highlight condition
+        // ✅ Highlight logic
         const shouldHighlight = (isForwarded && now - forwardedAt < 5 * 60 * 1000) || isLocalHighlight;
-
-        // Check if still in highlight timer
         const inTimer = highlightTimers[customerId] && now < highlightTimers[customerId];
 
         if (shouldHighlight || inTimer) {
           row.classList.add('highlight-turn');
           forwardedIds.push(customerId);
 
-          // If not already tracked, set timer
           if (!highlightTimers[customerId]) {
             highlightTimers[customerId] = now + 5 * 60 * 1000;
-
-            // Remove from memory after timeout
             setTimeout(() => {
               delete highlightTimers[customerId];
             }, 5 * 60 * 1000);
@@ -286,13 +282,16 @@ async function fetchAndUpdateTokens() {
 
         tokenList.appendChild(row);
 
+        // ✅ Play voice and remove individual ID from storage
         if (isLocalHighlight) {
           speak('Manager T O Requested');
-          localStorage.removeItem('highlightCustomerId');
+          const remaining = highlightCustomerIds.filter(id => id !== customerId);
+          localStorage.setItem('highlightCustomerIds', JSON.stringify(remaining));
         }
       });
     });
 
+    // ✅ Speak only if new forwarded customers found
     const newForwarded = forwardedIds.filter(id => !lastForwardedCustomerIds.includes(id));
     if (newForwarded.length > 0) {
       speak('Manager T O Requested');
