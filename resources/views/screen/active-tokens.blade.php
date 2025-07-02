@@ -219,7 +219,6 @@ async function fetchAndUpdateTokens() {
     const res = await fetch('{{ route('tokens.active') }}', {
       headers: { 'Accept': 'application/json' }
     });
-
     const data = await res.json();
     const tokenList = document.getElementById('tokenList');
     tokenList.innerHTML = '';
@@ -229,9 +228,11 @@ async function fetchAndUpdateTokens() {
       return;
     }
 
+    // ✅ Multiple highlighted customer IDs
+    const highlightCustomerIds = JSON.parse(localStorage.getItem('highlightCustomerIds') || '[]');
+    let forwardedIds = [];
     let hasCustomer = false;
     const now = Date.now();
-    let forwardedIds = [];
 
     data.active.forEach((token) => {
       const name = token.sales_person || 'Unknown';
@@ -243,18 +244,28 @@ async function fetchAndUpdateTokens() {
         const customerId = String(customer.id);
         const customerName = customer.customer_name || 'Unknown Customer';
         const processes = customer.process || [];
-
         const isForwarded = customer.forwarded;
         const forwardedAt = new Date(customer.forwarded_at).getTime();
-        const shouldHighlight = isForwarded && now - forwardedAt < 5 * 60 * 1000;
+        const isLocalHighlight = highlightCustomerIds.includes(customerId);
 
         const row = document.createElement('div');
         row.className = 'active-token-row';
         row.dataset.customerId = customerId;
 
-        if (shouldHighlight) {
+        // ✅ Highlight logic
+        const shouldHighlight = (isForwarded && now - forwardedAt < 5 * 60 * 1000) || isLocalHighlight;
+        const inTimer = highlightTimers[customerId] && now < highlightTimers[customerId];
+
+        if (shouldHighlight || inTimer) {
           row.classList.add('highlight-turn');
           forwardedIds.push(customerId);
+
+          if (!highlightTimers[customerId]) {
+            highlightTimers[customerId] = now + 5 * 60 * 1000;
+            setTimeout(() => {
+              delete highlightTimers[customerId];
+            }, 5 * 60 * 1000);
+          }
         }
 
         row.innerHTML = `
@@ -270,9 +281,17 @@ async function fetchAndUpdateTokens() {
         `;
 
         tokenList.appendChild(row);
+
+        // ✅ Play voice and remove individual ID from storage
+        if (isLocalHighlight) {
+          speak('Manager T O Requested');
+          const remaining = highlightCustomerIds.filter(id => id !== customerId);
+          localStorage.setItem('highlightCustomerIds', JSON.stringify(remaining));
+        }
       });
     });
 
+    // ✅ Speak only if new forwarded customers found
     const newForwarded = forwardedIds.filter(id => !lastForwardedCustomerIds.includes(id));
     if (newForwarded.length > 0) {
       speak('Manager T O Requested');
@@ -283,7 +302,6 @@ async function fetchAndUpdateTokens() {
     if (!hasCustomer) {
       tokenList.innerHTML = `<div class="text-center text-white text-xl py-10">No active customers at the moment</div>`;
     }
-
   } catch (err) {
     console.error('Error fetching tokens:', err);
     document.getElementById('tokenList').innerHTML = `<div class="text-red-500 text-center">Error loading customer data</div>`;
