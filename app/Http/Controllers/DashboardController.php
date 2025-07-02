@@ -86,6 +86,9 @@ public function index(): mixed
     $salespeople = \App\Models\User::role('Sales person')
         ->where('id', '!=', $user->id)
         ->get();
+   $tolist = CustomerSale::where('forwarded_to_manager', false)
+        ->get();
+
 
     $isCheckedIn = Queue::where('user_id', $user->id)
         ->where('is_checked_in', true)
@@ -115,7 +118,7 @@ public function index(): mixed
         }
     }
 
-    return view('sales-person-dashboard.dashboard', compact('token', 'onHoldToken', 'customers', 'salespeople', 'appointment'));
+    return view('sales-person-dashboard.dashboard', compact('token', 'onHoldToken', 'customers', 'salespeople', 'appointment', 'tolist'));
 }
 
 }

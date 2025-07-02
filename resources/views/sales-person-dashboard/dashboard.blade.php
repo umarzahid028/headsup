@@ -225,7 +225,7 @@
 <button 
     type="button"
     class="toBtn relative bg-gray-800 text-white px-4 py-1.5 rounded"
-    data-customer-id="{{ $customers->first()->id ?? '' }}"
+    data-customer-id="{{ $tolist->first()->id ?? '' }}"
 >
     <span class="btn-label">T/O</span>
     <div class="toSpinner hidden absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded">
@@ -1081,17 +1081,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let debounceTimeout;
     let customerSavedThisTurn = false;
-    let autosaveEnabled = false; // ← Only becomes true when newCustomerBtn is clicked
+    let autosaveEnabled = false;
 
-    // Reset save flag every 3 seconds
     setInterval(() => {
       customerSavedThisTurn = false;
     }, 3000);
 
-    // Apply input listeners only when autosaveEnabled = true
     const attachFieldListeners = () => {
       const fields = form.querySelectorAll('input, textarea, select');
-
       fields.forEach(field => {
         if (field.name === 'name') return;
 
@@ -1104,29 +1101,37 @@ document.addEventListener('DOMContentLoaded', () => {
             autoSaveForm();
           }, 700);
         });
+
+        // For checkboxes and radio buttons
+        field.addEventListener('change', () => {
+          if (!autosaveEnabled || !idInput.value) return;
+
+          customerSavedThisTurn = false;
+          clearTimeout(debounceTimeout);
+          debounceTimeout = setTimeout(() => {
+            autoSaveForm();
+          }, 300);
+        });
       });
     };
 
-    // Listen only to name field for now
     nameInput.addEventListener('input', () => {
-      if (autosaveEnabled) return; // skip if already enabled
+      if (autosaveEnabled) return;
 
       customerSavedThisTurn = false;
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         if (!nameInput.value.trim()) return;
-        // Do nothing until button is clicked
-      }, 700);
+        // Do nothing yet
+      }, 300);
     });
 
-    // When "Take Customer" button is clicked
     if (newCustomerBtn) {
       newCustomerBtn.addEventListener('click', async () => {
         if (!nameInput.value.trim()) return;
 
         await autoSaveForm();
 
-        // If ID generated, activate autosave
         if (idInput.value) {
           autosaveEnabled = true;
           attachFieldListeners();
@@ -1155,6 +1160,9 @@ document.addEventListener('DOMContentLoaded', () => {
           if (result.id && !idInput.value) {
             idInput.value = result.id;
             localStorage.setItem('activeCustomerId', result.id);
+
+            autosaveEnabled = true;
+            attachFieldListeners(); // In case it wasn’t attached before
           }
 
           customerSavedThisTurn = true;
@@ -1215,6 +1223,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
           card.classList.add('active-card');
           localStorage.setItem('activeCustomerId', customerId);
+
+          autosaveEnabled = true;
+          attachFieldListeners();
         });
       });
     }
@@ -1250,6 +1261,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         appointmentCard.classList.add('active-card');
         localStorage.setItem('activeCustomerId', customerId);
+
+        autosaveEnabled = true;
+        attachFieldListeners();
       });
     }
 
@@ -1285,6 +1299,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (checkbox) checkbox.checked = true;
           });
         }
+
+        autosaveEnabled = true;
+        attachFieldListeners();
       }
     }
 
@@ -1303,6 +1320,7 @@ document.addEventListener('DOMContentLoaded', () => {
     applyActiveCard();
   });
 </script>
+
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
