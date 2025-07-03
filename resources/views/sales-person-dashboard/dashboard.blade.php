@@ -144,9 +144,7 @@
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">
         {{ ucfirst($field) }}
-        @if($field === 'name')
-          <span class="text-red-600">*</span>
-        @endif
+      
       </label>
 
       <input
