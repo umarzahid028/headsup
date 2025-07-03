@@ -18,7 +18,7 @@ public function store(Request $request)
             'id'             => 'nullable|integer|exists:customer_sales,id',
             'user_id'        => 'nullable|exists:users,id',
             'customer_id'    => 'nullable|exists:customers,id',
-            'name'           => 'required|string|max:255',
+            'name'           => 'nullable|string|max:255',
             'email'          => 'nullable|email|max:255',
             'phone'          => 'nullable|string|max:20',
             'interest'       => 'nullable|string|max:255',

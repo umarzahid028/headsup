@@ -155,7 +155,7 @@
         type="{{ $field === 'email' ? 'email' : 'text' }}"
         class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
         value="{{ $value }}"
-        @if($field === 'name') required @endif
+        
       />
     </div>
   @endforeach
@@ -1139,54 +1139,63 @@ function toggleButtons() {
       }, 300);
     });
 
-    if (newCustomerBtn) {
-      newCustomerBtn.addEventListener('click', async () => {
-        if (!nameInput.value.trim()) return;
+if (newCustomerBtn) {
+  newCustomerBtn.addEventListener('click', async () => {
+    // Don't block if name is empty
 
-        await autoSaveForm();
+    // Optional: Clear other fields (except ID)
+    nameInput.value = '';
+    form.querySelector('input[name="email"]').value = '';
+    form.querySelector('input[name="phone"]').value = '';
+    form.querySelector('input[name="interest"]').value = '';
+    [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
 
-        if (idInput.value) {
-          autosaveEnabled = true;
-          attachFieldListeners();
-        }
-      });
+    await autoSaveForm();
+
+    if (idInput.value) {
+      autosaveEnabled = true;
+      attachFieldListeners();
     }
+  });
+}
+
 
     async function autoSaveForm() {
-      if (!nameInput.value.trim() || customerSavedThisTurn) return;
+  if (customerSavedThisTurn) return;
 
-      const formData = new FormData(form);
+  const formData = new FormData(form);
 
-      try {
-        const response = await fetch('{{ route('customer.sales.store') }}', {
-          method: 'POST',
-          headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-          body: formData
-        });
+  try {
+    const response = await fetch('{{ route('customer.sales.store') }}', {
+      method: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: formData
+    });
 
-        const result = await response.json();
+    const result = await response.json();
 
-        if (result.status === 'success') {
-          if (result.id && !idInput.value) {
-            idInput.value = result.id;
-            localStorage.setItem('activeCustomerId', result.id);
+    if (result.status === 'success') {
+      if (result.id && !idInput.value) {
+        idInput.value = result.id;
+        localStorage.setItem('activeCustomerId', result.id);
 
-            autosaveEnabled = true;
-            attachFieldListeners(); // In case it wasn’t attached before
-          }
-
-          customerSavedThisTurn = true;
-          await loadCustomers();
-        } else {
-          console.error('Save failed:', result);
-        }
-      } catch (err) {
-        console.error('Auto-save failed:', err);
+        autosaveEnabled = true;
+        attachFieldListeners(); // In case it wasn’t attached before
       }
+
+      customerSavedThisTurn = true;
+      await loadCustomers();
+    } else {
+      console.error('Save failed:', result);
     }
+  } catch (err) {
+    console.error('Auto-save failed:', err);
+  }
+}
+
 
     async function loadCustomers() {
       try {
