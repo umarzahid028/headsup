@@ -995,15 +995,7 @@ function toggleButtons() {
           return;
         }
 
-        if (!nameVal) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Name required!',
-            text: 'Please enter customer name before taking.',
-          });
-          resetTakeButtonUI();
-          return;
-        }
+       
 
         $.ajax({
           url: '{{ route("sales.person.takeTurn") }}',

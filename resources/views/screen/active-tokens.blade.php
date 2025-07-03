@@ -157,7 +157,6 @@
       </div>
     </section>
   </div>
-
 <script>
 let currentTurnUser = '';
 let previousTurnUser = '';
@@ -252,28 +251,36 @@ async function fetchAndUpdateTokens() {
         row.dataset.customerId = customerId;
 
         const shouldHighlight = (isForwarded && now - forwardedAt < 5 * 60 * 1000) || isLocalHighlight;
-        const inTimer = highlightTimers[customerId] && now < highlightTimers[customerId];
+        const highlightExpiresAt = highlightTimers[customerId] || (forwardedAt + 5 * 60 * 1000);
+        const isExpired = now > highlightExpiresAt;
 
-        if (shouldHighlight || inTimer) {
+        if ((shouldHighlight || !isExpired) && !isExpired) {
           row.classList.add('highlight-turn');
           forwardedIds.push(customerId);
 
           if (!highlightTimers[customerId]) {
-            highlightTimers[customerId] = now + 5 * 60 * 1000;
+            highlightTimers[customerId] = forwardedAt + 5 * 60 * 1000;
+
             setTimeout(() => {
               delete highlightTimers[customerId];
-            }, 5 * 60 * 1000);
+              const highlightedRow = document.querySelector(`.active-token-row[data-customer-id="${customerId}"]`);
+              if (highlightedRow) {
+                highlightedRow.classList.remove('highlight-turn');
+              }
+            }, highlightTimers[customerId] - now);
           }
 
-          // ✅ Speak only if this ID hasn't been spoken before
           const alreadySpoken = lastForwardedCustomerIds.includes(customerId);
           if (!alreadySpoken) {
-            speak('Manager T O Requested');
+            const audio = new Audio('/audio/notification.mp3');
+            audio.play().catch(err => console.error('Audio play failed:', err));
           }
 
-          // ✅ Remove from localStorage if exists
           const remaining = highlightCustomerIds.filter(id => id !== customerId);
           localStorage.setItem('highlightCustomerIds', JSON.stringify(remaining));
+        } else {
+          // Remove expired highlight if still present
+          row.classList.remove('highlight-turn');
         }
 
         row.innerHTML = `
@@ -292,7 +299,6 @@ async function fetchAndUpdateTokens() {
       });
     });
 
-    // ✅ Update tracked forwarded IDs
     lastForwardedCustomerIds = forwardedIds;
 
     if (!hasCustomer) {
@@ -343,11 +349,12 @@ function refreshScreen() {
 }
 
 window.onload = () => {
- // initialize immediately, no click needed
   refreshScreen();
   setInterval(refreshScreen, 3000);
 };
 </script>
+
+
 
 
 
