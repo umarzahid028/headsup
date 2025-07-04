@@ -272,7 +272,7 @@ async function fetchAndUpdateTokens() {
 
           const alreadySpoken = lastForwardedCustomerIds.includes(customerId);
           if (!alreadySpoken) {
-            const audio = new Audio('/sounds/notification.mp3');
+            const audio = new Audio('/');
             audio.play().catch(err => console.error('Audio play failed:', err));
           }
 
