@@ -29,9 +29,10 @@
   @foreach ($customers as $customer)
 @php
   $latestProcess = 'N/A';
-  if (is_array($customer->process) && !empty($customer->process)) {
-    $latestProcess = end($customer->process);
-    reset($customer->process);
+  $processArray = is_array($customer->process) ? $customer->process : [];
+
+  if (!empty($processArray)) {
+    $latestProcess = $processArray[array_key_last($processArray)];
   } elseif (is_string($customer->process)) {
     $latestProcess = $customer->process;
   }
@@ -40,6 +41,7 @@
     ? implode(', ', $customer->disposition)
     : ($customer->disposition ?? null);
 @endphp
+
 
 
    @if (is_null($customer->disposition) 
