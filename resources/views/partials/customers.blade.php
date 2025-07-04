@@ -28,11 +28,11 @@
 <div id="customer-list">
   @foreach ($customers as $customer)
     @php
-      $firstProcess = 'N/A';
+      $latestProcess = 'N/A';
       if (is_array($customer->process) && isset($customer->process[0])) {
-        $firstProcess = $customer->process[0];
+        $latestProcess = $customer->process[0];
       } elseif (is_string($customer->process)) {
-        $firstProcess = $customer->process;
+        $latestProcess = $customer->process;
       }
 
       $dispositions = is_array($customer->disposition)
@@ -70,7 +70,7 @@
           </p>
           <p><span class="font-medium text-gray-400">Name:</span> {{ $customer->name }}</p>
           <p><span class="font-medium text-gray-400">Email:</span> {{ $customer->email }}</p>
-          <p><span class="font-medium text-gray-400">Process:</span> {{ $firstProcess }}</p>
+          <p><span class="font-medium text-gray-400">Process:</span> {{ $latestProcess }}</p>
           <p><span class="font-medium text-gray-400">Disposition:</span> {{ $dispositions ?? 'N/A' }}</p>
         </div>
 
