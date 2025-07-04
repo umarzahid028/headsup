@@ -27,18 +27,20 @@
 
 <div id="customer-list">
   @foreach ($customers as $customer)
-    @php
-      $latestProcess = 'N/A';
-      if (is_array($customer->process) && isset($customer->process[0])) {
-        $latestProcess = $customer->process[0];
-      } elseif (is_string($customer->process)) {
-        $latestProcess = $customer->process;
-      }
+@php
+  $latestProcess = 'N/A';
+  if (is_array($customer->process) && !empty($customer->process)) {
+    $latestProcess = end($customer->process);
+    reset($customer->process);
+  } elseif (is_string($customer->process)) {
+    $latestProcess = $customer->process;
+  }
 
-      $dispositions = is_array($customer->disposition)
-        ? implode(', ', $customer->disposition)
-        : ($customer->disposition ?? null);
-    @endphp
+  $dispositions = is_array($customer->disposition)
+    ? implode(', ', $customer->disposition)
+    : ($customer->disposition ?? null);
+@endphp
+
 
    @if (is_null($customer->disposition) 
     && !$customer->forwarded_to_manager
