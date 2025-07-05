@@ -1243,50 +1243,54 @@ async function autoSaveForm(allowWithoutId = false) {
     }
   }
 
- function bindAppointmentCardClick() {
-    const appointmentCard = document.querySelector('#appointment-card');
-    if (!appointmentCard) return;
+function bindAppointmentCardClick() {
+  const appointmentCard = document.querySelector('#appointment-card');
+  if (!appointmentCard) return;
 
-    appointmentCard.addEventListener('click', async () => {
-      if (appointmentCard.classList.contains('hidden')) return;
-      if (appointmentCard.dataset.used === 'true') return;
+  appointmentCard.addEventListener('click', async () => {
+    if (appointmentCard.classList.contains('hidden')) return;
 
-      const customerId = appointmentCard.dataset.customerId;
+    // Prevent multiple submissions
+    if (appointmentCard.dataset.used === 'true') return;
 
-      clearFormFields();
+    const customerId = appointmentCard.dataset.customerId;
 
-      idInput.value = '';
-      nameInput.value = appointmentCard.dataset.name || '';
-      emailInput.value = appointmentCard.dataset.email ?? '';
-      phoneInput.value = appointmentCard.dataset.phone ?? '';
-      interestInput.value = appointmentCard.dataset.interest ?? '';
-      appointmentInput.value = appointmentCard.dataset.appointmentId ?? '';
+    clearFormFields();
 
-      if (appointmentCard.dataset.process) {
-        appointmentCard.dataset.process.split(',').forEach(proc => {
-          const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
-            .find(cb => cb.value.trim() === proc.trim());
-          if (checkbox) checkbox.checked = true;
-        });
-      }
+    idInput.value = ''; // Force new customer
+    nameInput.value = appointmentCard.dataset.name || '';
+    emailInput.value = appointmentCard.dataset.email ?? '';
+    phoneInput.value = appointmentCard.dataset.phone ?? '';
+    interestInput.value = appointmentCard.dataset.interest ?? '';
+    appointmentInput.value = appointmentCard.dataset.appointmentId ?? '';
 
-      document.querySelectorAll('.customer-card').forEach(c => {
-        c.classList.remove('active-card');
-        c.classList.remove('pause-animation');
+    if (appointmentCard.dataset.process) {
+      appointmentCard.dataset.process.split(',').forEach(proc => {
+        const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
+          .find(cb => cb.value.trim() === proc.trim());
+        if (checkbox) checkbox.checked = true;
       });
+    }
 
-      appointmentCard.classList.add('active-card');
-      appointmentCard.dataset.used = 'true';
-
-      localStorage.setItem('activeCustomerId', customerId);
-      loadedFromAppointment = true;
-      autosaveEnabled = true;
-      attachFieldListeners();
-
-      await autoSaveForm();
-      appointmentCard.classList.add('hidden');
+    document.querySelectorAll('.customer-card').forEach(c => {
+      c.classList.remove('active-card');
+      c.classList.remove('pause-animation');
     });
-  }
+
+    appointmentCard.classList.add('active-card');
+    appointmentCard.dataset.used = 'true';
+
+    localStorage.setItem('activeCustomerId', customerId);
+    loadedFromAppointment = true;
+    
+    autosaveEnabled = true;            // ✅ Yeh line pehle laayi gayi hai
+    attachFieldListeners();            // ✅ Yeh bhi uske sath
+
+    await autoSaveForm();              // ✅ Yeh ab sahi tarah kaam karega
+
+    appointmentCard.classList.add('hidden');
+  });
+}
 
   function clearFormFields() {
     form.reset();
@@ -1297,7 +1301,7 @@ async function autoSaveForm(allowWithoutId = false) {
     });
   }
 
-  function applyActiveCard() {
+function applyActiveCard() {
     const savedId = localStorage.getItem('activeCustomerId');
     const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
     if (!savedCard || savedCard.id === 'appointment-card') return;
@@ -1326,7 +1330,6 @@ async function autoSaveForm(allowWithoutId = false) {
   }
 
 
-
   if (addCustomerBtn) {
     addCustomerBtn.addEventListener('click', () => {
       const activeCard = document.querySelector('.active-card');
@@ -1342,7 +1345,6 @@ async function autoSaveForm(allowWithoutId = false) {
   applyActiveCard();
 });
 </script>
-
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
