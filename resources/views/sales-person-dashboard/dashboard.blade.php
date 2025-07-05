@@ -1180,7 +1180,7 @@ if (newCustomerBtn) {
   async function autoSaveForm() {
     if (customerSavedThisTurn) return;
 
-    if (!nameInput.value.trim() && !emailInput.value.trim() && !phoneInput.value.trim()) {
+    if (nameInput.value.trim() && emailInput.value.trim() && phoneInput.value.trim()) {
       console.warn('Skipped autosave: No data provided.');
       return;
     }
