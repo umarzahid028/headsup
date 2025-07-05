@@ -1187,12 +1187,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
- async function autoSaveForm(allowWithoutId = false) {
+async function autoSaveForm(allowWithoutId = false) {
+  const hasAppointment = appointmentInput.value.trim() !== '';
+
+  // ✅ Skip saving if not allowed and both ID and Appointment are empty
   if (!autosaveEnabled && !allowWithoutId) return;
-  if (!allowWithoutId && !idInput.value.trim()) return;
+  if (!allowWithoutId && !idInput.value.trim() && !hasAppointment) return;
   if (customerSavedThisTurn) return;
 
   const formData = new FormData(form);
+
   try {
     const response = await fetch('{{ route('customer.sales.store') }}', {
       method: 'POST',
@@ -1221,6 +1225,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 }
 
+
   async function loadCustomers() {
     try {
       const resp = await fetch('{{ route('customer.index') }}?partial=1', {
@@ -1238,7 +1243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function bindAppointmentCardClick() {
+function bindAppointmentCardClick() {
   const appointmentCard = document.querySelector('#appointment-card');
   if (!appointmentCard) return;
 
@@ -1275,9 +1280,11 @@ document.addEventListener('DOMContentLoaded', () => {
     autosaveEnabled = true;
     attachFieldListeners();
 
+    // ✅ Save even with appointment ID only
     await autoSaveForm(true);
   });
 }
+
 
   function bindAppointmentCardClick() {
     const appointmentCard = document.querySelector('#appointment-card');
