@@ -240,79 +240,79 @@ public function completeForm(Request $request, $id)
 }
 
 
-public function forwardToManager(Request $request)
-{
-    $customer = null;
-
-    if ($request->filled('id')) {
-        $customer = CustomerSale::find($request->id);
-    }
-
-    // If no direct customer but appointment is provided
-    if (!$customer && $request->filled('appointment_id')) {
-        $appointment = Appointment::find($request->appointment_id);
-
-        if (!$appointment) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Appointment not found.',
-            ], 404);
-        }
-
-        // Create a new customer from appointment
-        $customer = new CustomerSale([
-            'name'           => $appointment->customer_name,
-            'phone'          => $appointment->customer_phone,
-            'user_id'        => auth()->id(),
-            'appointment_id' => $appointment->id,
-            'forwarded_to_manager' => true,
-            'forwarded_at'         => now(),
-        ]);
-        $customer->save();
-
-        // Mark appointment as completed
-        $appointment->status = 'completed';
-        $appointment->save();
-    }
-
-    // If customer still not found
-    if (!$customer) {
-        return response()->json([
-            'status'  => 'error',
-            'message' => 'No valid customer or appointment found.',
-        ], 404);
-    }
-
-    // If existing customer, update forward flags if needed
-    if (!$customer->forwarded_to_manager) {
-        $customer->forwarded_to_manager = true;
-        $customer->forwarded_at = now();
-        $customer->save();
-    }
-
-    return response()->json([
-        'status'   => 'forwarded',
-        'message'  => 'Customer forwarded to Sales Manager!',
-        'redirect' => route('sales.perosn', ['id' => $customer->id]),
-    ]);
-}
-
-// CustomerController.php
 // public function forwardToManager(Request $request)
 // {
-//     $request->validate([
-//         'customer_id' => 'required|integer|exists:customer_sales,id',
-//     ]);
+//     $customer = null;
 
-//     $customer = CustomerSale::find($request->customer_id);
-//     $customer->forwarded_at = now(); // includes both date and time
-//     $customer->save();
+//     if ($request->filled('id')) {
+//         $customer = CustomerSale::find($request->id);
+//     }
+
+//     // If no direct customer but appointment is provided
+//     if (!$customer && $request->filled('appointment_id')) {
+//         $appointment = Appointment::find($request->appointment_id);
+
+//         if (!$appointment) {
+//             return response()->json([
+//                 'status' => 'error',
+//                 'message' => 'Appointment not found.',
+//             ], 404);
+//         }
+
+//         // Create a new customer from appointment
+//         $customer = new CustomerSale([
+//             'name'           => $appointment->customer_name,
+//             'phone'          => $appointment->customer_phone,
+//             'user_id'        => auth()->id(),
+//             'appointment_id' => $appointment->id,
+//             'forwarded_to_manager' => true,
+//             'forwarded_at'         => now(),
+//         ]);
+//         $customer->save();
+
+//         // Mark appointment as completed
+//         $appointment->status = 'completed';
+//         $appointment->save();
+//     }
+
+//     // If customer still not found
+//     if (!$customer) {
+//         return response()->json([
+//             'status'  => 'error',
+//             'message' => 'No valid customer or appointment found.',
+//         ], 404);
+//     }
+
+//     // If existing customer, update forward flags if needed
+//     if (!$customer->forwarded_to_manager) {
+//         $customer->forwarded_to_manager = true;
+//         $customer->forwarded_at = now();
+//         $customer->save();
+//     }
 
 //     return response()->json([
-//         'status' => 'success',
-//         'message' => 'Customer has been forwarded to the Sales Manager.'
+//         'status'   => 'forwarded',
+//         'message'  => 'Customer forwarded to Sales Manager!',
+//         'redirect' => route('sales.perosn', ['id' => $customer->id]),
 //     ]);
 // }
+
+// CustomerController.php
+public function forwardToManager(Request $request)
+{
+    $request->validate([
+        'customer_id' => 'required|integer|exists:customer_sales,id',
+    ]);
+
+    $customer = CustomerSale::find($request->customer_id);
+    $customer->forwarded_at = now(); // includes both date and time
+    $customer->save();
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Customer has been forwarded to the Sales Manager.'
+    ]);
+}
 
 
 

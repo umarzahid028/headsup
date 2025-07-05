@@ -343,7 +343,7 @@ Add Customer
 
   <!-- T/O request -->
 
-<!-- <script>
+<script>
   document.addEventListener('DOMContentLoaded', () => {
     const toButton = document.querySelector('.toBtn');
     if (!toButton) return; // safety check
@@ -402,7 +402,7 @@ Add Customer
       }
     });
   });
-</script> -->
+</script>
 
 
 
@@ -689,7 +689,7 @@ function completeForm(customerId) {
 </script>
 
 
-<script>
+<!-- <script>
 document.addEventListener('DOMContentLoaded', () => {
   const toBtn   = document.getElementById('toBtn');
   const spinner = toBtn.querySelector('.toSpinner');
@@ -761,7 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   toBtn.addEventListener('click', forwardCard);
 });
-</script>
+</script> -->
 
 
 <script>
