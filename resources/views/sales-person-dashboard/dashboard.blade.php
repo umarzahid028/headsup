@@ -1159,9 +1159,9 @@ if (newCustomerBtn) {
 
 
     async function autoSaveForm() {
-  if (!isMyTurn) {
-    console.warn('Not your turn – auto-save aborted.');
-    return; // 🚫 Don't allow saving if it's not your turn
+  if (!idInput.value && !isMyTurn) {
+    console.warn('Blocked: Not your turn and no existing customer ID.');
+    return;
   }
 
   if (customerSavedThisTurn) return;
