@@ -1158,7 +1158,7 @@ if (newCustomerBtn) {
 }
 
 
-async function autoSaveForm() {
+  async function autoSaveForm() {
   if (!idInput.value && !isMyTurn) {
     console.warn('Blocked: Not your turn and no existing customer ID.');
     return;
@@ -1190,11 +1190,12 @@ async function autoSaveForm() {
         autosaveEnabled = true;
         attachFieldListeners();
 
-        // 🟢 Only reload customer list if new customer was created
+        // ✅ Only reload list if it's a new customer
         await loadCustomers();
       }
 
       customerSavedThisTurn = true;
+
     } else {
       console.error('Save failed:', result);
     }
@@ -1202,7 +1203,6 @@ async function autoSaveForm() {
     console.error('Auto-save failed:', err);
   }
 }
-
 
 
 
