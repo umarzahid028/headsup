@@ -1136,36 +1136,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  if (newCustomerBtn) {
-    newCustomerBtn.addEventListener('click', async () => {
-      const isFormDirty = !!(
-        nameInput.value.trim() ||
-        emailInput.value.trim() ||
-        phoneInput.value.trim() ||
-        interestInput.value.trim() ||
-        [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
-      );
+ if (newCustomerBtn) {
+  newCustomerBtn.addEventListener('click', async () => {
+    const isFormDirty = !!(
+      nameInput.value.trim() ||
+      emailInput.value.trim() ||
+      phoneInput.value.trim() ||
+      interestInput.value.trim() ||
+      [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
+    );
 
-      idInput.value = '';
-      appointmentInput.value = '';
-      localStorage.removeItem('activeCustomerId');
+    idInput.value = '';
+    appointmentInput.value = '';
+    localStorage.removeItem('activeCustomerId');
 
-      if (!isFormDirty) {
-        nameInput.value = '';
-        emailInput.value = '';
-        phoneInput.value = '';
-        interestInput.value = '';
-        [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-      }
+    if (!isFormDirty) {
+      nameInput.value = '';
+      emailInput.value = '';
+      phoneInput.value = '';
+      interestInput.value = '';
+      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+    }
 
-      await autoSaveForm();
+    // 🛠️ Call autoSaveForm() to create record manually
+    await autoSaveForm();
 
-      if (idInput.value) {
-        autosaveEnabled = true;
-        attachFieldListeners();
-      }
-    });
-  }
+    // ✅ Only if ID returned from save, enable autosave
+    if (idInput.value) {
+      autosaveEnabled = true;
+      attachFieldListeners();
+    }
+  });
+}
 
   async function autoSaveForm() {
   if (customerSavedThisTurn) return;
