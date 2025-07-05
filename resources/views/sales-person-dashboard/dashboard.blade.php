@@ -224,8 +224,8 @@
         </button>
 <button 
   type="button"
-  id="toBtn"
-  class="relative bg-gray-800 text-white px-4 py-1.5 rounded"
+  id="To-Button"
+  class="toBtn relative bg-gray-800 text-white px-4 py-1.5 rounded"
 >
   <span class="btn-label">T/O</span>
   <div class="toSpinner hidden absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded">
