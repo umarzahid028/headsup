@@ -1106,10 +1106,12 @@ document.addEventListener('DOMContentLoaded', () => {
     fields.forEach(field => {
       field.addEventListener('input', () => {
         if (!autosaveEnabled) return;
+
         if (loadedFromAppointment && ['email', 'name', 'phone', 'interest'].includes(field.name)) {
-          idInput.value = '';
+          idInput.value = ''; // reset to force new customer creation
           loadedFromAppointment = false;
         }
+
         customerSavedThisTurn = false;
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {
@@ -1119,10 +1121,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       field.addEventListener('change', () => {
         if (!autosaveEnabled) return;
+
         if (loadedFromAppointment && ['email', 'name', 'phone', 'interest'].includes(field.name)) {
           idInput.value = '';
           loadedFromAppointment = false;
         }
+
         customerSavedThisTurn = false;
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {
@@ -1132,73 +1136,68 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  if (newCustomerBtn) {
-    newCustomerBtn.addEventListener('click', async () => {
-      const isFormFilled =
-        nameInput.value.trim() ||
-        emailInput.value.trim() ||
-        phoneInput.value.trim() ||
-        interestInput.value.trim() ||
-        [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked);
+if (newCustomerBtn) {
+  newCustomerBtn.addEventListener('click', async () => {
+    idInput.value = '';
+    appointmentInput.value = '';
+    localStorage.removeItem('activeCustomerId');
 
-      idInput.value = '';
-      appointmentInput.value = '';
-      localStorage.removeItem('activeCustomerId');
+    nameInput.value = '';
+    emailInput.value = '';
+    phoneInput.value = '';
+    interestInput.value = '';
+    [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
 
-      // ✅ Form clear nahi hoga
-      // ✅ Agar data filled hai to new customer save hoga
-      if (isFormFilled) {
-        await autoSaveForm();
-      }
-    });
-  }
-
-  async function autoSaveForm() {
-    if (customerSavedThisTurn) return;
-
-    const formData = new FormData(form);
-    try {
-      const response = await fetch('{{ route('customer.sales.store') }}', {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: formData
-      });
-
-      const result = await response.json();
-
-    if (result.status === 'success') {
-  if (result.id) {
-    idInput.value = result.id;
-    localStorage.setItem('activeCustomerId', result.id);
-
-    // ✅ Enable autosave only after ID is returned
-    if (!autosaveEnabled) {
-      autosaveEnabled = true;
-      attachFieldListeners();
-    }
-  } else {
-    // ❌ If ID not returned, stop autosave
-    autosaveEnabled = false;
-  }
+    // ❗️ Let the form save and autosave will activate after ID is received
+    await autoSaveForm();
+  });
 }
 
-        customerSavedThisTurn = true;
-        if (loadedFromAppointment) {
-          const apptCard = document.getElementById('appointment-card');
-          if (apptCard) apptCard.classList.add('hidden');
-          loadedFromAppointment = false;
+
+  async function autoSaveForm() {
+  if (customerSavedThisTurn) return;
+
+  const formData = new FormData(form);
+  try {
+    const response = await fetch('{{ route('customer.sales.store') }}', {
+      method: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (result.status === 'success') {
+      if (result.id) {
+        idInput.value = result.id;
+        localStorage.setItem('activeCustomerId', result.id);
+
+        // ✅ Enable autosave only after we get ID
+        if (!autosaveEnabled) {
+          autosaveEnabled = true;
+          attachFieldListeners();
         }
-        await loadCustomers();
-      } else {
-        console.error('Save failed:', result);
       }
-    } catch (err) {
-      console.error('Auto-save failed:', err);
+
+      customerSavedThisTurn = true;
+
+      if (loadedFromAppointment) {
+        const apptCard = document.getElementById('appointment-card');
+        if (apptCard) apptCard.classList.add('hidden');
+        loadedFromAppointment = false;
+      }
+
+      await loadCustomers();
+    } else {
+      console.error('Save failed:', result);
     }
+  } catch (err) {
+    console.error('Auto-save failed:', err);
   }
+}
 
   async function loadCustomers() {
     try {
@@ -1351,7 +1350,6 @@ document.addEventListener('DOMContentLoaded', () => {
   applyActiveCard();
 });
 </script>
-
 
 
 <script>
