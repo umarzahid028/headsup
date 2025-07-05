@@ -1146,8 +1146,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!nameInput.value.trim()) return;
     }, 300);
   });
-
- if (newCustomerBtn) {
+if (newCustomerBtn) {
   newCustomerBtn.addEventListener('click', async () => {
     const isFormDirty = !!(
       nameInput.value.trim() ||
@@ -1158,17 +1157,16 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 
     if (isFormDirty) {
-      await autoSaveForm();
+      await autoSaveForm(true); // ✅ allowWithoutId = true
     } else {
       nameInput.value = '';
       emailInput.value = '';
       phoneInput.value = '';
       interestInput.value = '';
       [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-      await autoSaveForm();
+      await autoSaveForm(true); // ✅ allowWithoutId = true
     }
 
-    // 👇 Abhi se auto-save allow hoga aur fields sunega
     if (idInput.value) {
       autosaveEnabled = true;
       attachFieldListeners();
@@ -1177,9 +1175,11 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 
 
-async function autoSaveForm() {
-  // 👇 Yeh dono cheezein honi chahiye warna auto-save na ho
-  if (!autosaveEnabled || !idInput.value.trim()) return;
+
+async function autoSaveForm(allowWithoutId = false) {
+  // ⚠️ Block auto-save if not enabled OR no ID — unless explicitly allowed (e.g. on button click)
+  if (!autosaveEnabled && !allowWithoutId) return;
+  if (!allowWithoutId && !idInput.value.trim()) return;
 
   if (customerSavedThisTurn) return;
 
@@ -1201,6 +1201,7 @@ async function autoSaveForm() {
         idInput.value = result.id;
         localStorage.setItem('activeCustomerId', result.id);
       }
+
       customerSavedThisTurn = true;
       await loadCustomers();
     } else {
@@ -1210,7 +1211,6 @@ async function autoSaveForm() {
     console.error('Auto-save failed:', err);
   }
 }
-
 
   async function loadCustomers() {
     try {
