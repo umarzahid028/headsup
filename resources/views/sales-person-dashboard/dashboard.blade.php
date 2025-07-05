@@ -112,7 +112,7 @@
 
   <div class="w-full grid grid-cols-1 xl:grid-cols-4 gap-6 px-4 mt-4">
     <!-- LEFT SIDE: Customer Form -->
-   <div class="xl:col-span-3 {{ Auth()->user()->hasRole('Sales person') ? 'xl:col-span-3' : 'xl:col-span-4' }} overflow-visible">
+   <div class="xl:col-span-3  overflow-visible">
   <div id="formContainer">
     <form id="salesForm" method="POST" action="{{ route('customer.sales.store') }}" class=" grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
       @csrf
@@ -224,9 +224,8 @@
         </button>
 <button 
   type="button"
-  id="TO-button"
-  class="toBtn relative bg-gray-800 text-white px-4 py-1.5 rounded"
-  data-customer-id=""
+  id="toBtn"
+  class="relative bg-gray-800 text-white px-4 py-1.5 rounded"
 >
   <span class="btn-label">T/O</span>
   <div class="toSpinner hidden absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded">
@@ -344,7 +343,7 @@ Add Customer
 
   <!-- T/O request -->
 
-<script>
+<!-- <script>
   document.addEventListener('DOMContentLoaded', () => {
     const toButton = document.querySelector('.toBtn');
     if (!toButton) return; // safety check
@@ -403,7 +402,7 @@ Add Customer
       }
     });
   });
-</script>
+</script> -->
 
 
 
@@ -690,23 +689,21 @@ function completeForm(customerId) {
 </script>
 
 
-<!-- <script>
+<script>
 document.addEventListener('DOMContentLoaded', () => {
   const toBtn   = document.getElementById('toBtn');
-  const spinner = document.getElementById('toSpinner');
+  const spinner = toBtn.querySelector('.toSpinner');
   const label   = toBtn.querySelector('.btn-label');
   const form    = document.getElementById('salesForm');
 
   async function forwardCard() {
-    const id             = form.querySelector('input[name="id"]')?.value.trim();
-    const appointment_id = form.querySelector('input[name="appointment_id"]')?.value.trim();
+    const customer_id = form.querySelector('input[name="id"]')?.value.trim();
 
-    if (!id && !appointment_id) {
-      Swal.fire('Error', 'No customer or appointment selected.', 'error');
+    if (!customer_id) {
+      Swal.fire('Error', 'No customer selected.', 'error');
       return;
     }
 
-    // 🔄 Show spinner & disable button
     spinner.classList.remove('hidden');
     label.classList.add('opacity-0');
     toBtn.disabled = true;
@@ -715,24 +712,23 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch("{{ route('customer.forward') }}", {
         method: 'POST',
         headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
           'Accept': 'application/json',
           'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
         },
-        body: JSON.stringify({ 
-          id: id || null, 
-          appointment_id: appointment_id || null 
-        })
+        body: JSON.stringify({ id: customer_id }) // ✅ 'id', not 'customer_id'
       });
 
-      if (!response.ok) throw new Error('Server error');
+      if (!response.ok) {
+        const errRes = await response.text();
+        throw new Error(`Server error: ${errRes}`);
+      }
+
       const result = await response.json();
 
-      // ✅ Local notification
       localStorage.setItem('manager_notification', 'T/O Customer forwarded to Sales Manager.');
 
-      // ✅ Show success and hide card
       Swal.fire({
         icon: 'success',
         title: 'Transferred!',
@@ -740,9 +736,10 @@ document.addEventListener('DOMContentLoaded', () => {
         timer: 2000,
         showConfirmButton: true
       }).then(() => {
-        const card = document.querySelector(`#customer-list`);
+        // ✅ Remove specific card instead of full list
+        const card = document.querySelector(`#card-${customer_id}`);
         if (card) {
-          card.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+          card.classList.add('fade-out');
           setTimeout(() => card.remove(), 300);
         }
 
@@ -753,6 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
     } catch (error) {
+      console.error('Forward error:', error); // ✅ Add logging
       Swal.fire('Error', error.message || 'Something went wrong.', 'error');
     } finally {
       spinner.classList.add('hidden');
@@ -763,8 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   toBtn.addEventListener('click', forwardCard);
 });
-</script> -->
-
+</script>
 
 
 <script>

@@ -161,8 +161,10 @@
 let currentTurnUser = '';
 let previousTurnUser = '';
 let synthReady = false;
-let lastForwardedCustomerIds = [];
-const highlightTimers = {}; // Track highlight timeouts
+const forwardedMap = {}; // Track played sounds per forwarded customer
+
+const managerSound = new Audio('/sounds/manager.mp3');
+managerSound.load(); // Preload
 
 function prepareVoiceEngine() {
   if (synthReady) return;
@@ -227,10 +229,8 @@ async function fetchAndUpdateTokens() {
       return;
     }
 
-    const highlightCustomerIds = JSON.parse(localStorage.getItem('highlightCustomerIds') || '[]');
-    let forwardedIds = [];
     let hasCustomer = false;
-    const now = Date.now();
+    const now = new Date();
 
     data.active.forEach((token) => {
       const name = token.sales_person || 'Unknown';
@@ -243,45 +243,11 @@ async function fetchAndUpdateTokens() {
         const customerName = customer.customer_name || 'Unknown Customer';
         const processes = customer.process || [];
         const isForwarded = customer.forwarded;
-        const forwardedAt = new Date(customer.forwarded_at).getTime();
-        const isLocalHighlight = customer.forwarded_at;
+        const forwardedAt = customer.forwarded_at ? new Date(customer.forwarded_at) : null;
 
         const row = document.createElement('div');
         row.className = 'active-token-row';
         row.dataset.customerId = customerId;
-
-        const shouldHighlight = (isForwarded && now - forwardedAt < 5 * 60 * 1000) || isLocalHighlight;
-        const highlightExpiresAt = highlightTimers[customerId] || (forwardedAt + 5 * 60 * 1000);
-        const isExpired = now > highlightExpiresAt;
-
-        if ((shouldHighlight || !isExpired) && !isExpired) {
-          row.classList.add('highlight-turn');
-          forwardedIds.push(customerId);
-
-          if (!highlightTimers[customerId]) {
-            highlightTimers[customerId] = forwardedAt + 5 * 60 * 1000;
-
-            setTimeout(() => {
-              delete highlightTimers[customerId];
-              const highlightedRow = document.querySelector(`.active-token-row[data-customer-id="${customerId}"]`);
-              if (highlightedRow) {
-                highlightedRow.classList.remove('highlight-turn');
-              }
-            }, highlightTimers[customerId] - now);
-          }
-
-          const alreadySpoken = lastForwardedCustomerIds.includes(customerId);
-          if (!alreadySpoken) {
-            const audio = new Audio('/sounds/manager.mp3');
-            audio.play().catch(err => console.error('Audio play failed:', err));
-          }
-
-          const remaining = highlightCustomerIds.filter(id => id !== customerId);
-          localStorage.setItem('highlightCustomerIds', JSON.stringify(remaining));
-        } else {
-          // Remove expired highlight if still present
-          row.classList.remove('highlight-turn');
-        }
 
         row.innerHTML = `
           <div><span class="whitespace-nowrap">${name}</span></div>
@@ -296,10 +262,38 @@ async function fetchAndUpdateTokens() {
         `;
 
         tokenList.appendChild(row);
+
+        // ✅ Highlight & Sound Logic
+        if (
+          isForwarded &&
+          forwardedAt &&
+          now - forwardedAt <= 5 * 60 * 1000
+        ) {
+          const key = customerId + '_' + forwardedAt.getTime();
+
+          if (!forwardedMap[key]) {
+            forwardedMap[key] = true;
+
+            // 🔸 Highlight first
+            row.classList.add('highlight-turn');
+
+            // 🔸 Then play sound
+            managerSound.currentTime = 0;
+            managerSound.play();
+
+            // 🔸 Remove highlight after remaining time
+            const timeLeft = 5 * 60 * 1000 - (now - forwardedAt);
+            setTimeout(() => {
+              const el = document.querySelector(`[data-customer-id="${customerId}"]`);
+              if (el) el.classList.remove('highlight-turn');
+            }, timeLeft);
+          } else {
+            // If already played, still apply highlight
+            row.classList.add('highlight-turn');
+          }
+        }
       });
     });
-
-    lastForwardedCustomerIds = forwardedIds;
 
     if (!hasCustomer) {
       tokenList.innerHTML = `<div class="text-center text-white text-xl py-10">No active customers at the moment</div>`;
@@ -353,6 +347,7 @@ window.onload = () => {
   setInterval(refreshScreen, 3000);
 };
 </script>
+
 
 
 
