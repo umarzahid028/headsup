@@ -1136,54 +1136,42 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  nameInput.addEventListener('input', () => {
-    if (autosaveEnabled) return;
-    customerSavedThisTurn = false;
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(() => {
-      if (!nameInput.value.trim()) return;
-    }, 300);
-  });
-if (newCustomerBtn) {
-  newCustomerBtn.addEventListener('click', async () => {
-    const isFormDirty = !!(
-      nameInput.value.trim() ||
-      emailInput.value.trim() ||
-      phoneInput.value.trim() ||
-      interestInput.value.trim() ||
-      [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
-    );
+  if (newCustomerBtn) {
+    newCustomerBtn.addEventListener('click', async () => {
+      const isFormDirty = !!(
+        nameInput.value.trim() ||
+        emailInput.value.trim() ||
+        phoneInput.value.trim() ||
+        interestInput.value.trim() ||
+        [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
+      );
 
-    // Force new record regardless of form state
-    idInput.value = '';
-    appointmentInput.value = '';
-    localStorage.removeItem('activeCustomerId');
+      idInput.value = '';
+      appointmentInput.value = '';
+      localStorage.removeItem('activeCustomerId');
 
-    if (!isFormDirty) {
-      nameInput.value = '';
-      emailInput.value = '';
-      phoneInput.value = '';
-      interestInput.value = '';
-      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-    }
+      if (!isFormDirty) {
+        nameInput.value = '';
+        emailInput.value = '';
+        phoneInput.value = '';
+        interestInput.value = '';
+        [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+      }
 
-    await autoSaveForm();
+      await autoSaveForm();
 
-    if (idInput.value) {
-      autosaveEnabled = true;
-      attachFieldListeners();
-    }
-  });
-}
-
+      if (idInput.value) {
+        autosaveEnabled = true;
+        attachFieldListeners();
+      }
+    });
+  }
 
   async function autoSaveForm() {
     if (customerSavedThisTurn) return;
 
-    if (!nameInput.value.trim() && !emailInput.value.trim() && !phoneInput.value.trim()) {
-      console.warn('Skipped autosave: No data provided.');
-      return;
-    }
+    // Always allow autosave, even if fields are empty
+    console.log('Auto-saving customer...');
 
     const formData = new FormData(form);
     try {
@@ -1208,7 +1196,6 @@ if (newCustomerBtn) {
 
         customerSavedThisTurn = true;
 
-        // If saved from appointment, hide the card permanently
         if (loadedFromAppointment) {
           const apptCard = document.getElementById('appointment-card');
           if (apptCard) apptCard.classList.add('hidden');
@@ -1285,15 +1272,13 @@ if (newCustomerBtn) {
 
     appointmentCard.addEventListener('click', async () => {
       if (appointmentCard.classList.contains('hidden')) return;
-
-      // Prevent multiple submissions
       if (appointmentCard.dataset.used === 'true') return;
 
       const customerId = appointmentCard.dataset.customerId;
 
       clearFormFields();
 
-      idInput.value = ''; // Force new customer
+      idInput.value = '';
       nameInput.value = appointmentCard.dataset.name || '';
       emailInput.value = appointmentCard.dataset.email ?? '';
       phoneInput.value = appointmentCard.dataset.phone ?? '';
