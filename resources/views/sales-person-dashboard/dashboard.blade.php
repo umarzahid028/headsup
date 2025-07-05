@@ -1087,6 +1087,7 @@ function updateNameInputState() {
     const nameInput = form.querySelector('input[name="name"]');
     const newCustomerBtn = document.getElementById('newCustomerBtn');
     const addCustomerBtn = document.getElementById('addCustomerBtn');
+    const appointmentInput = form.querySelector('input[name="appointment_id"]');
 
     let debounceTimeout;
     let customerSavedThisTurn = false;
@@ -1099,11 +1100,10 @@ function updateNameInputState() {
     const attachFieldListeners = () => {
       const fields = form.querySelectorAll('input, textarea, select');
       fields.forEach(field => {
-       
 
         field.addEventListener('input', () => {
           if (!autosaveEnabled || !idInput.value) return;
-
+          if (!appointmentInput || !appointmentInput.value.trim()) return;
           customerSavedThisTurn = false;
           clearTimeout(debounceTimeout);
           debounceTimeout = setTimeout(() => {
@@ -1114,7 +1114,7 @@ function updateNameInputState() {
         // For checkboxes and radio buttons
         field.addEventListener('change', () => {
           if (!autosaveEnabled || !idInput.value) return;
-
+          if (!appointmentInput || !appointmentInput.value.trim()) return;
           customerSavedThisTurn = false;
           clearTimeout(debounceTimeout);
           debounceTimeout = setTimeout(() => {
@@ -1135,80 +1135,83 @@ function updateNameInputState() {
       }, 300);
     });
 
-if (newCustomerBtn) {
-  newCustomerBtn.addEventListener('click', async () => {
-    const isFormDirty = !!(
-      nameInput.value.trim() ||
-      form.querySelector('input[name="email"]').value.trim() ||
-      form.querySelector('input[name="phone"]').value.trim() ||
-      form.querySelector('input[name="interest"]').value.trim() ||
-      [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
-    );
-
-    if (isFormDirty) {
-      await autoSaveForm();
-    } else {
-      // If all fields are blank, create a blank new customer
-      nameInput.value = '';
-      form.querySelector('input[name="email"]').value = '';
-      form.querySelector('input[name="phone"]').value = '';
-      form.querySelector('input[name="interest"]').value = '';
-      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-
-      await autoSaveForm();
-    }
-
-    // If ID was generated, enable autosave and field listeners
-    if (idInput.value) {
-      autosaveEnabled = true;
-      attachFieldListeners();
-    }
-  });
-}
-
-
-    async function autoSaveForm() {
-  if (!idInput.value && !isMyTurn) {
-    console.warn('Blocked: Not your turn and no existing customer ID.');
-    return;
-  }
-
-  if (customerSavedThisTurn) return;
-
-  const formData = new FormData(form);
-
-  try {
-    const response = await fetch('{{ route('customer.sales.store') }}', {
-      method: 'POST',
-      headers: {
-        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: formData
-    });
-
-    const result = await response.json();
-
-    if (result.status === 'success') {
-      if (result.id && !idInput.value) {
-        idInput.value = result.id;
-        localStorage.setItem('activeCustomerId', result.id);
-
+    // ✅ Yeh block naya add kiya gaya hai
+    appointmentInput.addEventListener('input', () => {
+      if (appointmentInput.value.trim() && idInput.value.trim()) {
         autosaveEnabled = true;
         attachFieldListeners();
       }
+    });
 
-      customerSavedThisTurn = true;
-      await loadCustomers();
-    } else {
-      console.error('Save failed:', result);
+    if (newCustomerBtn) {
+      newCustomerBtn.addEventListener('click', async () => {
+        const isFormDirty = !!(
+          nameInput.value.trim() ||
+          form.querySelector('input[name="email"]').value.trim() ||
+          form.querySelector('input[name="phone"]').value.trim() ||
+          form.querySelector('input[name="interest"]').value.trim() ||
+          [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
+        );
+
+        if (isFormDirty) {
+          await autoSaveForm();
+        } else {
+          nameInput.value = '';
+          form.querySelector('input[name="email"]').value = '';
+          form.querySelector('input[name="phone"]').value = '';
+          form.querySelector('input[name="interest"]').value = '';
+          [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+
+          await autoSaveForm();
+        }
+
+        if (idInput.value) {
+          autosaveEnabled = true;
+          attachFieldListeners();
+        }
+      });
     }
-  } catch (err) {
-    console.error('Auto-save failed:', err);
-  }
-}
 
+    async function autoSaveForm() {
+      if (!idInput.value && !isMyTurn) {
+        console.warn('Blocked: Not your turn and no existing customer ID.');
+        return;
+      }
 
+      if (customerSavedThisTurn) return;
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch('{{ route('customer.sales.store') }}', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.status === 'success') {
+          if (result.id && !idInput.value) {
+            idInput.value = result.id;
+            localStorage.setItem('activeCustomerId', result.id);
+
+            autosaveEnabled = true;
+            attachFieldListeners();
+          }
+
+          customerSavedThisTurn = true;
+          await loadCustomers();
+        } else {
+          console.error('Save failed:', result);
+        }
+      } catch (err) {
+        console.error('Auto-save failed:', err);
+      }
+    }
 
     async function loadCustomers() {
       try {
@@ -1244,14 +1247,9 @@ if (newCustomerBtn) {
           form.querySelector('input[name="interest"]').value = card.dataset.interest ?? '';
 
           const button = document.getElementById('TO-button');
-          console.log('card.dataset.id', card.dataset.customerId);
           if (button) {
-            // Replace the data-customer-id attribute value
-            button.setAttribute('data-customer-id',card.dataset.customerId ); // Replace 'NEW_VALUE' with the desired value
-          } else {
-            console.error('Button with ID "TO-button" not found.');
+            button.setAttribute('data-customer-id', card.dataset.customerId);
           }
-
 
           if (card.dataset.process) {
             card.dataset.process.split(',').forEach(proc => {
@@ -1276,7 +1274,6 @@ if (newCustomerBtn) {
     }
 
     function bindAppointmentCardClick() {
-    
       const appointmentCard = document.querySelector('#appointment-card');
       if (!appointmentCard) return;
 
@@ -1292,7 +1289,6 @@ if (newCustomerBtn) {
         form.querySelector('input[name="phone"]').value = appointmentCard.dataset.phone ?? '';
         form.querySelector('input[name="interest"]').value = appointmentCard.dataset.interest ?? '';
 
-      
         if (appointmentCard.dataset.process) {
           appointmentCard.dataset.process.split(',').forEach(proc => {
             const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
@@ -1336,7 +1332,6 @@ if (newCustomerBtn) {
         idInput.value = savedId;
         nameInput.value = savedCard.dataset.name || '';
         form.querySelector('input[name="appointment_id"]').value = appointmentCard.dataset.appointmentId || '';
-
         form.querySelector('input[name="email"]').value = savedCard.dataset.email ?? '';
         form.querySelector('input[name="phone"]').value = savedCard.dataset.phone ?? '';
         form.querySelector('input[name="interest"]').value = savedCard.dataset.interest ?? '';
@@ -1363,7 +1358,6 @@ if (newCustomerBtn) {
       });
     }
 
-    // Init
     bindCardClickEvents();
     bindAppointmentCardClick();
     applyActiveCard();
