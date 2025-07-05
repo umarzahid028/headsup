@@ -1101,27 +1101,35 @@ function updateNameInputState() {
       const fields = form.querySelectorAll('input, textarea, select');
       fields.forEach(field => {
         field.addEventListener('input', () => {
-          if (!autosaveEnabled || !idInput.value || !appointmentInput.value.trim()) return;
+          if (!autosaveEnabled || !idInput.value || !appointmentInput?.value.trim()) return;
+
           customerSavedThisTurn = false;
           clearTimeout(debounceTimeout);
-          debounceTimeout = setTimeout(autoSaveForm, 700);
+          debounceTimeout = setTimeout(() => {
+            autoSaveForm();
+          }, 700);
         });
 
         field.addEventListener('change', () => {
-          if (!autosaveEnabled || !idInput.value || !appointmentInput.value.trim()) return;
+          if (!autosaveEnabled || !idInput.value || !appointmentInput?.value.trim()) return;
+
           customerSavedThisTurn = false;
           clearTimeout(debounceTimeout);
-          debounceTimeout = setTimeout(autoSaveForm, 300);
+          debounceTimeout = setTimeout(() => {
+            autoSaveForm();
+          }, 300);
         });
       });
     };
 
     nameInput.addEventListener('input', () => {
       if (autosaveEnabled) return;
+
       customerSavedThisTurn = false;
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
         if (!nameInput.value.trim()) return;
+        // Do nothing yet
       }, 300);
     });
 
@@ -1143,24 +1151,23 @@ function updateNameInputState() {
           form.querySelector('input[name="phone"]').value = '';
           form.querySelector('input[name="interest"]').value = '';
           [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+
           await autoSaveForm();
         }
 
-        if (idInput.value) {
+        if (idInput.value && appointmentInput?.value.trim()) {
           autosaveEnabled = true;
           attachFieldListeners();
         }
       });
     }
 
-    appointmentInput.addEventListener('input', async () => {
-      if (appointmentInput.value.trim() !== '') {
-        await autoSaveForm();
-      }
-    });
-
     async function autoSaveForm() {
-      if (!appointmentInput.value.trim()) return;
+      if (!idInput.value && !isMyTurn) {
+        console.warn('Blocked: Not your turn and no existing customer ID.');
+        return;
+      }
+
       if (customerSavedThisTurn) return;
 
       const formData = new FormData(form);
@@ -1181,9 +1188,13 @@ function updateNameInputState() {
           if (result.id && !idInput.value) {
             idInput.value = result.id;
             localStorage.setItem('activeCustomerId', result.id);
-            autosaveEnabled = true;
-            attachFieldListeners();
+
+            if (appointmentInput?.value.trim()) {
+              autosaveEnabled = true;
+              attachFieldListeners();
+            }
           }
+
           customerSavedThisTurn = true;
           await loadCustomers();
         } else {
@@ -1199,8 +1210,10 @@ function updateNameInputState() {
         const resp = await fetch('{{ route('customer.index') }}?partial=1', {
           headers: { 'X-Requested-With': 'XMLHttpRequest' },
         });
+
         const html = await resp.text();
         document.getElementById('customer-list').innerHTML = html;
+
         bindCardClickEvents();
         bindAppointmentCardClick();
         applyActiveCard();
@@ -1221,9 +1234,16 @@ function updateNameInputState() {
 
           idInput.value = customerId;
           nameInput.value = card.dataset.name || '';
-          form.querySelector('input[name="email"]').value = card.dataset.email || '';
-          form.querySelector('input[name="phone"]').value = card.dataset.phone || '';
-          form.querySelector('input[name="interest"]').value = card.dataset.interest || '';
+          form.querySelector('input[name="email"]').value = card.dataset.email ?? '';
+          form.querySelector('input[name="phone"]').value = card.dataset.phone ?? '';
+          form.querySelector('input[name="interest"]').value = card.dataset.interest ?? '';
+
+          const button = document.getElementById('TO-button');
+          if (button) {
+            button.setAttribute('data-customer-id', card.dataset.customerId);
+          } else {
+            console.error('Button with ID "TO-button" not found.');
+          }
 
           if (card.dataset.process) {
             card.dataset.process.split(',').forEach(proc => {
@@ -1234,14 +1254,17 @@ function updateNameInputState() {
           }
 
           document.querySelectorAll('.customer-card').forEach(c => {
-            c.classList.remove('active-card', 'pause-animation');
+            c.classList.remove('active-card');
+            c.classList.remove('pause-animation');
           });
 
           card.classList.add('active-card');
           localStorage.setItem('activeCustomerId', customerId);
 
-          autosaveEnabled = true;
-          attachFieldListeners();
+          if (idInput.value && appointmentInput?.value.trim()) {
+            autosaveEnabled = true;
+            attachFieldListeners();
+          }
         });
       });
     }
@@ -1258,9 +1281,10 @@ function updateNameInputState() {
 
         idInput.value = customerId;
         nameInput.value = appointmentCard.dataset.name || '';
-        form.querySelector('input[name="email"]').value = appointmentCard.dataset.email || '';
-        form.querySelector('input[name="phone"]').value = appointmentCard.dataset.phone || '';
-        form.querySelector('input[name="interest"]').value = appointmentCard.dataset.interest || '';
+        form.querySelector('input[name="email"]').value = appointmentCard.dataset.email ?? '';
+        form.querySelector('input[name="phone"]').value = appointmentCard.dataset.phone ?? '';
+        form.querySelector('input[name="interest"]').value = appointmentCard.dataset.interest ?? '';
+        form.querySelector('input[name="appointment_id"]').value = appointmentCard.dataset.appointmentId ?? '';
 
         if (appointmentCard.dataset.process) {
           appointmentCard.dataset.process.split(',').forEach(proc => {
@@ -1271,14 +1295,17 @@ function updateNameInputState() {
         }
 
         document.querySelectorAll('.customer-card').forEach(c => {
-          c.classList.remove('active-card', 'pause-animation');
+          c.classList.remove('active-card');
+          c.classList.remove('pause-animation');
         });
 
         appointmentCard.classList.add('active-card');
         localStorage.setItem('activeCustomerId', customerId);
 
-        autosaveEnabled = true;
-        attachFieldListeners();
+        if (idInput.value && appointmentInput?.value.trim()) {
+          autosaveEnabled = true;
+          attachFieldListeners();
+        }
       });
     }
 
@@ -1300,12 +1327,13 @@ function updateNameInputState() {
       savedCard.classList.add('active-card');
       if (!idInput.value || idInput.value === savedId) {
         clearFormFields();
+
         idInput.value = savedId;
         nameInput.value = savedCard.dataset.name || '';
         form.querySelector('input[name="appointment_id"]').value = savedCard.dataset.appointmentId || '';
-        form.querySelector('input[name="email"]').value = savedCard.dataset.email || '';
-        form.querySelector('input[name="phone"]').value = savedCard.dataset.phone || '';
-        form.querySelector('input[name="interest"]').value = savedCard.dataset.interest || '';
+        form.querySelector('input[name="email"]').value = savedCard.dataset.email ?? '';
+        form.querySelector('input[name="phone"]').value = savedCard.dataset.phone ?? '';
+        form.querySelector('input[name="interest"]').value = savedCard.dataset.interest ?? '';
 
         if (savedCard.dataset.process) {
           savedCard.dataset.process.split(',').forEach(proc => {
@@ -1314,8 +1342,11 @@ function updateNameInputState() {
             if (checkbox) checkbox.checked = true;
           });
         }
-        autosaveEnabled = true;
-        attachFieldListeners();
+
+        if (idInput.value && appointmentInput?.value.trim()) {
+          autosaveEnabled = true;
+          attachFieldListeners();
+        }
       }
     }
 
@@ -1328,11 +1359,13 @@ function updateNameInputState() {
       });
     }
 
+    // Init
     bindCardClickEvents();
     bindAppointmentCardClick();
     applyActiveCard();
   });
 </script>
+
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
