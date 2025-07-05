@@ -1158,21 +1158,17 @@ if (newCustomerBtn) {
 }
 
 
- async function autoSaveForm() {
+    async function autoSaveForm() {
   if (!idInput.value && !isMyTurn) {
-    console.warn('⛔ Blocked: Not your turn and no existing customer ID.');
+    console.warn('Blocked: Not your turn and no existing customer ID.');
     return;
   }
 
-  if (customerSavedThisTurn) {
-    console.log('🔁 Skipped: Already saved this turn.');
-    return;
-  }
+  if (customerSavedThisTurn) return;
 
   const formData = new FormData(form);
 
   try {
-    console.log('💾 Auto-saving...');
     const response = await fetch('{{ route('customer.sales.store') }}', {
       method: 'POST',
       headers: {
@@ -1183,32 +1179,25 @@ if (newCustomerBtn) {
     });
 
     const result = await response.json();
-    console.log('✅ Server Response:', result);
 
     if (result.status === 'success') {
-      // If new customer created (no ID before), update ID
       if (result.id && !idInput.value) {
         idInput.value = result.id;
         localStorage.setItem('activeCustomerId', result.id);
 
         autosaveEnabled = true;
         attachFieldListeners();
-
-        // ✅ Only load customers list on new customer creation
-        await loadCustomers();
       }
 
       customerSavedThisTurn = true;
-
+      await loadCustomers();
     } else {
-      console.error('❌ Save failed:', result);
+      console.error('Save failed:', result);
     }
-
   } catch (err) {
-    console.error('🚨 Auto-save failed:', err);
+    console.error('Auto-save failed:', err);
   }
 }
-
 
 
 
