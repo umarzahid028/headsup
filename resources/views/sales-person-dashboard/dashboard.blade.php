@@ -1187,7 +1187,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  async function autoSaveForm(allowWithoutId = false) {
+ async function autoSaveForm(allowWithoutId = false) {
+  if (!isMyTurn) {
+    console.warn("Not your turn, cannot save.");
+    return;
+  }
     if (!autosaveEnabled && !allowWithoutId) return;
     if (!allowWithoutId && !idInput.value.trim()) return;
     if (customerSavedThisTurn) return;
