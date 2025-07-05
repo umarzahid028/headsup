@@ -1169,15 +1169,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const result = await response.json();
 
-      if (result.status === 'success') {
-        if (result.id) {
-          idInput.value = result.id;
-          localStorage.setItem('activeCustomerId', result.id);
-          if (!autosaveEnabled) {
-            autosaveEnabled = true;
-            attachFieldListeners();
-          }
-        }
+    if (result.status === 'success') {
+  if (result.id) {
+    idInput.value = result.id;
+    localStorage.setItem('activeCustomerId', result.id);
+
+    // ✅ Enable autosave only after ID is returned
+    if (!autosaveEnabled) {
+      autosaveEnabled = true;
+      attachFieldListeners();
+    }
+  } else {
+    // ❌ If ID not returned, stop autosave
+    autosaveEnabled = false;
+  }
+}
+
         customerSavedThisTurn = true;
         if (loadedFromAppointment) {
           const apptCard = document.getElementById('appointment-card');
