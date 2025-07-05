@@ -1146,35 +1146,30 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 if (newCustomerBtn) {
   newCustomerBtn.addEventListener('click', async () => {
-    const isFormDirty = !!(
-      nameInput.value.trim() ||
-      emailInput.value.trim() ||
-      phoneInput.value.trim() ||
-      interestInput.value.trim() ||
-      [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
-    );
-
-    // Force new record regardless of form state
+    // Clear form (visuals)
     idInput.value = '';
     appointmentInput.value = '';
     localStorage.removeItem('activeCustomerId');
 
-    if (!isFormDirty) {
-      nameInput.value = '';
-      emailInput.value = '';
-      phoneInput.value = '';
-      interestInput.value = '';
-      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-    }
+    nameInput.value = '';
+    emailInput.value = '';
+    phoneInput.value = '';
+    interestInput.value = '';
+    [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
 
+    autosaveEnabled = false; // 🔒 Still off
+
+    // 🔁 Manually save — but do NOT enable autosave yet
     await autoSaveForm();
 
+    // ✅ If ID mil gaya, enable autosave now
     if (idInput.value) {
       autosaveEnabled = true;
       attachFieldListeners();
     }
   });
 }
+
 
 
   async function autoSaveForm() {
