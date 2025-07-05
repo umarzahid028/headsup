@@ -1244,46 +1244,51 @@ async function autoSaveForm(allowWithoutId = false) {
   }
 
 function bindAppointmentCardClick() {
-  const appointmentCard = document.querySelector('#appointment-card');
-  if (!appointmentCard) return;
+    const appointmentCard = document.querySelector('#appointment-card');
+    if (!appointmentCard) return;
 
-  appointmentCard.addEventListener('click', async () => {
-    const customerId = appointmentCard.dataset.customerId;
+    appointmentCard.addEventListener('click', async () => {
+      if (appointmentCard.classList.contains('hidden')) return;
 
-    clearFormFields();
+      // Prevent multiple submissions
+      if (appointmentCard.dataset.used === 'true') return;
 
-    idInput.value = '';
-    nameInput.value = appointmentCard.dataset.name || '';
-    emailInput.value = appointmentCard.dataset.email ?? '';
-    phoneInput.value = appointmentCard.dataset.phone ?? '';
-    interestInput.value = appointmentCard.dataset.interest ?? '';
-    appointmentInput.value = appointmentCard.dataset.appointmentId ?? '';
+      const customerId = appointmentCard.dataset.customerId;
 
-    if (appointmentCard.dataset.process) {
-      appointmentCard.dataset.process.split(',').forEach(proc => {
-        const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
-          .find(cb => cb.value.trim() === proc.trim());
-        if (checkbox) checkbox.checked = true;
+      clearFormFields();
+
+      idInput.value = ''; // Force new customer
+      nameInput.value = appointmentCard.dataset.name || '';
+      emailInput.value = appointmentCard.dataset.email ?? '';
+      phoneInput.value = appointmentCard.dataset.phone ?? '';
+      interestInput.value = appointmentCard.dataset.interest ?? '';
+      appointmentInput.value = appointmentCard.dataset.appointmentId ?? '';
+
+      if (appointmentCard.dataset.process) {
+        appointmentCard.dataset.process.split(',').forEach(proc => {
+          const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
+            .find(cb => cb.value.trim() === proc.trim());
+          if (checkbox) checkbox.checked = true;
+        });
+      }
+
+      document.querySelectorAll('.customer-card').forEach(c => {
+        c.classList.remove('active-card');
+        c.classList.remove('pause-animation');
       });
-    }
 
-    document.querySelectorAll('.customer-card').forEach(c => {
-      c.classList.remove('active-card');
-      c.classList.remove('pause-animation');
+      appointmentCard.classList.add('active-card');
+      appointmentCard.dataset.used = 'true';
+
+      localStorage.setItem('activeCustomerId', customerId);
+      loadedFromAppointment = true;
+      autosaveEnabled = true;
+      attachFieldListeners();
+
+      await autoSaveForm();
+      appointmentCard.classList.add('hidden');
     });
-
-    appointmentCard.classList.add('active-card');
-
-    localStorage.setItem('activeCustomerId', customerId);
-
-    loadedFromAppointment = true;
-    autosaveEnabled = true;
-    attachFieldListeners(); // ✅ Now ensures listeners work
-    await autoSaveForm(true); // ✅ THIS IS THE FIX
-  });
-}
-
-
+  }
   function clearFormFields() {
     form.reset();
     form.querySelectorAll('input[type="hidden"]').forEach(el => {
