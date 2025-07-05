@@ -1158,7 +1158,7 @@ if (newCustomerBtn) {
 }
 
 
-    async function autoSaveForm() {
+async function autoSaveForm() {
   if (!idInput.value && !isMyTurn) {
     console.warn('Blocked: Not your turn and no existing customer ID.');
     return;
@@ -1181,16 +1181,20 @@ if (newCustomerBtn) {
     const result = await response.json();
 
     if (result.status === 'success') {
-      if (result.id && !idInput.value) {
+      const isNewCustomer = result.id && !idInput.value;
+
+      if (isNewCustomer) {
         idInput.value = result.id;
         localStorage.setItem('activeCustomerId', result.id);
 
         autosaveEnabled = true;
         attachFieldListeners();
+
+        // 🟢 Only reload customer list if new customer was created
+        await loadCustomers();
       }
 
       customerSavedThisTurn = true;
-     
     } else {
       console.error('Save failed:', result);
     }
@@ -1198,6 +1202,7 @@ if (newCustomerBtn) {
     console.error('Auto-save failed:', err);
   }
 }
+
 
 
 
