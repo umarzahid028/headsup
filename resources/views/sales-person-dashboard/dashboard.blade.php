@@ -1159,6 +1159,11 @@ if (newCustomerBtn) {
 
 
     async function autoSaveForm() {
+  if (!isMyTurn) {
+    console.warn('Not your turn – auto-save aborted.');
+    return; // 🚫 Don't allow saving if it's not your turn
+  }
+
   if (customerSavedThisTurn) return;
 
   const formData = new FormData(form);
@@ -1181,7 +1186,7 @@ if (newCustomerBtn) {
         localStorage.setItem('activeCustomerId', result.id);
 
         autosaveEnabled = true;
-        attachFieldListeners(); // In case it wasn’t attached before
+        attachFieldListeners();
       }
 
       customerSavedThisTurn = true;
@@ -1193,6 +1198,7 @@ if (newCustomerBtn) {
     console.error('Auto-save failed:', err);
   }
 }
+
 
 
     async function loadCustomers() {
