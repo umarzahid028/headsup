@@ -1136,68 +1136,79 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-if (newCustomerBtn) {
-  newCustomerBtn.addEventListener('click', async () => {
-    idInput.value = '';
-    appointmentInput.value = '';
-    localStorage.removeItem('activeCustomerId');
+  if (newCustomerBtn) {
+    newCustomerBtn.addEventListener('click', async () => {
+      const isFormDirty = !!(
+        nameInput.value.trim() ||
+        emailInput.value.trim() ||
+        phoneInput.value.trim() ||
+        interestInput.value.trim() ||
+        [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
+      );
 
-    nameInput.value = '';
-    emailInput.value = '';
-    phoneInput.value = '';
-    interestInput.value = '';
-    [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+      // Reset hidden IDs
+      idInput.value = '';
+      appointmentInput.value = '';
+      localStorage.removeItem('activeCustomerId');
 
-    // ❗️ Let the form save and autosave will activate after ID is received
-    await autoSaveForm();
-  });
-}
+      // ✅ Save form before clearing, if data entered
+      if (isFormDirty) {
+        await autoSaveForm();
+      }
 
+      // Clear visible fields
+      nameInput.value = '';
+      emailInput.value = '';
+      phoneInput.value = '';
+      interestInput.value = '';
+      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+    });
+  }
 
   async function autoSaveForm() {
-  if (customerSavedThisTurn) return;
+    if (customerSavedThisTurn) return;
 
-  const formData = new FormData(form);
-  try {
-    const response = await fetch('{{ route('customer.sales.store') }}', {
-      method: 'POST',
-      headers: {
-        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: formData
-    });
+    const formData = new FormData(form);
+    try {
+      const response = await fetch('{{ route('customer.sales.store') }}', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formData
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    if (result.status === 'success') {
-      if (result.id) {
-        idInput.value = result.id;
-        localStorage.setItem('activeCustomerId', result.id);
+      if (result.status === 'success') {
+        if (result.id) {
+          idInput.value = result.id;
+          localStorage.setItem('activeCustomerId', result.id);
 
-        // ✅ Enable autosave only after we get ID
-        if (!autosaveEnabled) {
-          autosaveEnabled = true;
-          attachFieldListeners();
+          // ✅ Enable autosave only after we get ID
+          if (!autosaveEnabled) {
+            autosaveEnabled = true;
+            attachFieldListeners();
+          }
         }
+
+        customerSavedThisTurn = true;
+
+        if (loadedFromAppointment) {
+          const apptCard = document.getElementById('appointment-card');
+          if (apptCard) apptCard.classList.add('hidden');
+          loadedFromAppointment = false;
+        }
+
+        await loadCustomers();
+      } else {
+        console.error('Save failed:', result);
       }
-
-      customerSavedThisTurn = true;
-
-      if (loadedFromAppointment) {
-        const apptCard = document.getElementById('appointment-card');
-        if (apptCard) apptCard.classList.add('hidden');
-        loadedFromAppointment = false;
-      }
-
-      await loadCustomers();
-    } else {
-      console.error('Save failed:', result);
+    } catch (err) {
+      console.error('Auto-save failed:', err);
     }
-  } catch (err) {
-    console.error('Auto-save failed:', err);
   }
-}
 
   async function loadCustomers() {
     try {
@@ -1350,6 +1361,7 @@ if (newCustomerBtn) {
   applyActiveCard();
 });
 </script>
+
 
 
 <script>
