@@ -1191,15 +1191,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const result = await response.json();
 
-      if (result.status === 'success') {
-        if (result.id) {
-          idInput.value = result.id;
-          localStorage.setItem('activeCustomerId', result.id);
-          autosaveEnabled = true;
-          attachFieldListeners();
-        }
+   if (result.status === 'success') {
+  if (result.id) {
+    idInput.value = result.id;
+    localStorage.setItem('activeCustomerId', result.id);
 
-        customerSavedThisTurn = true;
+    // Autosave will only be enabled in New Customer button or card click
+    // So don't enable it here silently
+  }
+  customerSavedThisTurn = true;
+
         await loadCustomers();
       } else {
         console.error('Save failed:', result);
