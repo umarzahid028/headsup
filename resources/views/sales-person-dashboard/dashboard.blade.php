@@ -1247,12 +1247,12 @@ function bindAppointmentCardClick() {
   const appointmentCard = document.querySelector('#appointment-card');
   if (!appointmentCard) return;
 
-  appointmentCard.addEventListener('click', async () => {
-    const customerId = appointmentCard.dataset.customerId;
+  appointmentCard.classList.add('customer-card'); // ✅ make it behave like a customer card
 
+  appointmentCard.addEventListener('click', async () => {
     clearFormFields();
 
-    idInput.value = '';
+    idInput.value = ''; // ensure no customer id yet
     nameInput.value = appointmentCard.dataset.name || '';
     emailInput.value = appointmentCard.dataset.email ?? '';
     phoneInput.value = appointmentCard.dataset.phone ?? '';
@@ -1267,23 +1267,28 @@ function bindAppointmentCardClick() {
       });
     }
 
+    // ✅ Make it behave like selected customer card
     document.querySelectorAll('.customer-card').forEach(c => {
       c.classList.remove('active-card');
       c.classList.remove('pause-animation');
     });
 
     appointmentCard.classList.add('active-card');
-
-    localStorage.setItem('activeCustomerId', customerId);
+    localStorage.setItem('activeCustomerId', 'appointment_' + appointmentInput.value);
 
     loadedFromAppointment = true;
+
+    // ✅ Enable autosave
     autosaveEnabled = true;
     attachFieldListeners();
 
-    // ✅ Save even with appointment ID only
-    await autoSaveForm(true);
+    // ✅ Trigger autosave even if only appointment_id exists
+    if (appointmentInput.value.trim()) {
+      await autoSaveForm(true);
+    }
   });
 }
+
 
 
   function bindAppointmentCardClick() {
