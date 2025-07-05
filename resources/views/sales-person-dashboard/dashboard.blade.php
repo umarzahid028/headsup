@@ -1139,17 +1139,30 @@ function toggleButtons() {
 
 if (newCustomerBtn) {
   newCustomerBtn.addEventListener('click', async () => {
-    // Don't block if name is empty
+    // Check if any field has value (excluding ID)
+    const isFormDirty = !!(
+      nameInput.value.trim() ||
+      form.querySelector('input[name="email"]').value.trim() ||
+      form.querySelector('input[name="phone"]').value.trim() ||
+      form.querySelector('input[name="interest"]').value.trim() ||
+      [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
+    );
 
-    // Optional: Clear other fields (except ID)
-    nameInput.value = '';
-    form.querySelector('input[name="email"]').value = '';
-    form.querySelector('input[name="phone"]').value = '';
-    form.querySelector('input[name="interest"]').value = '';
-    [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+    if (isFormDirty) {
+      // If user has typed anything, save that as a new customer
+      await autoSaveForm();
+    } else {
+      // If all fields are blank, create a blank new customer
+      nameInput.value = '';
+      form.querySelector('input[name="email"]').value = '';
+      form.querySelector('input[name="phone"]').value = '';
+      form.querySelector('input[name="interest"]').value = '';
+      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
 
-    await autoSaveForm();
+      await autoSaveForm();
+    }
 
+    // If ID was generated, enable autosave and field listeners
     if (idInput.value) {
       autosaveEnabled = true;
       attachFieldListeners();
