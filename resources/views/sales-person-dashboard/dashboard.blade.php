@@ -1085,9 +1085,9 @@ function updateNameInputState() {
     const form = document.getElementById('salesForm');
     const idInput = form.querySelector('input[name="id"]');
     const nameInput = form.querySelector('input[name="name"]');
+    const appointmentInput = form.querySelector('input[name="appointment_id"]');
     const newCustomerBtn = document.getElementById('newCustomerBtn');
     const addCustomerBtn = document.getElementById('addCustomerBtn');
-    const appointmentInput = form.querySelector('input[name="appointment_id"]');
 
     let debounceTimeout;
     let customerSavedThisTurn = false;
@@ -1122,14 +1122,15 @@ function updateNameInputState() {
       });
     };
 
-    nameInput.addEventListener('input', () => {
-      if (autosaveEnabled) return;
-      customerSavedThisTurn = false;
-      clearTimeout(debounceTimeout);
-      debounceTimeout = setTimeout(() => {
-        if (!nameInput.value.trim()) return;
-      }, 300);
-    });
+    // ✅ Auto Save when Appointment ID is filled
+    if (appointmentInput) {
+      appointmentInput.addEventListener('input', async () => {
+        console.log('⚡ Appointment ID input changed:', appointmentInput.value);
+        if (appointmentInput.value.trim() !== '') {
+          await autoSaveForm();
+        }
+      });
+    }
 
     if (newCustomerBtn) {
       newCustomerBtn.addEventListener('click', async () => {
@@ -1149,7 +1150,6 @@ function updateNameInputState() {
           form.querySelector('input[name="phone"]').value = '';
           form.querySelector('input[name="interest"]').value = '';
           [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-
           await autoSaveForm();
         }
 
@@ -1160,41 +1160,7 @@ function updateNameInputState() {
       });
     }
 
-    appointmentInput.addEventListener('input', async () => {
-      const appointmentId = appointmentInput.value.trim();
-
-      if (appointmentId && !idInput.value) {
-        try {
-          await autoSaveForm();
-
-          if (idInput.value) {
-            autosaveEnabled = true;
-
-            const appointmentCard = document.querySelector('#appointment-card');
-            if (appointmentCard) appointmentCard.remove();
-
-            await loadCustomers();
-
-            const newCard = document.querySelector(`.customer-card[data-customer-id="${idInput.value}"]`);
-            if (newCard) {
-              newCard.classList.add('active-card');
-              localStorage.setItem('activeCustomerId', idInput.value);
-            }
-
-            attachFieldListeners();
-          }
-        } catch (e) {
-          console.error('Auto-save failed after appointment input:', e);
-        }
-      }
-    });
-
     async function autoSaveForm() {
-      if (!idInput.value && typeof isMyTurn !== 'undefined' && !isMyTurn) {
-        console.warn('Blocked: Not your turn and no existing customer ID.');
-        return;
-      }
-
       if (customerSavedThisTurn) return;
 
       const formData = new FormData(form);
@@ -1220,6 +1186,14 @@ function updateNameInputState() {
           }
 
           customerSavedThisTurn = true;
+
+          // ✅ Remove appointment card after successful save
+          const appointmentCard = document.querySelector('#appointment-card');
+          if (appointmentCard) {
+            appointmentCard.remove();
+            console.log('🗑️ Appointment card removed after save');
+          }
+
           await loadCustomers();
         } else {
           console.error('Save failed:', result);
@@ -1264,7 +1238,7 @@ function updateNameInputState() {
 
           const button = document.getElementById('TO-button');
           if (button) {
-            button.setAttribute('data-customer-id', card.dataset.customerId);
+            button.setAttribute('data-customer-id', customerId);
           }
 
           if (card.dataset.process) {
@@ -1338,16 +1312,13 @@ function updateNameInputState() {
     function applyActiveCard() {
       const savedId = localStorage.getItem('activeCustomerId');
       const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
-
       if (!savedCard || savedCard.id === 'appointment-card') return;
 
       savedCard.classList.add('active-card');
       if (!idInput.value || idInput.value === savedId) {
         clearFormFields();
-
         idInput.value = savedId;
         nameInput.value = savedCard.dataset.name || '';
-        form.querySelector('input[name="appointment_id"]').value = savedCard.dataset.appointmentId || '';
         form.querySelector('input[name="email"]').value = savedCard.dataset.email ?? '';
         form.querySelector('input[name="phone"]').value = savedCard.dataset.phone ?? '';
         form.querySelector('input[name="interest"]').value = savedCard.dataset.interest ?? '';
