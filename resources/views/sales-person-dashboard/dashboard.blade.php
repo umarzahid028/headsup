@@ -922,10 +922,7 @@ function toggleButtons() {
 }
 
 
-  // Toggle readonly on name field
-  function updateNameInputState() {
-    nameInput.readOnly = !(isMyTurn || cardClicked);
-  }
+
 
   // Customer card clicked
   document.addEventListener('click', function (e) {
@@ -1158,7 +1155,7 @@ if (newCustomerBtn) {
 }
 
 
-  async function autoSaveForm() {
+    async function autoSaveForm() {
   if (!idInput.value && !isMyTurn) {
     console.warn('Blocked: Not your turn and no existing customer ID.');
     return;
@@ -1181,21 +1178,16 @@ if (newCustomerBtn) {
     const result = await response.json();
 
     if (result.status === 'success') {
-      const isNewCustomer = result.id && !idInput.value;
-
-      if (isNewCustomer) {
+      if (result.id && !idInput.value) {
         idInput.value = result.id;
         localStorage.setItem('activeCustomerId', result.id);
 
         autosaveEnabled = true;
         attachFieldListeners();
-
-        // ✅ Only reload list if it's a new customer
-        await loadCustomers();
       }
 
       customerSavedThisTurn = true;
-
+      await loadCustomers();
     } else {
       console.error('Save failed:', result);
     }
