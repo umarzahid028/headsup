@@ -1147,68 +1147,70 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 300);
   });
 
-  if (newCustomerBtn) {
-    newCustomerBtn.addEventListener('click', async () => {
-      const isFormDirty = !!(
-        nameInput.value.trim() ||
-        emailInput.value.trim() ||
-        phoneInput.value.trim() ||
-        interestInput.value.trim() ||
-        [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
-      );
+ if (newCustomerBtn) {
+  newCustomerBtn.addEventListener('click', async () => {
+    const isFormDirty = !!(
+      nameInput.value.trim() ||
+      emailInput.value.trim() ||
+      phoneInput.value.trim() ||
+      interestInput.value.trim() ||
+      [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
+    );
 
-      if (isFormDirty) {
-        await autoSaveForm();
-      } else {
-        nameInput.value = '';
-        emailInput.value = '';
-        phoneInput.value = '';
-        interestInput.value = '';
-        [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-        await autoSaveForm();
-      }
-
-      if (idInput.value) {
-        autosaveEnabled = true;
-        attachFieldListeners();
-      }
-    });
-  }
-
-  async function autoSaveForm() {
-    if (customerSavedThisTurn) return;
-
-    const formData = new FormData(form);
-    try {
-      const response = await fetch('{{ route('customer.sales.store') }}', {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: formData
-      });
-
-      const result = await response.json();
-
-   if (result.status === 'success') {
-  if (result.id) {
-    idInput.value = result.id;
-    localStorage.setItem('activeCustomerId', result.id);
-
-    // Autosave will only be enabled in New Customer button or card click
-    // So don't enable it here silently
-  }
-  customerSavedThisTurn = true;
-
-        await loadCustomers();
-      } else {
-        console.error('Save failed:', result);
-      }
-    } catch (err) {
-      console.error('Auto-save failed:', err);
+    if (isFormDirty) {
+      await autoSaveForm();
+    } else {
+      nameInput.value = '';
+      emailInput.value = '';
+      phoneInput.value = '';
+      interestInput.value = '';
+      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+      await autoSaveForm();
     }
+
+    // 👇 Abhi se auto-save allow hoga aur fields sunega
+    if (idInput.value) {
+      autosaveEnabled = true;
+      attachFieldListeners();
+    }
+  });
+}
+
+
+async function autoSaveForm() {
+  // 👇 Yeh dono cheezein honi chahiye warna auto-save na ho
+  if (!autosaveEnabled || !idInput.value.trim()) return;
+
+  if (customerSavedThisTurn) return;
+
+  const formData = new FormData(form);
+  try {
+    const response = await fetch('{{ route('customer.sales.store') }}', {
+      method: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (result.status === 'success') {
+      if (result.id) {
+        idInput.value = result.id;
+        localStorage.setItem('activeCustomerId', result.id);
+      }
+      customerSavedThisTurn = true;
+      await loadCustomers();
+    } else {
+      console.error('Save failed:', result);
+    }
+  } catch (err) {
+    console.error('Auto-save failed:', err);
   }
+}
+
 
   async function loadCustomers() {
     try {
