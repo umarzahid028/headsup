@@ -1104,11 +1104,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const attachFieldListeners = () => {
     const fields = form.querySelectorAll('input, textarea, select');
     fields.forEach(field => {
-      field.addEventListener('input', () => {
+      field.removeEventListener('input', field._inputHandler || (() => {}));
+      field.removeEventListener('change', field._changeHandler || (() => {}));
+
+      const onInput = () => {
         if (!autosaveEnabled) return;
 
         if (loadedFromAppointment && ['email', 'name', 'phone', 'interest'].includes(field.name)) {
-          idInput.value = ''; // reset to force new customer creation
+          idInput.value = '';
           loadedFromAppointment = false;
         }
 
@@ -1117,9 +1120,9 @@ document.addEventListener('DOMContentLoaded', () => {
         debounceTimeout = setTimeout(() => {
           autoSaveForm();
         }, 700);
-      });
+      };
 
-      field.addEventListener('change', () => {
+      const onChange = () => {
         if (!autosaveEnabled) return;
 
         if (loadedFromAppointment && ['email', 'name', 'phone', 'interest'].includes(field.name)) {
@@ -1132,45 +1135,38 @@ document.addEventListener('DOMContentLoaded', () => {
         debounceTimeout = setTimeout(() => {
           autoSaveForm();
         }, 300);
-      });
+      };
+
+      field._inputHandler = onInput;
+      field._changeHandler = onChange;
+
+      field.addEventListener('input', onInput);
+      field.addEventListener('change', onChange);
     });
   };
 
-  nameInput.addEventListener('input', () => {
-    if (autosaveEnabled) return;
-    customerSavedThisTurn = false;
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(() => {
-      if (!nameInput.value.trim()) return;
-    }, 300);
-  });
-if (newCustomerBtn) {
-  newCustomerBtn.addEventListener('click', async () => {
-    // Clear form (visuals)
-    idInput.value = '';
-    appointmentInput.value = '';
-    localStorage.removeItem('activeCustomerId');
+  if (newCustomerBtn) {
+    newCustomerBtn.addEventListener('click', async () => {
+      idInput.value = '';
+      appointmentInput.value = '';
+      localStorage.removeItem('activeCustomerId');
 
-    nameInput.value = '';
-    emailInput.value = '';
-    phoneInput.value = '';
-    interestInput.value = '';
-    [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+      nameInput.value = '';
+      emailInput.value = '';
+      phoneInput.value = '';
+      interestInput.value = '';
+      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
 
-    autosaveEnabled = false; // 🔒 Still off
+      autosaveEnabled = false; // still off
 
-    // 🔁 Manually save — but do NOT enable autosave yet
-    await autoSaveForm();
+      await autoSaveForm(); // manual save
 
-    // ✅ If ID mil gaya, enable autosave now
-    if (idInput.value) {
-      autosaveEnabled = true;
-      attachFieldListeners();
-    }
-  });
-}
-
-
+      if (idInput.value) {
+        autosaveEnabled = true;
+        attachFieldListeners();
+      }
+    });
+  }
 
   async function autoSaveForm() {
     if (customerSavedThisTurn) return;
@@ -1197,13 +1193,14 @@ if (newCustomerBtn) {
         if (result.id) {
           idInput.value = result.id;
           localStorage.setItem('activeCustomerId', result.id);
-          autosaveEnabled = true;
-          attachFieldListeners();
+          if (!autosaveEnabled) {
+            autosaveEnabled = true;
+            attachFieldListeners();
+          }
         }
 
         customerSavedThisTurn = true;
 
-        // If saved from appointment, hide the card permanently
         if (loadedFromAppointment) {
           const apptCard = document.getElementById('appointment-card');
           if (apptCard) apptCard.classList.add('hidden');
@@ -1280,15 +1277,13 @@ if (newCustomerBtn) {
 
     appointmentCard.addEventListener('click', async () => {
       if (appointmentCard.classList.contains('hidden')) return;
-
-      // Prevent multiple submissions
       if (appointmentCard.dataset.used === 'true') return;
 
       const customerId = appointmentCard.dataset.customerId;
 
       clearFormFields();
 
-      idInput.value = ''; // Force new customer
+      idInput.value = '';
       nameInput.value = appointmentCard.dataset.name || '';
       emailInput.value = appointmentCard.dataset.email ?? '';
       phoneInput.value = appointmentCard.dataset.phone ?? '';
@@ -1372,6 +1367,7 @@ if (newCustomerBtn) {
   applyActiveCard();
 });
 </script>
+
 
 
 <script>
