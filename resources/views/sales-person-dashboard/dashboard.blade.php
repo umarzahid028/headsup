@@ -922,6 +922,10 @@ function toggleButtons() {
 }
 
 
+  // Toggle readonly on name field
+function updateNameInputState() {
+  nameInput.readOnly = false;
+}
 
 
   // Customer card clicked
