@@ -1106,12 +1106,10 @@ document.addEventListener('DOMContentLoaded', () => {
     fields.forEach(field => {
       field.addEventListener('input', () => {
         if (!autosaveEnabled) return;
-
         if (loadedFromAppointment && ['email', 'name', 'phone', 'interest'].includes(field.name)) {
-          idInput.value = ''; // reset to force new customer creation
+          idInput.value = '';
           loadedFromAppointment = false;
         }
-
         customerSavedThisTurn = false;
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {
@@ -1121,12 +1119,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       field.addEventListener('change', () => {
         if (!autosaveEnabled) return;
-
         if (loadedFromAppointment && ['email', 'name', 'phone', 'interest'].includes(field.name)) {
           idInput.value = '';
           loadedFromAppointment = false;
         }
-
         customerSavedThisTurn = false;
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {
@@ -1138,30 +1134,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (newCustomerBtn) {
     newCustomerBtn.addEventListener('click', async () => {
-      const isFormDirty = !!(
+      const isFormFilled =
         nameInput.value.trim() ||
         emailInput.value.trim() ||
         phoneInput.value.trim() ||
         interestInput.value.trim() ||
-        [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
-      );
+        [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked);
 
-      // Reset hidden IDs
       idInput.value = '';
       appointmentInput.value = '';
       localStorage.removeItem('activeCustomerId');
 
-      // ✅ Save form before clearing, if data entered
-      if (isFormDirty) {
+      // ✅ Form clear nahi hoga
+      // ✅ Agar data filled hai to new customer save hoga
+      if (isFormFilled) {
         await autoSaveForm();
       }
-
-      // Clear visible fields
-      nameInput.value = '';
-      emailInput.value = '';
-      phoneInput.value = '';
-      interestInput.value = '';
-      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
     });
   }
 
@@ -1185,22 +1173,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.id) {
           idInput.value = result.id;
           localStorage.setItem('activeCustomerId', result.id);
-
-          // ✅ Enable autosave only after we get ID
           if (!autosaveEnabled) {
             autosaveEnabled = true;
             attachFieldListeners();
           }
         }
-
         customerSavedThisTurn = true;
-
         if (loadedFromAppointment) {
           const apptCard = document.getElementById('appointment-card');
           if (apptCard) apptCard.classList.add('hidden');
           loadedFromAppointment = false;
         }
-
         await loadCustomers();
       } else {
         console.error('Save failed:', result);
