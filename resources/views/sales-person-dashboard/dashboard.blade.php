@@ -1144,34 +1144,38 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!nameInput.value.trim()) return;
     }, 300);
   });
+if (newCustomerBtn) {
+  newCustomerBtn.addEventListener('click', async () => {
+    const isFormDirty = !!(
+      nameInput.value.trim() ||
+      emailInput.value.trim() ||
+      phoneInput.value.trim() ||
+      interestInput.value.trim() ||
+      [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
+    );
 
-  if (newCustomerBtn) {
-    newCustomerBtn.addEventListener('click', async () => {
-      const isFormDirty = !!(
-        nameInput.value.trim() ||
-        emailInput.value.trim() ||
-        phoneInput.value.trim() ||
-        interestInput.value.trim() ||
-        [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
-      );
+    // Force new record regardless of form state
+    idInput.value = '';
+    appointmentInput.value = '';
+    localStorage.removeItem('activeCustomerId');
 
-      if (isFormDirty) {
-        await autoSaveForm();
-      } else {
-        nameInput.value = '';
-        emailInput.value = '';
-        phoneInput.value = '';
-        interestInput.value = '';
-        [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-        await autoSaveForm();
-      }
+    if (!isFormDirty) {
+      nameInput.value = '';
+      emailInput.value = '';
+      phoneInput.value = '';
+      interestInput.value = '';
+      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+    }
 
-      if (idInput.value) {
-        autosaveEnabled = true;
-        attachFieldListeners();
-      }
-    });
-  }
+    await autoSaveForm();
+
+    if (idInput.value) {
+      autosaveEnabled = true;
+      attachFieldListeners();
+    }
+  });
+}
+
 
   async function autoSaveForm() {
     if (customerSavedThisTurn) return;
