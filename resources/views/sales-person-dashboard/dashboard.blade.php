@@ -1181,16 +1181,21 @@ if (newCustomerBtn) {
     const result = await response.json();
 
     if (result.status === 'success') {
-      if (result.id && !idInput.value) {
-        idInput.value = result.id;
-        localStorage.setItem('activeCustomerId', result.id);
+  if (result.id && !idInput.value) {
+    idInput.value = result.id;
+    localStorage.setItem('activeCustomerId', result.id);
 
-        autosaveEnabled = true;
-        attachFieldListeners();
-      }
+    autosaveEnabled = true;
+    attachFieldListeners();
+  }
 
-      customerSavedThisTurn = true;
-      await loadCustomers();
+  customerSavedThisTurn = true;
+
+  if (!idInput.value || !autosaveEnabled) {
+    await loadCustomers();
+  }
+
+
     } else {
       console.error('Save failed:', result);
     }
