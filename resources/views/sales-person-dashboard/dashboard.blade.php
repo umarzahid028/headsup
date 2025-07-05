@@ -1335,6 +1335,8 @@ if (newCustomerBtn) {
 
         idInput.value = savedId;
         nameInput.value = savedCard.dataset.name || '';
+        form.querySelector('input[name="appointment_id"]').value = appointmentCard.dataset.appointmentId || '';
+
         form.querySelector('input[name="email"]').value = savedCard.dataset.email ?? '';
         form.querySelector('input[name="phone"]').value = savedCard.dataset.phone ?? '';
         form.querySelector('input[name="interest"]').value = savedCard.dataset.interest ?? '';
