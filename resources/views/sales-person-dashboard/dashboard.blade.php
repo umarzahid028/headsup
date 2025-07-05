@@ -1158,13 +1158,26 @@ if (newCustomerBtn) {
 }
 
 
-    async function autoSaveForm() {
-  if (!idInput.value && !isMyTurn) {
-    console.warn('Blocked: Not your turn and no existing customer ID.');
+   async function autoSaveForm() {
+  console.log('⏳ autoSaveForm called');
+
+  // Prevent autoSave if it's not allowed
+  if (!autosaveEnabled) {
+    console.warn('❌ Autosave is not enabled.');
     return;
   }
 
-  if (customerSavedThisTurn) return;
+  // Prevent saving if no ID and not user's turn (if applicable)
+  if (!idInput.value && typeof isMyTurn !== 'undefined' && !isMyTurn) {
+    console.warn('❌ Blocked: Not your turn and no existing customer ID.');
+    return;
+  }
+
+  // Don't re-save too quickly
+  if (customerSavedThisTurn) {
+    console.log('⏸ Already saved in last 3 seconds.');
+    return;
+  }
 
   const formData = new FormData(form);
 
@@ -1178,31 +1191,43 @@ if (newCustomerBtn) {
       body: formData
     });
 
-    const result = await response.json();
+    let result;
+    try {
+      result = await response.json();
+    } catch (jsonError) {
+      console.error('❌ Failed to parse server response as JSON:', jsonError);
+      return;
+    }
+
+    console.log('✅ Server Response:', result);
 
     if (result.status === 'success') {
-  if (result.id && !idInput.value) {
-    idInput.value = result.id;
-    localStorage.setItem('activeCustomerId', result.id);
+      // Set customer ID if new customer created
+      if (result.id && !idInput.value) {
+        idInput.value = result.id;
+        localStorage.setItem('activeCustomerId', result.id);
 
-    autosaveEnabled = true;
-    attachFieldListeners();
-  }
+        autosaveEnabled = true;
+        attachFieldListeners();
+        console.log('🆕 New customer ID set, autosave enabled');
+      }
 
-  customerSavedThisTurn = true;
+      customerSavedThisTurn = true;
 
-  if (!idInput.value || !autosaveEnabled) {
-    await loadCustomers();
-  }
-
+      // Load customer cards only for new customer
+      if (!idInput.value || !autosaveEnabled) {
+        console.log('🔁 Reloading customer cards...');
+        await loadCustomers();
+      }
 
     } else {
-      console.error('Save failed:', result);
+      console.error('❌ Save failed:', result);
     }
   } catch (err) {
-    console.error('Auto-save failed:', err);
+    console.error('❌ Auto-save failed:', err);
   }
 }
+
 
 
 
