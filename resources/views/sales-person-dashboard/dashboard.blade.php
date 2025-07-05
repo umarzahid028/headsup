@@ -1190,7 +1190,7 @@ if (newCustomerBtn) {
       }
 
       customerSavedThisTurn = true;
-      await loadCustomers();
+     
     } else {
       console.error('Save failed:', result);
     }
