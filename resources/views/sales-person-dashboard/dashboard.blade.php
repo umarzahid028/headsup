@@ -1243,21 +1243,19 @@ async function autoSaveForm(allowWithoutId = false) {
     }
   }
 
-function bindAppointmentCardClick() {
+ function bindAppointmentCardClick() {
     const appointmentCard = document.querySelector('#appointment-card');
     if (!appointmentCard) return;
 
     appointmentCard.addEventListener('click', async () => {
       if (appointmentCard.classList.contains('hidden')) return;
-
-      // Prevent multiple submissions
       if (appointmentCard.dataset.used === 'true') return;
 
       const customerId = appointmentCard.dataset.customerId;
 
       clearFormFields();
 
-      idInput.value = ''; // Force new customer
+      idInput.value = '';
       nameInput.value = appointmentCard.dataset.name || '';
       emailInput.value = appointmentCard.dataset.email ?? '';
       phoneInput.value = appointmentCard.dataset.phone ?? '';
@@ -1289,6 +1287,7 @@ function bindAppointmentCardClick() {
       appointmentCard.classList.add('hidden');
     });
   }
+
   function clearFormFields() {
     form.reset();
     form.querySelectorAll('input[type="hidden"]').forEach(el => {
@@ -1322,9 +1321,11 @@ function bindAppointmentCardClick() {
       }
 
       autosaveEnabled = true;
-      attachFieldListeners(); // ✅ Again, ensure listeners are bound correctly
+      attachFieldListeners();
     }
   }
+
+
 
   if (addCustomerBtn) {
     addCustomerBtn.addEventListener('click', () => {
@@ -1341,6 +1342,7 @@ function bindAppointmentCardClick() {
   applyActiveCard();
 });
 </script>
+
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
