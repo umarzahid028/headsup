@@ -1187,39 +1187,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  async function autoSaveForm(allowWithoutId = false) {
-    if (!autosaveEnabled && !allowWithoutId) return;
-    if (!allowWithoutId && !idInput.value.trim()) return;
-    if (customerSavedThisTurn) return;
+ async function autoSaveForm(allowWithoutId = false) {
+  if (!autosaveEnabled && !allowWithoutId) return;
+  if (!allowWithoutId && !idInput.value.trim()) return;
+  if (customerSavedThisTurn) return;
 
-    const formData = new FormData(form);
-    try {
-      const response = await fetch('{{ route('customer.sales.store') }}', {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: formData
-      });
+  const formData = new FormData(form);
+  try {
+    const response = await fetch('{{ route('customer.sales.store') }}', {
+      method: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: formData
+    });
 
-      const result = await response.json();
+    const result = await response.json();
 
-      if (result.status === 'success') {
-        if (result.id) {
-          idInput.value = result.id;
-          localStorage.setItem('activeCustomerId', result.id);
-        }
-
-        customerSavedThisTurn = true;
-        await loadCustomers();
-      } else {
-        console.error('Save failed:', result);
+    if (result.status === 'success') {
+      if (result.id) {
+        idInput.value = result.id;
+        localStorage.setItem('activeCustomerId', result.id);
       }
-    } catch (err) {
-      console.error('Auto-save failed:', err);
+
+      customerSavedThisTurn = true;
+      await loadCustomers();
+    } else {
+      console.error('Save failed:', result);
     }
+  } catch (err) {
+    console.error('Auto-save failed:', err);
   }
+}
 
   async function loadCustomers() {
     try {
@@ -1238,43 +1238,46 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function bindCardClickEvents() {
-    document.querySelectorAll('.customer-card').forEach(card => {
-      if (card.id === 'appointment-card') return;
+  function bindAppointmentCardClick() {
+  const appointmentCard = document.querySelector('#appointment-card');
+  if (!appointmentCard) return;
 
-      card.addEventListener('click', () => {
-        const customerId = card.dataset.customerId;
-        if (!customerId) return;
+  appointmentCard.addEventListener('click', async () => {
+    const customerId = appointmentCard.dataset.customerId;
 
-        clearFormFields();
+    clearFormFields();
 
-        idInput.value = customerId;
-        nameInput.value = card.dataset.name || '';
-        emailInput.value = card.dataset.email ?? '';
-        phoneInput.value = card.dataset.phone ?? '';
-        interestInput.value = card.dataset.interest ?? '';
+    idInput.value = '';
+    nameInput.value = appointmentCard.dataset.name || '';
+    emailInput.value = appointmentCard.dataset.email ?? '';
+    phoneInput.value = appointmentCard.dataset.phone ?? '';
+    interestInput.value = appointmentCard.dataset.interest ?? '';
+    appointmentInput.value = appointmentCard.dataset.appointmentId ?? '';
 
-        if (card.dataset.process) {
-          card.dataset.process.split(',').forEach(proc => {
-            const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
-              .find(cb => cb.value.trim() === proc.trim());
-            if (checkbox) checkbox.checked = true;
-          });
-        }
-
-        document.querySelectorAll('.customer-card').forEach(c => {
-          c.classList.remove('active-card');
-          c.classList.remove('pause-animation');
-        });
-
-        card.classList.add('active-card');
-        localStorage.setItem('activeCustomerId', customerId);
-
-        autosaveEnabled = true;
-        attachFieldListeners(); // ✅ Make sure it's fresh
+    if (appointmentCard.dataset.process) {
+      appointmentCard.dataset.process.split(',').forEach(proc => {
+        const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
+          .find(cb => cb.value.trim() === proc.trim());
+        if (checkbox) checkbox.checked = true;
       });
+    }
+
+    document.querySelectorAll('.customer-card').forEach(c => {
+      c.classList.remove('active-card');
+      c.classList.remove('pause-animation');
     });
-  }
+
+    appointmentCard.classList.add('active-card');
+
+    localStorage.setItem('activeCustomerId', customerId);
+
+    loadedFromAppointment = true;
+    autosaveEnabled = true;
+    attachFieldListeners();
+
+    await autoSaveForm(true);
+  });
+}
 
   function bindAppointmentCardClick() {
     const appointmentCard = document.querySelector('#appointment-card');
