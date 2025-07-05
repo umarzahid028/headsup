@@ -1136,23 +1136,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-if (newCustomerBtn) {
-  newCustomerBtn.addEventListener('click', async () => {
-    idInput.value = '';
-    appointmentInput.value = '';
-    localStorage.removeItem('activeCustomerId');
+  if (newCustomerBtn) {
+    newCustomerBtn.addEventListener('click', async () => {
+      const isFormDirty = !!(
+        nameInput.value.trim() ||
+        emailInput.value.trim() ||
+        phoneInput.value.trim() ||
+        interestInput.value.trim() ||
+        [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
+      );
 
-    nameInput.value = '';
-    emailInput.value = '';
-    phoneInput.value = '';
-    interestInput.value = '';
-    [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+      idInput.value = '';
+      appointmentInput.value = '';
+      localStorage.removeItem('activeCustomerId');
 
-    // ❗️ Let the form save and autosave will activate after ID is received
-    await autoSaveForm();
-  });
-}
+      if (!isFormDirty) {
+        nameInput.value = '';
+        emailInput.value = '';
+        phoneInput.value = '';
+        interestInput.value = '';
+        [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+      }
 
+      await autoSaveForm();
+
+      if (idInput.value) {
+        autosaveEnabled = true;
+        attachFieldListeners();
+      }
+    });
+  }
 
   async function autoSaveForm() {
   if (customerSavedThisTurn) return;
