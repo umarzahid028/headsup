@@ -923,9 +923,10 @@ function toggleButtons() {
 
 
   // Toggle readonly on name field
-  function updateNameInputState() {
-    nameInput.readOnly = !(isMyTurn || cardClicked);
-  }
+function updateNameInputState() {
+  nameInput.readOnly = false;
+}
+
 
   // Customer card clicked
   document.addEventListener('click', function (e) {
@@ -1139,7 +1140,6 @@ function toggleButtons() {
 
 if (newCustomerBtn) {
   newCustomerBtn.addEventListener('click', async () => {
-    // Check if any field has value (excluding ID)
     const isFormDirty = !!(
       nameInput.value.trim() ||
       form.querySelector('input[name="email"]').value.trim() ||
@@ -1149,7 +1149,6 @@ if (newCustomerBtn) {
     );
 
     if (isFormDirty) {
-      // If user has typed anything, save that as a new customer
       await autoSaveForm();
     } else {
       // If all fields are blank, create a blank new customer
