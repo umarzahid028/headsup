@@ -25,7 +25,7 @@ public function store(Request $request)
             'notes'          => 'nullable|string',
             'process'        => 'nullable|array',
             'disposition'    => 'nullable|string',
-            'appointment_id' => 'nullable|exists:appointments,id', 
+            'appointment_id' => 'nullable|exists:appointments,id',
         ]);
     } catch (\Illuminate\Validation\ValidationException $e) {
         return response()->json([
@@ -35,52 +35,70 @@ public function store(Request $request)
     }
 
     $data = [
-        'user_id'       => $validated['user_id'] ?? auth()->id(),
-        'customer_id'   => $validated['customer_id'] ?? null,
-        'name'          => $validated['name'],
-        'email'         => $validated['email'] ?? null,
-        'phone'         => $validated['phone'] ?? null,
-        'interest'      => $validated['interest'] ?? null,
-        'notes'         => $validated['notes'] ?? null,
-        'process'       => $validated['process'] ?? [],
-        'disposition'   => $validated['disposition'] ?? null,
-        'appointment_id'=> $validated['appointment_id'] ?? null, 
+        'user_id'        => $validated['user_id'] ?? auth()->id(),
+        'customer_id'    => $validated['customer_id'] ?? null,
+        'name'           => $validated['name'],
+        'email'          => $validated['email'] ?? null,
+        'phone'          => $validated['phone'] ?? null,
+        'interest'       => $validated['interest'] ?? null,
+        'notes'          => $validated['notes'] ?? null,
+        'process'        => $validated['process'] ?? [],
+        'disposition'    => $validated['disposition'] ?? null,
+        'appointment_id' => $validated['appointment_id'] ?? null,
     ];
 
     $sale = null;
 
+    // 1. If ID provided, find that sale
     if (!empty($validated['id'])) {
-        $sale = CustomerSale::find($validated['id']);
+        $sale = \App\Models\CustomerSale::find($validated['id']);
     }
 
+    // 2. If not found, try by appointment ID (prevents duplicate save for same appointment)
+    if (!$sale && !empty($validated['appointment_id'])) {
+        $sale = \App\Models\CustomerSale::where('appointment_id', $validated['appointment_id'])->first();
+    }
+
+    // 3. Fallback: try matching by name + phone on the same day
+    if (!$sale && !empty($data['name']) && !empty($data['phone'])) {
+        $sale = \App\Models\CustomerSale::where('user_id', $data['user_id'])
+            ->where('name', $data['name'])
+            ->where('phone', $data['phone'])
+            ->whereDate('created_at', now()->toDateString())
+            ->latest()
+            ->first();
+    }
+
+    // 4. Fallback: if customer_id provided, try match by customer
     if (!$sale && !empty($validated['customer_id'])) {
-        $existing = CustomerSale::where('user_id', $data['user_id'])
+        $sale = \App\Models\CustomerSale::where('user_id', $data['user_id'])
             ->where('customer_id', $validated['customer_id'])
             ->whereDate('created_at', now()->toDateString())
             ->latest()
             ->first();
-
-        if ($existing) {
-            $sale = $existing;
-        }
     }
 
+    // Create or update
     if ($sale) {
         $sale->update($data);
     } else {
-        $sale = CustomerSale::create($data);
+        $sale = \App\Models\CustomerSale::create($data);
     }
 
+    // Mark ended_at if disposition set
     if (!empty($validated['disposition'])) {
         $sale->ended_at = now();
         $sale->save();
     }
 
+    // Mark appointment completed once
     if (!empty($validated['appointment_id'])) {
         \App\Models\Appointment::where('id', $validated['appointment_id'])
+            ->where('status', '!=', 'completed')
             ->update(['status' => 'completed']);
     }
 
+    // Calculate duration if possible
     $queue = \App\Models\Queue::where('user_id', $data['user_id'])
         ->where('customer_id', $data['customer_id'])
         ->whereNotNull('took_turn_at')
@@ -102,6 +120,7 @@ public function store(Request $request)
         'redirect' => route('sales.perosn'),
     ]);
 }
+
 
   public function index(Request $request)
 {

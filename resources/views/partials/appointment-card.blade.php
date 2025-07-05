@@ -1,36 +1,49 @@
 <style>
   .active-card {
-  animation: pulseActive 1s infinite;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
-}
-
-@keyframes pulseActive {
-  0% {
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+    animation: pulseActive 1s infinite;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
   }
-  70% {
-    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
-  }
-}
 
-.pause-animation {
-  animation: none !important;
-  box-shadow: none !important;
-}
+  @keyframes pulseActive {
+    0% {
+      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+    }
+  }
 
+  .pause-animation {
+    animation: none !important;
+    box-shadow: none !important;
+  }
 </style>
-@if($appointment && !in_array($appointment->status, ['completed', 'canceled']) && auth()->id() === $appointment->salesperson_id)
 
+@php
+  $existingCustomer = null;
 
+  if ($appointment) {
+      $existingCustomer = \App\Models\CustomerSale::where('name', $appointment->customer_name)
+          ->where('phone', $appointment->customer_phone)
+          ->first();
+  }
+@endphp
+
+@if(
+  $appointment &&
+  !in_array($appointment->status, ['completed', 'canceled']) &&
+  auth()->id() === $appointment->salesperson_id &&
+  !$existingCustomer
+)
   {{-- SHOW appointment card --}}
   <div id="customer-list" class="transition-opacity duration-300">
     <div
       id="appointment-card"
-      class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
+      class="customer-card active-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
       data-name="{{ $appointment->customer_name }}"
       data-phone="{{ $appointment->customer_phone }}"
     >
@@ -43,7 +56,7 @@
         <p>
           <span class="font-medium text-gray-400">Sales Person:</span>
           <span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full ml-2">
-             {{ $appointment->salesperson->name ?? 'N/A' }}
+            {{ $appointment->salesperson->name ?? 'N/A' }}
           </span>
         </p>
         <p><span class="font-medium text-gray-400">Name:</span> {{ $appointment->customer_name }}</p>
@@ -60,4 +73,3 @@
     </div>
   </div>
 @endif
-
