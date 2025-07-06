@@ -224,8 +224,8 @@
         </button>
 <button 
   type="button"
-  id="To-Button"
-  class="toBtn relative bg-gray-800 text-white px-4 py-1.5 rounded"
+  id="toBtn"
+  class=" relative bg-gray-800 text-white px-4 py-1.5 rounded"
 >
   <span class="btn-label">T/O</span>
   <div class="toSpinner hidden absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded">
@@ -343,7 +343,7 @@ Add Customer
 
   <!-- T/O request -->
 
-<script>
+<!-- <script>
   document.addEventListener('DOMContentLoaded', () => {
     const toButton = document.querySelector('.toBtn');
     if (!toButton) return; // safety check
@@ -402,7 +402,7 @@ Add Customer
       }
     });
   });
-</script>
+</script> -->
 
 
 
@@ -689,7 +689,7 @@ function completeForm(customerId) {
 </script>
 
 
-<!-- <script>
+<script>
 document.addEventListener('DOMContentLoaded', () => {
   const toBtn   = document.getElementById('toBtn');
   const spinner = toBtn.querySelector('.toSpinner');
@@ -737,16 +737,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showConfirmButton: true
       }).then(() => {
         // ✅ Remove specific card instead of full list
-        const card = document.querySelector(`#card-${customer_id}`);
-        if (card) {
-          card.classList.add('fade-out');
-          setTimeout(() => card.remove(), 300);
-        }
-
-        form.reset();
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+       
       });
 
     } catch (error) {
@@ -761,7 +752,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   toBtn.addEventListener('click', forwardCard);
 });
-</script> -->
+</script> 
 
 
 <script>
@@ -1330,34 +1321,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  if (newCustomerBtn) {
-    newCustomerBtn.addEventListener('click', async () => {
-      const isFormDirty = !!(
-        nameInput.value.trim() ||
-        emailInput.value.trim() ||
-        phoneInput.value.trim() ||
-        interestInput.value.trim() ||
-        [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
-      );
+if (newCustomerBtn) {
+  newCustomerBtn.addEventListener('click', async () => {
+    console.log("New Customer button clicked");
 
-      if (isFormDirty) {
-        await autoSaveForm(true);
-      } else {
-        nameInput.value = '';
-        emailInput.value = '';
-        phoneInput.value = '';
-        interestInput.value = '';
-        [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-        await autoSaveForm(true);
-      }
+    const isFormDirty = !!(
+      nameInput.value.trim() ||
+      emailInput.value.trim() ||
+      phoneInput.value.trim() ||
+      interestInput.value.trim() ||
+      [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
+    );
 
-      // ✅ After ID is created
-      if (idInput.value) {
-        autosaveEnabled = true;
-        attachFieldListeners(); // ✅ Re-attach listeners after ID
-      }
-    });
-  }
+    if (isFormDirty) {
+      console.log("Form is dirty. Saving...");
+      await autoSaveForm(true);
+    } else {
+      console.log("Form is clean. Resetting...");
+      nameInput.value = '';
+      emailInput.value = '';
+      phoneInput.value = '';
+      interestInput.value = '';
+      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+      await autoSaveForm(true);
+    }
+
+    if (idInput.value) {
+      autosaveEnabled = true;
+      attachFieldListeners();
+    }
+  });
+}
+
 
 async function autoSaveForm(allowWithoutId = false) {
   const hasAppointment = appointmentInput.value.trim() !== '';
@@ -1381,15 +1376,20 @@ async function autoSaveForm(allowWithoutId = false) {
 
     const result = await response.json();
 
-    if (result.status === 'success') {
-      if (result.id) {
-        idInput.value = result.id;
-        localStorage.setItem('activeCustomerId', result.id);
-      }
+if (result.status === 'success') {
+  if (result.id) {
+    idInput.value = result.id;
+    localStorage.setItem('activeCustomerId', result.id);
 
-      customerSavedThisTurn = true;
-      await loadCustomers();
-    } else {
+    // ✅ Ensure autosave is now allowed
+    autosaveEnabled = true;
+    attachFieldListeners(); // in case listeners were not added yet
+  }
+
+  customerSavedThisTurn = true;
+  await loadCustomers();
+}
+else {
       console.error('Save failed:', result);
     }
   } catch (err) {

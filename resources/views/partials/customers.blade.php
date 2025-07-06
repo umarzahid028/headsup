@@ -45,7 +45,6 @@
 
 
    @if (is_null($customer->disposition) 
-    && !$customer->forwarded_to_manager
     && (is_null($customer->transferred_to_user_id) || $customer->transferred_to_user_id == auth()->id()) )
 
       <div

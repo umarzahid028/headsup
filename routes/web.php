@@ -111,7 +111,10 @@ Route::get('/checkins', [TokenController::class, 'checkinSalespersons'])->name('
 
 Route::post('/stop-timer/{id}', [CustomerSaleController::class, 'stopTimer']);
 // Customer Transfor
-Route::post('/customers/{id}/transfer', [CustomerSaleController::class, 'transfer']);
+Route::middleware(['auth'])->group(function () {
+    Route::post('/customers/{id}/transfer', [CustomerSaleController::class, 'transfer'])->name('customers.transfer');
+});
+
 Route::get('add/customer', [CustomerSaleController::class, 'addcustomer'])->name('add.customer');
 
 

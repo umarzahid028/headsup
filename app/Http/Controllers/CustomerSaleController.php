@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
+use App\Models\User;
 use App\Models\Queue;
 use App\Models\Appointment;
 use App\Models\CustomerSale;
@@ -99,7 +100,7 @@ public function store(Request $request)
         'message'  => 'Customer sale data saved successfully!',
         'duration' => $duration,
         'id'       => $sale->id,
-        'redirect' => route('sales.perosn'),
+         'redirect' => url()->previous(),
     ]);
 }
 
@@ -124,6 +125,28 @@ public function transfer(Request $request, $id)
     ]);
 
     $customer = CustomerSale::findOrFail($id);
+    $currentUser = auth()->user();
+
+    // ✅ Only allow if current user is Sales Manager or owner of the customer
+    if (!$currentUser->hasRole('Sales Manager') && $customer->user_id !== $currentUser->id) {
+        return response()->json([
+            'message' => 'Unauthorized to transfer this customer.'
+        ], 403);
+    }
+
+    // ✅ Check if new_user_id is a sales person who is currently checked-in
+    $isCheckedIn = \App\Models\Queue::where('user_id', $request->new_user_id)
+        ->where('is_checked_in', true)
+        ->latest('created_at')
+        ->exists();
+
+    if (!$isCheckedIn) {
+        return response()->json([
+            'message' => 'The selected sales person is not checked-in.',
+        ], 422); // 422: validation error
+    }
+
+    // ✅ Proceed with transfer
     $customer->user_id = $request->new_user_id;
     $customer->save();
 
@@ -134,6 +157,7 @@ public function transfer(Request $request, $id)
 
 
 
+
     public function addcustomer()
     {
         return view('tokens-history/addcustomer');
@@ -141,9 +165,29 @@ public function transfer(Request $request, $id)
 
 public function customer()
 {
-    $customers = CustomerSale::where('forwarded_to_manager', true)->latest()->get();
-    return view('t/o-customers.customer', compact('customers'));
+    if (!Auth::check()) {
+        abort(403);
+    }
+
+    $user = Auth::user();
+
+    // ✅ Get all customers (or apply filter if needed)
+    $customers = CustomerSale::get();
+
+    // ✅ Get only users with "Sales person" role who are currently checked-in
+    $checkedInUserIds = Queue::where('is_checked_in', true)
+        ->latest('id')
+        ->pluck('user_id')
+        ->unique();
+
+    $salespeople = User::role('Sales person')
+        ->whereIn('id', $checkedInUserIds)
+        ->get();
+
+    return view('t/o-customers.customer', compact('customers', 'salespeople'));
 }
+
+
 
 public function completeForm(Request $request, $id)
 {
@@ -240,79 +284,76 @@ public function completeForm(Request $request, $id)
 }
 
 
-// public function forwardToManager(Request $request)
-// {
-//     $customer = null;
-
-//     if ($request->filled('id')) {
-//         $customer = CustomerSale::find($request->id);
-//     }
-
-//     // If no direct customer but appointment is provided
-//     if (!$customer && $request->filled('appointment_id')) {
-//         $appointment = Appointment::find($request->appointment_id);
-
-//         if (!$appointment) {
-//             return response()->json([
-//                 'status' => 'error',
-//                 'message' => 'Appointment not found.',
-//             ], 404);
-//         }
-
-//         // Create a new customer from appointment
-//         $customer = new CustomerSale([
-//             'name'           => $appointment->customer_name,
-//             'phone'          => $appointment->customer_phone,
-//             'user_id'        => auth()->id(),
-//             'appointment_id' => $appointment->id,
-//             'forwarded_to_manager' => true,
-//             'forwarded_at'         => now(),
-//         ]);
-//         $customer->save();
-
-//         // Mark appointment as completed
-//         $appointment->status = 'completed';
-//         $appointment->save();
-//     }
-
-//     // If customer still not found
-//     if (!$customer) {
-//         return response()->json([
-//             'status'  => 'error',
-//             'message' => 'No valid customer or appointment found.',
-//         ], 404);
-//     }
-
-//     // If existing customer, update forward flags if needed
-//     if (!$customer->forwarded_to_manager) {
-//         $customer->forwarded_to_manager = true;
-//         $customer->forwarded_at = now();
-//         $customer->save();
-//     }
-
-//     return response()->json([
-//         'status'   => 'forwarded',
-//         'message'  => 'Customer forwarded to Sales Manager!',
-//         'redirect' => route('sales.perosn', ['id' => $customer->id]),
-//     ]);
-// }
-
-// CustomerController.php
 public function forwardToManager(Request $request)
 {
-    $request->validate([
-        'customer_id' => 'required|integer|exists:customer_sales,id',
-    ]);
+    $customer = null;
 
-    $customer = CustomerSale::find($request->customer_id);
-    $customer->forwarded_at = now(); // includes both date and time
+    if ($request->filled('id')) {
+        $customer = CustomerSale::find($request->id);
+    }
+
+    // If no direct customer but appointment is provided
+    if (!$customer && $request->filled('appointment_id')) {
+        $appointment = Appointment::find($request->appointment_id);
+
+        if (!$appointment) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Appointment not found.',
+            ], 404);
+        }
+
+        // Create a new customer from appointment
+        $customer = new CustomerSale([
+            'name'           => $appointment->customer_name,
+            'phone'          => $appointment->customer_phone,
+            'user_id'        => auth()->id(),
+            'appointment_id' => $appointment->id,
+        ]);
+        $customer->save();
+
+        // Mark appointment as completed
+        $appointment->status = 'completed';
+        $appointment->save();
+    }
+
+    // If customer still not found
+    if (!$customer) {
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'No valid customer or appointment found.',
+        ], 404);
+    }
+
+    // ✅ Always update forwarding time
+    $customer->forwarded_to_manager = true;
+    $customer->forwarded_at = now();
     $customer->save();
 
     return response()->json([
-        'status' => 'success',
-        'message' => 'Customer has been forwarded to the Sales Manager.'
+        'status'   => 'forwarded',
+        'message'  => 'Customer forwarded to Sales Manager!',
+        'redirect' => route('sales.perosn', ['id' => $customer->id]),
     ]);
 }
+
+
+// CustomerController.php
+// public function forward(Request $request)
+// {
+//     $request->validate([
+//         'customer_id' => 'required|integer|exists:customer_sales,id',
+//     ]);
+
+//     $customer = CustomerSale::find($request->customer_id);
+//     $customer->forwarded_at = now(); // includes both date and time
+//     $customer->save();
+
+//     return response()->json([
+//         'status' => 'success',
+//         'message' => 'Customer has been forwarded to the Sales Manager.'
+//     ]);
+// }
 
 
 
@@ -322,84 +363,7 @@ public function forwardToManager(Request $request)
     return view('partials.customer-list', compact('customers'));
 }
 
-public function customerform(Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'id'             => 'nullable|integer|exists:customer_sales,id',
-            'user_id'        => 'required|exists:users,id',
-            'customer_id'    => 'nullable|exists:customers,id',
-            'name'           => 'required|string|max:255',
-            'email'          => 'nullable|email|max:255',
-            'phone'          => 'nullable|string|max:20',
-            'interest'       => 'nullable|string|max:255',
-            'notes'          => 'nullable|string',
-            'process'        => 'nullable|array',
-            'disposition'    => 'nullable|string',
-            'appointment_id' => 'nullable|exists:appointments,id',
-        ]);
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        return response()->json([
-            'status' => 'error',
-            'errors' => $e->errors(),
-        ], 422);
-    }
 
-    $data = [
-        'user_id'     => $validated['user_id'],
-        'customer_id' => $validated['customer_id'] ?? null,
-        'name'        => $validated['name'],
-        'email'       => $validated['email'] ?? null,
-        'phone'       => $validated['phone'],
-        'interest'    => $validated['interest'] ?? null,
-        'notes'       => $validated['notes'] ?? null,
-        'process'     => $validated['process'] ?? [],
-        'disposition' => $validated['disposition'] ?? null,
-    ];
-
-    // ✅ Find or create
-    $sale = !empty($validated['id']) ? CustomerSale::find($validated['id']) : null;
-
-    if ($sale) {
-        $sale->update($data);
-    } else {
-        $sale = CustomerSale::create($data);
-    }
-
-    // ✅ Set ended_at if disposition is given
-    if (!empty($validated['disposition'])) {
-        $sale->ended_at = now();
-        $sale->save();
-    }
-
-    // ✅ Update appointment status if needed
-    if (!empty($validated['appointment_id'])) {
-        \App\Models\Appointment::where('id', $validated['appointment_id'])
-            ->update(['status' => 'completed']);
-    }
-
-    // ✅ Calculate duration from queue
-    $queue = \App\Models\Queue::where('user_id', $data['user_id'])
-        ->where('customer_id', $data['customer_id'])
-        ->whereNotNull('took_turn_at')
-        ->latest('took_turn_at')
-        ->first();
-
-    $duration = null;
-    if ($queue && $sale->ended_at) {
-        $start = \Carbon\Carbon::parse($queue->took_turn_at);
-        $end = \Carbon\Carbon::parse($sale->ended_at);
-        $duration = $start->diff($end)->format('%Hh %Im %Ss');
-    }
-
-    return response()->json([
-        'status'   => 'success',
-        'message'  => 'Customer sale data saved successfully!',
-        'duration' => $duration,
-        'id'       => $sale->id, // send back id to frontend
-        'redirect' => route('to.customers', ['id' => auth()->id()]),
-    ]);
-}
 // app/Http/Controllers/SalesPersonController.php
 
 public function checkout(Request $request, $id)

@@ -99,7 +99,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6M4 14a8 8 0 0114-6.9M20 10a8 8 0 01-14 6.9" />
                     </svg>
 
-                    <span class="flex-1">T/O Customers</span>
+                    <span class="flex-1">Customer Activity</span>
                 </a>
             </div>
             @endhasrole

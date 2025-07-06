@@ -28,99 +28,105 @@ class DashboardController extends Controller
         $this->middleware('auth');
     }
 
-   
-public function index(): mixed
-{
-    $user = auth()->user();
 
-    if ($user && $user->hasRole('Sales person')) {
-        return redirect()->route('sales.perosn');
+    public function index(): mixed
+    {
+        $user = auth()->user();
+
+        if ($user && $user->hasRole('Sales person')) {
+            return redirect()->route('sales.perosn');
+        }
+
+        $queues = User::role('Sales person')->count();
+        $lastMonthCount = User::role('Sales person')
+            ->whereBetween('created_at', [
+                now()->subMonth()->startOfMonth(),
+                now()->subMonth()->endOfMonth()
+            ])->count();
+        $queueGrowth = $lastMonthCount > 0
+            ? round((($queues - $lastMonthCount) / $lastMonthCount) * 100)
+            : 0;
+
+        $customer = CustomerSale::count();
+        $appointment = Appointment::count();
+        $customerdetail = CustomerSale::where('disposition', 'Sold!')->count();
+
+        $unsold = $customer - $customerdetail;
+        $soldChart = [
+            'Sold' => $customerdetail,
+            'Unsold' => $unsold < 0 ? 0 : $unsold,
+        ];
+
+        $months = collect(range(5, 0))->map(fn($i) => now()->subMonths($i)->format('M'))->all();
+
+        $customerChart = collect(range(5, 0))->map(
+            fn($i) =>
+            CustomerSale::whereMonth('created_at', now()->subMonths($i)->month)->count()
+        )->values()->all();
+
+        $appointmentChart = collect(range(5, 0))->map(
+            fn($i) =>
+            Appointment::whereMonth('created_at', now()->subMonths($i)->month)->count()
+        )->values()->all();
+
+        return view('dashboard', compact(
+            'queues',
+            'queueGrowth',
+            'customer',
+            'appointment',
+            'customerdetail',
+            'customerChart',
+            'appointmentChart',
+            'soldChart',
+            'months'
+        ));
     }
-
-    $queues = User::role('Sales person')->count();
-    $lastMonthCount = User::role('Sales person')
-        ->whereBetween('created_at', [
-            now()->subMonth()->startOfMonth(),
-            now()->subMonth()->endOfMonth()
-        ])->count();
-    $queueGrowth = $lastMonthCount > 0
-        ? round((($queues - $lastMonthCount) / $lastMonthCount) * 100)
-        : 0;
-
-    $customer = CustomerSale::count();
-    $appointment = Appointment::count();
-    $customerdetail = CustomerSale::where('disposition', 'Sold!')->count();
-
-    $unsold = $customer - $customerdetail;
-    $soldChart = [
-        'Sold' => $customerdetail,
-        'Unsold' => $unsold < 0 ? 0 : $unsold,
-    ];
-
-    $months = collect(range(5, 0))->map(fn($i) => now()->subMonths($i)->format('M'))->all();
-
-    $customerChart = collect(range(5, 0))->map(fn($i) =>
-        CustomerSale::whereMonth('created_at', now()->subMonths($i)->month)->count()
-    )->values()->all();
-
-    $appointmentChart = collect(range(5, 0))->map(fn($i) =>
-        Appointment::whereMonth('created_at', now()->subMonths($i)->month)->count()
-    )->values()->all();
-
-    return view('dashboard', compact(
-        'queues', 'queueGrowth', 'customer', 'appointment', 'customerdetail',
-        'customerChart', 'appointmentChart', 'soldChart', 'months'
-    ));
-}
 
 
     //Sales perosn
-   public function salesdashboard($id = null)
-{
-    $user = Auth::user();
+    public function salesdashboard($id = null)
+    {
+        $user = Auth::user();
 
-    $customers = CustomerSale::where('user_id', auth()->id())
-        ->where('forwarded_to_manager', false)
-        ->latest()
-        ->get();
-
-    $salespeople = \App\Models\User::role('Sales person')
-        ->where('id', '!=', $user->id)
-        ->get();
-        
-   $tolist = CustomerSale::where('forwarded_to_manager', false)
-        ->get();
+        $customers = CustomerSale::where('user_id', auth()->id())
+            ->latest()
+            ->get();
 
 
-    $isCheckedIn = Queue::where('user_id', $user->id)
-        ->where('is_checked_in', true)
-        ->exists();
+        $salespeople = User::role('Sales person')
+            ->where('id', '!=', $user->id)
+            ->get();
 
-    $token = null;
-    $onHoldToken = null;
 
-    if ($isCheckedIn) {
-        $token = Token::with('salesperson')
-            ->where('user_id', $user->id)
-            ->where('status', 'assigned')
-            ->latest('created_at')
-            ->first();
 
-        $onHoldToken = Token::with('salesperson')
-            ->where('user_id', $user->id)
-            ->where('status', 'on_hold')
-            ->latest('created_at')
-            ->first();
-    }
-    $appointment = null;
-    if ($id !== null) {
-        $appointment = Appointment::find($id);
-        if (!$appointment) {
-            abort(404, 'Appointment not found');
+        $isCheckedIn = Queue::where('user_id', $user->id)
+            ->where('is_checked_in', true)
+            ->exists();
+
+        $token = null;
+        $onHoldToken = null;
+
+        if ($isCheckedIn) {
+            $token = Token::with('salesperson')
+                ->where('user_id', $user->id)
+                ->where('status', 'assigned')
+                ->latest('created_at')
+                ->first();
+
+            $onHoldToken = Token::with('salesperson')
+                ->where('user_id', $user->id)
+                ->where('status', 'on_hold')
+                ->latest('created_at')
+                ->first();
         }
+        $appointment = null;
+        if ($id !== null) {
+            $appointment = Appointment::find($id);
+            if (!$appointment) {
+                abort(404, 'Appointment not found');
+            }
+        }
+
+        return view('sales-person-dashboard.dashboard', compact('token', 'onHoldToken', 'customers', 'salespeople', 'appointment'));
     }
-
-    return view('sales-person-dashboard.dashboard', compact('token', 'onHoldToken', 'customers', 'salespeople', 'appointment', 'tolist'));
-}
-
 }
