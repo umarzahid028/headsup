@@ -1173,7 +1173,6 @@ async function autoSaveForm(allowWithoutId = false) {
 
   if (customerSavedThisTurn) return;
 
-
   const formData = new FormData(form);
 
   try {
@@ -1196,6 +1195,31 @@ async function autoSaveForm(allowWithoutId = false) {
 
       customerSavedThisTurn = true;
       await loadCustomers();
+
+      // ✅ NEW LOGIC STARTS HERE
+      if (appointmentInput.value && result.id) {
+        const appointmentCard = document.getElementById('appointment-card');
+        if (appointmentCard) {
+          // Update card dataset values
+          appointmentCard.dataset.customerId = result.id;
+          appointmentCard.dataset.name = nameInput.value;
+          appointmentCard.dataset.email = emailInput.value;
+          appointmentCard.dataset.phone = phoneInput.value;
+          appointmentCard.dataset.interest = interestInput.value;
+          appointmentCard.dataset.used = 'true';
+
+          // Convert to customer card
+          appointmentCard.id = ''; // Remove special ID
+          appointmentCard.classList.add('customer-card');
+          appointmentCard.classList.remove('active-card');
+          appointmentCard.classList.remove('hidden');
+
+          // Bind customer card click events again
+          bindCardClickEvents();
+        }
+      }
+      // ✅ NEW LOGIC ENDS HERE
+
     } else {
       console.error('Save failed:', result);
     }
@@ -1203,6 +1227,7 @@ async function autoSaveForm(allowWithoutId = false) {
     console.error('Auto-save failed:', err);
   }
 }
+
   async function loadCustomers() {
     try {
       const resp = await fetch('{{ route('customer.index') }}?partial=1', {
