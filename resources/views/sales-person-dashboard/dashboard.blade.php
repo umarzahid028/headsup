@@ -1167,7 +1167,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 👇 Also block if saving a new record without allow flag
-  if (!allowWithoutId && !hasCustomerId && !hasAppointment) {
+  if (!allowWithoutId && !hasCustomerId) {
     console.log('⛔ Auto-save blocked: No appointment or customer ID.');
     return;
   }
