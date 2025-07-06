@@ -1196,11 +1196,11 @@ async function autoSaveForm(allowWithoutId = false) {
       customerSavedThisTurn = true;
       await loadCustomers();
 
-      // ✅ NEW LOGIC STARTS HERE
+      // ✅ Fix: Turn appointment card into proper customer card
       if (appointmentInput.value && result.id) {
         const appointmentCard = document.getElementById('appointment-card');
         if (appointmentCard) {
-          // Update card dataset values
+          // Set all customer-related data attributes
           appointmentCard.dataset.customerId = result.id;
           appointmentCard.dataset.name = nameInput.value;
           appointmentCard.dataset.email = emailInput.value;
@@ -1208,17 +1208,21 @@ async function autoSaveForm(allowWithoutId = false) {
           appointmentCard.dataset.interest = interestInput.value;
           appointmentCard.dataset.used = 'true';
 
-          // Convert to customer card
-          appointmentCard.id = ''; // Remove special ID
+          // Convert the card
+          appointmentCard.removeAttribute('id'); // Remove ID to prevent future special behavior
           appointmentCard.classList.add('customer-card');
           appointmentCard.classList.remove('active-card');
           appointmentCard.classList.remove('hidden');
 
-          // Bind customer card click events again
+          // Rebind events on all customer cards
           bindCardClickEvents();
+
+          // Optional: Scroll to that card or visually highlight it
+          setTimeout(() => {
+            appointmentCard.classList.add('active-card');
+          }, 100);
         }
       }
-      // ✅ NEW LOGIC ENDS HERE
 
     } else {
       console.error('Save failed:', result);
