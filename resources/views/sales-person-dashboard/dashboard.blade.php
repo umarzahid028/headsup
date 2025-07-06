@@ -1126,8 +1126,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (newCustomerBtn) {
     newCustomerBtn.addEventListener('click', async () => {
-      console.log("New Customer button clicked");
-
       const isFormDirty = !!(
         nameInput.value.trim() ||
         emailInput.value.trim() ||
@@ -1137,10 +1135,8 @@ document.addEventListener('DOMContentLoaded', () => {
       );
 
       if (isFormDirty) {
-        console.log("Form is dirty. Saving...");
         await autoSaveForm(true);
       } else {
-        console.log("Form is clean. Resetting...");
         nameInput.value = '';
         emailInput.value = '';
         phoneInput.value = '';
@@ -1157,22 +1153,26 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function autoSaveForm(allowWithoutId = false) {
-  const hasAppointment = appointmentInput.value.trim() !== '';
-  const hasCustomerId = idInput.value.trim() !== '';
+  console.log('🚀 autoSaveForm triggered');
 
-  // 👇 Block auto-save entirely if no ID and it's not your turn
-  if (!hasCustomerId && !hasAppointment && !isMyTurn) {
-    console.log('⛔ Not your turn and no ID – auto-save blocked.');
+  const hasAppointment = appointmentInput && appointmentInput.value.trim() !== '';
+  const hasCustomerId = idInput && idInput.value.trim() !== '';
+
+  console.log('📌 hasAppointment:', hasAppointment);
+  console.log('📌 hasCustomerId:', hasCustomerId);
+  console.log('📌 allowWithoutId:', allowWithoutId);
+
+  const isAllowed = isMyTurn || hasCustomerId || (allowWithoutId && hasAppointment);
+
+  if (!isAllowed) {
+    console.log('⛔ Blocked: Not your turn.');
     return;
   }
 
-  // 👇 Also block if saving a new record without allow flag
-  if (!allowWithoutId && !hasCustomerId) {
-    console.log('⛔ Auto-save blocked: No appointment or customer ID.');
+  if (customerSavedThisTurn) {
+    console.log('⏳ Skipping save: Already saved recently');
     return;
   }
-
-  if (customerSavedThisTurn) return;
 
   const formData = new FormData(form);
 
@@ -1187,6 +1187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const result = await response.json();
+    console.log('✅ Server Response:', result);
 
     if (result.status === 'success') {
       if (result.id) {
@@ -1195,15 +1196,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       customerSavedThisTurn = true;
-      await loadCustomers();
+      await loadCustomers?.();
     } else {
-      console.error('Save failed:', result);
+      console.error('❌ Save failed:', result);
     }
   } catch (err) {
-    console.error('Auto-save failed:', err);
+    console.error('❌ Auto-save error:', err);
   }
 }
-
 
   async function loadCustomers() {
     try {
@@ -1268,8 +1268,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (appointmentCard.classList.contains('hidden')) return;
       if (appointmentCard.dataset.used === 'true') return;
 
-      const customerId = appointmentCard.dataset.customerId;
-
       clearFormFields();
 
       idInput.value = '';
@@ -1295,12 +1293,16 @@ document.addEventListener('DOMContentLoaded', () => {
       appointmentCard.classList.add('active-card');
       appointmentCard.dataset.used = 'true';
 
-      localStorage.setItem('activeCustomerId', customerId);
+      localStorage.setItem('activeCustomerId', appointmentCard.dataset.customerId);
       loadedFromAppointment = true;
       autosaveEnabled = true;
       attachFieldListeners();
 
-      await autoSaveForm();
+      setTimeout(() => {
+        console.log('🚀 Auto-saving after appointment click:', appointmentInput.value);
+        autoSaveForm(true);
+      }, 200);
+
       appointmentCard.classList.add('hidden');
     });
   }
@@ -1356,6 +1358,7 @@ document.addEventListener('DOMContentLoaded', () => {
   applyActiveCard();
 });
 </script>
+
 
 
 <script>
