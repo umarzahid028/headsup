@@ -1124,107 +1124,84 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  if (newCustomerBtn) {
-    newCustomerBtn.addEventListener('click', async () => {
-      console.log("New Customer button clicked");
+ if (newCustomerBtn) {
+  newCustomerBtn.addEventListener('click', async () => {
+    const isFormDirty = !!(
+      nameInput.value.trim() ||
+      emailInput.value.trim() ||
+      phoneInput.value.trim() ||
+      interestInput.value.trim() ||
+      [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
+    );
 
-      const isFormDirty = !!(
-        nameInput.value.trim() ||
-        emailInput.value.trim() ||
-        phoneInput.value.trim() ||
-        interestInput.value.trim() ||
-        [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
-      );
+    if (isFormDirty) {
+      console.log("Form is dirty. Saving...");
+      await autoSaveForm(true); // allowWithoutId = true
+    } else {
+      console.log("Form is clean. Resetting...");
+      nameInput.value = '';
+      emailInput.value = '';
+      phoneInput.value = '';
+      interestInput.value = '';
+      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+      await autoSaveForm(true);
+    }
 
-      if (isFormDirty) {
-        console.log("Form is dirty. Saving...");
-        await autoSaveForm(true);
-      } else {
-        console.log("Form is clean. Resetting...");
-        nameInput.value = '';
-        emailInput.value = '';
-        phoneInput.value = '';
-        interestInput.value = '';
-        [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-        await autoSaveForm(true);
-      }
-
-      if (idInput.value) {
-        autosaveEnabled = true;
-        attachFieldListeners();
-      }
-    });
-  }
+    if (idInput.value) {
+      autosaveEnabled = true;
+      attachFieldListeners();
+    }
+  });
+}
 
   async function autoSaveForm(allowWithoutId = false) {
-    if (!isMyTurn) {
-      console.log('⛔ Not your turn, auto-save blocked.');
-      return;
-    }
+  const hasAppointment = appointmentInput.value.trim() !== '';
+  const hasCustomerId = idInput.value.trim() !== '';
 
-    const hasAppointment = appointmentInput.value.trim() !== '';
-    const hasCustomerId = idInput.value.trim() !== '';
-
-    if (!allowWithoutId && !hasCustomerId && !hasAppointment) {
-      console.log('⛔ Auto-save blocked: No appointment or customer ID.');
-      return;
-    }
-
-    if (customerSavedThisTurn) return;
-
-    const formData = new FormData(form);
-
-    try {
-      const response = await fetch('{{ route('customer.sales.store') }}', {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: formData
-      });
-
-      const result = await response.json();
-
-      if (result.status === 'success') {
-        if (result.id) {
-          idInput.value = result.id;
-          localStorage.setItem('activeCustomerId', result.id);
-        }
-
-        // ✅ FIX: convert appointment card to customer card after save
-        if (appointmentInput.value && result.id) {
-          const appointmentCard = document.getElementById('appointment-card');
-          if (appointmentCard) {
-            appointmentCard.dataset.customerId = result.id;
-            appointmentCard.dataset.name = nameInput.value;
-            appointmentCard.dataset.email = emailInput.value;
-            appointmentCard.dataset.phone = phoneInput.value;
-            appointmentCard.dataset.interest = interestInput.value;
-            appointmentCard.dataset.used = 'true';
-
-            appointmentCard.removeAttribute('id');
-            appointmentCard.classList.add('customer-card');
-            appointmentCard.classList.remove('active-card');
-            appointmentCard.classList.remove('hidden');
-
-            setTimeout(() => {
-              appointmentCard.classList.add('active-card');
-            }, 100);
-
-            bindCardClickEvents();
-          }
-        }
-
-        customerSavedThisTurn = true;
-        await loadCustomers();
-      } else {
-        console.error('Save failed:', result);
-      }
-    } catch (err) {
-      console.error('Auto-save failed:', err);
-    }
+  // 👇 Block auto-save entirely if no ID and it's not your turn
+  if (!hasCustomerId && !hasAppointment && !isMyTurn) {
+    console.log('⛔ Not your turn and no ID – auto-save blocked.');
+    return;
   }
+
+  // 👇 Also block if saving a new record without allow flag
+  if (!allowWithoutId && !hasCustomerId && !hasAppointment) {
+    console.log('⛔ Auto-save blocked: No appointment or customer ID.');
+    return;
+  }
+
+  if (customerSavedThisTurn) return;
+
+  const formData = new FormData(form);
+
+  try {
+    const response = await fetch('{{ route('customer.sales.store') }}', {
+      method: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (result.status === 'success') {
+      if (result.id) {
+        idInput.value = result.id;
+        localStorage.setItem('activeCustomerId', result.id);
+      }
+
+      customerSavedThisTurn = true;
+      await loadCustomers();
+    } else {
+      console.error('Save failed:', result);
+    }
+  } catch (err) {
+    console.error('Auto-save failed:', err);
+  }
+}
+
 
   async function loadCustomers() {
     try {
