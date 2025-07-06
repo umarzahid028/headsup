@@ -1358,33 +1358,35 @@ async function autoSaveForm() {
   if (customerSavedThisTurn) return;
   if (!autosaveEnabled) return;
 
-  // ✅ Block create if not from appointment
+  // ✅ Don't auto-create new customer unless loaded from appointment
   if (!idInput.value && !loadedFromAppointment) {
-    console.log('⛔ Skipping auto-save: no customer ID and not loaded from appointment');
+    console.log('⛔ Auto-save blocked: Not loaded from appointment and no ID');
     return;
   }
 
   const formData = new FormData(form);
+
   try {
     const response = await fetch(form.action, {
       method: 'POST',
       body: formData,
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-      }
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+      },
     });
 
     const data = await response.json();
+
     if (data.id) {
       idInput.value = data.id;
       localStorage.setItem('activeCustomerId', data.id);
     }
 
     customerSavedThisTurn = true;
-    console.log('✅ Auto-saved:', data);
+    console.log('✅ Auto-saved customer:', data);
   } catch (err) {
-    console.error('❌ Auto-save failed', err);
+    console.error('❌ Auto-save error:', err);
   }
 }
 
