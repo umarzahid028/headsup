@@ -1354,43 +1354,40 @@ if (newCustomerBtn) {
 }
 
 
-async function autoSaveForm(allowWithoutId = false) {
-  const hasAppointment = appointmentInput.value.trim() !== '';
-
-  // ✅ Skip saving if not allowed and both ID and Appointment are empty
-  if (!autosaveEnabled && !allowWithoutId) return;
-  if (!allowWithoutId && !idInput.value.trim() && !hasAppointment) return;
+async function autoSaveForm() {
   if (customerSavedThisTurn) return;
+  if (!autosaveEnabled) return;
+
+  // ✅ Block create if not from appointment
+  if (!idInput.value && !loadedFromAppointment) {
+    console.log('⛔ Skipping auto-save: no customer ID and not loaded from appointment');
+    return;
+  }
 
   const formData = new FormData(form);
-
   try {
-    const response = await fetch('{{ route('customer.sales.store') }}', {
+    const response = await fetch(form.action, {
       method: 'POST',
+      body: formData,
       headers: {
-        'X-CSRF-TOKEN': '{{ csrf_token() }}',
         'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: formData
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+      }
     });
 
-    const result = await response.json();
-
-    if (result.status === 'success') {
-      if (result.id) {
-        idInput.value = result.id;
-        localStorage.setItem('activeCustomerId', result.id);
-      }
-
-      customerSavedThisTurn = true;
-      await loadCustomers();
-    } else {
-      console.error('Save failed:', result);
+    const data = await response.json();
+    if (data.id) {
+      idInput.value = data.id;
+      localStorage.setItem('activeCustomerId', data.id);
     }
+
+    customerSavedThisTurn = true;
+    console.log('✅ Auto-saved:', data);
   } catch (err) {
-    console.error('Auto-save failed:', err);
+    console.error('❌ Auto-save failed', err);
   }
 }
+
   async function loadCustomers() {
     try {
       const resp = await fetch('{{ route('customer.index') }}?partial=1', {
