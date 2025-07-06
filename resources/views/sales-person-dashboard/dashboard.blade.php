@@ -1085,15 +1085,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let debounceTimeout;
   let customerSavedThisTurn = false;
+  let autosaveEnabled = false;
   let loadedFromAppointment = false;
 
+  // Reset save flag every 3 seconds
   setInterval(() => {
     customerSavedThisTurn = false;
   }, 3000);
-
-  const isAutoSaveEnabled = () => {
-    return !!(idInput.value.trim() || appointmentInput.value.trim());
-  };
 
   const attachFieldListeners = () => {
     const fields = form.querySelectorAll('input, textarea, select');
@@ -1104,7 +1102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         field.removeEventListener('change', field._autoSaveHandlerChange);
 
       field._autoSaveHandlerInput = () => {
-        if (!isAutoSaveEnabled()) return;
+        if (!autosaveEnabled) return;
 
         if (loadedFromAppointment && ['email', 'name', 'phone', 'interest'].includes(field.name)) {
           idInput.value = '';
@@ -1119,7 +1117,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       field._autoSaveHandlerChange = () => {
-        if (!isAutoSaveEnabled()) return;
+        if (!autosaveEnabled) return;
 
         if (loadedFromAppointment && ['email', 'name', 'phone', 'interest'].includes(field.name)) {
           idInput.value = '';
@@ -1139,7 +1137,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   nameInput.addEventListener('input', () => {
-    if (isAutoSaveEnabled()) return;
+    if (autosaveEnabled) return;
 
     customerSavedThisTurn = false;
     clearTimeout(debounceTimeout);
@@ -1149,24 +1147,29 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   async function autoSaveForm() {
-    if (!isAutoSaveEnabled()) return;
+    if (customerSavedThisTurn) return;
 
     const formData = new FormData(form);
     try {
-      const response = await fetch('{{ route('sales.person.store') }}', {
+      const response = await fetch(form.action, {
         method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        body: formData
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
       });
 
-      const result = await response.json();
-      if (result?.id) {
-        idInput.value = result.id;
-        localStorage.setItem('activeCustomerId', result.id);
+      const data = await response.json();
+      if (data.id) {
+        idInput.value = data.id;
+        localStorage.setItem('activeCustomerId', data.id);
       }
 
-    } catch (error) {
-      console.error('AutoSave failed:', error);
+      customerSavedThisTurn = true;
+      console.log('✅ Auto-saved:', data);
+    } catch (err) {
+      console.error('❌ Auto-save failed', err);
     }
   }
 
@@ -1224,7 +1227,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       localStorage.setItem('activeCustomerId', customerId);
       loadedFromAppointment = true;
-
+      autosaveEnabled = true;
       attachFieldListeners();
 
       await autoSaveForm();
@@ -1238,44 +1241,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
         el.value = '';
       }
-    });
-  }
-
-  function bindCardClickEvents() {
-    document.querySelectorAll('.customer-card').forEach(card => {
-      card.addEventListener('click', async () => {
-        if (card.classList.contains('active-card')) return;
-
-        clearFormFields();
-
-        const customerId = card.dataset.customerId;
-
-        idInput.value = customerId;
-        nameInput.value = card.dataset.name || '';
-        emailInput.value = card.dataset.email ?? '';
-        phoneInput.value = card.dataset.phone ?? '';
-        interestInput.value = card.dataset.interest ?? '';
-
-        if (card.dataset.process) {
-          card.dataset.process.split(',').forEach(proc => {
-            const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
-              .find(cb => cb.value.trim() === proc.trim());
-            if (checkbox) checkbox.checked = true;
-          });
-        }
-
-        document.querySelectorAll('.customer-card').forEach(c => {
-          c.classList.remove('active-card');
-          c.classList.remove('pause-animation');
-        });
-
-        card.classList.add('active-card');
-        localStorage.setItem('activeCustomerId', customerId);
-
-        attachFieldListeners();
-
-        await autoSaveForm();
-      });
     });
   }
 
@@ -1302,8 +1267,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
+      autosaveEnabled = true;
       attachFieldListeners();
     }
+  }
+
+  function bindCardClickEvents() {
+    const cards = document.querySelectorAll('.customer-card:not(#appointment-card)');
+    cards.forEach(card => {
+      card.addEventListener('click', () => {
+        localStorage.setItem('activeCustomerId', card.dataset.customerId);
+        location.reload(); // Or update form manually if needed
+      });
+    });
   }
 
   if (addCustomerBtn) {
@@ -1315,7 +1291,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Init
+  // Initialize
   bindCardClickEvents();
   bindAppointmentCardClick();
   applyActiveCard();
