@@ -1074,30 +1074,30 @@ $(document).ready(() => {
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('salesForm');
-  const idInput = form.querySelector('input[name="id"]');
-  const nameInput = form.querySelector('input[name="name"]');
-  const emailInput = form.querySelector('input[name="email"]');
-  const phoneInput = form.querySelector('input[name="phone"]');
-  const interestInput = form.querySelector('input[name="interest"]');
-  const appointmentInput = form.querySelector('input[name="appointment_id"]');
-  const newCustomerBtn = document.getElementById('newCustomerBtn');
-  const addCustomerBtn = document.getElementById('addCustomerBtn');
+const form = document.getElementById('salesForm');
+const idInput = form.querySelector('input[name="id"]');
+const nameInput = form.querySelector('input[name="name"]');
+const emailInput = form.querySelector('input[name="email"]');
+const phoneInput = form.querySelector('input[name="phone"]');
+const interestInput = form.querySelector('input[name="interest"]');
+const appointmentInput = form.querySelector('input[name="appointment_id"]');
+const newCustomerBtn = document.getElementById('newCustomerBtn');
+const addCustomerBtn = document.getElementById('addCustomerBtn');
 
-  let debounceTimeout;
-  let customerSavedThisTurn = false;
-  let autosaveEnabled = false;
-  let loadedFromAppointment = false;
+let debounceTimeout;
+let customerSavedThisTurn = false;
+let autosaveEnabled = false;
+let loadedFromAppointment = false;
 
-  setInterval(() => {
-    customerSavedThisTurn = false;
-  }, 3000);
+setInterval(() => {
+  customerSavedThisTurn = false;
+}, 3000);
 
-  const attachFieldListeners = () => {
-    const fields = form.querySelectorAll('input, textarea, select');
-    fields.forEach(field => {
-      field.addEventListener('input', () => {
-        if (!autosaveEnabled) return;
+const attachFieldListeners = () => {
+  const fields = form.querySelectorAll('input, textarea, select');
+  fields.forEach(field => {
+    field.addEventListener('input', () => {
+      if (!autosaveEnabled) return;
         if (loadedFromAppointment && ['email', 'name', 'phone', 'interest'].includes(field.name)) {
           idInput.value = '';
           loadedFromAppointment = false;
@@ -1158,56 +1158,85 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 
 
-  async function autoSaveForm(allowWithoutId = false) {
-    console.log('🚀 autoSaveForm triggered');
+async function autoSaveForm(allowWithoutId = false) {
+  console.log('🚀 autoSaveForm triggered');
 
-    const hasAppointment = appointmentInput && appointmentInput.value.trim() !== '';
-    const hasCustomerId = idInput && idInput.value.trim() !== '';
+  const hasAppointment = appointmentInput && appointmentInput.value.trim() !== '';
+  const hasCustomerId = idInput && idInput.value.trim() !== '';
 
-    console.log('📌 hasAppointment:', hasAppointment);
-    console.log('📌 hasCustomerId:', hasCustomerId);
-    console.log('📌 allowWithoutId:', allowWithoutId);
-
-    if (!isMyTurn && !allowWithoutId && !hasCustomerId && !hasAppointment) {
-      console.log('⛔ Blocked: No ID or Appointment');
-      return;
-    }
-
-    if (customerSavedThisTurn) {
-      console.log('⏳ Skipping save: Already saved recently');
-      return;
-    }
-
-    const formData = new FormData(form);
-
-    try {
-      const response = await fetch('{{ route('customer.sales.store') }}', {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: formData
-      });
-
-      const result = await response.json();
-      console.log('✅ Server Response:', result);
-
-      if (result.status === 'success') {
-        if (result.id) {
-          idInput.value = result.id;
-          localStorage.setItem('activeCustomerId', result.id);
-        }
-
-        customerSavedThisTurn = true;
-        await loadCustomers?.();
-      } else {
-        console.error('❌ Save failed:', result);
-      }
-    } catch (err) {
-      console.error('❌ Auto-save error:', err);
-    }
+  if (!isMyTurn && !allowWithoutId && !hasCustomerId && !hasAppointment) {
+    console.log('⛔ Blocked: No ID or Appointment');
+    return;
   }
+
+  if (customerSavedThisTurn) {
+    console.log('⏳ Skipping save: Already saved recently');
+    return;
+  }
+
+  const formData = new FormData(form);
+
+  try {
+    const response = await fetch('{{ route('customer.sales.store') }}', {
+      method: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: formData
+    });
+
+    const result = await response.json();
+    console.log('✅ Server Response:', result);
+
+    if (result.status === 'success') {
+      if (result.id) {
+        idInput.value = result.id;
+        localStorage.setItem('activeCustomerId', result.id);
+      }
+
+      customerSavedThisTurn = true;
+
+      // ✅ Keep appointment_id value after reset
+      const appointmentIdValue = appointmentInput?.value;
+
+      if (allowWithoutId && !hasCustomerId) {
+        form.reset();
+
+        form.querySelectorAll('input[type="hidden"]').forEach(el => {
+          if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
+            el.value = '';
+          }
+        });
+
+        if (appointmentInput) appointmentInput.value = appointmentIdValue;
+        idInput.value = result.id; 
+      }
+
+      await loadCustomers?.();
+
+      setTimeout(() => {
+        const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
+        if (newCard) {
+          document.querySelectorAll('.customer-card').forEach(c => {
+            c.classList.remove('active-card');
+            c.classList.remove('pause-animation');
+          });
+
+          newCard.classList.add('active-card');
+          newCard.classList.add('pause-animation');
+        } else {
+          console.warn('❌ Card not found for customer ID:', result.id);
+        }
+      }, 300);
+
+    } else {
+      console.error('❌ Save failed:', result);
+    }
+  } catch (err) {
+    console.error('❌ Auto-save error:', err);
+  }
+}
 
   async function loadCustomers() {
     try {
@@ -1311,14 +1340,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function clearFormFields() {
-    form.reset();
-    form.querySelectorAll('input[type="hidden"]').forEach(el => {
-      if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
-        el.value = '';
-      }
-    });
-  }
+function clearFormFields() {
+  const preservedValues = {
+    appointment_id: appointmentInput?.value ?? '',
+    user_id: form.querySelector('input[name="user_id"]')?.value ?? '',
+  };
+
+  form.reset();
+
+  form.querySelectorAll('input[type="hidden"]').forEach(el => {
+    if (preservedValues[el.name]) {
+      el.value = preservedValues[el.name];
+    } else if (el.name !== 'id') {
+      el.value = '';
+    }
+  });
+}
+
 
   function applyActiveCard() {
     const savedId = localStorage.getItem('activeCustomerId');

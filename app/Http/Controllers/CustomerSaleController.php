@@ -26,7 +26,7 @@ public function store(Request $request)
             'notes'          => 'nullable|string',
             'process'        => 'nullable|array',
             'disposition'    => 'nullable|string',
-            'appointment_id' => 'nullable|exists:appointments,id', 
+            'appointment_id' => 'nullable|exists:appointments,id',
         ]);
     } catch (\Illuminate\Validation\ValidationException $e) {
         return response()->json([
@@ -36,52 +36,63 @@ public function store(Request $request)
     }
 
     $data = [
-        'user_id'       => $validated['user_id'] ?? auth()->id(),
-        'customer_id'   => $validated['customer_id'] ?? null,
-        'name'          => $validated['name'],
-        'email'         => $validated['email'] ?? null,
-        'phone'         => $validated['phone'] ?? null,
-        'interest'      => $validated['interest'] ?? null,
-        'notes'         => $validated['notes'] ?? null,
-        'process'       => $validated['process'] ?? [],
-        'disposition'   => $validated['disposition'] ?? null,
-        'appointment_id'=> $validated['appointment_id'] ?? null, 
+        'user_id'        => $validated['user_id'] ?? auth()->id(),
+        'customer_id'    => $validated['customer_id'] ?? null,
+        'name'           => $validated['name'],
+        'email'          => $validated['email'] ?? null,
+        'phone'          => $validated['phone'] ?? null,
+        'interest'       => $validated['interest'] ?? null,
+        'notes'          => $validated['notes'] ?? null,
+        'process'        => $validated['process'] ?? [],
+        'disposition'    => $validated['disposition'] ?? null,
+        'appointment_id' => $validated['appointment_id'] ?? null,
     ];
 
     $sale = null;
 
+    // ✅ 1. If ID is given
     if (!empty($validated['id'])) {
         $sale = CustomerSale::find($validated['id']);
     }
 
-    if (!$sale && !empty($validated['customer_id'])) {
-        $existing = CustomerSale::where('user_id', $data['user_id'])
-            ->where('customer_id', $validated['customer_id'])
+    // ✅ 2. If appointment already used
+    if (!$sale && !empty($data['appointment_id'])) {
+        $sale = CustomerSale::where('appointment_id', $data['appointment_id'])->first();
+    }
+
+    // ✅ 3. Same-day sale for same customer
+    if (!$sale && !empty($data['customer_id'])) {
+        $sale = CustomerSale::where('user_id', $data['user_id'])
+            ->where('customer_id', $data['customer_id'])
             ->whereDate('created_at', now()->toDateString())
             ->latest()
             ->first();
-
-        if ($existing) {
-            $sale = $existing;
-        }
     }
 
+    // ✅ Create or Update
     if ($sale) {
         $sale->update($data);
     } else {
         $sale = CustomerSale::create($data);
     }
 
+    // ✅ End sale time
     if (!empty($validated['disposition'])) {
         $sale->ended_at = now();
         $sale->save();
     }
 
-    if (!empty($validated['appointment_id'])) {
-        \App\Models\Appointment::where('id', $validated['appointment_id'])
-            ->update(['status' => 'completed']);
-    }
+if (!empty($sale->appointment_id)) {
+    $appointment = \App\Models\Appointment::find($sale->appointment_id);
 
+    if ($appointment && $appointment->status !== 'completed') {
+        $appointment->status = 'completed';
+        $appointment->save();
+    }
+}
+
+
+    // ✅ Duration calculation from queue
     $queue = \App\Models\Queue::where('user_id', $data['user_id'])
         ->where('customer_id', $data['customer_id'])
         ->whereNotNull('took_turn_at')
@@ -100,9 +111,10 @@ public function store(Request $request)
         'message'  => 'Customer sale data saved successfully!',
         'duration' => $duration,
         'id'       => $sale->id,
-         'redirect' => url()->previous(),
+        'redirect' => url()->previous(),
     ]);
 }
+
 
   public function index(Request $request)
 {
