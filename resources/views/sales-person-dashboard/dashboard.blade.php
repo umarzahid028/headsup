@@ -972,100 +972,100 @@ function updateNameInputState() {
           return;
         }
 
-        if (!isMyTurn) {
-          Swal.fire({
-            icon: 'error',
-            title: 'Not your turn!',
-            text: 'Please wait for your turn before taking a customer.'
-          });
-          resetTakeButtonUI();
-          return;
-        }
-
-       
-
-        $.ajax({
-          url: '{{ route("sales.person.takeTurn") }}',
-          method: 'POST',
-          data: {
-            _token: $('meta[name="csrf-token"]').attr('content')
-          },
-          success: () => {
-            Swal.fire({
-              icon: 'success',
-              title: 'Customer Taken!',
-              text: 'You have successfully taken this customer.',
-              timer: 2000,
-            });
-
-            cardClicked = false;
-            customerSavedThisTurn = false;
-
-            // Simulate assigning customerId if successful
-            customerIdInput.value = Math.floor(Math.random() * 100000); // For demo purpose
-            updateTurnStatus();
-            updateNameInputState();
-            toggleButtons();
-          },
-          error: () => {
-            Swal.fire({
-              icon: 'error',
-              title: 'Error occurred!'
-            });
-          },
-          complete: () => {
-            resetTakeButtonUI();
-          }
-        });
-      })
-      .fail(() => {
+      if (!isMyTurn) {
         Swal.fire({
           icon: 'error',
-          title: 'Check-in failed!',
-          text: 'Please try again.'
+          title: 'Not your turn!',
+          text: 'Please wait for your turn before taking a customer.'
         });
         resetTakeButtonUI();
-      });
-  });
+        return;
+      }
 
-  function resetTakeButtonUI() {
-    $('#newCustomerBtn .spinner').addClass('hidden');
-    $('#newCustomerBtn .btn-text').text('Take Customer');
-    $('#newCustomerBtn').prop('disabled', false);
-  }
+      
 
-  // Turn status polling
-  function updateTurnStatus() {
-    $.get('/next-turn-status')
-      .done(res => {
-        isMyTurn = res.is_your_turn;
-        currentTurnUserId = res.current_turn_user_id;
+      $.ajax({
+        url: '{{ route("sales.person.takeTurn") }}',
+        method: 'POST',
+        data: {
+          _token: $('meta[name="csrf-token"]').attr('content')
+        },
+        success: () => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Customer Taken!',
+            text: 'You have successfully taken this customer.',
+            timer: 2000,
+          });
 
-        if (!res.is_checked_in) {
-          $('#turn-status').text('❗ Please check in to activate your turn queue.');
-        } else if (isMyTurn) {
-          $('#turn-status').text(`🟢 It’s your turn now!`);
-        } else {
-          $('#turn-status').text('⏳ Waiting for your turn...');
+          cardClicked = false;
+          customerSavedThisTurn = false;
+
+          // Simulate assigning customerId if successful
+          customerIdInput.value = Math.floor(Math.random() * 100000); // For demo purpose
+          updateTurnStatus();
+          updateNameInputState();
+          toggleButtons();
+        },
+        error: () => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error occurred!'
+          });
+        },
+        complete: () => {
+          resetTakeButtonUI();
         }
-
-        wasTurnBefore = isMyTurn;
-        updateNameInputState();
-        toggleButtons();
-      })
-      .fail(() => {
-        $('#turn-status').text('⚠️ Error checking turn.');
-        isMyTurn = false;
-        updateNameInputState();
-        toggleButtons();
       });
-  }
+    })
+    .fail(() => {
+      Swal.fire({
+        icon: 'error',
+        title: 'Check-in failed!',
+        text: 'Please try again.'
+      });
+      resetTakeButtonUI();
+    });
+});
 
-  $(document).ready(() => {
-    toggleButtons();
-    updateTurnStatus();
-    setInterval(updateTurnStatus, 10000);
-  });
+function resetTakeButtonUI() {
+  $('#newCustomerBtn .spinner').addClass('hidden');
+  $('#newCustomerBtn .btn-text').text('Take Customer');
+  $('#newCustomerBtn').prop('disabled', false);
+}
+
+// Turn status polling
+function updateTurnStatus() {
+  $.get('/next-turn-status')
+    .done(res => {
+      isMyTurn = res.is_your_turn;
+      currentTurnUserId = res.current_turn_user_id;
+
+      if (!res.is_checked_in) {
+        $('#turn-status').text('❗ Please check in to activate your turn queue.');
+      } else if (isMyTurn) {
+        $('#turn-status').text(`🟢 It’s your turn now!`);
+      } else {
+        $('#turn-status').text('⏳ Waiting for your turn...');
+      }
+
+      wasTurnBefore = isMyTurn;
+      updateNameInputState();
+      toggleButtons();
+    })
+    .fail(() => {
+      $('#turn-status').text('⚠️ Error checking turn.');
+      isMyTurn = false;
+      updateNameInputState();
+      toggleButtons();
+    });
+}
+
+$(document).ready(() => {
+  toggleButtons();
+  updateTurnStatus();
+  setInterval(updateTurnStatus, 10000);
+});
 </script>
 
 
@@ -1158,12 +1158,21 @@ if (newCustomerBtn) {
 
 
 async function autoSaveForm(allowWithoutId = false) {
-  const hasAppointment = appointmentInput.value.trim() !== '';
+  if (!isMyTurn) {
+    console.log('⛔ Not your turn, auto-save blocked.');
+    return;
+  }
 
-  // ✅ Skip saving if not allowed and both ID and Appointment are empty
-  if (!autosaveEnabled && !allowWithoutId) return;
-  if (!allowWithoutId && !idInput.value.trim() && !hasAppointment) return;
+  const hasAppointment = appointmentInput.value.trim() !== '';
+  const hasCustomerId = idInput.value.trim() !== '';
+
+  if (!allowWithoutId && !hasCustomerId && !hasAppointment) {
+    console.log('⛔ Auto-save blocked: No appointment or customer ID.');
+    return;
+  }
+
   if (customerSavedThisTurn) return;
+
 
   const formData = new FormData(form);
 
