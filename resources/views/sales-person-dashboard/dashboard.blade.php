@@ -1153,57 +1153,55 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function autoSaveForm(allowWithoutId = false) {
-  console.log('🚀 autoSaveForm triggered');
+    console.log('🚀 autoSaveForm triggered');
 
-  const hasAppointment = appointmentInput && appointmentInput.value.trim() !== '';
-  const hasCustomerId = idInput && idInput.value.trim() !== '';
+    const hasAppointment = appointmentInput && appointmentInput.value.trim() !== '';
+    const hasCustomerId = idInput && idInput.value.trim() !== '';
 
-  console.log('📌 hasAppointment:', hasAppointment);
-  console.log('📌 hasCustomerId:', hasCustomerId);
-  console.log('📌 allowWithoutId:', allowWithoutId);
+    console.log('📌 hasAppointment:', hasAppointment);
+    console.log('📌 hasCustomerId:', hasCustomerId);
+    console.log('📌 allowWithoutId:', allowWithoutId);
 
-  const isAllowed = isMyTurn || hasCustomerId || (allowWithoutId && hasAppointment);
-
-  if (!isAllowed) {
-    console.log('⛔ Blocked: Not your turn.');
-    return;
-  }
-
-  if (customerSavedThisTurn) {
-    console.log('⏳ Skipping save: Already saved recently');
-    return;
-  }
-
-  const formData = new FormData(form);
-
-  try {
-    const response = await fetch('{{ route('customer.sales.store') }}', {
-      method: 'POST',
-      headers: {
-        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: formData
-    });
-
-    const result = await response.json();
-    console.log('✅ Server Response:', result);
-
-    if (result.status === 'success') {
-      if (result.id) {
-        idInput.value = result.id;
-        localStorage.setItem('activeCustomerId', result.id);
-      }
-
-      customerSavedThisTurn = true;
-      await loadCustomers?.();
-    } else {
-      console.error('❌ Save failed:', result);
+    if (!isMyTurn && !allowWithoutId && !hasCustomerId && !hasAppointment) {
+      console.log('⛔ Blocked: No ID or Appointment');
+      return;
     }
-  } catch (err) {
-    console.error('❌ Auto-save error:', err);
+
+    if (customerSavedThisTurn) {
+      console.log('⏳ Skipping save: Already saved recently');
+      return;
+    }
+
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch('{{ route('customer.sales.store') }}', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+      console.log('✅ Server Response:', result);
+
+      if (result.status === 'success') {
+        if (result.id) {
+          idInput.value = result.id;
+          localStorage.setItem('activeCustomerId', result.id);
+        }
+
+        customerSavedThisTurn = true;
+        await loadCustomers?.();
+      } else {
+        console.error('❌ Save failed:', result);
+      }
+    } catch (err) {
+      console.error('❌ Auto-save error:', err);
+    }
   }
-}
 
   async function loadCustomers() {
     try {
