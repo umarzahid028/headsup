@@ -1153,7 +1153,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const formData = new FormData(form);
     try {
-      const response = await fetch('{{ route('customer.store') }}', {
+      const response = await fetch('{{ route('sales.person.store') }}', {
         method: 'POST',
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         body: formData
