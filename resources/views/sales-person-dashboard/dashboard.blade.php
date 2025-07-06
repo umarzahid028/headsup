@@ -1124,33 +1124,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  if (newCustomerBtn) {
-    newCustomerBtn.addEventListener('click', async () => {
-      const isFormDirty = !!(
-        nameInput.value.trim() ||
-        emailInput.value.trim() ||
-        phoneInput.value.trim() ||
-        interestInput.value.trim() ||
-        [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
-      );
+ if (newCustomerBtn) {
+  newCustomerBtn.addEventListener('click', async () => {
+    if (!isMyTurn) {
+      console.log('⛔ Not your turn. Cannot take new customer.');
+      return;
+    }
 
-      if (isFormDirty) {
-        await autoSaveForm(true);
-      } else {
-        nameInput.value = '';
-        emailInput.value = '';
-        phoneInput.value = '';
-        interestInput.value = '';
-        [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-        await autoSaveForm(true);
-      }
+    const isFormDirty = !!(
+      nameInput.value.trim() ||
+      emailInput.value.trim() ||
+      phoneInput.value.trim() ||
+      interestInput.value.trim() ||
+      [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
+    );
 
-      if (idInput.value) {
-        autosaveEnabled = true;
-        attachFieldListeners();
-      }
-    });
-  }
+    if (isFormDirty) {
+      await autoSaveForm(true);
+    } else {
+      nameInput.value = '';
+      emailInput.value = '';
+      phoneInput.value = '';
+      interestInput.value = '';
+      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+      await autoSaveForm(true);
+    }
+
+    if (idInput.value) {
+      autosaveEnabled = true;
+      attachFieldListeners();
+    }
+  });
+}
+
 
   async function autoSaveForm(allowWithoutId = false) {
     console.log('🚀 autoSaveForm triggered');
