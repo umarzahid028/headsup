@@ -467,7 +467,7 @@ Add Customer
 
 
 
-<!-- <script>
+<script>
   $(document).ready(() => {
     toggleButton();
     updateTurnStatus();
@@ -518,7 +518,7 @@ Add Customer
       });
     });
   });
-</script> -->
+</script>
 
 
 <script>
