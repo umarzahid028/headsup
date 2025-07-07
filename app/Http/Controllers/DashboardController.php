@@ -94,15 +94,20 @@ class DashboardController extends Controller
 
 
 $salespeople = User::role('Sales person')
-    ->whereHas('queues', function ($query) {
-        $query->where('is_checked_in', true)
-              ->whereNull('checked_out_at')
-              ->whereDate('created_at', now());
+    ->whereIn('id', function ($subquery) {
+        $subquery->select('user_id')
+            ->from('queues as q1')
+            ->whereDate('q1.created_at', now())
+            ->whereRaw('q1.id = (
+                SELECT q2.id FROM queues as q2
+                WHERE q2.user_id = q1.user_id
+                AND DATE(q2.created_at) = CURDATE()
+                ORDER BY q2.created_at DESC
+                LIMIT 1
+            )')
+            ->whereNull('q1.checked_out_at'); 
     })
     ->get();
-
-
-
         $isCheckedIn = Queue::where('user_id', $user->id)
             ->where('is_checked_in', true)
             ->exists();
