@@ -147,10 +147,11 @@ class CustomerSaleController extends Controller
         }
 
         // ✅ Check if new_user_id is a sales person who is currently checked-in
-        $isCheckedIn = \App\Models\Queue::where('user_id', $request->new_user_id)
-            ->where('is_checked_in', true)
-            ->latest('created_at')
-            ->exists();
+     $isCheckedIn = \App\Models\Queue::where('user_id', $request->new_user_id)
+    ->where('is_checked_out', true)
+    ->latest('created_at')
+    ->exists();
+
 
         if (!$isCheckedIn) {
             return response()->json([
