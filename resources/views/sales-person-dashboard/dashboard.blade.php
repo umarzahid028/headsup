@@ -116,7 +116,7 @@
   <div id="formContainer">
     <form id="salesForm" method="POST" action="{{ route('customer.sales.store') }}" class=" grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
       @csrf
-  <input type="hidden" name="appointment_id" value="{{ $appointment->id ?? '' }}">
+  <input type="text" name="appointment_id" value="{{ $appointment->id ?? '' }}" style="display:none;">
 
 <div class="md:col-span-2">
   <h3 class="text-2xl font-bold text-gray-800 leading-tight mb-0">Customer Sales Form</h3>
@@ -129,17 +129,7 @@
       <!-- Customer Info -->
 <div class="space-y-4">
   @foreach (['name', 'email', 'phone', 'interest'] as $field)
-    @php
-      // Check if we should prefill from appointment
-      $value = $sale->$field ?? '';
-      if (isset($appointment)) {
-        if ($field === 'name') {
-          $value = $appointment->customer_name ?? $value;
-        } elseif ($field === 'phone') {
-          $value = $appointment->customer_phone ?? $value;
-        }
-      }
-    @endphp
+
 
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">
@@ -152,7 +142,7 @@
         name="{{ $field }}"
         type="{{ $field === 'email' ? 'email' : 'text' }}"
         class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
-        value="{{ $value }}"
+       
         
       />
     </div>
@@ -403,7 +393,7 @@ Add Customer
     });
   });
 </script> -->
-
+<!-- 
 
 
 <script>
@@ -473,11 +463,11 @@ Add Customer
 
     setInterval(refreshAppointments, 3000);
   });
-</script>
+</script> -->
 
 
 
-<script>
+<!-- <script>
   $(document).ready(() => {
     toggleButton();
     updateTurnStatus();
@@ -526,7 +516,7 @@ Add Customer
       });
     });
   });
-</script>
+</script> -->
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -1159,18 +1149,18 @@ const attachFieldListeners = () => {
 
 
 async function autoSaveForm(allowWithoutId = false) {
-  console.log('🚀 autoSaveForm triggered');
+  console.log(' autoSaveForm triggered');
 
   const hasAppointment = appointmentInput && appointmentInput.value.trim() !== '';
   const hasCustomerId = idInput && idInput.value.trim() !== '';
 
   if (!isMyTurn && !allowWithoutId && !hasCustomerId && !hasAppointment) {
-    console.log('⛔ Blocked: No ID or Appointment');
+    console.log(' Blocked: No ID or Appointment');
     return;
   }
 
   if (customerSavedThisTurn) {
-    console.log('⏳ Skipping save: Already saved recently');
+    console.log(' Skipping save: Already saved recently');
     return;
   }
 
@@ -1358,33 +1348,36 @@ function clearFormFields() {
 }
 
 
-  function applyActiveCard() {
-    const savedId = localStorage.getItem('activeCustomerId');
-    const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
-    if (!savedCard || savedCard.id === 'appointment-card') return;
+ function applyActiveCard() {
+  const savedId = localStorage.getItem('activeCustomerId');
+  const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
 
-    savedCard.classList.add('active-card');
-    if (!idInput.value || idInput.value === savedId) {
-      clearFormFields();
+  // ❌ Don't auto-apply if it's the appointment card or missing
+  if (!savedCard || savedCard.id === 'appointment-card') return;
 
-      idInput.value = savedId;
-      nameInput.value = savedCard.dataset.name || '';
-      emailInput.value = savedCard.dataset.email ?? '';
-      phoneInput.value = savedCard.dataset.phone ?? '';
-      interestInput.value = savedCard.dataset.interest ?? '';
+  savedCard.classList.add('active-card');
 
-      if (savedCard.dataset.process) {
-        savedCard.dataset.process.split(',').forEach(proc => {
-          const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
-            .find(cb => cb.value.trim() === proc.trim());
-          if (checkbox) checkbox.checked = true;
-        });
-      }
+  if (!idInput.value || idInput.value === savedId) {
+    clearFormFields();
 
-      autosaveEnabled = true;
-      attachFieldListeners();
+    idInput.value = savedId;
+    nameInput.value = savedCard.dataset.name || '';
+    emailInput.value = savedCard.dataset.email ?? '';
+    phoneInput.value = savedCard.dataset.phone ?? '';
+    interestInput.value = savedCard.dataset.interest ?? '';
+
+    if (savedCard.dataset.process) {
+      savedCard.dataset.process.split(',').forEach(proc => {
+        const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
+          .find(cb => cb.value.trim() === proc.trim());
+        if (checkbox) checkbox.checked = true;
+      });
     }
+
+    autosaveEnabled = true;
+    attachFieldListeners();
   }
+}
 
   if (addCustomerBtn) {
     addCustomerBtn.addEventListener('click', () => {
