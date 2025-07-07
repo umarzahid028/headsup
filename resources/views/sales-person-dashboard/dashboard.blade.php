@@ -1428,22 +1428,22 @@ function clearFormFields() {
 <!-- Card Active -->
  <script>
 document.addEventListener("DOMContentLoaded", function () {
-  // Jab koi card pe click kare to animation apply ho
+  // Click se animation change hoti rahe
   document.querySelectorAll(".customer-card").forEach(function(card) {
     card.addEventListener("click", function () {
       setActiveCard(card);
     });
   });
 
-  // Auto select latest/newest card
+  // Auto select first (newest) card
   const cards = document.querySelectorAll(".customer-card");
   if (cards.length > 0) {
-    const lastCard = cards[cards.length - 1];
-    setActiveCard(lastCard); // Auto activate last one
-    lastCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    const firstCard = cards[0]; // 👈 yeh line fix hai
+    setActiveCard(firstCard);
+    firstCard.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  // Function to apply animation class
+  // Class change logic
   function setActiveCard(selectedCard) {
     document.querySelectorAll(".customer-card").forEach(function (card) {
       card.classList.remove("active-card");
