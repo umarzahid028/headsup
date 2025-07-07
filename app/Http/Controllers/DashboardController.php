@@ -93,13 +93,17 @@ class DashboardController extends Controller
             ->get();
 
 
-  $salespeople = User::role('Sales person')
-    ->where('id', '!=', $user->id)
+$salespeople = User::role('Sales person')
     ->whereHas('queues', function ($query) {
-        $query->where('is_checked_in', true)
-              ->whereNull('checked_out_at')
-              ->whereDate('created_at', now());
+        $query->whereNotNull('checked_out_at')
+              ->whereDate('checked_out_at', now());
     })
+    ->with(['queues' => function ($query) {
+        $query->whereNotNull('checked_out_at')
+              ->whereDate('checked_out_at', now())
+              ->orderByDesc('checked_out_at')
+              ->limit(1); // ✅ latest queue only
+    }])
     ->get();
 
 
