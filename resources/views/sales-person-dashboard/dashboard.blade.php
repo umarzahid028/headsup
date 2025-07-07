@@ -1176,7 +1176,7 @@ async function autoSaveForm(allowWithoutId = false) {
 
   // ✅ Block auto-save if no ID and no appointment, unless explicitly allowed
   if (!hasCustomerId && !hasAppointment && !allowWithoutId) {
-    console.log('🚫 No customer ID or appointment — skipping auto-save');
+    console.log(' No customer ID or appointment — skipping auto-save');
     return;
   }
 
