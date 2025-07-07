@@ -192,19 +192,21 @@ class CustomerSaleController extends Controller
             ->pluck('user_id')
             ->unique();
 
-  $salespeople = User::role('Sales person')
-    ->whereHas('queues', function ($query) {
-        $query->whereNotNull('checked_out_at')
-              ->whereDate('checked_out_at', now());
+ $salespeople = User::role('Sales person')
+    ->whereIn('id', function ($subquery) {
+        $subquery->select('user_id')
+            ->from('queues as q1')
+            ->whereDate('q1.created_at', now())
+            ->whereRaw('q1.id = (
+                SELECT q2.id FROM queues as q2
+                WHERE q2.user_id = q1.user_id
+                AND DATE(q2.created_at) = CURDATE()
+                ORDER BY q2.created_at DESC
+                LIMIT 1
+            )')
+            ->whereNull('q1.checked_out_at'); 
     })
-    ->with(['queues' => function ($query) {
-        $query->whereNotNull('checked_out_at')
-              ->whereDate('checked_out_at', now())
-              ->orderByDesc('checked_out_at')
-              ->limit(1); // ✅ latest queue only
-    }])
     ->get();
-
 
         return view('t/o-customers.customer', compact('customers', 'salespeople'));
     }
