@@ -1425,54 +1425,6 @@ function clearFormFields() {
 </script>
 
 
-<!-- Card Active -->
- <script>
-document.addEventListener("DOMContentLoaded", function () {
-  const customerIdFromForm = document.getElementById("customerId")?.value;
-  const cards = document.querySelectorAll(".customer-card");
-
-  // Remove active class from all first
-  cards.forEach(function (card) {
-    card.classList.remove("active-card");
-  });
-
-  // If customerId exists, find and activate corresponding card
-  if (customerIdFromForm) {
-    const matchingCard = Array.from(cards).find(card =>
-      card.dataset.customerId === customerIdFromForm
-    );
-
-    if (matchingCard) {
-      matchingCard.classList.add("active-card");
-      matchingCard.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }
-
-  // On card click, update form and animation
-  cards.forEach(function (card) {
-    card.addEventListener("click", function () {
-      // Remove animation from all
-      cards.forEach(c => c.classList.remove("active-card"));
-
-      // Add to clicked card
-      card.classList.add("active-card");
-
-      // Update hidden input in form
-      const customerIdInput = document.getElementById("customerId");
-      if (customerIdInput) {
-        customerIdInput.value = card.dataset.customerId || "";
-      }
-
-      // Optionally fill other fields (name, email etc.)
-      document.getElementById("nameInput").value = card.dataset.name || "";
-      document.getElementById("emailInput").value = card.dataset.email || "";
-      document.getElementById("phoneInput").value = card.dataset.phone || "";
-      document.getElementById("interestInput").value = card.dataset.interest || "";
-    });
-  });
-});
-</script>
-
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
