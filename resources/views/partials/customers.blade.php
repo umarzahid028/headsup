@@ -49,7 +49,7 @@
 
       <div
         id="card-{{ $customer->id }}"
-        class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
+        class="customer-card  max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
         data-name="{{ $customer->name }}"
         data-email="{{ $customer->email }}"
         data-phone="{{ $customer->phone ?? '' }}"

@@ -492,7 +492,6 @@ Add Customer
       // Clear previous animation
       document.querySelectorAll('.customer-card').forEach(c => {
         c.classList.remove('active-card');
-        c.classList.remove('pause-animation');
       });
 
       // Re-trigger animation
@@ -1235,11 +1234,8 @@ async function autoSaveForm(allowWithoutId = false) {
         if (newCard) {
           document.querySelectorAll('.customer-card').forEach(c => {
             c.classList.remove('active-card');
-            c.classList.remove('pause-animation');
           });
 
-          newCard.classList.add('active-card');
-          newCard.classList.add('pause-animation');
         } else {
           console.warn('❌ Card not found for customer ID:', result.id);
         }
@@ -1298,7 +1294,6 @@ async function autoSaveForm(allowWithoutId = false) {
 
         document.querySelectorAll('.customer-card').forEach(c => {
           c.classList.remove('active-card');
-          c.classList.remove('pause-animation');
         });
 
         card.classList.add('active-card');
@@ -1337,7 +1332,6 @@ async function autoSaveForm(allowWithoutId = false) {
 
       document.querySelectorAll('.customer-card').forEach(c => {
         c.classList.remove('active-card');
-        c.classList.remove('pause-animation');
       });
 
       appointmentCard.classList.add('active-card');
@@ -1399,7 +1393,6 @@ function clearFormFields() {
   if (!savedCard || savedCard.id === 'appointment-card') return;
 
   savedCard.classList.add('active-card');
-  savedCard.classList.add('pause-animation');
 
   if (!idInput.value || idInput.value === savedId) {
     clearFormFields();
