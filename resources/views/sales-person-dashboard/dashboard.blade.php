@@ -1151,16 +1151,6 @@ const attachFieldListeners = () => {
 
     if (isFormDirty) {
       await autoSaveForm(true);
-
-      // ✅ Form clear karo agar naya record save ho gaya
-      if (idInput.value) {
-        nameInput.value = '';
-        emailInput.value = '';
-        phoneInput.value = '';
-        interestInput.value = '';
-        [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-      }
-
     } else {
       nameInput.value = '';
       emailInput.value = '';
