@@ -480,13 +480,16 @@ Add Customer
       const phone = card.dataset.phone || '';
       const customerId = card.dataset.customerId || '';
 
-      // Set values to inputs
       const nameInput = document.getElementById('nameInput');
       const phoneInput = document.getElementById('phoneInput');
       const idInput = form.querySelector('input[name="id"]');
 
-      if (nameInput) nameInput.value = name;
-      if (phoneInput) phoneInput.value = phone;
+      // ✅ Skip filling name and phone if it's the appointment card
+      if (card.id !== 'appointment-card') {
+        if (nameInput) nameInput.value = name;
+        if (phoneInput) phoneInput.value = phone;
+      }
+
       if (idInput) idInput.value = customerId;
 
       // Clear previous animation
@@ -497,7 +500,7 @@ Add Customer
 
       // Re-trigger animation
       card.classList.remove('active-card');
-      void card.offsetWidth; // Force reflow to restart animation
+      void card.offsetWidth;
       card.classList.add('active-card');
 
       toggleButton();
@@ -509,7 +512,6 @@ Add Customer
       fillFormFromCard(appointmentCard);
     }
 
-    // Click event in case card is clicked again
     document.querySelectorAll('.customer-card').forEach(card => {
       card.addEventListener('click', () => {
         fillFormFromCard(card);
@@ -517,6 +519,7 @@ Add Customer
     });
   });
 </script>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -1213,7 +1216,7 @@ async function autoSaveForm(allowWithoutId = false) {
       const appointmentIdValue = appointmentInput?.value;
 
       if (allowWithoutId && !hasCustomerId) {
-        
+        form.reset();
 
         form.querySelectorAll('input[type="hidden"]').forEach(el => {
           if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
