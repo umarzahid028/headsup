@@ -58,6 +58,7 @@
         data-disposition="{{ $dispositions }}"
         data-customer-id="{{ $customer->id }}"
         data-customer-name="{{ $customer->name }}"
+        data-notes="{{ $customer->notes ?? '' }}"
       >
 
         <div class="flex justify-between items-center">

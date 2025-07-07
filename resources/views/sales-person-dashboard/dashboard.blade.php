@@ -393,7 +393,7 @@ Add Customer
     });
   });
 </script> -->
-<!-- 
+
 
 
 <script>
@@ -463,11 +463,11 @@ Add Customer
 
     setInterval(refreshAppointments, 3000);
   });
-</script> -->
+</script> 
 
 
 
-<!-- <script>
+<script>
   $(document).ready(() => {
     toggleButton();
     updateTurnStatus();
@@ -516,7 +516,7 @@ Add Customer
       });
     });
   });
-</script> -->
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -1070,6 +1070,7 @@ const nameInput = form.querySelector('input[name="name"]');
 const emailInput = form.querySelector('input[name="email"]');
 const phoneInput = form.querySelector('input[name="phone"]');
 const interestInput = form.querySelector('input[name="interest"]');
+const notesInput = form.querySelector('textarea[name="notes"]');
 const appointmentInput = form.querySelector('input[name="appointment_id"]');
 const newCustomerBtn = document.getElementById('newCustomerBtn');
 const addCustomerBtn = document.getElementById('addCustomerBtn');
@@ -1086,33 +1087,52 @@ setInterval(() => {
 const attachFieldListeners = () => {
   const fields = form.querySelectorAll('input, textarea, select');
   fields.forEach(field => {
-    field.addEventListener('input', () => {
+    const handleInput = () => {
       if (!autosaveEnabled) return;
-        if (loadedFromAppointment && ['email', 'name', 'phone', 'interest'].includes(field.name)) {
+      if (
+        loadedFromAppointment &&
+        ['email', 'name', 'phone', 'interest'].includes(field.name)
+      ) {
+        if (!hasStartedManualEdit && !idWasManuallyCleared) {
           idInput.value = '';
           loadedFromAppointment = false;
+          idWasManuallyCleared = true;
         }
-        customerSavedThisTurn = false;
-        clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => {
-          autoSaveForm();
-        }, 700);
-      });
+        hasStartedManualEdit = true;
+      }
+      customerSavedThisTurn = false;
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(() => {
+        autoSaveForm();
+      }, 700);
+    };
 
-      field.addEventListener('change', () => {
-        if (!autosaveEnabled) return;
-        if (loadedFromAppointment && ['email', 'name', 'phone', 'interest'].includes(field.name)) {
+    const handleChange = () => {
+      if (!autosaveEnabled) return;
+      if (
+        loadedFromAppointment &&
+        ['email', 'name', 'phone', 'interest'].includes(field.name)
+      ) {
+        if (!hasStartedManualEdit && !idWasManuallyCleared) {
           idInput.value = '';
           loadedFromAppointment = false;
+          idWasManuallyCleared = true;
         }
-        customerSavedThisTurn = false;
-        clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => {
-          autoSaveForm();
-        }, 300);
-      });
-    });
-  };
+        hasStartedManualEdit = true;
+      }
+      customerSavedThisTurn = false;
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(() => {
+        autoSaveForm();
+      }, 300);
+    };
+
+    field.removeEventListener('input', handleInput);
+    field.addEventListener('input', handleInput);
+    field.removeEventListener('change', handleChange);
+    field.addEventListener('change', handleChange);
+  });
+};
 
  if (newCustomerBtn) {
   newCustomerBtn.addEventListener('click', async () => {
@@ -1179,48 +1199,48 @@ async function autoSaveForm(allowWithoutId = false) {
     const result = await response.json();
     console.log('✅ Server Response:', result);
 
-    if (result.status === 'success') {
-      if (result.id) {
-        idInput.value = result.id;
-        localStorage.setItem('activeCustomerId', result.id);
-      }
+if (result.status === 'success') {
+  if (result.id) {
+    idInput.value = result.id;
+    localStorage.setItem('activeCustomerId', result.id);
+  }
 
-      customerSavedThisTurn = true;
+  customerSavedThisTurn = true;
 
-      // ✅ Keep appointment_id value after reset
-      const appointmentIdValue = appointmentInput?.value;
+  // ✅ Keep appointment_id value after reset
+  const appointmentIdValue = appointmentInput?.value;
 
-      if (allowWithoutId && !hasCustomerId) {
-        form.reset();
+if (allowWithoutId && !hasCustomerId) {
+  form.reset();
 
-        form.querySelectorAll('input[type="hidden"]').forEach(el => {
-          if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
-            el.value = '';
-          }
-        });
+  form.querySelectorAll('input[type="hidden"]').forEach(el => {
+    if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
+      el.value = '';
+    }
+  });
 
-        if (appointmentInput) appointmentInput.value = appointmentIdValue;
-        idInput.value = result.id; 
-      }
+  if (appointmentInput) appointmentInput.value = appointmentIdValue;
+  idInput.value = result.id; 
+}
 
-      await loadCustomers?.();
+  await loadCustomers?.();
 
-      setTimeout(() => {
-        const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
-        if (newCard) {
-          document.querySelectorAll('.customer-card').forEach(c => {
-            c.classList.remove('active-card');
-            c.classList.remove('pause-animation');
-          });
+  setTimeout(() => {
+    const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
+    if (newCard) {
+      document.querySelectorAll('.customer-card').forEach(c => {
+        c.classList.remove('active-card');
+        c.classList.remove('pause-animation');
+      });
 
-          newCard.classList.add('active-card');
-          newCard.classList.add('pause-animation');
-        } else {
-          console.warn('❌ Card not found for customer ID:', result.id);
-        }
-      }, 300);
-
+      newCard.classList.add('active-card');
+      newCard.classList.add('pause-animation');
     } else {
+      console.warn('❌ Card not found for customer ID:', result.id);
+    }
+  }, 300);
+}
+ else {
       console.error('❌ Save failed:', result);
     }
   } catch (err) {
@@ -1260,7 +1280,9 @@ async function autoSaveForm(allowWithoutId = false) {
         emailInput.value = card.dataset.email ?? '';
         phoneInput.value = card.dataset.phone ?? '';
         interestInput.value = card.dataset.interest ?? '';
+        notesInput.value = card.dataset.notes ?? '';
 
+       
         if (card.dataset.process) {
           card.dataset.process.split(',').forEach(proc => {
             const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
@@ -1336,7 +1358,7 @@ function clearFormFields() {
     user_id: form.querySelector('input[name="user_id"]')?.value ?? '',
   };
 
-  form.reset();
+  
 
   form.querySelectorAll('input[type="hidden"]').forEach(el => {
     if (preservedValues[el.name]) {
