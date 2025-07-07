@@ -139,27 +139,26 @@ class CustomerSaleController extends Controller
         $customer = CustomerSale::findOrFail($id);
         $currentUser = auth()->user();
 
-        // ✅ Only allow if current user is Sales Manager or owner of the customer
         if (!$currentUser->hasRole('Sales Manager') && $customer->user_id !== $currentUser->id) {
             return response()->json([
                 'message' => 'Unauthorized to transfer this customer.'
             ], 403);
         }
 
-        // ✅ Check if new_user_id is a sales person who is currently checked-in
-     $isCheckedIn = \App\Models\Queue::where('user_id', $request->new_user_id)
-    ->where('is_checked_out', true)
-    ->latest('created_at')
-    ->exists();
+   $isCheckedIn = User::whereHas('queues', function ($query) {
+    $query->where('is_checked_in', true)
+          ->whereNull('checked_out_at') // or where('is_checked_out', false)
+          ->whereDate('created_at', today());
+})
+->get();
 
 
         if (!$isCheckedIn) {
             return response()->json([
                 'message' => 'The selected sales person is not checked-in.',
-            ], 422); // 422: validation error
+            ], 422); 
         }
 
-        // ✅ Proceed with transfer
         $customer->user_id = $request->new_user_id;
         $customer->save();
 
@@ -193,9 +192,14 @@ class CustomerSaleController extends Controller
             ->pluck('user_id')
             ->unique();
 
-        $salespeople = User::role('Sales person')
-            ->whereIn('id', $checkedInUserIds)
-            ->get();
+       $salespeople = User::role('Sales person')
+    ->where('id', '!=', $user->id)
+    ->whereHas('queues', function ($query) {
+        $query->where('is_checked_in', true)
+              ->whereNull('checked_out_at')
+              ->whereDate('created_at', now());
+    })
+    ->get();
 
         return view('t/o-customers.customer', compact('customers', 'salespeople'));
     }

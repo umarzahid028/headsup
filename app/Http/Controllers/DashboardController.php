@@ -93,9 +93,14 @@ class DashboardController extends Controller
             ->get();
 
 
-        $salespeople = User::role('Sales person')
-            ->where('id', '!=', $user->id)
-            ->get();
+  $salespeople = User::role('Sales person')
+    ->where('id', '!=', $user->id)
+    ->whereHas('queues', function ($query) {
+        $query->where('is_checked_in', true)
+              ->whereNull('checked_out_at')
+              ->whereDate('created_at', now());
+    })
+    ->get();
 
 
 
