@@ -344,7 +344,7 @@ class CustomerSaleController extends Controller
 
         return response()->json([
             'status'   => 'forwarded',
-            'message'  => 'T/O Customer Successfull!',
+            'message'  => 'T/O Customer Success !',
             'redirect' => route('sales.perosn', ['id' => $customer->id]),
         ]);
     }
