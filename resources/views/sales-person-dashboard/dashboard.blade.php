@@ -1357,7 +1357,6 @@ function clearFormFields() {
     user_id: form.querySelector('input[name="user_id"]')?.value ?? '',
   };
 
-  form.reset(); // 🔄 Resets inputs, textareas, checkboxes
 
   // 🧹 Clear hidden fields (except id, user_id, appointment_id)
   form.querySelectorAll('input[type="hidden"]').forEach(el => {
