@@ -1213,7 +1213,7 @@ async function autoSaveForm(allowWithoutId = false) {
       const appointmentIdValue = appointmentInput?.value;
 
       if (allowWithoutId && !hasCustomerId) {
-        form.reset();
+        
 
         form.querySelectorAll('input[type="hidden"]').forEach(el => {
           if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
