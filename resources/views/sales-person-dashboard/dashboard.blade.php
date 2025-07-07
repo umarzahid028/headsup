@@ -1149,23 +1149,25 @@ const attachFieldListeners = () => {
       [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
     );
 
-    if (isFormDirty) {
-      await autoSaveForm(true);
-    } else {
+    // Reset fields manually if not dirty
+    if (!isFormDirty) {
       nameInput.value = '';
       emailInput.value = '';
       phoneInput.value = '';
       interestInput.value = '';
       [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-      await autoSaveForm(true);
     }
 
-//     if (idInput.value) {
-//       autosaveEnabled = true;
-//       attachFieldListeners();
-//     }
-//   });
-// }
+    await autoSaveForm(true);
+
+    if (idInput.value) {
+      autosaveEnabled = true;
+      attachFieldListeners();
+    } else {
+      console.warn('❌ No ID returned. New customer not created.');
+    }
+  });
+}
 
 
 async function autoSaveForm(allowWithoutId = false) {
@@ -1204,9 +1206,6 @@ if (result.status === 'success') {
     idInput.value = result.id;
     localStorage.setItem('activeCustomerId', result.id);
 
-    // ✅ Enable autosave only now
-    autosaveEnabled = true;
-    attachFieldListeners();
   }
 
 
