@@ -1134,7 +1134,7 @@ const attachFieldListeners = () => {
   });
 };
 
- if (newCustomerBtn) {
+if (newCustomerBtn) {
   newCustomerBtn.addEventListener('click', async () => {
     if (!isMyTurn) {
       console.log('⛔ Not your turn. Cannot take new customer.');
@@ -1149,7 +1149,7 @@ const attachFieldListeners = () => {
       [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
     );
 
-    // Reset fields manually if not dirty
+    // Reset fields if not dirty
     if (!isFormDirty) {
       nameInput.value = '';
       emailInput.value = '';
@@ -1159,6 +1159,9 @@ const attachFieldListeners = () => {
     }
 
     await autoSaveForm(true);
+  });
+}
+
 
     if (idInput.value) {
       autosaveEnabled = true;
@@ -1206,10 +1209,13 @@ if (result.status === 'success') {
     idInput.value = result.id;
     localStorage.setItem('activeCustomerId', result.id);
 
-    // ✅ Enable autosave only now
-    autosaveEnabled = true;
-    attachFieldListeners();
+    // ✅ Enable autosave only if it's not already on
+    if (!autosaveEnabled) {
+      autosaveEnabled = true;
+      attachFieldListeners();
+    }
   }
+
 
 
   customerSavedThisTurn = true;
