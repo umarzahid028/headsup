@@ -1134,7 +1134,7 @@ const attachFieldListeners = () => {
   });
 };
 
-if (newCustomerBtn) {
+ if (newCustomerBtn) {
   newCustomerBtn.addEventListener('click', async () => {
     if (!isMyTurn) {
       console.log('⛔ Not your turn. Cannot take new customer.');
@@ -1149,25 +1149,20 @@ if (newCustomerBtn) {
       [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
     );
 
-    // Reset fields if not dirty
-    if (!isFormDirty) {
+    if (isFormDirty) {
+      await autoSaveForm(true);
+    } else {
       nameInput.value = '';
       emailInput.value = '';
       phoneInput.value = '';
       interestInput.value = '';
       [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+      await autoSaveForm(true);
     }
-
-    await autoSaveForm(true);
-  });
-}
-
 
     if (idInput.value) {
       autosaveEnabled = true;
       attachFieldListeners();
-    } else {
-      console.warn('❌ No ID returned. New customer not created.');
     }
   });
 }
@@ -1179,8 +1174,9 @@ async function autoSaveForm(allowWithoutId = false) {
   const hasAppointment = appointmentInput && appointmentInput.value.trim() !== '';
   const hasCustomerId = idInput && idInput.value.trim() !== '';
 
-  if (!isMyTurn && !allowWithoutId && !hasCustomerId && !hasAppointment) {
-    console.log(' Blocked: No ID or Appointment');
+  // ✅ Block auto-save if no ID and no appointment, unless explicitly allowed
+  if (!hasCustomerId && !hasAppointment && !allowWithoutId) {
+    console.log('🚫 No customer ID or appointment — skipping auto-save');
     return;
   }
 
@@ -1204,62 +1200,54 @@ async function autoSaveForm(allowWithoutId = false) {
     const result = await response.json();
     console.log('✅ Server Response:', result);
 
-if (result.status === 'success') {
-  if (result.id) {
-    idInput.value = result.id;
-    localStorage.setItem('activeCustomerId', result.id);
+    if (result.status === 'success') {
+      if (result.id) {
+        idInput.value = result.id;
+        localStorage.setItem('activeCustomerId', result.id);
+      }
 
-    // ✅ Enable autosave only if it's not already on
-    if (!autosaveEnabled) {
-      autosaveEnabled = true;
-      attachFieldListeners();
-    }
-  }
+      customerSavedThisTurn = true;
 
+      // ✅ Keep appointment_id value after reset
+      const appointmentIdValue = appointmentInput?.value;
 
+      if (allowWithoutId && !hasCustomerId) {
+        form.reset();
 
-  customerSavedThisTurn = true;
+        form.querySelectorAll('input[type="hidden"]').forEach(el => {
+          if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
+            el.value = '';
+          }
+        });
 
-  // ✅ Keep appointment_id value after reset
-  const appointmentIdValue = appointmentInput?.value;
+        if (appointmentInput) appointmentInput.value = appointmentIdValue;
+        idInput.value = result.id;
+      }
 
-if (allowWithoutId && !hasCustomerId) {
-  form.reset();
+      await loadCustomers?.();
 
-  form.querySelectorAll('input[type="hidden"]').forEach(el => {
-    if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
-      el.value = '';
-    }
-  });
+      setTimeout(() => {
+        const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
+        if (newCard) {
+          document.querySelectorAll('.customer-card').forEach(c => {
+            c.classList.remove('active-card');
+            c.classList.remove('pause-animation');
+          });
 
-  if (appointmentInput) appointmentInput.value = appointmentIdValue;
-  idInput.value = result.id; 
-}
-
-  await loadCustomers?.();
-
-  setTimeout(() => {
-    const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
-    if (newCard) {
-      document.querySelectorAll('.customer-card').forEach(c => {
-        c.classList.remove('active-card');
-        c.classList.remove('pause-animation');
-      });
-
-      newCard.classList.add('active-card');
-      newCard.classList.add('pause-animation');
+          newCard.classList.add('active-card');
+          newCard.classList.add('pause-animation');
+        } else {
+          console.warn('❌ Card not found for customer ID:', result.id);
+        }
+      }, 300);
     } else {
-      console.warn('❌ Card not found for customer ID:', result.id);
-    }
-  }, 300);
-}
- else {
       console.error('❌ Save failed:', result);
     }
   } catch (err) {
     console.error('❌ Auto-save error:', err);
   }
 }
+
 
   async function loadCustomers() {
     try {
