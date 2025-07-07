@@ -396,7 +396,7 @@ Add Customer
 
 
 
-<script>
+<!-- <script>
   let selectedCardId = null;
 
   function bindAppointmentCardLogic() {
@@ -463,11 +463,11 @@ Add Customer
 
     setInterval(refreshAppointments, 3000);
   });
-</script> 
+</script>  -->
 
 
 
-<script>
+<!-- <script>
   $(document).ready(() => {
     toggleButton();
     updateTurnStatus();
@@ -518,7 +518,7 @@ Add Customer
       });
     });
   });
-</script>
+</script> -->
 
 
 <script>
@@ -1424,6 +1424,34 @@ function clearFormFields() {
 });
 </script>
 
+
+<!-- Card Active -->
+ <script>
+document.addEventListener("DOMContentLoaded", function () {
+  // Jab koi card pe click kare to animation apply ho
+  document.querySelectorAll(".customer-card").forEach(function(card) {
+    card.addEventListener("click", function () {
+      setActiveCard(card);
+    });
+  });
+
+  // Auto select latest/newest card
+  const cards = document.querySelectorAll(".customer-card");
+  if (cards.length > 0) {
+    const lastCard = cards[cards.length - 1];
+    setActiveCard(lastCard); // Auto activate last one
+    lastCard.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  // Function to apply animation class
+  function setActiveCard(selectedCard) {
+    document.querySelectorAll(".customer-card").forEach(function (card) {
+      card.classList.remove("active-card");
+    });
+    selectedCard.classList.add("active-card");
+  }
+});
+</script>
 
 
 <script>
