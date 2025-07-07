@@ -1169,18 +1169,20 @@ const attachFieldListeners = () => {
 
 
 async function autoSaveForm(allowWithoutId = false) {
-  console.log(' autoSaveForm triggered');
+  console.log('autoSaveForm triggered');
 
+  const appointmentInput = document.querySelector('[name="appointment_id"]');
   const hasAppointment = appointmentInput && appointmentInput.value.trim() !== '';
   const hasCustomerId = idInput && idInput.value.trim() !== '';
 
-  if (!isMyTurn && !allowWithoutId && !hasCustomerId && !hasAppointment) {
-    console.log(' Blocked: No ID or Appointment');
+  // ✅ Block auto-save if no ID and no appointment, unless explicitly allowed
+  if (!hasCustomerId && !hasAppointment && !allowWithoutId) {
+    console.log('🚫 No customer ID or appointment — skipping auto-save');
     return;
   }
 
   if (customerSavedThisTurn) {
-    console.log(' Skipping save: Already saved recently');
+    console.log('Skipping save: Already saved recently');
     return;
   }
 
@@ -1199,54 +1201,57 @@ async function autoSaveForm(allowWithoutId = false) {
     const result = await response.json();
     console.log('✅ Server Response:', result);
 
-if (result.status === 'success') {
-  if (result.id) {
-    idInput.value = result.id;
-    localStorage.setItem('activeCustomerId', result.id);
-  }
+    if (result.status === 'success') {
+      if (result.id) {
+        idInput.value = result.id;
+        localStorage.setItem('activeCustomerId', result.id);
+      }
 
-  customerSavedThisTurn = true;
+      customerSavedThisTurn = true;
 
-  // ✅ Keep appointment_id value after reset
-  const appointmentIdValue = appointmentInput?.value;
+      // ✅ Keep appointment_id value after reset
+      const appointmentIdValue = appointmentInput?.value;
 
-if (allowWithoutId && !hasCustomerId) {
-  form.reset();
+      if (allowWithoutId && !hasCustomerId) {
+        form.reset();
 
-  form.querySelectorAll('input[type="hidden"]').forEach(el => {
-    if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
-      el.value = '';
-    }
-  });
+        form.querySelectorAll('input[type="hidden"]').forEach(el => {
+          if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
+            el.value = '';
+          }
+        });
 
-  if (appointmentInput) appointmentInput.value = appointmentIdValue;
-  idInput.value = result.id; 
-}
+        if (appointmentInput && appointmentIdValue) {
+          appointmentInput.value = appointmentIdValue;
+        }
 
-  await loadCustomers?.();
+        idInput.value = result.id;
+      }
 
-  setTimeout(() => {
-    const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
-    if (newCard) {
-      document.querySelectorAll('.customer-card').forEach(c => {
-        c.classList.remove('active-card');
-        c.classList.remove('pause-animation');
-      });
+      await loadCustomers?.();
 
-      newCard.classList.add('active-card');
-      newCard.classList.add('pause-animation');
+      setTimeout(() => {
+        const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
+        if (newCard) {
+          document.querySelectorAll('.customer-card').forEach(c => {
+            c.classList.remove('active-card');
+            c.classList.remove('pause-animation');
+          });
+
+          newCard.classList.add('active-card');
+          newCard.classList.add('pause-animation');
+        } else {
+          console.warn('❌ Card not found for customer ID:', result.id);
+        }
+      }, 300);
     } else {
-      console.warn('❌ Card not found for customer ID:', result.id);
-    }
-  }, 300);
-}
- else {
       console.error('❌ Save failed:', result);
     }
   } catch (err) {
     console.error('❌ Auto-save error:', err);
   }
 }
+
 
   async function loadCustomers() {
     try {
