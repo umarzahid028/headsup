@@ -1375,7 +1375,6 @@ function clearFormFields() {
     userInput.value = preservedValues.user_id;
   }
 
-  // ❌ Clear all checkboxes manually (because form.reset doesn't always uncheck custom-styled ones)
   form.querySelectorAll('input[name="process[]"]').forEach(cb => {
     cb.checked = false;
   });
@@ -1384,7 +1383,7 @@ function clearFormFields() {
 
 
  function applyActiveCard() {
-  if (loadedFromAppointment) return; // 🛑 Don't override if appointment was just used
+  if (loadedFromAppointment) return; 
 
   const savedId = localStorage.getItem('activeCustomerId');
   const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
