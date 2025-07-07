@@ -116,7 +116,7 @@
   <div id="formContainer">
     <form id="salesForm" method="POST" action="{{ route('customer.sales.store') }}" class=" grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
       @csrf
-  <input type="text" name="appointment_id" value="{{ $appointment->id ?? '' }}" style="display:none;">
+  <input type="text" name="appointment_id" value="{{ $appointment->id ?? '' }}">
 
 <div class="md:col-span-2">
   <h3 class="text-2xl font-bold text-gray-800 leading-tight mb-0">Customer Sales Form</h3>
