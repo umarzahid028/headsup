@@ -1428,28 +1428,48 @@ function clearFormFields() {
 <!-- Card Active -->
  <script>
 document.addEventListener("DOMContentLoaded", function () {
-  // Click se animation change hoti rahe
-  document.querySelectorAll(".customer-card").forEach(function(card) {
-    card.addEventListener("click", function () {
-      setActiveCard(card);
-    });
+  const customerIdFromForm = document.getElementById("customerId")?.value;
+  const cards = document.querySelectorAll(".customer-card");
+
+  // Remove active class from all first
+  cards.forEach(function (card) {
+    card.classList.remove("active-card");
   });
 
-  // Auto select first (newest) card
-  const cards = document.querySelectorAll(".customer-card");
-  if (cards.length > 0) {
-    const firstCard = cards[0]; // 👈 yeh line fix hai
-    setActiveCard(firstCard);
-    firstCard.scrollIntoView({ behavior: "smooth", block: "center" });
+  // If customerId exists, find and activate corresponding card
+  if (customerIdFromForm) {
+    const matchingCard = Array.from(cards).find(card =>
+      card.dataset.customerId === customerIdFromForm
+    );
+
+    if (matchingCard) {
+      matchingCard.classList.add("active-card");
+      matchingCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   }
 
-  // Class change logic
-  function setActiveCard(selectedCard) {
-    document.querySelectorAll(".customer-card").forEach(function (card) {
-      card.classList.remove("active-card");
+  // On card click, update form and animation
+  cards.forEach(function (card) {
+    card.addEventListener("click", function () {
+      // Remove animation from all
+      cards.forEach(c => c.classList.remove("active-card"));
+
+      // Add to clicked card
+      card.classList.add("active-card");
+
+      // Update hidden input in form
+      const customerIdInput = document.getElementById("customerId");
+      if (customerIdInput) {
+        customerIdInput.value = card.dataset.customerId || "";
+      }
+
+      // Optionally fill other fields (name, email etc.)
+      document.getElementById("nameInput").value = card.dataset.name || "";
+      document.getElementById("emailInput").value = card.dataset.email || "";
+      document.getElementById("phoneInput").value = card.dataset.phone || "";
+      document.getElementById("interestInput").value = card.dataset.interest || "";
     });
-    selectedCard.classList.add("active-card");
-  }
+  });
 });
 </script>
 
