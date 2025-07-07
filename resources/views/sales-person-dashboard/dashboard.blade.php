@@ -1206,6 +1206,9 @@ if (result.status === 'success') {
     idInput.value = result.id;
     localStorage.setItem('activeCustomerId', result.id);
 
+    // ✅ Enable autosave only now
+    autosaveEnabled = true;
+    attachFieldListeners();
   }
 
 
