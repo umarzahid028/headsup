@@ -396,7 +396,7 @@ Add Customer
 
 
 
-<!-- <script>
+<script>
   let selectedCardId = null;
 
   function bindAppointmentCardLogic() {
@@ -463,7 +463,7 @@ Add Customer
 
     setInterval(refreshAppointments, 3000);
   });
-</script>  -->
+</script> 
 
 
 
