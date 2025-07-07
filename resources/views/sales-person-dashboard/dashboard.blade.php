@@ -1160,12 +1160,12 @@ const attachFieldListeners = () => {
       await autoSaveForm(true);
     }
 
-    if (idInput.value) {
-      autosaveEnabled = true;
-      attachFieldListeners();
-    }
-  });
-}
+//     if (idInput.value) {
+//       autosaveEnabled = true;
+//       attachFieldListeners();
+//     }
+//   });
+// }
 
 
 async function autoSaveForm(allowWithoutId = false) {
@@ -1203,7 +1203,12 @@ if (result.status === 'success') {
   if (result.id) {
     idInput.value = result.id;
     localStorage.setItem('activeCustomerId', result.id);
+
+    // ✅ Enable autosave only now
+    autosaveEnabled = true;
+    attachFieldListeners();
   }
+
 
   customerSavedThisTurn = true;
 
