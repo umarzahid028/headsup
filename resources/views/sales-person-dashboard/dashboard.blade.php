@@ -396,7 +396,7 @@ Add Customer
 
 
 
-<!-- <script>
+<script>
   let selectedCardId = null;
 
   function bindAppointmentCardLogic() {
@@ -463,7 +463,7 @@ Add Customer
 
     setInterval(refreshAppointments, 3000);
   });
-</script>  -->
+</script> 
 
 
 
@@ -480,16 +480,13 @@ Add Customer
       const phone = card.dataset.phone || '';
       const customerId = card.dataset.customerId || '';
 
+      // Set values to inputs
       const nameInput = document.getElementById('nameInput');
       const phoneInput = document.getElementById('phoneInput');
       const idInput = form.querySelector('input[name="id"]');
 
-      // ✅ Skip filling name and phone if it's the appointment card
-      if (card.id !== 'appointment-card') {
-        if (nameInput) nameInput.value = name;
-        if (phoneInput) phoneInput.value = phone;
-      }
-
+      if (nameInput) nameInput.value = name;
+      if (phoneInput) phoneInput.value = phone;
       if (idInput) idInput.value = customerId;
 
       // Clear previous animation
@@ -500,7 +497,7 @@ Add Customer
 
       // Re-trigger animation
       card.classList.remove('active-card');
-      void card.offsetWidth;
+      void card.offsetWidth; // Force reflow to restart animation
       card.classList.add('active-card');
 
       toggleButton();
@@ -512,6 +509,7 @@ Add Customer
       fillFormFromCard(appointmentCard);
     }
 
+    // Click event in case card is clicked again
     document.querySelectorAll('.customer-card').forEach(card => {
       card.addEventListener('click', () => {
         fillFormFromCard(card);
@@ -519,7 +517,6 @@ Add Customer
     });
   });
 </script>
-
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -1366,26 +1363,43 @@ function clearFormFields() {
     user_id: form.querySelector('input[name="user_id"]')?.value ?? '',
   };
 
-  
+  form.reset(); // 🔄 Resets inputs, textareas, checkboxes
 
+  // 🧹 Clear hidden fields (except id, user_id, appointment_id)
   form.querySelectorAll('input[type="hidden"]').forEach(el => {
-    if (preservedValues[el.name]) {
-      el.value = preservedValues[el.name];
-    } else if (el.name !== 'id') {
+    if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
       el.value = '';
     }
+  });
+
+  // ✅ Restore preserved values
+  if (appointmentInput && preservedValues.appointment_id) {
+    appointmentInput.value = preservedValues.appointment_id;
+  }
+
+  const userInput = form.querySelector('input[name="user_id"]');
+  if (userInput && preservedValues.user_id) {
+    userInput.value = preservedValues.user_id;
+  }
+
+  // ❌ Clear all checkboxes manually (because form.reset doesn't always uncheck custom-styled ones)
+  form.querySelectorAll('input[name="process[]"]').forEach(cb => {
+    cb.checked = false;
   });
 }
 
 
+
  function applyActiveCard() {
+  if (loadedFromAppointment) return; // 🛑 Don't override if appointment was just used
+
   const savedId = localStorage.getItem('activeCustomerId');
   const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
 
-  // ❌ Don't auto-apply if it's the appointment card or missing
   if (!savedCard || savedCard.id === 'appointment-card') return;
 
   savedCard.classList.add('active-card');
+  savedCard.classList.add('pause-animation');
 
   if (!idInput.value || idInput.value === savedId) {
     clearFormFields();
@@ -1395,6 +1409,7 @@ function clearFormFields() {
     emailInput.value = savedCard.dataset.email ?? '';
     phoneInput.value = savedCard.dataset.phone ?? '';
     interestInput.value = savedCard.dataset.interest ?? '';
+    notesInput.value = savedCard.dataset.notes ?? '';
 
     if (savedCard.dataset.process) {
       savedCard.dataset.process.split(',').forEach(proc => {
@@ -1408,6 +1423,7 @@ function clearFormFields() {
     attachFieldListeners();
   }
 }
+
 
   if (addCustomerBtn) {
     addCustomerBtn.addEventListener('click', () => {
