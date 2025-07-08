@@ -106,12 +106,26 @@ class CustomerSaleController extends Controller
             $duration = $start->diff($end)->format('%Hh %Im %Ss');
         }
 
+        $redirectUrl = url()->previous();
+
+if (!empty($sale->appointment_id)) {
+    $parsedUrl = parse_url($redirectUrl);
+    parse_str($parsedUrl['query'] ?? '', $query);
+
+    unset($query['id']); 
+
+    $redirectUrl = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . $parsedUrl['path'];
+
+    if (!empty($query)) {
+        $redirectUrl .= '?' . http_build_query($query);
+    }
+}
         return response()->json([
             'status'   => 'success',
             'message'  => 'Customer sale data saved successfully!',
             'duration' => $duration,
             'id'       => $sale->id,
-            'redirect' => url()->previous(),
+            'redirect' => $redirectUrl,
         ]);
     }
 
