@@ -422,7 +422,7 @@ public function checkout(Request $request, $id)
     'status' => 'error',
     'customer_exists' => true,
     'message' => 'You cannot check out while a customer is still assigned.',
-], 403);
+]);
 
     }
 
