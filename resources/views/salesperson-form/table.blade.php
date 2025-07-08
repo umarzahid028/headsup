@@ -145,9 +145,11 @@
             </div>
         </div>
     </div>
+<button onclick="Swal.fire('Working!', 'SweetAlert is working!', 'success')">Test Alert</button>
 
     {{-- ✅ SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
     <!-- ✅ Flash Messages -->
 @if (session('success'))
