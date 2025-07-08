@@ -1237,9 +1237,7 @@ async function autoSaveForm(allowWithoutId = false) {
     } else {
       console.warn('❌ Card not found for customer ID:', result.id);
     }
-      const activeCard = document.querySelector('.active-card');
-  if (activeCard) activeCard.classList.add('pause-animation');
-  clearFormFields();
+    
   }, 300);
 }
  else {
