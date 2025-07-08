@@ -257,21 +257,22 @@
                 }
                 console.log(xhr, message);
 
-                if (res.customer_exists) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: res.message || 'You cannot check out while a customer is still assigned.',
-                        confirmButtonColor: '#d33'
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: res.message || 'Something went wrong. Please try again.',
-                        confirmButtonColor: '#d33'
-                    });
-                }
+            if (res.customer_exists) {
+    Swal.fire({
+        icon: 'warning', // ✅ better than 'error' for a business rule
+        title: 'Active Customer Assigned',
+        text: res.message || 'You cannot check out while a customer is still assigned.',
+        confirmButtonColor: '#d33'
+    });
+} else {
+    Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: res.message || 'Something went wrong. Please try again.',
+        confirmButtonColor: '#d33'
+    });
+}
+
             }
         });
     });
