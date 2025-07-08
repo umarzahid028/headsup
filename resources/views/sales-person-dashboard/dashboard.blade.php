@@ -1421,7 +1421,7 @@ function clearFormFields() {
 if (addCustomerBtn) {
   addCustomerBtn.addEventListener('click', () => {
     const activeCard = document.querySelector('.active-card');
-    const form = document.getElementById('salesForm'); 
+    const form = document.getElementById('salesForm');
 
     if (activeCard) {
       activeCard.classList.add('pause-animation');
@@ -1429,7 +1429,16 @@ if (addCustomerBtn) {
 
     if (form) {
       form.reset();
+
+      // ✅ Explicitly clear hidden + preserved fields
+      form.querySelector('input[name="id"]').value = '';
+      form.querySelector('input[name="appointment_id"]').value = '';
+      form.querySelector('input[name="user_id"]').value = '';
+      form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
     }
+
+    // ✅ Optionally clear active customer ID from localStorage
+    localStorage.removeItem('activeCustomerId');
   });
 }
 
