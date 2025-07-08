@@ -1,4 +1,6 @@
 <x-app-layout>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     {{-- ✅ SweetAlert2 Buttons Styling --}}
 <style>
 /* Common confirm button style (used for both alerts) */
@@ -175,9 +177,6 @@
     });
 </script>
 @endif
-
-
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
     $.ajaxSetup({
