@@ -259,8 +259,8 @@
 
                 if (res.customer_exists) {
                     Swal.fire({
-                        icon: 'warning',
-                        title: 'Active Customer Assigned',
+                        icon: 'error',
+                        title: 'Error',
                         text: res.message || 'You cannot check out while a customer is still assigned.',
                         confirmButtonColor: '#d33'
                     });
