@@ -12,125 +12,114 @@ use Illuminate\Support\Facades\Auth;
 
 class CustomerSaleController extends Controller
 {
-    public function store(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'id'             => 'nullable|integer|exists:customer_sales,id',
-                'user_id'        => 'nullable|exists:users,id',
-                'customer_id'    => 'nullable|exists:customers,id',
-                'name'           => 'nullable|string|max:255',
-                'email'          => 'nullable|email|max:255',
-                'phone'          => 'nullable|string|max:20',
-                'interest'       => 'nullable|string|max:255',
-                'notes'          => 'nullable|string',
-                'process'        => 'nullable|array',
-                'disposition'    => 'nullable|string',
-                'appointment_id' => 'nullable|exists:appointments,id',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => $e->errors(),
-            ], 422);
-        }
-
-        $data = [
-            'user_id'        => $validated['user_id'] ?? auth()->id(),
-            'customer_id'    => $validated['customer_id'] ?? null,
-            'name'           => $validated['name'],
-            'email'          => $validated['email'] ?? null,
-            'phone'          => $validated['phone'] ?? null,
-            'interest'       => $validated['interest'] ?? null,
-            'notes'          => $validated['notes'] ?? null,
-            'process'        => $validated['process'] ?? [],
-            'disposition'    => $validated['disposition'] ?? null,
-            'appointment_id' => $validated['appointment_id'] ?? null,
-        ];
-
-        $sale = null;
-
-        // ✅ 1. If ID is given
-        if (!empty($validated['id'])) {
-            $sale = CustomerSale::find($validated['id']);
-        }
-
-        // ✅ 2. If appointment already used
-        if (!$sale && !empty($data['appointment_id'])) {
-            $sale = CustomerSale::where('appointment_id', $data['appointment_id'])->first();
-        }
-
-        // ✅ 3. Same-day sale for same customer
-        if (!$sale && !empty($data['customer_id'])) {
-            $sale = CustomerSale::where('user_id', $data['user_id'])
-                ->where('customer_id', $data['customer_id'])
-                ->whereDate('created_at', now()->toDateString())
-                ->latest()
-                ->first();
-        }
-
-        // ✅ Create or Update
-        if ($sale) {
-            $sale->update($data);
-        } else {
-            $sale = CustomerSale::create($data);
-        }
-
-        // ✅ End sale time
-        if (!empty($validated['disposition'])) {
-            $sale->ended_at = now();
-            $sale->save();
-        }
-
-        if (!empty($sale->appointment_id)) {
-            $appointment = \App\Models\Appointment::find($sale->appointment_id);
-
-            if ($appointment && $appointment->status !== 'completed') {
-                $appointment->status = 'completed';
-                $appointment->save();
-            }
-        }
-
-
-        // ✅ Duration calculation from queue
-        $queue = \App\Models\Queue::where('user_id', $data['user_id'])
-            ->where('customer_id', $data['customer_id'])
-            ->whereNotNull('took_turn_at')
-            ->latest('took_turn_at')
-            ->first();
-
-        $duration = null;
-        if ($queue && $sale->ended_at) {
-            $start = \Carbon\Carbon::parse($queue->took_turn_at);
-            $end = \Carbon\Carbon::parse($sale->ended_at);
-            $duration = $start->diff($end)->format('%Hh %Im %Ss');
-        }
-
-  $redirectUrl = url()->previous();
-
-if (!empty($sale->appointment_id)) {
-    $parsedUrl = parse_url($redirectUrl);
-    parse_str($parsedUrl['query'] ?? '', $query);
-
-    unset($query['id']);
-
-    // Use request()->getSchemeAndHttpHost() instead of manually getting scheme & host
-    $cleanPath = $parsedUrl['path'] ?? '/';
-    $redirectUrl = request()->getSchemeAndHttpHost() . $cleanPath;
-
-    if (!empty($query)) {
-        $redirectUrl .= '?' . http_build_query($query);
-    }
-}
-
-        return response()->json([
-            'status'   => 'success',
-            'message'  => 'Customer sale data saved successfully!',
-            'duration' => $duration,
-            'id'       => $sale->id,
-            'redirect' => $redirectUrl,
+  public function store(Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'id'             => 'nullable|integer|exists:customer_sales,id',
+            'user_id'        => 'nullable|exists:users,id',
+            'customer_id'    => 'nullable|exists:customers,id',
+            'name'           => 'nullable|string|max:255',
+            'email'          => 'nullable|email|max:255',
+            'phone'          => 'nullable|string|max:20',
+            'interest'       => 'nullable|string|max:255',
+            'notes'          => 'nullable|string',
+            'process'        => 'nullable|array',
+            'disposition'    => 'nullable|string',
+            'appointment_id' => 'nullable|exists:appointments,id',
         ]);
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'status' => 'error',
+            'errors' => $e->errors(),
+        ], 422);
     }
+
+    $data = [
+        'user_id'        => $validated['user_id'] ?? auth()->id(),
+        'customer_id'    => $validated['customer_id'] ?? null,
+        'name'           => $validated['name'],
+        'email'          => $validated['email'] ?? null,
+        'phone'          => $validated['phone'] ?? null,
+        'interest'       => $validated['interest'] ?? null,
+        'notes'          => $validated['notes'] ?? null,
+        'process'        => $validated['process'] ?? [],
+        'disposition'    => $validated['disposition'] ?? null,
+        'appointment_id' => $validated['appointment_id'] ?? null,
+    ];
+
+    $sale = null;
+
+    // ✅ 1. If ID is given
+    if (!empty($validated['id'])) {
+        $sale = CustomerSale::find($validated['id']);
+    }
+
+    // ✅ 2. If appointment already used
+    if (!$sale && !empty($data['appointment_id'])) {
+        $sale = CustomerSale::where('appointment_id', $data['appointment_id'])->first();
+    }
+
+    // ✅ 3. Same-day sale for same customer
+    if (!$sale && !empty($data['customer_id'])) {
+        $sale = CustomerSale::where('user_id', $data['user_id'])
+            ->where('customer_id', $data['customer_id'])
+            ->whereDate('created_at', now()->toDateString())
+            ->latest()
+            ->first();
+    }
+
+    // ✅ Create or Update
+    if ($sale) {
+        $sale->update($data);
+    } else {
+        $sale = CustomerSale::create($data);
+    }
+
+    // ✅ End sale time
+    if (!empty($validated['disposition'])) {
+        $sale->ended_at = now();
+        $sale->save();
+    }
+
+    // ✅ Mark appointment as completed
+    if (!empty($sale->appointment_id)) {
+        $appointment = \App\Models\Appointment::find($sale->appointment_id);
+        if ($appointment && $appointment->status !== 'completed') {
+            $appointment->status = 'completed';
+            $appointment->save();
+        }
+    }
+
+    // ✅ Duration calculation from queue
+    $queue = \App\Models\Queue::where('user_id', $data['user_id'])
+        ->where('customer_id', $data['customer_id'])
+        ->whereNotNull('took_turn_at')
+        ->latest('took_turn_at')
+        ->first();
+
+    $duration = null;
+    if ($queue && $sale->ended_at) {
+        $start = \Carbon\Carbon::parse($queue->took_turn_at);
+        $end = \Carbon\Carbon::parse($sale->ended_at);
+        $duration = $start->diff($end)->format('%Hh %Im %Ss');
+    }
+
+    // ✅ Clean redirect URL
+    if (!empty($sale->appointment_id)) {
+        $redirectUrl = route('sales.index'); // Redirect to clean /sales route
+    } else {
+        $redirectUrl = url()->previous(); // Stay on current page
+    }
+
+    return response()->json([
+        'status'   => 'success',
+        'message'  => 'Customer sale data saved successfully!',
+        'duration' => $duration,
+        'id'       => $sale->id,
+        'redirect' => $redirectUrl,
+    ]);
+}
 
 
     public function index(Request $request)
