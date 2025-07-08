@@ -1,4 +1,69 @@
 <x-app-layout>
+        {{-- ✅ SweetAlert2 Buttons Styling --}}
+<style>
+/* Common confirm button style (used for both alerts) */
+.swal2-confirm.custom-ok-button {
+    background-color: #111827 !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 10px 20px !important;
+    border-radius: 5px !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+}
+
+/* Only for confirmation cancel button */
+.swal2-cancel.custom-cancel-button {
+    background-color: #111827 !important;
+    color: white !important;
+    padding: 10px 20px !important;
+    border-radius: 5px !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+}
+
+/* Button spacing */
+.swal2-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+   
+        .swal2-confirm {
+            background-color: #111827 !important;
+            color: #fff !important;
+            box-shadow: none !important;
+        }
+
+        .swal2-confirm:hover,
+        .swal2-confirm:focus,
+        .swal2-confirm:active {
+            background-color: #111827 !important;
+            color: #fff !important;
+            box-shadow: none !important;
+        }
+ 
+/* Custom confirm button */
+.swal2-confirm.custom-confirm-button {
+    background-color: #111827 !important;
+    color: white !important;
+    padding: 10px 20px !important;
+    border-radius: 5px !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Optional: Prevent hover color flickering */
+.swal2-confirm.custom-confirm-button:hover {
+    background-color: #0f172a !important;
+    color: #fff !important;
+    opacity: 0.95;
+    transition: 0.2s ease-in-out;
+}
+</style>
     <x-slot name="header">
         <h2 class="text-2xl font-bold text-gray-800 mb-1">
             Appointments

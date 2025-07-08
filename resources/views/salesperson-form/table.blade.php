@@ -31,7 +31,7 @@
     justify-content: center;
     gap: 10px;
 }
-    <style>
+   
         .swal2-confirm {
             background-color: #111827 !important;
             color: #fff !important;
