@@ -244,36 +244,37 @@
                     location.reload();
                 });
             },
-            error: function (xhr) {
-                btn.prop('disabled', false);
-                btnText.removeClass('hidden');
-                spinner.addClass('hidden');
+           error: function (xhr) {
+    btn.prop('disabled', false);
+    btnText.removeClass('hidden');
+    spinner.addClass('hidden');
 
-                let res = {};
-                try {
-                    res = xhr.responseJSON || JSON.parse(xhr.responseText);
-                } catch (e) {
-                    res = { message: 'Something went wrong. Please try again.' };
-                }
-                console.log(xhr, message);
+    let res = {};
+    try {
+        res = xhr.responseJSON || JSON.parse(xhr.responseText);
+    } catch (e) {
+        res = { message: 'Something went wrong. Please try again.' };
+    }
 
-            if (res.customer_exists) {
-    Swal.fire({
-        icon: 'warning', // ✅ better than 'error' for a business rule
-        title: 'Active Customer Assigned',
-        text: res.message || 'You cannot check out while a customer is still assigned.',
-        confirmButtonColor: '#d33'
-    });
-} else {
-    Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: res.message || 'Something went wrong. Please try again.',
-        confirmButtonColor: '#d33'
-    });
+    console.log('AJAX Error:', res);
+
+    if (res.customer_exists) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Active Customer Assigned',
+            text: res.message || 'You cannot check out while a customer is still assigned.',
+            confirmButtonColor: '#d33'
+        });
+    } else {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: res.message || 'Something went wrong. Please try again.',
+            confirmButtonColor: '#d33'
+        });
+    }
 }
 
-            }
         });
     });
 </script>
