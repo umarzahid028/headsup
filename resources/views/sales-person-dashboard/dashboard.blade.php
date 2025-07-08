@@ -601,9 +601,9 @@ function completeForm(customerId) {
     // ✅ Block check-out if cards exist
     if (btnText.text().trim() === 'Check Out' && $('#customer-list .customer-card').length > 0) {
       Swal.fire({
-        icon: 'error',
-         title: 'Pending Customer Cards',
-  text: 'Please complete or transfer all customer cards before checking out.',
+        icon: 'warning',
+         title: 'Active Customer Assigned',
+  text: 'You cannot check out while a customer is still assigned.',
       });
       return;
     }
