@@ -183,63 +183,128 @@
 @endif
 
 
-    <script>
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
+<script>
+  let durationInterval = null;
 
-        $(document).on('submit', '.check-out-form', function(e) {
-            e.preventDefault();
+  function startDurationTimer(startTimeIso) {
+    const start = new Date(startTimeIso);
 
-            const form = $(this);
-            const btn = form.find('.check-out-btn');
-            const btnText = btn.find('.btn-text');
-            const spinner = btn.find('.btn-spinner');
+    function updateDuration() {
+      const now = new Date();
+      const diffMs = now - start;
 
-            btn.prop('disabled', true);
-            btnText.addClass('hidden');
-            spinner.removeClass('hidden');
+      const seconds = Math.floor((diffMs / 1000) % 60);
+      const minutes = Math.floor((diffMs / 1000 / 60) % 60);
+      const hours = Math.floor((diffMs / 1000 / 60 / 60));
 
-            $.ajax({
-                url: form.attr('action'),
-                method: 'POST',
-                data: form.serialize(),
-                success: function(response) {
-                    btn.prop('disabled', false);
-                    btnText.removeClass('hidden');
-                    spinner.addClass('hidden');
+      const formatted = [
+        hours > 0 ? `${hours}h` : '',
+        minutes > 0 ? `${minutes}m` : '',
+        `${seconds}s`
+      ].filter(Boolean).join(' ');
 
-                   Swal.fire({
-    icon: 'success',
-    title: 'Checked Out!',
-    text: response.message || 'You have been checked out.',
-    confirmButtonText: 'OK',
-    confirmButtonColor: '#111827',
-    customClass: {
-        confirmButton: 'custom-confirm-button'
+      document.getElementById('duration').textContent = formatted;
     }
-});
 
+    updateDuration();
+    if (durationInterval) clearInterval(durationInterval);
+    durationInterval = setInterval(updateDuration, 1000);
+  }
 
-                    // Optionally: Disable button or remove it
-                    // btn.prop('disabled', true).addClass('opacity-50').text('Checked Out');
-                },
-                error: function() {
-                    btn.prop('disabled', false);
-                    btnText.removeClass('hidden');
-                    spinner.addClass('hidden');
+  @if($isCheckedIn && $checkInTimeRaw)
+    startDurationTimer('{{ \Carbon\Carbon::parse($checkInTimeRaw)->toIso8601String() }}');
+  @endif
 
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'Something went wrong. Please try again.',
-                    });
-                }
-            });
+  $.ajaxSetup({
+    headers: {
+      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+  });
+
+  $('#checkToggleForm').on('submit', function(e) {
+    e.preventDefault();
+
+    const btn = $('#checkToggleButton');
+    const btnText = btn.find('.btn-text');
+
+    // ✅ Block check-out if cards exist
+    if (btnText.text().trim() === 'Check Out' && $('#customer-list .customer-card').length > 0) {
+      Swal.fire({
+        icon: 'error',
+         title: 'Pending Customer Cards',
+  text: 'Please complete or transfer all customer cards before checking out.',
+      });
+      return;
+    }
+
+    const spinner = btn.find('.btn-spinner');
+    btn.prop('disabled', true);
+    btnText.addClass('hidden');
+    spinner.removeClass('hidden');
+
+    $.ajax({
+      url: $(this).attr('action'),
+      method: 'POST',
+      data: $(this).serialize(),
+      success: function(response) {
+        btn.prop('disabled', false);
+        btnText.removeClass('hidden');
+        spinner.addClass('hidden');
+
+        if (response.checked_in) {
+          // ✅ Checked In UI
+          btnText.text('Check Out');
+          btn.removeClass('bg-green-500 hover:bg-green-600')
+            .addClass('bg-red-500 hover:bg-red-600');
+
+          $('.status-text').text('✅ Checked In')
+            .removeClass('bg-red-100 text-red-700')
+            .addClass('bg-green-100 text-green-800');
+
+          $('#check-in-time').text(new Date(response.checked_in_at).toLocaleString());
+          $('#check-out-time').text('N/A');
+
+          $('#duration-wrapper').removeClass('hidden');
+          $('#duration').text('Loading...');
+          startDurationTimer(response.checked_in_at);
+
+        } else {
+          // ❌ Checked Out UI
+          btnText.text('Check In');
+          btn.removeClass('bg-red-500 hover:bg-red-600')
+            .addClass('bg-green-500 hover:bg-green-600');
+
+          $('.status-text').text('❌ Checked Out')
+            .removeClass('bg-green-100 text-green-800')
+            .addClass('bg-red-100 text-red-700');
+
+          $('#check-out-time').text(new Date().toLocaleString());
+          $('#duration-wrapper').addClass('hidden');
+          clearInterval(durationInterval);
+        }
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: response.message,
+          timer: 2000,
+          showConfirmButton: true,
         });
-    </script>
+      },
+      error: function() {
+        btn.prop('disabled', false);
+        btnText.removeClass('hidden');
+        spinner.addClass('hidden');
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Something went wrong. Please try again.',
+        });
+      }
+    });
+  });
+</script>
 
 
     {{-- ✅ Delete Confirmation --}}
