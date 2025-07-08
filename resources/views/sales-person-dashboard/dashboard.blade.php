@@ -1417,28 +1417,33 @@ function clearFormFields() {
   }
 }
 
-
 if (addCustomerBtn) {
   addCustomerBtn.addEventListener('click', () => {
     const activeCard = document.querySelector('.active-card');
     const form = document.getElementById('salesForm');
 
     if (activeCard) {
-      activeCard.classList.add('pause-animation');
+      activeCard.classList.remove('active-card'); // 🛑 Pause animation
     }
 
     if (form) {
       form.reset();
 
-      // ✅ Explicitly clear hidden + preserved fields
       form.querySelector('input[name="id"]').value = '';
       form.querySelector('input[name="appointment_id"]').value = '';
      
       form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
     }
-
   });
 }
+
+document.querySelectorAll('.customer-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
+    card.classList.add('active-card'); // ▶️ Resume animation
+  });
+});
+
 
 
   bindCardClickEvents();
