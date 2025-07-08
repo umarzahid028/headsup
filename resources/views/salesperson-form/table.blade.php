@@ -238,6 +238,7 @@
                 } catch (e) {
                     res = { message: 'Something went wrong. Please try again.' };
                 }
+                console.log(xhr, message);
 
                 if (res.customer_exists) {
                     Swal.fire({
