@@ -399,21 +399,7 @@ class CustomerSaleController extends Controller
 {
     $user = auth()->user();
 
-    // ✅ Check if this user has an active assigned customer
-    $hasCustomer = \App\Models\CustomerSale::where('user_id', $user->id)
-        ->whereNotNull('customer_id')
-        ->whereNull('ended_at') // still ongoing
-        ->exists();
-
-    if ($hasCustomer) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'You cannot check out while a customer is still assigned.',
-            'customer_exists' => true
-        ], 400);
-    }
-
-    // 🟢 Perform checkout
+    // ✅ Step 1: Find active check-in
     $queue = \App\Models\Queue::where('user_id', $user->id)
         ->where('is_checked_in', true)
         ->latest()
@@ -421,17 +407,29 @@ class CustomerSaleController extends Controller
 
     if (!$queue) {
         return response()->json([
-            'status' => 'error',
-            'message' => 'No active check-in found.'
+            'message' => 'You are not currently checked in.'
         ], 404);
     }
 
+    // ✅ Step 2: Check if user has any active customer (not ended)
+    $hasCustomer = \App\Models\CustomerSale::where('user_id', $user->id)
+        ->whereNotNull('customer_id')
+        ->whereNull('ended_at') // means customer is still being handled
+        ->exists();
+
+    if ($hasCustomer) {
+        return response()->json([
+            'customer_exists' => true,
+            'message' => 'You cannot check out while a customer is still assigned.'
+        ], 400);
+    }
+
+    // ✅ Step 3: Proceed with checkout
     $queue->is_checked_in = false;
     $queue->checked_out_at = now();
     $queue->save();
 
     return response()->json([
-        'status' => 'success',
         'message' => 'Checked out successfully!'
     ]);
 }
