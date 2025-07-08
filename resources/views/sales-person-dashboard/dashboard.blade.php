@@ -1208,6 +1208,8 @@ async function autoSaveForm(allowWithoutId = false) {
 
   customerSavedThisTurn = true;
 
+    autosaveEnabled = true;
+  attachFieldListeners();
   // ✅ Preserve appointment_id
   const appointmentIdValue = appointmentInput?.value;
 

@@ -311,47 +311,49 @@ async function autoSaveForm(allowWithoutId = false) {
     const result = await response.json();
     console.log('✅ Server Response:', result);
 
-    if (result.status === 'success') {
-      if (result.id) {
-        idInput.value = result.id;
-        localStorage.setItem('activeCustomerId', result.id);
+   if (result.status === 'success') {
+  if (result.id) {
+    idInput.value = result.id;
+    localStorage.setItem('activeCustomerId', result.id);
+  }
+
+  customerSavedThisTurn = true;
+
+  // ✅ Preserve appointment_id
+  const appointmentIdValue = appointmentInput?.value;
+
+  if (allowWithoutId && !hasCustomerId) {
+    form.querySelectorAll('input[type="hidden"]').forEach(el => {
+      if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
+        el.value = '';
       }
+    });
 
-      customerSavedThisTurn = true;
+    if (appointmentInput && appointmentIdValue) {
+      appointmentInput.value = appointmentIdValue;
+    }
 
-      // ✅ Keep appointment_id value after reset
-      const appointmentIdValue = appointmentInput?.value;
+    idInput.value = result.id;
+  }
 
-      if (allowWithoutId && !hasCustomerId) {
-       
+  await loadCustomers?.();
 
-        form.querySelectorAll('input[type="hidden"]').forEach(el => {
-          if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
-            el.value = '';
-          }
-        });
+  applyActiveCard();
 
-        if (appointmentInput && appointmentIdValue) {
-          appointmentInput.value = appointmentIdValue;
-        }
+  setTimeout(() => {
+    const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
+    if (newCard) {
+      document.querySelectorAll('.customer-card').forEach(c => {
+        c.classList.remove('active-card');
+      });
 
-        idInput.value = result.id;
-      }
-
-      await loadCustomers?.();
-
-      setTimeout(() => {
-        const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
-        if (newCard) {
-          document.querySelectorAll('.customer-card').forEach(c => {
-            c.classList.remove('active-card');
-          });
-
-        } else {
-          console.warn('❌ Card not found for customer ID:', result.id);
-        }
-      }, 300);
+      newCard.classList.add('active-card'); 
     } else {
+      console.warn('❌ Card not found for customer ID:', result.id);
+    }
+  }, 300);
+}
+ else {
       console.error('❌ Save failed:', result);
     }
   } catch (err) {
