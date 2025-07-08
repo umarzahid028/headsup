@@ -107,7 +107,7 @@ class CustomerSaleController extends Controller
 
     // ✅ Clean redirect URL
     if (!empty($sale->appointment_id)) {
-        $redirectUrl = route('sales.index'); // Redirect to clean /sales route
+        $redirectUrl = route('sales.perosn'); // Redirect to clean /sales route
     } else {
         $redirectUrl = url()->previous(); // Stay on current page
     }
