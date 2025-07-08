@@ -1419,19 +1419,17 @@ function clearFormFields() {
 
 if (addCustomerBtn) {
   addCustomerBtn.addEventListener('click', () => {
-    const activeCard = document.querySelector('.active-card');
-    const form = document.getElementById('salesForm');
+    const activeCard = document.querySelector('.customer-card.active-card');
 
     if (activeCard) {
-      activeCard.classList.remove('active-card'); // 🛑 Pause animation
+      activeCard.classList.add('paused'); // 🛑 Pause animation via CSS
     }
 
+    const form = document.getElementById('salesForm');
     if (form) {
       form.reset();
-
       form.querySelector('input[name="id"]').value = '';
       form.querySelector('input[name="appointment_id"]').value = '';
-     
       form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
     }
   });
@@ -1439,8 +1437,13 @@ if (addCustomerBtn) {
 
 document.querySelectorAll('.customer-card').forEach(card => {
   card.addEventListener('click', () => {
-    document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
-    card.classList.add('active-card'); // ▶️ Resume animation
+    // Remove active/paused classes from all
+    document.querySelectorAll('.customer-card').forEach(c => {
+      c.classList.remove('active-card', 'paused');
+    });
+
+    // Add active class to clicked card (animation starts)
+    card.classList.add('active-card');
   });
 });
 

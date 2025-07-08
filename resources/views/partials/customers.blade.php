@@ -21,6 +21,14 @@
   animation: none !important;
   box-shadow: none !important;
 }
+.customer-card.active-card {
+  animation: pulse 1s infinite;
+}
+
+.customer-card.paused {
+  animation-play-state: paused !important;
+}
+
 
 </style>
 
