@@ -395,34 +395,46 @@ class CustomerSaleController extends Controller
 
     // app/Http/Controllers/SalesPersonController.php
 
- public function checkout(Request $request, $id)
+public function checkout(Request $request, $id)
 {
     $person = Queue::find($id);
 
     if (!$person) {
-        return redirect()->back()->with('error', 'Salesperson not found.');
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Salesperson not found.',
+        ], 404);
     }
 
     if (!$person->is_checked_in) {
-        return redirect()->back()->with('error', 'This salesperson is already checked out.');
+        return response()->json([
+            'status' => 'error',
+            'message' => 'This salesperson is already checked out.',
+        ], 400);
     }
 
-    // ✅ Check if this user has any active customer still assigned
+    // ❗ Block checkout if any customer is still assigned and not ended
     $hasCustomer = \App\Models\CustomerSale::where('user_id', $person->user_id)
-        ->whereNotNull('customer_id')
-        ->whereNull('ended_at') // means sale still open
+        ->whereNull('ended_at')
         ->exists();
 
     if ($hasCustomer) {
-        return redirect()->back()->with('error', 'Cannot check out while a customer is still assigned.');
+        return response()->json([
+            'status' => 'error',
+            'customer_exists' => true,
+            'message' => 'You cannot check out while a customer is still assigned.',
+        ], 403);
     }
 
-    // ✅ Proceed with checkout
+    // ✅ Proceed to checkout
     $person->is_checked_in = false;
     $person->checked_out_at = now();
     $person->save();
 
-    return redirect()->back()->with('success', 'Checked out successfully!');
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Checked out successfully!',
+    ]);
 }
 
 
