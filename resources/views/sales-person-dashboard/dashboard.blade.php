@@ -1443,34 +1443,39 @@ function clearFormFields() {
     const nameInput = document.getElementById('nameInput');
     const phoneInput = document.getElementById('phoneInput');
     const idInput = document.getElementById('customerId');
+    const appointmentIdInput = form.querySelector('input[name="appointment_id"]'); // ✅ new line
 
-    // 🔁 Bind click manually so every click re-applies data
     if (appointmentCard && form) {
       appointmentCard.addEventListener('click', () => {
-        // Clear values first to ensure update
+        // Clear values first
         nameInput.value = '';
         phoneInput.value = '';
         idInput.value = '';
+        if (appointmentIdInput) appointmentIdInput.value = ''; // ✅ clear first
 
-        // Small delay ensures DOM update
         setTimeout(() => {
           nameInput.value = appointmentCard.dataset.name || '';
           phoneInput.value = appointmentCard.dataset.phone || '';
           idInput.value = appointmentCard.dataset.customerId || '';
 
-          // Mark active
+          // ✅ Set the appointment ID from data-attribute
+          if (appointmentIdInput) {
+            appointmentIdInput.value = appointmentCard.dataset.appointmentId || '';
+          }
+
+          // Mark card as active
           document.querySelectorAll('.customer-card').forEach(card => {
             card.classList.remove('active-card');
           });
           appointmentCard.classList.add('active-card');
-        }, 50); // Delay helps ensure refresh on same value
+        }, 50);
       });
 
-      // Trigger first click automatically if needed
-      appointmentCard.click();
+      appointmentCard.click(); // auto-trigger
     }
   });
 </script>
+
 
 
 
