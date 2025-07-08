@@ -31,6 +31,21 @@
     justify-content: center;
     gap: 10px;
 }
+    <style>
+        .swal2-confirm {
+            background-color: #111827 !important;
+            color: #fff !important;
+            box-shadow: none !important;
+        }
+
+        .swal2-confirm:hover,
+        .swal2-confirm:focus,
+        .swal2-confirm:active {
+            background-color: #111827 !important;
+            color: #fff !important;
+            box-shadow: none !important;
+        }
+    </style>
 </style>
 <style>
 /* Custom confirm button */
