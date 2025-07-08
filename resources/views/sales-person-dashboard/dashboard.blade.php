@@ -1136,7 +1136,7 @@ const attachFieldListeners = () => {
  if (newCustomerBtn) {
   newCustomerBtn.addEventListener('click', async () => {
     if (!isMyTurn) {
-      console.log('⛔ Not your turn. Cannot take new customer.');
+      console.log(' Not your turn. Cannot take new customer.');
       return;
     }
 
@@ -1414,14 +1414,20 @@ function clearFormFields() {
 }
 
 
-  if (addCustomerBtn) {
-    addCustomerBtn.addEventListener('click', () => {
-      const activeCard = document.querySelector('.active-card');
-      if (activeCard) {
-        activeCard.classList.add('pause-animation');
-      }
-    });
-  }
+ if (addCustomerBtn) {
+  addCustomerBtn.addEventListener('click', () => {
+    const activeCard = document.querySelector('.active-card');
+    if (activeCard) {
+      activeCard.classList.add('pause-animation');
+    }
+
+    // ✅ Reset the form
+    const customerForm = document.querySelector('#customerForm');
+    if (customerForm) {
+      customerForm.reset();
+    }
+  });
+}
 
   bindCardClickEvents();
   bindAppointmentCardClick();
