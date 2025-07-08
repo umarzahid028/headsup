@@ -217,29 +217,36 @@
                     location.reload(); // Optional: reload page after checkout
                 });
             },
-            error: function (xhr) {
-                btn.prop('disabled', false);
-                btnText.removeClass('hidden');
-                spinner.addClass('hidden');
+           error: function (xhr) {
+    btn.prop('disabled', false);
+    btnText.removeClass('hidden');
+    spinner.addClass('hidden');
 
-                const res = xhr.responseJSON;
+    let res = {};
 
-                if (res?.customer_exists) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Active Customer Assigned',
-                        text: res.message || 'You cannot check out while a customer is still assigned.',
-                        confirmButtonColor: '#d33'
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: res?.message || 'Something went wrong. Please try again.',
-                        confirmButtonColor: '#d33'
-                    });
-                }
-            }
+    try {
+        res = xhr.responseJSON || JSON.parse(xhr.responseText);
+    } catch (e) {
+        res = {};
+    }
+
+    if (res.customer_exists) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Active Customer Assigned',
+            text: res.message || 'You cannot check out while a customer is still assigned.',
+            confirmButtonColor: '#d33'
+        });
+    } else {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: res.message || 'Something went wrong. Please try again.',
+            confirmButtonColor: '#d33'
+        });
+    }
+}
+
         });
     });
 </script>
