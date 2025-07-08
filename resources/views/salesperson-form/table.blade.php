@@ -116,7 +116,7 @@
             </a>
         @endif
 
-       @if(isset($person->latestQueue) && $person->latestQueue->checked_in_at && is_null($person->latestQueue->checked_out_at))
+     @if(isset($person->latestQueue) && $person->latestQueue->checked_in_at && is_null($person->latestQueue->checked_out_at))
     <form class="check-out-form"
           action="{{ route('sales.person.checkout', $person->latestQueue->id) }}"
           method="POST">
@@ -124,7 +124,13 @@
         <button type="submit"
                 class="check-out-btn text-white font-bold px-3 py-1.5 rounded bg-gray-800">
             <span class="btn-text">Check Out</span>
-            <svg class="btn-spinner hidden animate-spin h-4 w-4 text-white" ...>...</svg>
+            <svg class="btn-spinner hidden animate-spin h-4 w-4 text-white"
+                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10"
+                        stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
         </button>
     </form>
 @endif
@@ -145,7 +151,6 @@
             </div>
         </div>
     </div>
-<button onclick="Swal.fire('Working!', 'SweetAlert is working!', 'success')">Test Alert</button>
 
     {{-- ✅ SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -180,26 +185,13 @@
 </script>
 @endif
 
-<script>
-    error: function (xhr) {
-    console.log("Full error:", xhr);
-    console.log("responseText:", xhr.responseText);
-    console.log("responseJSON:", xhr.responseJSON);
-    
-    Swal.fire({
-        icon: 'error',
-        title: 'Error Fired!',
-        text: 'Testing SweetAlert error block.',
-    });
-}
-
-</script>
 
 <!-- Your jQuery code -->
 <script>
+    // Set CSRF token for all AJAX
     $.ajaxSetup({
         headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') || $('input[name="_token"]').val()
         }
     });
 
@@ -211,6 +203,7 @@
         const btnText = btn.find('.btn-text');
         const spinner = btn.find('.btn-spinner');
 
+        // Disable and show spinner
         btn.prop('disabled', true);
         btnText.addClass('hidden');
         spinner.removeClass('hidden');
@@ -227,7 +220,9 @@
                 Swal.fire({
                     icon: 'success',
                     title: 'Checked Out!',
-                    text: response.message || 'You have been checked out.',
+                    text: response.message || 'You have been checked out successfully!',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#111827'
                 }).then(() => {
                     location.reload();
                 });
@@ -237,18 +232,33 @@
                 btnText.removeClass('hidden');
                 spinner.addClass('hidden');
 
-                console.log("XHR Error:", xhr);
-                console.log("Text:", xhr.responseText);
+                let res = {};
+                try {
+                    res = xhr.responseJSON || JSON.parse(xhr.responseText);
+                } catch (e) {
+                    res = { message: 'Something went wrong. Please try again.' };
+                }
 
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: 'Something went wrong in error block.',
-                });
+                if (res.customer_exists) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Active Customer Assigned',
+                        text: res.message || 'You cannot check out while a customer is still assigned.',
+                        confirmButtonColor: '#d33'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: res.message || 'Something went wrong. Please try again.',
+                        confirmButtonColor: '#d33'
+                    });
+                }
             }
         });
     });
 </script>
+
 
 
 
