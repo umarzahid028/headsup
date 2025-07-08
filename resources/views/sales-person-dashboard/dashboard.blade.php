@@ -954,12 +954,13 @@ function updateNameInputState() {
         if (!res.is_checked_in) {
           Swal.fire({
             icon: 'error',
-            title: 'Not checked in!',
-            text: 'Please check in first.',
+            title: `Oops! You're not checked in`,
+            text: 'Please check in before proceeding.',
           });
           resetTakeButtonUI();
           return;
         }
+     
 
       if (!isMyTurn) {
         Swal.fire({
