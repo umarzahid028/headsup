@@ -420,13 +420,12 @@ public function checkout(Request $request, $id)
     if ($hasCustomer) {
        return response()->json([
     'status' => 'error',
-    'customer_exists' => true,
     'message' => 'You cannot check out while a customer is still assigned.',
-], 403);
+    'customer_exists' => true,
+]);
 
     }
 
-    // ✅ Proceed to checkout
     $person->is_checked_in = false;
     $person->checked_out_at = now();
     $person->save();
