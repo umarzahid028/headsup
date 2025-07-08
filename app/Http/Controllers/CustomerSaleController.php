@@ -395,34 +395,45 @@ class CustomerSaleController extends Controller
 
     // app/Http/Controllers/SalesPersonController.php
 
- public function checkout(Request $request, $id)
+ public function checkout(Request $request)
 {
-    $person = Queue::find($id);
+    $user = auth()->user();
 
-    if (!$person) {
-        return redirect()->back()->with('error', 'Salesperson not found.');
-    }
-
-    if (!$person->is_checked_in) {
-        return redirect()->back()->with('error', 'This salesperson is already checked out.');
-    }
-
-    // ✅ Check if salesperson has any active customer sale
-    $hasCustomer = \App\Models\CustomerSale::where('user_id', $person->user_id)
+    // ✅ Check if this user has an active assigned customer
+    $hasCustomer = \App\Models\CustomerSale::where('user_id', $user->id)
         ->whereNotNull('customer_id')
-        ->whereNull('ended_at') // Means: customer session still active
+        ->whereNull('ended_at') // still ongoing
         ->exists();
 
     if ($hasCustomer) {
-        return redirect()->back()->with('error', 'Cannot check out. This salesperson still has an assigned customer.');
+        return response()->json([
+            'status' => 'error',
+            'message' => 'You cannot check out while a customer is still assigned.',
+            'customer_exists' => true
+        ], 400);
     }
 
-    // ✅ Proceed to check out
-    $person->is_checked_in = false;
-    $person->checked_out_at = now();
-    $person->save();
+    // 🟢 Perform checkout
+    $queue = \App\Models\Queue::where('user_id', $user->id)
+        ->where('is_checked_in', true)
+        ->latest()
+        ->first();
 
-    return redirect()->back()->with('success', 'Checked out successfully!');
+    if (!$queue) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'No active check-in found.'
+        ], 404);
+    }
+
+    $queue->is_checked_in = false;
+    $queue->checked_out_at = now();
+    $queue->save();
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Checked out successfully!'
+    ]);
 }
 
 
