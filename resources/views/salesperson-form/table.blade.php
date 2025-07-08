@@ -181,6 +181,22 @@
 @endif
 
 <script>
+    error: function (xhr) {
+    console.log("Full error:", xhr);
+    console.log("responseText:", xhr.responseText);
+    console.log("responseJSON:", xhr.responseJSON);
+    
+    Swal.fire({
+        icon: 'error',
+        title: 'Error Fired!',
+        text: 'Testing SweetAlert error block.',
+    });
+}
+
+</script>
+
+<!-- Your jQuery code -->
+<script>
     $.ajaxSetup({
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -212,8 +228,6 @@
                     icon: 'success',
                     title: 'Checked Out!',
                     text: response.message || 'You have been checked out.',
-                    confirmButtonText: 'OK',
-                    confirmButtonColor: '#111827'
                 }).then(() => {
                     location.reload();
                 });
@@ -223,28 +237,19 @@
                 btnText.removeClass('hidden');
                 spinner.addClass('hidden');
 
-                let message = 'Something went wrong.';
-                let customerExists = false;
+                console.log("XHR Error:", xhr);
+                console.log("Text:", xhr.responseText);
 
-                try {
-                    const res = xhr.responseJSON || JSON.parse(xhr.responseText);
-                    message = res.message || message;
-                    customerExists = res.customer_exists || false;
-                } catch (e) {
-                    console.warn("Could not parse error response", e);
-                }
-
-                // ✅ Show SweetAlert based on response
                 Swal.fire({
-                    icon: customerExists ? 'warning' : 'error',
-                    title: customerExists ? 'Active Customer Assigned' : 'Error',
-                    text: message,
-                    confirmButtonColor: '#d33'
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'Something went wrong in error block.',
                 });
             }
         });
     });
 </script>
+
 
 
     {{-- ✅ Delete Confirmation --}}
