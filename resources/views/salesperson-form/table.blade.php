@@ -179,14 +179,12 @@
 @endif
 
 <script>
-    // ✅ Set CSRF token in AJAX headers
     $.ajaxSetup({
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     });
 
-    // ✅ Checkout form submission
     $(document).on('submit', '.check-out-form', function (e) {
         e.preventDefault();
 
@@ -195,7 +193,6 @@
         const btnText = btn.find('.btn-text');
         const spinner = btn.find('.btn-spinner');
 
-        // Disable button and show loader
         btn.prop('disabled', true);
         btnText.addClass('hidden');
         spinner.removeClass('hidden');
@@ -205,12 +202,10 @@
             method: 'POST',
             data: form.serialize(),
             success: function (response) {
-                // Re-enable button
                 btn.prop('disabled', false);
                 btnText.removeClass('hidden');
                 spinner.addClass('hidden');
 
-                // ✅ Show success alert
                 Swal.fire({
                     icon: 'success',
                     title: 'Checked Out!',
@@ -218,46 +213,32 @@
                     confirmButtonText: 'OK',
                     confirmButtonColor: '#111827'
                 }).then(() => {
-                    location.reload(); // Reload after success
+                    location.reload();
                 });
             },
             error: function (xhr) {
-                // Re-enable button
                 btn.prop('disabled', false);
                 btnText.removeClass('hidden');
                 spinner.addClass('hidden');
 
-                console.error("XHR Error:", xhr);
-
-                let res = {};
+                let message = 'Something went wrong.';
+                let customerExists = false;
 
                 try {
-                    // Try to parse JSON
-                    res = xhr.responseJSON || JSON.parse(xhr.responseText);
-                    console.log("Parsed error response:", res);
+                    const res = xhr.responseJSON || JSON.parse(xhr.responseText);
+                    message = res.message || message;
+                    customerExists = res.customer_exists || false;
                 } catch (e) {
-                    // Fallback if parsing fails
-                    console.error("Error parsing response JSON", e);
-                    res = { message: 'Something went wrong. Please try again.' };
+                    console.warn("Could not parse error response", e);
                 }
 
-                // ✅ Handle specific error case
-                if ($hasCustomer) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Active Customer Assigned',
-                        text: res.message || 'You cannot check out while a customer is still assigned.',
-                        confirmButtonColor: '#d33'
-                    });
-                } else {
-                    // ✅ General error
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: res.message || 'Something went wrong. Please try again.',
-                        confirmButtonColor: '#d33'
-                    });
-                }
+                // ✅ Show SweetAlert based on response
+                Swal.fire({
+                    icon: customerExists ? 'warning' : 'error',
+                    title: customerExists ? 'Active Customer Assigned' : 'Error',
+                    text: message,
+                    confirmButtonColor: '#d33'
+                });
             }
         });
     });
