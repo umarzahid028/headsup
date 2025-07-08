@@ -1420,9 +1420,8 @@ function clearFormFields() {
 if (addCustomerBtn) {
   addCustomerBtn.addEventListener('click', () => {
     const activeCard = document.querySelector('.customer-card.active-card');
-
     if (activeCard) {
-      activeCard.classList.add('paused'); // 🛑 Pause animation via CSS
+      activeCard.classList.add('paused'); // 🛑 Pause animation
     }
 
     const form = document.getElementById('salesForm');
@@ -1435,15 +1434,13 @@ if (addCustomerBtn) {
   });
 }
 
+// 🟢 Resume animation on card click
 document.querySelectorAll('.customer-card').forEach(card => {
   card.addEventListener('click', () => {
-    // Remove active/paused classes from all
     document.querySelectorAll('.customer-card').forEach(c => {
       c.classList.remove('active-card', 'paused');
     });
-
-    // Add active class to clicked card (animation starts)
-    card.classList.add('active-card');
+    card.classList.add('active-card'); // Animation starts
   });
 });
 
