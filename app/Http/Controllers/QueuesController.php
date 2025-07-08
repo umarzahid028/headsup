@@ -57,6 +57,20 @@ public function dashboardstore(Request $request)
         ], 500);
     }
 }
+
+public function checkUserCheckIn(Request $request)
+{
+    $user = Auth::user();
+
+    $latestQueue = Queue::where('user_id', $user->id)->latest('created_at')->first();
+
+    $checkedIn = $latestQueue && $latestQueue->is_checked_in;
+
+    return response()->json([
+        'checked_in' => $checkedIn
+    ]);
+}
+
 public function takeTurn(Request $request)
 {
     $user = Auth::user();

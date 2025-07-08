@@ -1499,66 +1499,82 @@ if (addCustomerBtn) {
   <!-- customer form -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <script>
-    document.getElementById('salesForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
+<script>
+  document.getElementById('salesForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
 
-      const form = e.target;
-      const formData = new FormData(form);
+    const form = e.target;
+    const formData = new FormData(form);
 
-      // Show processing alert
+    try {
+      // ✅ First: Check if user is checked in
+      const checkInRes = await fetch("{{ route('check.user.checkin') }}", {
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Accept': 'application/json'
+        }
+      });
+
+      const checkInJson = await checkInRes.json();
+
+      if (!checkInJson.checked_in) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Not Checked In',
+          text: 'You must check in before submitting this form.',
+        });
+        return; // Stop submission
+      }
+
+      // ✅ Proceed with actual form submission
       Swal.fire({
         title: 'Processing...',
         text: 'Please wait while we save your data.',
         allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
+        didOpen: () => Swal.showLoading()
       });
 
-      try {
-        const response = await fetch("{{ route('customer.sales.store') }}", {
-          method: 'POST',
-          headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json'
-          },
-          body: formData
+      const response = await fetch("{{ route('customer.sales.store') }}", {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Accept': 'application/json'
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: result.message || 'Form submitted successfully',
+          timer: 2000,
+          showConfirmButton: true,
+          willClose: () => {
+            window.location.href = result.redirect;
+          }
         });
 
-        const result = await response.json();
-
-        if (response.ok) {
-          // Show success message, then redirect
-          Swal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: result.message || 'Form submitted successfully',
-            timer: 2000,
-            showConfirmButton: true,
-            willClose: () => {
-              window.location.href = result.redirect;
-            }
-          });
-
-          form.reset(); // Optional
-        } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: result.message || 'Something went wrong!',
-          });
-        }
-
-      } catch (err) {
+        form.reset(); // Optional
+      } else {
         Swal.fire({
           icon: 'error',
-          title: 'Error',
-          text: 'Request failed. Please try again.'
+          title: 'Oops...',
+          text: result.message || 'Something went wrong!',
         });
       }
-    });
-  </script>
+
+    } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Request failed. Please try again.'
+      });
+    }
+  });
+</script>
 
 
 

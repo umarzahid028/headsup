@@ -54,6 +54,7 @@ Route::post('/sales-person', [QueuesController::class, 'dashboardstore'])->name(
 Route::get('/check-in-status', [QueuesController::class, 'checkInStatus']);
 //Sales person status
 Route::get('/status', [StatusController::class, 'showStatus']);
+Route::get('/check-user-checkin', [QueuesController::class, 'checkUserCheckIn'])->name('check.user.checkin');
 
 // Active tokens ke liye API (AJAX se call hoga, auth & role middleware lagao)
 Route::get('/queue-list', [TokenController::class, 'queuelist'])->name('tokens.active');
