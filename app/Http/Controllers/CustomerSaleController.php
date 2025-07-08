@@ -108,18 +108,18 @@ class CustomerSaleController extends Controller
 
         $redirectUrl = url()->previous();
 
-if (!empty($sale->appointment_id)) {
-    $parsedUrl = parse_url($redirectUrl);
-    parse_str($parsedUrl['query'] ?? '', $query);
+        if (!empty($sale->appointment_id)) {
+            $parsedUrl = parse_url($redirectUrl);
+            parse_str($parsedUrl['query'] ?? '', $query);
 
-    unset($query['id']); 
+            unset($query['id']);
 
-    $redirectUrl = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . $parsedUrl['path'];
+            $redirectUrl = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . $parsedUrl['path'];
 
-    if (!empty($query)) {
-        $redirectUrl .= '?' . http_build_query($query);
-    }
-}
+            if (!empty($query)) {
+                $redirectUrl .= '?' . http_build_query($query);
+            }
+        }
         return response()->json([
             'status'   => 'success',
             'message'  => 'Customer sale data saved successfully!',
@@ -159,18 +159,18 @@ if (!empty($sale->appointment_id)) {
             ], 403);
         }
 
-   $isCheckedIn = User::whereHas('queues', function ($query) {
-    $query->where('is_checked_in', true)
-          ->whereNull('checked_out_at') // or where('is_checked_out', false)
-          ->whereDate('created_at', today());
-})
-->get();
+        $isCheckedIn = User::whereHas('queues', function ($query) {
+            $query->where('is_checked_in', true)
+                ->whereNull('checked_out_at') // or where('is_checked_out', false)
+                ->whereDate('created_at', today());
+        })
+            ->get();
 
 
         if (!$isCheckedIn) {
             return response()->json([
                 'message' => 'The selected sales person is not checked-in.',
-            ], 422); 
+            ], 422);
         }
 
         $customer->user_id = $request->new_user_id;
@@ -206,19 +206,19 @@ if (!empty($sale->appointment_id)) {
             ->pluck('user_id')
             ->unique();
 
-$salespeople = User::role('Sales person')
-    ->whereIn('id', function ($subquery) {
-        $subquery->select('user_id')
-            ->from('queues as q1')
-            ->whereRaw('q1.id = (
+        $salespeople = User::role('Sales person')
+            ->whereIn('id', function ($subquery) {
+                $subquery->select('user_id')
+                    ->from('queues as q1')
+                    ->whereRaw('q1.id = (
                 SELECT q2.id FROM queues as q2
                 WHERE q2.user_id = q1.user_id
                 ORDER BY q2.created_at DESC
                 LIMIT 1
             )')
-            ->whereNull('q1.checked_out_at'); // only un-checked queues
-    })
-    ->get();
+                    ->whereNull('q1.checked_out_at'); // only un-checked queues
+            })
+            ->get();
 
 
         return view('t/o-customers.customer', compact('customers', 'salespeople'));
