@@ -177,14 +177,16 @@
 @endif
 
 
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
     $.ajaxSetup({
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     });
 
-    $(document).on('submit', '.check-out-form', function(e) {
+    $(document).on('submit', '.check-out-form', function (e) {
         e.preventDefault();
 
         const form = $(this);
@@ -200,7 +202,7 @@
             url: form.attr('action'),
             method: 'POST',
             data: form.serialize(),
-            success: function(response) {
+            success: function (response) {
                 btn.prop('disabled', false);
                 btnText.removeClass('hidden');
                 spinner.addClass('hidden');
@@ -210,13 +212,12 @@
                     title: 'Checked Out!',
                     text: response.message || 'You have been checked out.',
                     confirmButtonText: 'OK',
-                    confirmButtonColor: '#111827',
-                    customClass: {
-                        confirmButton: 'custom-confirm-button'
-                    }
+                    confirmButtonColor: '#111827'
+                }).then(() => {
+                    location.reload(); // Optional: reload page after checkout
                 });
             },
-            error: function(xhr) {
+            error: function (xhr) {
                 btn.prop('disabled', false);
                 btnText.removeClass('hidden');
                 spinner.addClass('hidden');
@@ -226,14 +227,16 @@
                 if (res?.customer_exists) {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Customer Already Assigned',
-                        text: res.message || 'You already have a customer assigned.',
+                        title: 'Active Customer Assigned',
+                        text: res.message || 'You cannot check out while a customer is still assigned.',
+                        confirmButtonColor: '#d33'
                     });
                 } else {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: 'Something went wrong. Please try again.',
+                        text: res?.message || 'Something went wrong. Please try again.',
+                        confirmButtonColor: '#d33'
                     });
                 }
             }
