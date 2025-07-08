@@ -1424,7 +1424,7 @@ function clearFormFields() {
     // ✅ Reset the form
     const customerForm = document.querySelector('#customerForm');
     if (customerForm) {
-      customerForm.reset();
+      form.reset();
     }
   });
 }
