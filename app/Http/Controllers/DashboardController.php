@@ -97,17 +97,16 @@ $salespeople = User::role('Sales person')
     ->whereIn('id', function ($subquery) {
         $subquery->select('user_id')
             ->from('queues as q1')
-            ->whereDate('q1.created_at', now())
             ->whereRaw('q1.id = (
                 SELECT q2.id FROM queues as q2
                 WHERE q2.user_id = q1.user_id
-                AND DATE(q2.created_at) = CURDATE()
                 ORDER BY q2.created_at DESC
                 LIMIT 1
             )')
-            ->whereNull('q1.checked_out_at'); 
+            ->whereNull('q1.checked_out_at'); // only un-checked queues
     })
     ->get();
+
         $isCheckedIn = Queue::where('user_id', $user->id)
             ->where('is_checked_in', true)
             ->exists();
