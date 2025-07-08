@@ -1,36 +1,28 @@
 <style>
-/* Customer card activate hone par animation */
-@keyframes fadeInSlide {
+  .active-card {
+  animation: pulseActive 1s infinite;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+}
+
+@keyframes pulseActive {
   0% {
-    opacity: 0;
-    transform: translateY(10px);
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
   }
   100% {
-    opacity: 1;
-    transform: translateY(0);
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
   }
 }
 
-/* Jab card active ho */
-.customer-card.active-card {
-  animation: fadeInSlide 0.3s ease-in-out;
-  border: 2px solid #007bff;
-  background-color: #e8f0fe;
-  transition: all 0.3s;
-}
-
-/* Jab aap "pause-animation" class lagayein */
-.customer-card.pause-animation {
+.pause-animation {
   animation: none !important;
+  box-shadow: none !important;
 }
 
-/* Hover effect */
-.customer-card:hover {
-  cursor: pointer;
-  box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
-}
 </style>
-
 
 
 <div id="customer-list">
