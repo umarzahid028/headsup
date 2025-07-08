@@ -395,27 +395,36 @@ class CustomerSaleController extends Controller
 
     // app/Http/Controllers/SalesPersonController.php
 
-    public function checkout(Request $request, $id)
-    {
-        $person = Queue::find($id);
-        if (!$person->is_checked_in) {
-            //     return response()->json([
-            //         'message' => 'This salesperson is already checked out.'
-            //     ], 400);
+ public function checkout(Request $request, $id)
+{
+    $person = Queue::find($id);
 
-            return redirect()->back()->with('error', 'This salesperson is already checked out.');
-        }
-
-        $person->is_checked_in = false;
-        $person->checked_out_at = now();
-        $person->save();
-
-        // return response()->json([
-        //     'message' => 'Checked out successfully!',
-        // ]);
-
-        return redirect()->back()->with('success', 'Checked out successfully!');
+    if (!$person) {
+        return redirect()->back()->with('error', 'Salesperson not found.');
     }
+
+    if (!$person->is_checked_in) {
+        return redirect()->back()->with('error', 'This salesperson is already checked out.');
+    }
+
+    // ✅ Check if salesperson has any active customer sale
+    $hasCustomer = \App\Models\CustomerSale::where('user_id', $person->user_id)
+        ->whereNotNull('customer_id')
+        ->whereNull('ended_at') // Means: customer session still active
+        ->exists();
+
+    if ($hasCustomer) {
+        return redirect()->back()->with('error', 'Cannot check out. This salesperson still has an assigned customer.');
+    }
+
+    // ✅ Proceed to check out
+    $person->is_checked_in = false;
+    $person->checked_out_at = now();
+    $person->save();
+
+    return redirect()->back()->with('success', 'Checked out successfully!');
+}
+
 
     public function saveArrivalTime(Request $request)
     {

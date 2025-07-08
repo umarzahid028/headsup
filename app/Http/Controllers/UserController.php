@@ -73,13 +73,21 @@ public function saletable()
     $salespersons = User::whereHas('roles', function ($q) {
             $q->whereIn('name', ['Sales person', 'Sales Manager']);
         })
-        ->with(['roles', 'customerSales','latestQueue']) 
-        ->withCount('customerSales') 
+        ->with(['roles', 'customerSales', 'latestQueue'])
+        ->withCount('customerSales')
         ->latest()
-        ->get();
+        ->get()
+        ->map(function ($user) {
+            // ✅ Check if any sale has customer_id (i.e. customer assigned)
+            $user->has_customer = $user->customerSales->contains(function ($sale) {
+                return !empty($sale->customer_id);
+            });
+            return $user;
+        });
 
     return view('salesperson-form.table', compact('salespersons'));
 }
+
 
 
 
