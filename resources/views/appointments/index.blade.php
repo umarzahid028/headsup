@@ -199,42 +199,7 @@
     @push('scripts')
  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
- <script>
-document.querySelectorAll('.check-in-required').forEach(button => {
-    button.addEventListener('click', async function (e) {
-        e.preventDefault();
 
-        try {
-            const response = await fetch("{{ route('check.user.checkin') }}", {
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                }
-            });
-
-            const data = await response.json();
-
-            if (data.checked_in) {
-                // ✅ User is checked in, proceed to route
-                window.location.href = this.dataset.url;
-            } else {
-                // ❌ User is NOT checked in
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Not Checked In',
-                    text: 'You must check in before proceeding to this customer.',
-                });
-            }
-        } catch (err) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Could not verify check-in status. Try again.',
-            });
-        }
-    });
-});
-</script>
 
     @endpush
 </x-app-layout>
