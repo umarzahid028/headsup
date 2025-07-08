@@ -417,15 +417,16 @@ public function checkout(Request $request, $id)
         ->whereNull('ended_at')
         ->exists();
 
-   if ($hasCustomer) {
-    return response()->json([
-        'status' => 'error',
-        'message' => 'You cannot check out while a customer is still assigned.',
-        'customer_exists' => true,
-    ], 403); 
-}
+    if ($hasCustomer) {
+       return response()->json([
+    'status' => 'error',
+    'customer_exists' => true,
+    'message' => 'You cannot check out while a customer is still assigned.',
+], 403);
 
+    }
 
+    // ✅ Proceed to checkout
     $person->is_checked_in = false;
     $person->checked_out_at = now();
     $person->save();
