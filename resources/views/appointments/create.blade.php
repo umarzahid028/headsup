@@ -119,55 +119,77 @@
     @endpush
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const form = document.getElementById('appointment-form');
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('appointment-form');
 
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
 
+        try {
+            // 🔍 First, check if user is checked in
+            const checkinResponse = await fetch("{{ route('check.user.checkin') }}", {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const checkinData = await checkinResponse.json();
+
+            if (!checkinData.checked_in) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Not Checked In',
+                    text: 'You must check in before booking an appointment.'
+                });
+                return; // ❌ Stop form submission
+            }
+
+            // ✅ If checked in, proceed with appointment submission
             const formData = new FormData(form);
 
-            fetch('/appointments', {
+            const response = await fetch('/appointments', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
                     'Accept': 'application/json'
                 },
                 body: formData
-            })
-            .then(response => {
-                if (!response.ok) return response.json().then(err => Promise.reject(err));
-                return response.json();
-            })
-          .then(data => {
-  Swal.fire({
-    icon: 'success',
-    title: `Success!`,
-    html: `${data.message}`,
-    showConfirmButton: true,
-});
-
-
-
-
-                setTimeout(() => {
-                    window.location.href = '/appointments';
-                }, 2000);
-            })
-            .catch(error => {
-                let errorMsg = "Something went wrong.";
-                if (error?.errors) {
-                    errorMsg = Object.values(error.errors).flat().join("<br>");
-                }
-
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Validation Error',
-                    html: errorMsg
-                });
             });
-        });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw err;
+            }
+
+            const data = await response.json();
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                html: `${data.message}`,
+                showConfirmButton: true
+            });
+
+            setTimeout(() => {
+                window.location.href = '/appointments';
+            }, 2000);
+
+        } catch (error) {
+            let errorMsg = "Something went wrong.";
+            if (error?.errors) {
+                errorMsg = Object.values(error.errors).flat().join("<br>");
+            }
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Validation Error',
+                html: errorMsg
+            });
+        }
     });
+});
 </script>
+
 
 </x-app-layout>
