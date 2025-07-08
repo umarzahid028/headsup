@@ -156,8 +156,37 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
+    <!-- ✅ Flash Messages -->
+@if (session('success'))
+<script>
+    Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: @json(session('success')), 
+        confirmButtonColor: '#111827',
+        customClass: {
+            confirmButton: 'custom-confirm-button'
+        }
+    });
+</script>
+@endif
+
+@if (session('error'))
+<script>
+    Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: @json(session('error')),
+        confirmButtonColor: '#d33',
+        customClass: {
+            confirmButton: 'custom-confirm-button'
+        }
+    });
+</script>
+@endif
 
  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+ <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <!-- Your jQuery code -->
 <script>
