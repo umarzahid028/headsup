@@ -496,22 +496,15 @@ function clearFormFields() {
 
 
  function applyActiveCard() {
-  if (loadedFromAppointment) return;
+  if (loadedFromAppointment) return; 
 
   const savedId = localStorage.getItem('activeCustomerId');
   const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
 
   if (!savedCard || savedCard.id === 'appointment-card') return;
 
-  // 1. Remove previous active-card from all
-  document.querySelectorAll('.customer-card').forEach(c => {
-    c.classList.remove('active-card', 'pause-animation');
-  });
-
-  // 2. Add animation class to the matched card
   savedCard.classList.add('active-card');
 
-  // 3. Load its data into the form (if not already)
   if (!idInput.value || idInput.value === savedId) {
     clearFormFields();
 
@@ -534,6 +527,7 @@ function clearFormFields() {
     attachFieldListeners();
   }
 }
+
 
   if (addCustomerBtn) {
     addCustomerBtn.addEventListener('click', () => {
