@@ -106,20 +106,23 @@ class CustomerSaleController extends Controller
             $duration = $start->diff($end)->format('%Hh %Im %Ss');
         }
 
-        $redirectUrl = url()->previous();
+  $redirectUrl = url()->previous();
 
-        if (!empty($sale->appointment_id)) {
-            $parsedUrl = parse_url($redirectUrl);
-            parse_str($parsedUrl['query'] ?? '', $query);
+if (!empty($sale->appointment_id)) {
+    $parsedUrl = parse_url($redirectUrl);
+    parse_str($parsedUrl['query'] ?? '', $query);
 
-            unset($query['id']);
+    unset($query['id']);
 
-            $redirectUrl = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . $parsedUrl['path'];
+    // Use request()->getSchemeAndHttpHost() instead of manually getting scheme & host
+    $cleanPath = $parsedUrl['path'] ?? '/';
+    $redirectUrl = request()->getSchemeAndHttpHost() . $cleanPath;
 
-            if (!empty($query)) {
-                $redirectUrl .= '?' . http_build_query($query);
-            }
-        }
+    if (!empty($query)) {
+        $redirectUrl .= '?' . http_build_query($query);
+    }
+}
+
         return response()->json([
             'status'   => 'success',
             'message'  => 'Customer sale data saved successfully!',

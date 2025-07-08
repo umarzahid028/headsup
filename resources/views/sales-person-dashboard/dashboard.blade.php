@@ -1523,7 +1523,6 @@ function clearFormFields() {
             timer: 2000,
             showConfirmButton: true,
             willClose: () => {
-              // 👇 Redirect after SweetAlert closes
               window.location.href = result.redirect;
             }
           });
