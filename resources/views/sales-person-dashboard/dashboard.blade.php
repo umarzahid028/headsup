@@ -1174,7 +1174,6 @@ async function autoSaveForm(allowWithoutId = false) {
   const hasAppointment = appointmentInput && appointmentInput.value.trim() !== '';
   const hasCustomerId = idInput && idInput.value.trim() !== '';
 
-  // ✅ Block auto-save if no ID and no appointment, unless explicitly allowed
   if (!hasCustomerId && !hasAppointment && !allowWithoutId) {
     console.log('🚫 No customer ID or appointment — skipping auto-save');
     return;
@@ -1207,10 +1206,6 @@ async function autoSaveForm(allowWithoutId = false) {
   }
 
   customerSavedThisTurn = true;
-
-    autosaveEnabled = true;
-  attachFieldListeners();
-  // ✅ Preserve appointment_id
   const appointmentIdValue = appointmentInput?.value;
 
   if (allowWithoutId && !hasCustomerId) {
@@ -1362,14 +1357,12 @@ function clearFormFields() {
   };
 
 
-  // 🧹 Clear hidden fields (except id, user_id, appointment_id)
   form.querySelectorAll('input[type="hidden"]').forEach(el => {
     if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
       el.value = '';
     }
   });
 
-  // ✅ Restore preserved values
   if (appointmentInput && preservedValues.appointment_id) {
     appointmentInput.value = preservedValues.appointment_id;
   }
@@ -1445,27 +1438,24 @@ function clearFormFields() {
     const nameInput = document.getElementById('nameInput');
     const phoneInput = document.getElementById('phoneInput');
     const idInput = document.getElementById('customerId');
-    const appointmentIdInput = form.querySelector('input[name="appointment_id"]'); // ✅ new line
+    const appointmentIdInput = form.querySelector('input[name="appointment_id"]'); 
 
     if (appointmentCard && form) {
       appointmentCard.addEventListener('click', () => {
-        // Clear values first
         nameInput.value = '';
         phoneInput.value = '';
         idInput.value = '';
-        if (appointmentIdInput) appointmentIdInput.value = ''; // ✅ clear first
+        if (appointmentIdInput) appointmentIdInput.value = ''; 
 
         setTimeout(() => {
           nameInput.value = appointmentCard.dataset.name || '';
           phoneInput.value = appointmentCard.dataset.phone || '';
           idInput.value = appointmentCard.dataset.customerId || '';
 
-          // ✅ Set the appointment ID from data-attribute
           if (appointmentIdInput) {
             appointmentIdInput.value = appointmentCard.dataset.appointmentId || '';
           }
 
-          // Mark card as active
           document.querySelectorAll('.customer-card').forEach(card => {
             card.classList.remove('active-card');
           });
@@ -1473,7 +1463,7 @@ function clearFormFields() {
         }, 50);
       });
 
-      appointmentCard.click(); // auto-trigger
+      appointmentCard.click(); 
     }
   });
 </script>
