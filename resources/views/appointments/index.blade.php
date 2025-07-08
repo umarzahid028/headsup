@@ -119,15 +119,18 @@
                                         <div class="flex flex-wrap gap-3 items-center">
                                             @if (!in_array($appt->status, ['completed', 'canceled']))
                                                 @if (Auth::user()->hasRole('Sales person') && Auth::id() == $appt->salesperson_id)
-                                                   <form action="{{ route('appointment.arrive') }}" method="POST" style="display: inline;">
+ <form id="arrive-form-{{ $appt->id }}" action="{{ route('appointment.arrive') }}" method="POST" style="display:inline;">
     @csrf
     <input type="hidden" name="appointment_id" value="{{ $appt->id }}">
-    <button type="submit"
+    <button type="button" 
             class="bg-gray-800 text-white px-3 py-1.5 rounded check-in-required"
-            >
+            data-type="form"
+            data-id="{{ $appt->id }}">
         Customer Arrive
     </button>
 </form>
+
+
 
 
                                                     <a href="{{ route('appointments.edit', ['appointment' => $appt->id]) }}"
@@ -138,11 +141,12 @@
                                                 @endif
 
                                                 @if (Auth::user()->hasRole(['Admin', 'Sales Manager']))
-                                                    <a href="{{ route('sales.perosn', ['id' => $appt->id]) }}"
-                                                       class="bg-gray-800 text-white px-3 py-1.5 rounded rounded check-in-required"
-                                                       >
-                                                        Customer Arrive
-                                                    </a>
+                                                  <a href="{{ route('sales.perosn', ['id' => $appt->id]) }}"
+   class="bg-gray-800 text-white px-3 py-1.5 rounded check-in-required"
+   data-type="link"
+   data-url="{{ route('sales.perosn', ['id' => $appt->id]) }}">
+    Customer Arrive
+</a>
 
                                                     <a href="{{ route('appointments.edit', ['appointment' => $appt->id]) }}"
                                                        class="bg-gray-800 text-white px-3 py-1.5 rounded"
@@ -200,8 +204,8 @@
  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-document.querySelectorAll('.check-in-required').forEach(button => {
-    button.addEventListener('click', async function (e) {
+document.querySelectorAll('.check-in-required').forEach(el => {
+    el.addEventListener('click', async function (e) {
         e.preventDefault();
 
         try {
@@ -215,26 +219,33 @@ document.querySelectorAll('.check-in-required').forEach(button => {
             const data = await response.json();
 
             if (data.checked_in) {
-                // ✅ User is checked in, proceed to route
-                window.location.href = button.dataset.url;
+                if (el.dataset.type === 'link') {
+                    // ✅ Redirect to link
+                    window.location.href = el.dataset.url;
+                } else if (el.dataset.type === 'form') {
+                    // ✅ Submit the form manually
+                    const formId = `arrive-form-${el.dataset.id}`;
+                    document.getElementById(formId).submit();
+                }
             } else {
-                // ❌ User is NOT checked in
+                // ❌ Not checked in
                 Swal.fire({
                     icon: 'warning',
                     title: 'Not Checked In',
-                    text: 'You must check in before proceeding to this customer.',
+                    text: 'You must check in before proceeding.',
                 });
             }
         } catch (err) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Could not verify check-in status. Try again.',
+                text: 'Could not verify check-in status.',
             });
         }
     });
 });
 </script>
+
 
 
     @endpush
