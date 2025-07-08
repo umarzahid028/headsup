@@ -413,7 +413,6 @@ public function checkout(Request $request, $id)
         ], 400);
     }
 
-    // ❗ Block checkout if any customer is still assigned and not ended
     $hasCustomer = \App\Models\CustomerSale::where('user_id', $person->user_id)
         ->whereNull('ended_at')
         ->exists();

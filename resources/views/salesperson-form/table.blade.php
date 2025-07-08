@@ -242,7 +242,7 @@
                 }
 
                 // ✅ Handle specific error case
-                if (res.customer_exists) {
+                if ($hasCustomer) {
                     Swal.fire({
                         icon: 'warning',
                         title: 'Active Customer Assigned',
