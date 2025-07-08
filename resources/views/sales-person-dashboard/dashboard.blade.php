@@ -1418,14 +1418,21 @@ function clearFormFields() {
 }
 
 
-  if (addCustomerBtn) {
-    addCustomerBtn.addEventListener('click', () => {
-      const activeCard = document.querySelector('.active-card');
-      if (activeCard) {
-        activeCard.classList.add('pause-animation');
-      }
-    });
-  }
+if (addCustomerBtn) {
+  addCustomerBtn.addEventListener('click', () => {
+    const activeCard = document.querySelector('.active-card');
+    const form = document.getElementById('salesForm'); 
+
+    if (activeCard) {
+      activeCard.classList.add('pause-animation');
+    }
+
+    if (form) {
+      form.reset();
+    }
+  });
+}
+
 
   bindCardClickEvents();
   bindAppointmentCardClick();
