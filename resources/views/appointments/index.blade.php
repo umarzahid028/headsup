@@ -58,7 +58,7 @@
     @csrf
     <input type="hidden" name="appointment_id" value="{{ $appt->id }}">
     <button type="submit"
-            class="bg-gray-800 text-white px-3 py-1.5 rounded "
+            class="bg-gray-800 text-white px-3 py-1.5 rounded check-in-required"
             >
         Customer Arrive
     </button>
