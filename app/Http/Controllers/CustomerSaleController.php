@@ -395,43 +395,34 @@ class CustomerSaleController extends Controller
 
     // app/Http/Controllers/SalesPersonController.php
 
- public function checkout(Request $request)
+ public function checkout(Request $request, $id)
 {
-    $user = auth()->user();
+    $person = Queue::find($id);
 
-    // ✅ Step 1: Find active check-in
-    $queue = \App\Models\Queue::where('user_id', $user->id)
-        ->where('is_checked_in', true)
-        ->latest()
-        ->first();
-
-    if (!$queue) {
-        return response()->json([
-            'message' => 'You are not currently checked in.'
-        ], 404);
+    if (!$person) {
+        return redirect()->back()->with('error', 'Salesperson not found.');
     }
 
-    // ✅ Step 2: Check if user has any active customer (not ended)
-    $hasCustomer = \App\Models\CustomerSale::where('user_id', $user->id)
+    if (!$person->is_checked_in) {
+        return redirect()->back()->with('error', 'This salesperson is already checked out.');
+    }
+
+    // ✅ Check if this user has any active customer still assigned
+    $hasCustomer = \App\Models\CustomerSale::where('user_id', $person->user_id)
         ->whereNotNull('customer_id')
-        ->whereNull('ended_at') // means customer is still being handled
+        ->whereNull('ended_at') // means sale still open
         ->exists();
 
     if ($hasCustomer) {
-        return response()->json([
-            'customer_exists' => true,
-            'message' => 'You cannot check out while a customer is still assigned.'
-        ], 400);
+        return redirect()->back()->with('error', 'Cannot check out while a customer is still assigned.');
     }
 
-    // ✅ Step 3: Proceed with checkout
-    $queue->is_checked_in = false;
-    $queue->checked_out_at = now();
-    $queue->save();
+    // ✅ Proceed with checkout
+    $person->is_checked_in = false;
+    $person->checked_out_at = now();
+    $person->save();
 
-    return response()->json([
-        'message' => 'Checked out successfully!'
-    ]);
+    return redirect()->back()->with('success', 'Checked out successfully!');
 }
 
 
