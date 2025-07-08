@@ -74,7 +74,7 @@
 
                                                 @if (Auth::user()->hasRole(['Admin', 'Sales Manager']))
                                                     <a href="{{ route('sales.perosn', ['id' => $appt->id]) }}"
-                                                       class="bg-gray-800 text-white px-3 py-1.5 rounded "
+                                                       class="bg-gray-800 text-white px-3 py-1.5 rounded rounded check-in-required"
                                                        >
                                                         Customer Arrive
                                                     </a>
@@ -133,6 +133,42 @@
 
     @push('scripts')
 
- 
+ <script>
+document.querySelectorAll('.check-in-required').forEach(button => {
+    button.addEventListener('click', async function (e) {
+        e.preventDefault();
+
+        try {
+            const response = await fetch("{{ route('check.user.checkin') }}", {
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.checked_in) {
+                // ✅ User is checked in, proceed to route
+                window.location.href = this.dataset.url;
+            } else {
+                // ❌ User is NOT checked in
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Not Checked In',
+                    text: 'You must check in before proceeding to this customer.',
+                });
+            }
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Could not verify check-in status. Try again.',
+            });
+        }
+    });
+});
+</script>
+
     @endpush
 </x-app-layout>
