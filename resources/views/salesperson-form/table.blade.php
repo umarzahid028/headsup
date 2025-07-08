@@ -179,12 +179,14 @@
 @endif
 
 <script>
+    // ✅ Set CSRF token in AJAX headers
     $.ajaxSetup({
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     });
 
+    // ✅ Checkout form submission
     $(document).on('submit', '.check-out-form', function (e) {
         e.preventDefault();
 
@@ -193,6 +195,7 @@
         const btnText = btn.find('.btn-text');
         const spinner = btn.find('.btn-spinner');
 
+        // Disable button and show loader
         btn.prop('disabled', true);
         btnText.addClass('hidden');
         spinner.removeClass('hidden');
@@ -202,10 +205,12 @@
             method: 'POST',
             data: form.serialize(),
             success: function (response) {
+                // Re-enable button
                 btn.prop('disabled', false);
                 btnText.removeClass('hidden');
                 spinner.addClass('hidden');
 
+                // ✅ Show success alert
                 Swal.fire({
                     icon: 'success',
                     title: 'Checked Out!',
@@ -213,39 +218,47 @@
                     confirmButtonText: 'OK',
                     confirmButtonColor: '#111827'
                 }).then(() => {
-                    location.reload(); // Optional: reload page after checkout
+                    location.reload(); // Reload after success
                 });
             },
-           error: function (xhr) {
-    btn.prop('disabled', false);
-    btnText.removeClass('hidden');
-    spinner.addClass('hidden');
+            error: function (xhr) {
+                // Re-enable button
+                btn.prop('disabled', false);
+                btnText.removeClass('hidden');
+                spinner.addClass('hidden');
 
-    let res = {};
+                console.error("XHR Error:", xhr);
 
-    try {
-        res = xhr.responseJSON || JSON.parse(xhr.responseText);
-    } catch (e) {
-        res = {};
-    }
+                let res = {};
 
-    if (res.customer_exists) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Active Customer Assigned',
-            text: res.message || 'You cannot check out while a customer is still assigned.',
-            confirmButtonColor: '#d33'
-        });
-    } else {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: res.message || 'Something went wrong. Please try again.',
-            confirmButtonColor: '#d33'
-        });
-    }
-}
+                try {
+                    // Try to parse JSON
+                    res = xhr.responseJSON || JSON.parse(xhr.responseText);
+                    console.log("Parsed error response:", res);
+                } catch (e) {
+                    // Fallback if parsing fails
+                    console.error("Error parsing response JSON", e);
+                    res = { message: 'Something went wrong. Please try again.' };
+                }
 
+                // ✅ Handle specific error case
+                if (res.customer_exists) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Active Customer Assigned',
+                        text: res.message || 'You cannot check out while a customer is still assigned.',
+                        confirmButtonColor: '#d33'
+                    });
+                } else {
+                    // ✅ General error
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: res.message || 'Something went wrong. Please try again.',
+                        confirmButtonColor: '#d33'
+                    });
+                }
+            }
         });
     });
 </script>
