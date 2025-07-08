@@ -965,14 +965,13 @@ function updateNameInputState() {
       if (!isMyTurn) {
         Swal.fire({
           icon: 'error',
-          title: 'Not your turn!',
-          text: 'Please wait for your turn before taking a customer.'
+          title: ' Hold On!',
+          text: ` It's not your turn to take a customer yet.`
         });
         resetTakeButtonUI();
         return;
       }
 
-      
 
       $.ajax({
         url: '{{ route("sales.person.takeTurn") }}',
