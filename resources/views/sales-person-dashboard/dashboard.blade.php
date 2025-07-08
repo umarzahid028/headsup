@@ -954,24 +954,24 @@ function updateNameInputState() {
         if (!res.is_checked_in) {
           Swal.fire({
             icon: 'error',
-            title: `Oops! You're not checked in`,
-            text: 'Please check in before proceeding.',
+            title: 'Not checked in!',
+            text: 'Please check in first.',
           });
           resetTakeButtonUI();
           return;
         }
-     
 
       if (!isMyTurn) {
         Swal.fire({
           icon: 'error',
-          title: ' Hold On!',
-          text: ` It's not your turn to take a customer yet.`
+          title: 'Not your turn!',
+          text: 'Please wait for your turn before taking a customer.'
         });
         resetTakeButtonUI();
         return;
       }
 
+      
 
       $.ajax({
         url: '{{ route("sales.person.takeTurn") }}',
@@ -1136,7 +1136,7 @@ const attachFieldListeners = () => {
  if (newCustomerBtn) {
   newCustomerBtn.addEventListener('click', async () => {
     if (!isMyTurn) {
-      console.log(' Not your turn. Cannot take new customer.');
+      console.log('⛔ Not your turn. Cannot take new customer.');
       return;
     }
 
@@ -1174,6 +1174,7 @@ async function autoSaveForm(allowWithoutId = false) {
   const hasAppointment = appointmentInput && appointmentInput.value.trim() !== '';
   const hasCustomerId = idInput && idInput.value.trim() !== '';
 
+  // ✅ Block auto-save if no ID and no appointment, unless explicitly allowed
   if (!hasCustomerId && !hasAppointment && !allowWithoutId) {
     console.log('🚫 No customer ID or appointment — skipping auto-save');
     return;
@@ -1206,6 +1207,8 @@ async function autoSaveForm(allowWithoutId = false) {
   }
 
   customerSavedThisTurn = true;
+
+  // ✅ Preserve appointment_id
   const appointmentIdValue = appointmentInput?.value;
 
   if (allowWithoutId && !hasCustomerId) {
@@ -1237,7 +1240,6 @@ async function autoSaveForm(allowWithoutId = false) {
     } else {
       console.warn('❌ Card not found for customer ID:', result.id);
     }
-    
   }, 300);
 }
  else {
@@ -1358,12 +1360,14 @@ function clearFormFields() {
   };
 
 
+  // 🧹 Clear hidden fields (except id, user_id, appointment_id)
   form.querySelectorAll('input[type="hidden"]').forEach(el => {
     if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
       el.value = '';
     }
   });
 
+  // ✅ Restore preserved values
   if (appointmentInput && preservedValues.appointment_id) {
     appointmentInput.value = preservedValues.appointment_id;
   }
@@ -1414,20 +1418,14 @@ function clearFormFields() {
 }
 
 
- if (addCustomerBtn) {
-  addCustomerBtn.addEventListener('click', () => {
-    const activeCard = document.querySelector('.active-card');
-    if (activeCard) {
-      activeCard.classList.add('pause-animation');
-    }
-
-    // ✅ Reset the form
-    const customerForm = document.querySelector('#customerForm');
-    if (customerForm) {
-      form.reset();
-    }
-  });
-}
+  if (addCustomerBtn) {
+    addCustomerBtn.addEventListener('click', () => {
+      const activeCard = document.querySelector('.active-card');
+      if (activeCard) {
+        activeCard.classList.add('pause-animation');
+      }
+    });
+  }
 
   bindCardClickEvents();
   bindAppointmentCardClick();
@@ -1445,36 +1443,34 @@ function clearFormFields() {
     const nameInput = document.getElementById('nameInput');
     const phoneInput = document.getElementById('phoneInput');
     const idInput = document.getElementById('customerId');
-    const appointmentIdInput = form.querySelector('input[name="appointment_id"]'); 
 
+    // 🔁 Bind click manually so every click re-applies data
     if (appointmentCard && form) {
       appointmentCard.addEventListener('click', () => {
+        // Clear values first to ensure update
         nameInput.value = '';
         phoneInput.value = '';
         idInput.value = '';
-        if (appointmentIdInput) appointmentIdInput.value = ''; 
 
+        // Small delay ensures DOM update
         setTimeout(() => {
           nameInput.value = appointmentCard.dataset.name || '';
           phoneInput.value = appointmentCard.dataset.phone || '';
           idInput.value = appointmentCard.dataset.customerId || '';
 
-          if (appointmentIdInput) {
-            appointmentIdInput.value = appointmentCard.dataset.appointmentId || '';
-          }
-
+          // Mark active
           document.querySelectorAll('.customer-card').forEach(card => {
             card.classList.remove('active-card');
           });
           appointmentCard.classList.add('active-card');
-        }, 50);
+        }, 50); // Delay helps ensure refresh on same value
       });
 
-      appointmentCard.click(); 
+      // Trigger first click automatically if needed
+      appointmentCard.click();
     }
   });
 </script>
-
 
 
 
