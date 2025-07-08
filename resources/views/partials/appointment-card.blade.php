@@ -46,6 +46,7 @@
       class="customer-card  max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
       data-name="{{ $appointment->customer_name }}"
       data-phone="{{ $appointment->customer_phone }}"
+       data-appointment-id="{{ $appointment->id }}"
     >
 
       <div class="flex justify-between items-center">
