@@ -954,8 +954,8 @@ function updateNameInputState() {
         if (!res.is_checked_in) {
           Swal.fire({
             icon: 'error',
-            title: 'Not checked in!',
-            text: 'Please check in first.',
+            title: `Oops! You're not checked in`,
+            text: 'Please check in before proceeding.',
           });
           resetTakeButtonUI();
           return;
@@ -964,8 +964,8 @@ function updateNameInputState() {
       if (!isMyTurn) {
         Swal.fire({
           icon: 'error',
-          title: 'Not your turn!',
-          text: 'Please wait for your turn before taking a customer.'
+          title: 'Hold On!',
+          text: ` It's not your turn to take a customer yet.`
         });
         resetTakeButtonUI();
         return;
