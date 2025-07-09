@@ -122,19 +122,29 @@ class CustomerSaleController extends Controller
 }
 
 
-    public function index(Request $request)
-    {
+public function index(Request $request)
+{
+    $user = auth()->user();
+
+    // 👇 Allow managers to see all, others only their own
+    if ($user->hasRole('Sales Manager')) {
         $customers = CustomerSale::with('user')
-            ->where('user_id', auth()->id())
             ->latest()
             ->get();
-
-        if ($request->ajax() || $request->boolean('partial')) {
-            return view('partials.customers', compact('customers'))->render();
-        }
-
-        return view('sales-person-dashboard.dashboard', compact('customers'));
+    } else {
+        $customers = CustomerSale::with('user')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->get();
     }
+
+    if ($request->ajax() || $request->boolean('partial')) {
+        return view('partials.customers', compact('customers'))->render();
+    }
+
+    return view('sales-person-dashboard.dashboard', compact('customers'));
+}
+
 
     public function transfer(Request $request, $id)
     {
@@ -181,7 +191,7 @@ class CustomerSaleController extends Controller
         return view('tokens-history/addcustomer');
     }
 
-    public function customer()
+    public function customer($id = null)
     {
         if (!Auth::check()) {
             abort(403);
@@ -190,7 +200,7 @@ class CustomerSaleController extends Controller
         $user = Auth::user();
 
         // ✅ Get all customers (or apply filter if needed)
-        $customers = CustomerSale::get();
+        $customers = CustomerSale::latest()->get();
 
         // ✅ Get only users with "Sales person" role who are currently checked-in
         $checkedInUserIds = Queue::where('is_checked_in', true)
@@ -198,6 +208,14 @@ class CustomerSaleController extends Controller
             ->pluck('user_id')
             ->unique();
 
+              $appointment = null;
+        if ($id !== null) {
+            $appointment = Appointment::find($id);
+            if (!$appointment) {
+                abort(404, 'Appointment not found');
+            }
+        }
+        
         $salespeople = User::role('Sales person')
             ->whereIn('id', function ($subquery) {
                 $subquery->select('user_id')
@@ -213,7 +231,7 @@ class CustomerSaleController extends Controller
             ->get();
 
 
-        return view('t/o-customers.customer', compact('customers', 'salespeople'));
+        return view('t/o-customers.customer', compact('customers', 'salespeople', 'appointment'));
     }
 
 

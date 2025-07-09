@@ -33,12 +33,18 @@
 
 
 
-   @if (is_null($customer->disposition) 
-    && (is_null($customer->transferred_to_user_id) || $customer->transferred_to_user_id == auth()->id()) )
+@if (
+    is_null($customer->disposition) &&
+    (
+        is_null($customer->transferred_to_user_id) ||
+        $customer->transferred_to_user_id == auth()->id() ||
+        auth()->user()->hasRole('Sales Manager')
+    )
+)
 
       <div
         id="card-{{ $customer->id }}"
-        class="customer-card  max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mt-6 cursor-pointer transition-all duration-300"
+        class="customer-card  max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mb-4 cursor-pointer transition-all duration-300"
         data-name="{{ $customer->name }}"
         data-email="{{ $customer->email }}"
         data-phone="{{ $customer->phone ?? '' }}"
@@ -63,6 +69,7 @@
           </p>
           <p><span class="font-medium text-gray-400">Name:</span> {{ $customer->name }}</p>
           <p><span class="font-medium text-gray-400">Email:</span> {{ $customer->email }}</p>
+          <p><span class="font-medium text-gray-400">Phone:</span> {{ $customer->phone }}</p>
           <p><span class="font-medium text-gray-400">Process:</span> {{ $latestProcess }}</p>
           <p><span class="font-medium text-gray-400">Disposition:</span> {{ $dispositions ?? 'N/A' }}</p>
         </div>

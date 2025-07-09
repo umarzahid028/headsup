@@ -121,7 +121,7 @@ Route::get('add/customer', [CustomerSaleController::class, 'addcustomer'])->name
 
 // routes/web.php
 Route::post('/forward-to-manager', [CustomerSaleController::class, 'forwardToManager'])->name('customer.forward');
-Route::get('/t/o-customers/customer', [CustomerSaleController::class, 'customer'])->name('to.customers');
+Route::get('/t/o-customers/customer/{id?}', [CustomerSaleController::class, 'customer'])->name('to.customers');
 // web.php
 Route::get('/customers/fetch', [CustomerSaleController::class, 'fetch'])->name('customers.fetch');
 Route::post('/forward-customer', [CustomerSaleController::class, 'forward']);
@@ -135,9 +135,22 @@ Route::post('/customer-form', [CustomerSaleController::class, 'customerform'])->
 
 Route::post('sales/person-checkout/{id}', [CustomerSaleController::class, 'checkout'])->name('sales.person.checkout');
 Route::get('/appointment/section', function () {
-    $appointment = Appointment::where('status', '!=', 'completed')->latest()->first();
+    $user = auth()->user();
+
+    if ($user->hasRole('Sales manager')) {
+        // Sales Manager sees all non-completed
+        $appointment = Appointment::where('status', '!=', 'completed')->latest()->first();
+    } else {
+        // Salesperson sees their own only
+        $appointment = Appointment::where('status', '!=', 'completed')
+            ->where('salesperson_id', $user->id)
+            ->latest()
+            ->first();
+    }
+
     return view('partials.appointment-card', compact('appointment'));
 });
+
 
 Route::post('/appointment/arrive', [CustomerSaleController::class, 'saveArrivalTime'])->name('appointment.arrive');
 

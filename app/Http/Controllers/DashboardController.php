@@ -88,24 +88,28 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $customers = CustomerSale::where('user_id', auth()->id())
-            ->latest()
-            ->get();
+       if ($user->hasRole('Sales Manager')) {
+    $customers = CustomerSale::latest()->get(); // get ALL customers
+} else {
+    $customers = CustomerSale::where('user_id', $user->id)->latest()->get(); // only own
+}
 
 
-$salespeople = User::role('Sales person')
-    ->whereIn('id', function ($subquery) {
-        $subquery->select('user_id')
-            ->from('queues as q1')
-            ->whereRaw('q1.id = (
+
+
+        $salespeople = User::role('Sales person')
+            ->whereIn('id', function ($subquery) {
+                $subquery->select('user_id')
+                    ->from('queues as q1')
+                    ->whereRaw('q1.id = (
                 SELECT q2.id FROM queues as q2
                 WHERE q2.user_id = q1.user_id
                 ORDER BY q2.created_at DESC
                 LIMIT 1
             )')
-            ->whereNull('q1.checked_out_at'); // only un-checked queues
-    })
-    ->get();
+                    ->whereNull('q1.checked_out_at'); // only un-checked queues
+            })
+            ->get();
 
         $isCheckedIn = Queue::where('user_id', $user->id)
             ->where('is_checked_in', true)

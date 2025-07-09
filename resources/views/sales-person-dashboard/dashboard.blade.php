@@ -1,329 +1,265 @@
 <x-app-layout>
-  <x-slot name="header">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <div style="display:flex; justify-content: space-between;">
-      <div class="px-2">
-        <h1 class="text-xl font-semibold text-gray-800">Welcome, {{ Auth::user()->name }}</h1>
-        <p class="text-sm text-gray-500">Manage your check-in activity.</p>
-      </div>
-      <div>
-        @if(auth()->user()->hasrole('Sales person'))
-        <p id="turn-status" style="text-align:center;" class="text-sm text-gray-700 font-medium my-2 animate-pulse-text">
-          Checking status...
-        </p>
-        @endif
-      </div>
+ <x-slot name="header">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <div style="display:flex; justify-content: space-between;">
+    <div class="px-2">
+      <h1 class="text-xl font-semibold text-gray-800">Welcome, {{ Auth::user()->name }}</h1>
+      <p class="text-sm text-gray-500">Manage your check-in activity.</p>
     </div>
-
-    <style>
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
-      .spinner {
-        border: 2px solid transparent;
-        border-radius: 50%;
-        width: 1rem;
-        height: 1rem;
-        animation: spin 1s linear infinite;
-      }
-
-      @keyframes pulseText {
-        0%, 100% {
-          opacity: 1;
-          transform: scale(1);
-        }
-        50% {
-          opacity: 0.6;
-          transform: scale(1.03);
-        }
-      }
-
-      .animate-pulse-text {
-        animation: pulseText 1.2s ease-in-out infinite;
-      }
-
-      #customerCards::-webkit-scrollbar {
-        width: 6px;
-      }
-
-      #customerCards::-webkit-scrollbar-thumb {
-        background-color: rgba(100, 116, 139, 0.5);
-        border-radius: 9999px;
-      }
-
-      .swal2-popup.no-scroll-popup {
-        max-width: 400px;
-        overflow-x: hidden !important;
-      }
-
-      .swal2-select {
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
-        border-radius: 6px;
-        border: 1px solid #ccc;
-        padding: 8px;
-        overflow-x: hidden;
-      }
-
-      .swal2-popup {
-        overflow-x: hidden !important;
-      }
-
-      /* SweetAlert2 OK button default background */
-.swal2-container button.swal2-confirm {
-  background-color: #111827 !important;
-  color: white !important;
-  border-radius: 6px;
-  transition: background-color 0.3s ease;
-  box-shadow: none !important;
-}
-
-/* Hover effect for OK button */
-.swal2-container button.swal2-confirm:hover {
-  background-color: #0f172a !important; /* Thoda dark shade */
-  color: white !important;
-}
-
-    </style>
-    <style>
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-  .animate-spin {
-    animation: spin 1s linear infinite;
-  }
-</style>
-
-  </x-slot>
-
-  @php
-    $user = Auth::user();
-    $latestQueue = $user->latestQueue;
-    $isCheckedIn = $latestQueue && $latestQueue->is_checked_in;
-    $checkInTimeRaw = $latestQueue?->checked_in_at;
-    $checkInTimeFormatted = $checkInTimeRaw ? \Carbon\Carbon::parse($checkInTimeRaw)->format('h:i A, M d') : 'N/A';
-    $checkOutTimeFormatted = $latestQueue?->checked_out_at ? \Carbon\Carbon::parse($latestQueue->checked_out_at)->format('h:i A, M d') : 'N/A';
-  @endphp
-
-  <div class="w-full grid grid-cols-1 xl:grid-cols-4 gap-6 px-4 mt-4">
-    <!-- LEFT SIDE: Customer Form -->
-   <div class="xl:col-span-3  overflow-visible">
-  <div id="formContainer">
-    <form id="salesForm" method="POST" action="{{ route('customer.sales.store') }}" class=" grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
-      @csrf
-  <input type="hidden" name="appointment_id" value="{{ $appointment->id ?? '' }}" >
-
-<div class="md:col-span-2">
-  <h3 class="text-2xl font-bold text-gray-800 leading-tight mb-0">Customer Sales Form</h3>
-  <p class="text-gray-500 mt-0 leading-tight">Fill out the details below to log a customer sales interaction.</p>
-</div>
-
-     <input type="hidden" name="id" id="customerId" value="">
-<input type="hidden" name="user_id" value="{{ auth()->id() }}" />
-
-      <!-- Customer Info -->
-<div class="space-y-4">
-  @foreach (['name', 'email', 'phone', 'interest'] as $field)
-
-
     <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">
-        {{ ucfirst($field) }}
-      
-      </label>
-
-      <input
-        id="{{ $field === 'name' ? 'nameInput' : $field . 'Input' }}"
-        name="{{ $field }}"
-        type="{{ $field === 'email' ? 'email' : 'text' }}"
-        class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
-       
-        
-      />
+      @if(auth()->user()->hasrole('Sales person'))
+      <p id="turn-status" class="text-sm text-gray-700 font-medium my-2 animate-pulse-text text-center">
+        Checking status...
+      </p>
+      @endif
     </div>
-  @endforeach
-</div>
+  </div>
 
+  <style>
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
-      <!-- Sales Details -->
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-          <textarea name="notes" rows="6"
-            class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full">{{ $sale->notes ?? '' }}</textarea>
+    .spinner {
+      border: 2px solid transparent;
+      border-radius: 50%;
+      width: 1rem;
+      height: 1rem;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes pulseText {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.6;
+        transform: scale(1.03);
+      }
+    }
+
+    .animate-pulse-text {
+      animation: pulseText 1.2s ease-in-out infinite;
+    }
+
+    #customerCards::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #customerCards::-webkit-scrollbar-thumb {
+      background-color: rgba(100, 116, 139, 0.5);
+      border-radius: 9999px;
+    }
+
+    .swal2-popup.no-scroll-popup {
+      max-width: 400px;
+      overflow-x: hidden !important;
+    }
+
+    .swal2-select {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      padding: 8px;
+      overflow-x: hidden;
+    }
+
+    .swal2-popup {
+      overflow-x: hidden !important;
+    }
+
+    .swal2-container button.swal2-confirm {
+      background-color: #111827 !important;
+      color: white !important;
+      border-radius: 6px;
+      transition: background-color 0.3s ease;
+      box-shadow: none !important;
+    }
+
+    .swal2-container button.swal2-confirm:hover {
+      background-color: #0f172a !important;
+      color: white !important;
+    }
+
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+  </style>
+</x-slot>
+
+@php
+  $user = Auth::user();
+  $latestQueue = $user->latestQueue;
+  $isCheckedIn = $latestQueue && $latestQueue->is_checked_in;
+  $checkInTimeRaw = $latestQueue?->checked_in_at;
+  $checkInTimeFormatted = $checkInTimeRaw ? \Carbon\Carbon::parse($checkInTimeRaw)->format('h:i A, M d') : 'N/A';
+  $checkOutTimeFormatted = $latestQueue?->checked_out_at ? \Carbon\Carbon::parse($latestQueue->checked_out_at)->format('h:i A, M d') : 'N/A';
+@endphp
+
+<div class="w-full grid grid-cols-1 xl:grid-cols-4 gap-6 px-4 mt-4">
+
+  <!-- LEFT SIDE -->
+  <div class="xl:col-span-3 overflow-visible">
+    <div id="formContainer">
+      <form id="salesForm" method="POST" action="{{ route('customer.sales.store') }}"
+        class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
+        @csrf
+        <input type="hidden" name="appointment_id" value="{{ $appointment->id ?? '' }}">
+        <input type="hidden" name="id" id="customerId" value="">
+        <input type="hidden" name="user_id" value="{{ auth()->id() }}" />
+
+        <div class="md:col-span-2">
+          <h3 class="text-2xl font-bold text-gray-800 leading-tight mb-0">Customer Sales Form</h3>
+          <p class="text-gray-500 mt-0 leading-tight">Fill out the details below to log a customer sales interaction.</p>
         </div>
 
-        <fieldset class="border border-gray-300 rounded-xl p-4">
-          <legend class="text-sm font-semibold text-gray-700 mb-3">Sales Process</legend>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            @foreach(['Investigating','Test Driving','Desking','Credit Application','Penciling','F&I'] as $process)
-            <label class="flex items-center space-x-2">
-              <input type="checkbox" name="process[]" value="{{ $process }}"
-                {{ isset($sale) && is_array($sale->process) && in_array($process, $sale->process) ? 'checked' : '' }}
-                class="form-checkbox h-5 w-5 text-indigo-600">
-              <span class="text-gray-700 text-sm">{{ $process }}</span>
-            </label>
-            @endforeach
+        <!-- Customer Info -->
+        <div class="space-y-4">
+          @foreach (['name', 'email', 'phone', 'interest'] as $field)
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">{{ ucfirst($field) }}</label>
+            <input
+              id="{{ $field === 'name' ? 'nameInput' : $field . 'Input' }}"
+              name="{{ $field }}"
+              type="{{ $field === 'email' ? 'email' : 'text' }}"
+              class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
+            />
           </div>
-        </fieldset>
+          @endforeach
+        </div>
 
-        <!-- Disposition Modal -->
-        <div id="customerModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-          <div class="bg-white p-6 rounded-xl w-full max-w-2xl relative">
-            <button type="button" id="closeModalBtn"
-              class="absolute top-3 right-3 text-gray-500 hover:text-black text-xl font-bold">&times;</button>
+        <!-- Sales Details -->
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <textarea name="notes" rows="6" class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full">{{ $sale->notes ?? '' }}</textarea>
+          </div>
 
-            <fieldset class="border border-gray-300 rounded-xl p-4">
-              <legend class="text-sm font-semibold text-gray-700 mb-3">Disposition</legend>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                @foreach([
-                  'Sold!', 'Walked Away', 'Challenged Credit', "Didn't Like Vehicle",
-                  "Didn't Like Price", "Didn't Like Finance Terms", 'Insurance Expensive',
-                  'Wants to keep looking', 'Wants to think about it', 'Needs Co-Signer'
-                ] as $disposition)
-                <label class="flex items-center space-x-2">
-                  <input type="radio" name="disposition" value="{{ $disposition }}"
-                    {{ isset($sale) && $sale->disposition === $disposition ? 'checked' : '' }}
-                    class="form-radio h-5 w-5 text-indigo-600">
-                  <span class="text-gray-700 text-sm">{{ $disposition }}</span>
-                </label>
-                @endforeach
+          <fieldset class="border border-gray-300 rounded-xl p-4">
+            <legend class="text-sm font-semibold text-gray-700 mb-3">Sales Process</legend>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              @foreach(['Investigating','Test Driving','Desking','Credit Application','Penciling','F&I'] as $process)
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" name="process[]" value="{{ $process }}"
+                  {{ isset($sale) && is_array($sale->process) && in_array($process, $sale->process) ? 'checked' : '' }}
+                  class="form-checkbox h-5 w-5 text-indigo-600">
+                <span class="text-gray-700 text-sm">{{ $process }}</span>
+              </label>
+              @endforeach
+            </div>
+          </fieldset>
+
+          <!-- Disposition Modal -->
+          <div id="customerModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white p-6 rounded-xl w-full max-w-2xl relative">
+              <button type="button" id="closeModalBtn" class="absolute top-3 right-3 text-gray-500 hover:text-black text-xl font-bold">&times;</button>
+              <fieldset class="border border-gray-300 rounded-xl p-4">
+                <legend class="text-sm font-semibold text-gray-700 mb-3">Disposition</legend>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  @foreach([
+                    'Sold!', 'Walked Away', 'Challenged Credit', "Didn't Like Vehicle",
+                    "Didn't Like Price", "Didn't Like Finance Terms", 'Insurance Expensive',
+                    'Wants to keep looking', 'Wants to think about it', 'Needs Co-Signer'
+                  ] as $disposition)
+                  <label class="flex items-center space-x-2">
+                    <input type="radio" name="disposition" value="{{ $disposition }}"
+                      {{ isset($sale) && $sale->disposition === $disposition ? 'checked' : '' }}
+                      class="form-radio h-5 w-5 text-indigo-600">
+                    <span class="text-gray-700 text-sm">{{ $disposition }}</span>
+                  </label>
+                  @endforeach
+                </div>
+              </fieldset>
+              <div class="text-right mt-4">
+                <button type="submit" class="bg-gray-800 text-white px-3 py-1.5 rounded">Save</button>
               </div>
-            </fieldset>
-
-            <div class="text-right mt-4">
-              <button type="submit"
-                class="bg-gray-800 text-white px-3 py-1.5 rounded ">
-                Save
-              </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Modal Trigger -->
-      <div class="md:col-span-2 text-right mt-4">
-       <button id="openModalBtn"  type="button"
-          class="bg-gray-800 text-white px-3 py-1.5 rounded">
-          Close
-        </button>
-<button 
-  type="button"
-  id="toBtn"
-  class=" relative bg-gray-800 text-white px-4 py-1.5 rounded"
->
-  <span class="btn-label">T/O</span>
-  <div class="toSpinner hidden absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded">
-    <div class="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-  </div>
-</button>
-
-
-
-
-
-
-      </div>
-    </form>
-  </div>
-</div>
-
-@if (Auth()->user()->hasRole('Sales person'))
-  
-<!-- RIGHT SIDE -->
-<div class="xl:col-span-1 flex flex-col h-[calc(100vh-10rem)]">
-  <div class="bg-white rounded-xl shadow p-3 w-full max-w-md mx-auto space-y-4 border mb-4">
-
-    <!-- Status + Button -->
-    <div class="flex items-center justify-between">
-     <span class="status-text text-sm font-semibold px-3 py-1 rounded-md flex items-center gap-1
-{{ $isCheckedIn ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700' }}">
-
-@if($isCheckedIn)
-<!-- Check Icon -->
-<svg class="w-4 h-4 text-green-800" fill="none" stroke="currentColor" stroke-width="2"
-     viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
-</svg>
-Checked In
-@else
-<!-- X Icon -->
-<svg class="w-4 h-4 text-red-700" fill="none" stroke="currentColor" stroke-width="2"
-     viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-</svg>
-Checked Out
-@endif
-</span>
-
-
-      <form id="checkToggleForm" action="{{ route('sales.person.store') }}" method="POST">
-        @csrf
-        <button type="submit"
-          id="checkToggleButton"
-          class="check-toggle-btn px-6 py-2 text-sm font-semibold flex items-center gap-2 rounded-md text-white shadow-md
-          {{ $isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' }}">
-          <span class="btn-text">{{ $isCheckedIn ? 'Check Out' : 'Check In' }}</span>
-          <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
-            fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10"
-              stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor"
-              d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
-          </svg>
-        </button>
+        <!-- Modal Triggers -->
+        <div class="md:col-span-2 text-right mt-4">
+          <button id="openModalBtn" type="button" class="bg-gray-800 text-white px-3 py-1.5 rounded">Close</button>
+          <button type="button" id="toBtn" class="relative bg-gray-800 text-white px-4 py-1.5 rounded">
+            <span class="btn-label">T/O</span>
+            <div class="toSpinner hidden absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded">
+              <div class="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          </button>
+        </div>
       </form>
     </div>
+  </div>
 
-    <!-- Time Info -->
-    <div class="text-left space-y-1">
-      <p class="text-xs text-gray-600"><strong>Check In:</strong> <span id="check-in-time">{{ $checkInTimeFormatted }}</span></p>
-      <p class="text-xs text-gray-600"><strong>Check Out:</strong> <span id="check-out-time">{{ $checkOutTimeFormatted }}</span></p>
-      <p class="text-xs text-gray-600 {{ $isCheckedIn ? '' : 'hidden' }}" id="duration-wrapper"><strong>Duration:</strong> <span id="duration">Loading...</span></p>
+  <!-- RIGHT SIDE -->
+  <div class="xl:col-span-1 flex flex-col h-[calc(100vh-10rem)]">
+    @if (Auth()->user()->hasRole('Sales person'))
+    <div class="bg-white rounded-xl shadow p-3 w-full max-w-md mx-auto space-y-4 border mb-4">
+      <div class="flex items-center justify-between">
+        <span class="status-text text-sm font-semibold px-3 py-1 rounded-md flex items-center gap-1
+          {{ $isCheckedIn ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700' }}">
+          @if($isCheckedIn)
+          <svg class="w-4 h-4 text-green-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+          </svg>
+          Checked In
+          @else
+          <svg class="w-4 h-4 text-red-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+          Checked Out
+          @endif
+        </span>
+
+        <form id="checkToggleForm" action="{{ route('sales.person.store') }}" method="POST">
+          @csrf
+          <button type="submit"
+            id="checkToggleButton"
+            class="check-toggle-btn px-6 py-2 text-sm font-semibold flex items-center gap-2 rounded-md text-white shadow-md
+            {{ $isCheckedIn ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600' }}">
+            <span class="btn-text">{{ $isCheckedIn ? 'Check Out' : 'Check In' }}</span>
+            <svg class="btn-spinner hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+              fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 010 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+            </svg>
+          </button>
+        </form>
+      </div>
+
+      <div class="text-left space-y-1">
+        <p class="text-xs text-gray-600"><strong>Check In:</strong> <span id="check-in-time">{{ $checkInTimeFormatted }}</span></p>
+        <p class="text-xs text-gray-600"><strong>Check Out:</strong> <span id="check-out-time">{{ $checkOutTimeFormatted }}</span></p>
+        <p class="text-xs text-gray-600 {{ $isCheckedIn ? '' : 'hidden' }}" id="duration-wrapper">
+          <strong>Duration:</strong> <span id="duration">Loading...</span>
+        </p>
+      </div>
+
+      <div>
+        <button id="newCustomerBtn" type="button" class="w-full bg-gray-800 text-white font-semibold px-6 py-2 rounded mb-4 hidden flex items-center justify-center gap-2">
+          <span class="spinner hidden w-5 h-5 border-2 border-white border-t-transparent rounded animate-spin"></span>
+          <span class="btn-text">Take Customer</span>
+        </button>
+        <button id="addCustomerBtn" type="button" class="w-full bg-gray-800 text-white px-6 py-2 rounded mb-4 hidden">Add Customer</button>
+      </div>
     </div>
+    @endif
 
-    <div>
-<!-- Take Customer Button (Initially hidden) -->
-<button
-id="newCustomerBtn"
-type="button" 
-class="w-full bg-gray-800 text-white font-semibold px-6 py-2 rounded mb-4 hidden flex items-center justify-center gap-2"
->
-<span class="spinner hidden w-5 h-5 border-2 border-white border-t-transparent rounded animate-spin"></span>
-<span class="btn-text">Take Customer</span>
-</button>
-
-
-<button
-id="addCustomerBtn"
-type="button" 
-class="w-full bg-gray-800 text-white  px-6 py-2 rounded mb-4 hidden">
-Add Customer
-</button>
-
-
-
+    <div class="flex-1 overflow-y-auto pr-2" id="customerCards">
+      @include('partials.customers', ['customers' => $customers])
+      <div id="appointment-wrapper" style="display: none;">
+        @include('partials.appointment-card', ['appointment' => $appointment])
+      </div>
     </div>
   </div>
-  <!-- Scrollable Customers -->
-  <div class="flex-1 overflow-y-auto pr-2" id="customerCards">
-    @include('partials.customers', ['customers' => $customers])
-  
-  <div id="appointment-wrapper">
-  @include('partials.appointment-card', ['appointment' => $appointment])
-  </div>
-  
-  
-  </div>
-  </div>
-@endif
 
-  </div>
+</div>
+
 
   @push('scripts')
   <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -1063,109 +999,94 @@ $(document).ready(() => {
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-const form = document.getElementById('salesForm');
-const idInput = form.querySelector('input[name="id"]');
-const nameInput = form.querySelector('input[name="name"]');
-const emailInput = form.querySelector('input[name="email"]');
-const phoneInput = form.querySelector('input[name="phone"]');
-const interestInput = form.querySelector('input[name="interest"]');
-const notesInput = form.querySelector('textarea[name="notes"]');
-const appointmentInput = form.querySelector('input[name="appointment_id"]');
-const newCustomerBtn = document.getElementById('newCustomerBtn');
-const addCustomerBtn = document.getElementById('addCustomerBtn');
+  const form = document.getElementById('salesForm');
+  const idInput = form.querySelector('input[name="id"]');
+  const nameInput = form.querySelector('input[name="name"]');
+  const emailInput = form.querySelector('input[name="email"]');
+  const phoneInput = form.querySelector('input[name="phone"]');
+  const interestInput = form.querySelector('input[name="interest"]');
+  const notesInput = form.querySelector('textarea[name="notes"]');
+  const appointmentInput = form.querySelector('input[name="appointment_id"]');
+  const newCustomerBtn = document.getElementById('newCustomerBtn');
+  const addCustomerBtn = document.getElementById('addCustomerBtn');
 
-let debounceTimeout;
-let customerSavedThisTurn = false;
-let autosaveEnabled = false;
-let loadedFromAppointment = false;
+  let debounceTimeout;
+  let customerSavedThisTurn = false;
+  let autosaveEnabled = false;
+  let loadedFromAppointment = false;
+  let hasStartedManualEdit = false;
+  let idWasManuallyCleared = false;
 
-setInterval(() => {
-  customerSavedThisTurn = false;
-}, 3000);
+  setInterval(() => {
+    customerSavedThisTurn = false;
+  }, 3000);
 
-const attachFieldListeners = () => {
-  const fields = form.querySelectorAll('input, textarea, select');
-  fields.forEach(field => {
-    const handleInput = () => {
-      if (!autosaveEnabled) return;
-      if (
-        loadedFromAppointment &&
-        ['email', 'name', 'phone', 'interest'].includes(field.name)
-      ) {
-        if (!hasStartedManualEdit && !idWasManuallyCleared) {
-          idInput.value = '';
-          loadedFromAppointment = false;
-          idWasManuallyCleared = true;
+  const attachFieldListeners = () => {
+    const fields = form.querySelectorAll('input, textarea, select');
+    fields.forEach(field => {
+      const handleFieldChange = () => {
+        console.log(`🖊️ Field changed: ${field.name}`);
+        if (!autosaveEnabled) return;
+
+        if (
+          loadedFromAppointment &&
+          ['email', 'name', 'phone', 'interest'].includes(field.name)
+        ) {
+          if (!hasStartedManualEdit && !idWasManuallyCleared) {
+            console.log('🔄 Clearing ID due to manual edit after appointment load');
+            idInput.value = '';
+            loadedFromAppointment = false;
+            idWasManuallyCleared = true;
+          }
+          hasStartedManualEdit = true;
         }
-        hasStartedManualEdit = true;
+
+        customerSavedThisTurn = false;
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+          autoSaveForm();
+        }, 500);
+      };
+
+      field.removeEventListener('input', handleFieldChange);
+      field.addEventListener('input', handleFieldChange);
+      field.removeEventListener('change', handleFieldChange);
+      field.addEventListener('change', handleFieldChange);
+    });
+  };
+
+  if (newCustomerBtn) {
+    newCustomerBtn.addEventListener('click', async () => {
+      if (!isMyTurn) {
+        console.log('⛔ Not your turn. Cannot take new customer.');
+        return;
       }
-      customerSavedThisTurn = false;
-      clearTimeout(debounceTimeout);
-      debounceTimeout = setTimeout(() => {
-        autoSaveForm();
-      }, 700);
-    };
 
-    const handleChange = () => {
-      if (!autosaveEnabled) return;
-      if (
-        loadedFromAppointment &&
-        ['email', 'name', 'phone', 'interest'].includes(field.name)
-      ) {
-        if (!hasStartedManualEdit && !idWasManuallyCleared) {
-          idInput.value = '';
-          loadedFromAppointment = false;
-          idWasManuallyCleared = true;
-        }
-        hasStartedManualEdit = true;
+      const isFormDirty = !!(
+        nameInput.value.trim() ||
+        emailInput.value.trim() ||
+        phoneInput.value.trim() ||
+        interestInput.value.trim() ||
+        [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
+      );
+
+      if (isFormDirty) {
+        await autoSaveForm(true);
+      } else {
+        nameInput.value = '';
+        emailInput.value = '';
+        phoneInput.value = '';
+        interestInput.value = '';
+        [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+        await autoSaveForm(true);
       }
-      customerSavedThisTurn = false;
-      clearTimeout(debounceTimeout);
-      debounceTimeout = setTimeout(() => {
-        autoSaveForm();
-      }, 300);
-    };
 
-    field.removeEventListener('input', handleInput);
-    field.addEventListener('input', handleInput);
-    field.removeEventListener('change', handleChange);
-    field.addEventListener('change', handleChange);
-  });
-};
-
- if (newCustomerBtn) {
-  newCustomerBtn.addEventListener('click', async () => {
-    if (!isMyTurn) {
-      console.log('⛔ Not your turn. Cannot take new customer.');
-      return;
-    }
-
-    const isFormDirty = !!(
-      nameInput.value.trim() ||
-      emailInput.value.trim() ||
-      phoneInput.value.trim() ||
-      interestInput.value.trim() ||
-      [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
-    );
-
-    if (isFormDirty) {
-      await autoSaveForm(true);
-    } else {
-      nameInput.value = '';
-      emailInput.value = '';
-      phoneInput.value = '';
-      interestInput.value = '';
-      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-      await autoSaveForm(true);
-    }
-
-    if (idInput.value) {
-      autosaveEnabled = true;
-      attachFieldListeners();
-    }
-  });
-}
-
+      if (idInput.value) {
+        autosaveEnabled = true;
+        attachFieldListeners();
+      }
+    });
+  }
 
 async function autoSaveForm(allowWithoutId = false) {
   console.log('autoSaveForm triggered');
@@ -1174,7 +1095,6 @@ async function autoSaveForm(allowWithoutId = false) {
   const hasAppointment = appointmentInput && appointmentInput.value.trim() !== '';
   const hasCustomerId = idInput && idInput.value.trim() !== '';
 
-  // ✅ Block auto-save if no ID and no appointment, unless explicitly allowed
   if (!hasCustomerId && !hasAppointment && !allowWithoutId) {
     console.log('🚫 No customer ID or appointment — skipping auto-save');
     return;
@@ -1200,49 +1120,48 @@ async function autoSaveForm(allowWithoutId = false) {
     const result = await response.json();
     console.log('✅ Server Response:', result);
 
-   if (result.status === 'success') {
-  if (result.id) {
-    idInput.value = result.id;
-    localStorage.setItem('activeCustomerId', result.id);
-  }
-
-  customerSavedThisTurn = true;
-
-  // ✅ Preserve appointment_id
-  const appointmentIdValue = appointmentInput?.value;
-
-  if (allowWithoutId && !hasCustomerId) {
-    form.querySelectorAll('input[type="hidden"]').forEach(el => {
-      if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
-        el.value = '';
+    if (result.status === 'success') {
+      if (result.id) {
+        idInput.value = result.id;
+        localStorage.setItem('activeCustomerId', result.id);
       }
-    });
 
-    if (appointmentInput && appointmentIdValue) {
-      appointmentInput.value = appointmentIdValue;
-    }
+      customerSavedThisTurn = true;
 
-    idInput.value = result.id;
-  }
+      const appointmentIdValue = appointmentInput?.value;
 
-  await loadCustomers?.();
+      if (allowWithoutId && !hasCustomerId) {
+        form.querySelectorAll('input[type="hidden"]').forEach(el => {
+          if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
+            el.value = '';
+          }
+        });
 
-  applyActiveCard();
+        if (appointmentInput && appointmentIdValue) {
+          appointmentInput.value = appointmentIdValue;
+        }
 
-  setTimeout(() => {
-    const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
-    if (newCard) {
-      document.querySelectorAll('.customer-card').forEach(c => {
-        c.classList.remove('active-card');
-      });
+        idInput.value = result.id;
+      }
 
-      newCard.classList.add('active-card'); 
+      // ✅ Load customers and apply active card ONLY IF user is NOT typing
+      if (autosaveEnabled && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        await loadCustomers?.();
+        applyActiveCard();
+      }
+
+      // ✅ Visual update only
+      setTimeout(() => {
+        const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
+        if (newCard) {
+          document.querySelectorAll('.customer-card').forEach(c => {
+            c.classList.remove('active-card');
+          });
+
+          newCard.classList.add('active-card');
+        }
+      }, 300);
     } else {
-      console.warn('❌ Card not found for customer ID:', result.id);
-    }
-  }, 300);
-}
- else {
       console.error('❌ Save failed:', result);
     }
   } catch (err) {
@@ -1384,8 +1303,8 @@ function clearFormFields() {
 
 
 
- function applyActiveCard() {
-  if (loadedFromAppointment) return; 
+function applyActiveCard() {
+  if (loadedFromAppointment || hasStartedManualEdit) return;
 
   const savedId = localStorage.getItem('activeCustomerId');
   const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
@@ -1442,8 +1361,7 @@ document.querySelectorAll('.customer-card').forEach(card => {
     });
     card.classList.add('active-card'); // Animation starts
   });
-});
-
+})
 
 
   bindCardClickEvents();
@@ -1511,27 +1429,32 @@ document.querySelectorAll('.customer-card').forEach(card => {
     const form = e.target;
     const formData = new FormData(form);
 
+    // Get user role from server-side (Laravel)
+    const userRole = "{{ auth()->user()->role }}";
+
     try {
-      // ✅ First: Check if user is checked in
-      const checkInRes = await fetch("{{ route('check.user.checkin') }}", {
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'Accept': 'application/json'
-        }
-      });
-
-      const checkInJson = await checkInRes.json();
-
-      if (!checkInJson.checked_in) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Not Checked In',
-          text: 'You must check in before submitting this form.',
+      // ✅ Only check if user is NOT a sales_manager
+      if (userRole !== 'Sales Manager') {
+        const checkInRes = await fetch("{{ route('check.user.checkin') }}", {
+          headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+          }
         });
-        return; // Stop submission
+
+        const checkInJson = await checkInRes.json();
+
+        if (!checkInJson.checked_in) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Not Checked In',
+            text: 'You must check in before submitting this form.',
+          });
+          return; // Stop submission
+        }
       }
 
-      // ✅ Proceed with actual form submission
+      // ✅ Proceed with form submission
       Swal.fire({
         title: 'Processing...',
         text: 'Please wait while we save your data.',

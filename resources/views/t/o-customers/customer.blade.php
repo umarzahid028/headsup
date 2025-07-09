@@ -13,6 +13,40 @@
             color: #fff !important;
             box-shadow: none !important;
         }
+              #customerCards::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      #customerCards::-webkit-scrollbar-thumb {
+        background-color: rgba(100, 116, 139, 0.5);
+        border-radius: 9999px;
+      }
+  
+    
+  .active-card {
+  animation: pulseActive 1s infinite;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+}
+
+@keyframes pulseActive {
+  0% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+}
+
+.pause-animation {
+  animation: none !important;
+  box-shadow: none !important;
+}
+
+</style>
     </style>
 
     <x-slot name="header">
@@ -27,15 +61,15 @@
 
                 <!-- Customer Sales Form -->
                 <div class="md:col-span-9 mx-2">
-  <div id="formContainer">
+   <div id="formContainer">
     <form id="salesForm" method="POST" action="{{ route('customer.sales.store') }}" class=" grid grid-cols-1 md:grid-cols-2 gap-8 bg-white rounded-2xl border border-gray-200 p-8 shadow-lg">
       @csrf
-  <input type="hidden" name="appointment_id" value="{{ $appointment->id ?? '' }}">
+  <input type="hidden" name="appointment_id" value="{{ $appointment->id ?? '' }}" >
 
-<!-- <div class="md:col-span-2">
+<div class="md:col-span-2">
   <h3 class="text-2xl font-bold text-gray-800 leading-tight mb-0">Customer Sales Form</h3>
   <p class="text-gray-500 mt-0 leading-tight">Fill out the details below to log a customer sales interaction.</p>
-</div> -->
+</div>
 
      <input type="hidden" name="id" id="customerId" value="">
 <input type="hidden" name="user_id" value="{{ auth()->id() }}" />
@@ -43,17 +77,7 @@
       <!-- Customer Info -->
 <div class="space-y-4">
   @foreach (['name', 'email', 'phone', 'interest'] as $field)
-    @php
-      // Check if we should prefill from appointment
-      $value = $sale->$field ?? '';
-      if (isset($appointment)) {
-        if ($field === 'name') {
-          $value = $appointment->customer_name ?? $value;
-        } elseif ($field === 'phone') {
-          $value = $appointment->customer_phone ?? $value;
-        }
-      }
-    @endphp
+
 
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-1 capitalize">
@@ -66,7 +90,7 @@
         name="{{ $field }}"
         type="{{ $field === 'email' ? 'email' : 'text' }}"
         class="border border-gray-300 rounded-xl px-4 py-3 text-base w-full"
-        value="{{ $value }}"
+       
         
       />
     </div>
@@ -136,7 +160,7 @@
           class="bg-gray-800 text-white px-3 py-1.5 rounded">
           Close
         </button>
-<!-- <button 
+<button 
   type="button"
   id="toBtn"
   class=" relative bg-gray-800 text-white px-4 py-1.5 rounded"
@@ -145,7 +169,7 @@
   <div class="toSpinner hidden absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded">
     <div class="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
   </div>
-</button> -->
+</button>
 
 
 
@@ -158,126 +182,112 @@
                 </div>
 
                 <!-- Customer Cards -->
-                <div class="md:col-span-3">
-                    <div id="customer-list">
+                <div class="md:col-span-3" id="customerCards">
                         @include('partials.customer-list', ['customers' => $customers])
-                    </div>
                 </div>
+
 
             </div>
         </div>
 
         <!-- Scripts -->
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 
       
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-const form = document.getElementById('salesForm');
-const idInput = form.querySelector('input[name="id"]');
-const nameInput = form.querySelector('input[name="name"]');
-const emailInput = form.querySelector('input[name="email"]');
-const phoneInput = form.querySelector('input[name="phone"]');
-const interestInput = form.querySelector('input[name="interest"]');
-const notesInput = form.querySelector('textarea[name="notes"]');
-const appointmentInput = form.querySelector('input[name="appointment_id"]');
-const newCustomerBtn = document.getElementById('newCustomerBtn');
-const addCustomerBtn = document.getElementById('addCustomerBtn');
+  const form = document.getElementById('salesForm');
+  const idInput = form.querySelector('input[name="id"]');
+  const nameInput = form.querySelector('input[name="name"]');
+  const emailInput = form.querySelector('input[name="email"]');
+  const phoneInput = form.querySelector('input[name="phone"]');
+  const interestInput = form.querySelector('input[name="interest"]');
+  const notesInput = form.querySelector('textarea[name="notes"]');
+  const appointmentInput = form.querySelector('input[name="appointment_id"]');
+  const newCustomerBtn = document.getElementById('newCustomerBtn');
+  const addCustomerBtn = document.getElementById('addCustomerBtn');
 
-let debounceTimeout;
-let customerSavedThisTurn = false;
-let autosaveEnabled = false;
-let loadedFromAppointment = false;
+  let debounceTimeout;
+  let customerSavedThisTurn = false;
+  let autosaveEnabled = false;
+  let loadedFromAppointment = false;
+  let hasStartedManualEdit = false;
+  let idWasManuallyCleared = false;
 
-setInterval(() => {
-  customerSavedThisTurn = false;
-}, 3000);
+  setInterval(() => {
+    customerSavedThisTurn = false;
+  }, 3000);
 
-const attachFieldListeners = () => {
-  const fields = form.querySelectorAll('input, textarea, select');
-  fields.forEach(field => {
-    const handleInput = () => {
-      if (!autosaveEnabled) return;
-      if (
-        loadedFromAppointment &&
-        ['email', 'name', 'phone', 'interest'].includes(field.name)
-      ) {
-        if (!hasStartedManualEdit && !idWasManuallyCleared) {
-          idInput.value = '';
-          loadedFromAppointment = false;
-          idWasManuallyCleared = true;
+  const attachFieldListeners = () => {
+    const fields = form.querySelectorAll('input, textarea, select');
+    fields.forEach(field => {
+      const handleFieldChange = () => {
+        console.log(`🖊️ Field changed: ${field.name}`);
+        if (!autosaveEnabled) return;
+
+        if (
+          loadedFromAppointment &&
+          ['email', 'name', 'phone', 'interest'].includes(field.name)
+        ) {
+          if (!hasStartedManualEdit && !idWasManuallyCleared) {
+            console.log('🔄 Clearing ID due to manual edit after appointment load');
+            idInput.value = '';
+            loadedFromAppointment = false;
+            idWasManuallyCleared = true;
+          }
+          hasStartedManualEdit = true;
         }
-        hasStartedManualEdit = true;
+
+        customerSavedThisTurn = false;
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+          autoSaveForm();
+        }, 500);
+      };
+
+      field.removeEventListener('input', handleFieldChange);
+      field.addEventListener('input', handleFieldChange);
+      field.removeEventListener('change', handleFieldChange);
+      field.addEventListener('change', handleFieldChange);
+    });
+  };
+
+  if (newCustomerBtn) {
+    newCustomerBtn.addEventListener('click', async () => {
+      if (!isMyTurn) {
+        console.log('⛔ Not your turn. Cannot take new customer.');
+        return;
       }
-      customerSavedThisTurn = false;
-      clearTimeout(debounceTimeout);
-      debounceTimeout = setTimeout(() => {
-        autoSaveForm();
-      }, 700);
-    };
 
-    const handleChange = () => {
-      if (!autosaveEnabled) return;
-      if (
-        loadedFromAppointment &&
-        ['email', 'name', 'phone', 'interest'].includes(field.name)
-      ) {
-        if (!hasStartedManualEdit && !idWasManuallyCleared) {
-          idInput.value = '';
-          loadedFromAppointment = false;
-          idWasManuallyCleared = true;
-        }
-        hasStartedManualEdit = true;
+      const isFormDirty = !!(
+        nameInput.value.trim() ||
+        emailInput.value.trim() ||
+        phoneInput.value.trim() ||
+        interestInput.value.trim() ||
+        [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
+      );
+
+      if (isFormDirty) {
+        await autoSaveForm(true);
+      } else {
+        nameInput.value = '';
+        emailInput.value = '';
+        phoneInput.value = '';
+        interestInput.value = '';
+        [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
+        await autoSaveForm(true);
       }
-      customerSavedThisTurn = false;
-      clearTimeout(debounceTimeout);
-      debounceTimeout = setTimeout(() => {
-        autoSaveForm();
-      }, 300);
-    };
 
-    field.removeEventListener('input', handleInput);
-    field.addEventListener('input', handleInput);
-    field.removeEventListener('change', handleChange);
-    field.addEventListener('change', handleChange);
-  });
-};
-
- if (newCustomerBtn) {
-  newCustomerBtn.addEventListener('click', async () => {
-    if (!isMyTurn) {
-      console.log('⛔ Not your turn. Cannot take new customer.');
-      return;
-    }
-
-    const isFormDirty = !!(
-      nameInput.value.trim() ||
-      emailInput.value.trim() ||
-      phoneInput.value.trim() ||
-      interestInput.value.trim() ||
-      [...form.querySelectorAll('input[name="process[]"]')].some(cb => cb.checked)
-    );
-
-    if (isFormDirty) {
-      await autoSaveForm(true);
-    } else {
-      nameInput.value = '';
-      emailInput.value = '';
-      phoneInput.value = '';
-      interestInput.value = '';
-      [...form.querySelectorAll('input[name="process[]"]')].forEach(cb => cb.checked = false);
-      await autoSaveForm(true);
-    }
-
-    if (idInput.value) {
-      autosaveEnabled = true;
-      attachFieldListeners();
-    }
-  });
-}
-
+      if (idInput.value) {
+        autosaveEnabled = true;
+        attachFieldListeners();
+      }
+    });
+  }
 
 async function autoSaveForm(allowWithoutId = false) {
   console.log('autoSaveForm triggered');
@@ -286,7 +296,6 @@ async function autoSaveForm(allowWithoutId = false) {
   const hasAppointment = appointmentInput && appointmentInput.value.trim() !== '';
   const hasCustomerId = idInput && idInput.value.trim() !== '';
 
-  // ✅ Block auto-save if no ID and no appointment, unless explicitly allowed
   if (!hasCustomerId && !hasAppointment && !allowWithoutId) {
     console.log('🚫 No customer ID or appointment — skipping auto-save');
     return;
@@ -312,49 +321,48 @@ async function autoSaveForm(allowWithoutId = false) {
     const result = await response.json();
     console.log('✅ Server Response:', result);
 
-   if (result.status === 'success') {
-  if (result.id) {
-    idInput.value = result.id;
-    localStorage.setItem('activeCustomerId', result.id);
-  }
-
-  customerSavedThisTurn = true;
-
-  // ✅ Preserve appointment_id
-  const appointmentIdValue = appointmentInput?.value;
-
-  if (allowWithoutId && !hasCustomerId) {
-    form.querySelectorAll('input[type="hidden"]').forEach(el => {
-      if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
-        el.value = '';
+    if (result.status === 'success') {
+      if (result.id) {
+        idInput.value = result.id;
+        localStorage.setItem('activeCustomerId', result.id);
       }
-    });
 
-    if (appointmentInput && appointmentIdValue) {
-      appointmentInput.value = appointmentIdValue;
-    }
+      customerSavedThisTurn = true;
 
-    idInput.value = result.id;
-  }
+      const appointmentIdValue = appointmentInput?.value;
 
-  await loadCustomers?.();
+      if (allowWithoutId && !hasCustomerId) {
+        form.querySelectorAll('input[type="hidden"]').forEach(el => {
+          if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
+            el.value = '';
+          }
+        });
 
-  applyActiveCard();
+        if (appointmentInput && appointmentIdValue) {
+          appointmentInput.value = appointmentIdValue;
+        }
 
-  setTimeout(() => {
-    const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
-    if (newCard) {
-      document.querySelectorAll('.customer-card').forEach(c => {
-        c.classList.remove('active-card');
-      });
+        idInput.value = result.id;
+      }
 
-      newCard.classList.add('active-card'); 
+      // ✅ Load customers and apply active card ONLY IF user is NOT typing
+      if (autosaveEnabled && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        await loadCustomers?.();
+        applyActiveCard();
+      }
+
+      // ✅ Visual update only
+      setTimeout(() => {
+        const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
+        if (newCard) {
+          document.querySelectorAll('.customer-card').forEach(c => {
+            c.classList.remove('active-card');
+          });
+
+          newCard.classList.add('active-card');
+        }
+      }, 300);
     } else {
-      console.warn('❌ Card not found for customer ID:', result.id);
-    }
-  }, 300);
-}
- else {
       console.error('❌ Save failed:', result);
     }
   } catch (err) {
@@ -496,8 +504,8 @@ function clearFormFields() {
 
 
 
- function applyActiveCard() {
-  if (loadedFromAppointment) return; 
+function applyActiveCard() {
+  if (loadedFromAppointment || hasStartedManualEdit) return;
 
   const savedId = localStorage.getItem('activeCustomerId');
   const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
@@ -529,21 +537,241 @@ function clearFormFields() {
   }
 }
 
+if (addCustomerBtn) {
+  addCustomerBtn.addEventListener('click', () => {
+    const activeCard = document.querySelector('.customer-card.active-card');
+    if (activeCard) {
+      activeCard.classList.add('paused'); // 🛑 Pause animation
+    }
 
-  if (addCustomerBtn) {
-    addCustomerBtn.addEventListener('click', () => {
-      const activeCard = document.querySelector('.active-card');
-      if (activeCard) {
-        activeCard.classList.add('pause-animation');
-      }
+    const form = document.getElementById('salesForm');
+    if (form) {
+      form.reset();
+      form.querySelector('input[name="id"]').value = '';
+      form.querySelector('input[name="appointment_id"]').value = '';
+      form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+    }
+  });
+}
+
+// 🟢 Resume animation on card click
+document.querySelectorAll('.customer-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.customer-card').forEach(c => {
+      c.classList.remove('active-card', 'paused');
     });
-  }
+    card.classList.add('active-card'); // Animation starts
+  });
+})
+
 
   bindCardClickEvents();
   bindAppointmentCardClick();
   applyActiveCard();
 });
 </script>
+
+
+
+<script>
+  document.getElementById('salesForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+
+    try {
+      // ✅ First: Check if user is checked in
+      const checkInRes = await fetch("{{ route('check.user.checkin') }}", {
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Accept': 'application/json'
+        }
+      });
+
+      const checkInJson = await checkInRes.json();
+
+      if (!checkInJson.checked_in) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Not Checked In',
+          text: 'You must check in before submitting this form.',
+        });
+        return; // Stop submission
+      }
+
+      // ✅ Proceed with actual form submission
+      Swal.fire({
+        title: 'Processing...',
+        text: 'Please wait while we save your data.',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      const response = await fetch("{{ route('customer.sales.store') }}", {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Accept': 'application/json'
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: result.message || 'Form submitted successfully',
+          timer: 2000,
+          showConfirmButton: true,
+          willClose: () => {
+            window.location.href = result.redirect;
+          }
+        });
+
+        form.reset(); // Optional
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: result.message || 'Something went wrong!',
+        });
+      }
+
+    } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Request failed. Please try again.'
+      });
+    }
+  });
+</script>
+
+
+<script>
+  let selectedCardId = null;
+
+  function bindAppointmentCardLogic() {
+    const nameInput = document.getElementById('nameInput');
+    const phoneInput = document.getElementById('phoneInput');
+    const idInput = document.getElementById('customerId');
+
+    document.querySelectorAll('.customer-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const name = card.dataset.name || '';
+        const phone = card.dataset.phone || '';
+        const id = card.dataset.customerId || '';
+
+        nameInput.value = name;
+        phoneInput.value = phone;
+        idInput.value = id;
+
+        document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
+        card.classList.add('active-card');
+
+        selectedCardId = card.id;
+      });
+    });
+  }
+
+  function checkDuplicateName() {
+    const appointmentCard = document.querySelector('#appointment-card');
+    if (!appointmentCard) return;
+
+    const appointmentName = appointmentCard.dataset.name?.trim().toLowerCase();
+    const customerCards = document.querySelectorAll('.customer-card');
+
+    customerCards.forEach(card => {
+      const customerName = card.dataset.name?.trim().toLowerCase();
+      if (card.id !== 'appointment-card' && customerName === appointmentName) {
+        appointmentCard.classList.add("border-red-500");
+        appointmentCard.classList.remove("border-gray-200");
+      }
+    });
+  }
+
+  function refreshAppointments() {
+    fetch('/appointment/section')
+      .then(res => res.text())
+      .then(html => {
+        const wrapper = document.getElementById("appointment-wrapper");
+        wrapper.innerHTML = html;
+
+        // Bind logic to new cards
+        bindAppointmentCardLogic();
+        checkDuplicateName();
+
+        // Reapply active card style
+        if (selectedCardId) {
+          const selectedCard = document.getElementById(selectedCardId);
+          if (selectedCard) selectedCard.classList.add('active-card');
+        }
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    bindAppointmentCardLogic();
+    checkDuplicateName();
+
+    setInterval(refreshAppointments, 3000);
+  });
+</script> 
+
+
+
+<script>
+  $(document).ready(() => {
+    toggleButton();
+    updateTurnStatus();
+    setInterval(updateTurnStatus, 10000);
+
+    const form = document.getElementById('salesForm');
+
+    function fillFormFromCard(card) {
+      const name = card.dataset.name || '';
+      const phone = card.dataset.phone || '';
+      const customerId = card.dataset.customerId || '';
+
+      // Set values to inputs
+      const nameInput = document.getElementById('nameInput');
+      const phoneInput = document.getElementById('phoneInput');
+      const idInput = form.querySelector('input[name="id"]');
+
+      if (nameInput) nameInput.value = name;
+      if (phoneInput) phoneInput.value = phone;
+      if (idInput) idInput.value = customerId;
+
+      // Clear previous animation
+      document.querySelectorAll('.customer-card').forEach(c => {
+        c.classList.remove('active-card');
+      });
+
+      // Re-trigger animation
+      card.classList.remove('active-card');
+      void card.offsetWidth; // Force reflow to restart animation
+      card.classList.add('active-card');
+
+      toggleButton();
+      updateNameInputState();
+    }
+
+    const appointmentCard = document.querySelector('#appointment-card');
+    if (appointmentCard) {
+      fillFormFromCard(appointmentCard);
+    }
+
+    // Click event in case card is clicked again
+    document.querySelectorAll('.customer-card').forEach(card => {
+      card.addEventListener('click', () => {
+        fillFormFromCard(card);
+      });
+    });
+  });
+</script>
+
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const salespeople = @json($salespeople);
@@ -629,6 +857,8 @@ function clearFormFields() {
     });
   });
 </script>
+
+
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -757,6 +987,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   </script>
+
 <script>
     const modal = document.getElementById('customerModal');
     const openBtn = document.getElementById('openModalBtn');

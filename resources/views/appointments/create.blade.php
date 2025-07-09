@@ -35,6 +35,8 @@
                     <!-- Section: Customer Information -->
                     <h3 class="text-lg font-semibold text-gray-700 mb-4">Customer Information</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <input type="hidden" id="user-role" value="{{ auth()->user()->role }}">
+
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Customer Name</label>
                             <input name="customer_name" placeholder="Customer Name" required
@@ -119,33 +121,36 @@
     @endpush
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('appointment-form');
+    const userRole = document.getElementById('user-role')?.value;
 
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
 
         try {
-            // 🔍 First, check if user is checked in
-            const checkinResponse = await fetch("{{ route('check.user.checkin') }}", {
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
-                    'Accept': 'application/json'
-                }
-            });
-
-            const checkinData = await checkinResponse.json();
-
-            if (!checkinData.checked_in) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Not Checked In',
-                    text: 'You must check in before booking an appointment.'
+            // 🔍 Apply check-in check only for Salesperson
+            if (userRole === 'salesperson') {
+                const checkinResponse = await fetch("{{ route('check.user.checkin') }}", {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                        'Accept': 'application/json'
+                    }
                 });
-                return; // ❌ Stop form submission
+
+                const checkinData = await checkinResponse.json();
+
+                if (!checkinData.checked_in) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Not Checked In',
+                        text: 'You must check in before booking an appointment.'
+                    });
+                    return; // ❌ Stop form submission
+                }
             }
 
-            // ✅ If checked in, proceed with appointment submission
+            // ✅ Proceed with appointment submission
             const formData = new FormData(form);
 
             const response = await fetch('/appointments', {
@@ -189,6 +194,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
 </script>
 
 

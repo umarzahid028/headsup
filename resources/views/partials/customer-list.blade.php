@@ -1,25 +1,18 @@
 <style>
-  .active-card {
+.active-card {
   animation: pulseActive 1s infinite;
   border-color: #6366f1;
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
 }
 
-@keyframes pulseActive {
-  0% {
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
-  }
+/* Pause class */
+.active-card.paused {
+  animation-play-state: paused !important;
 }
 
-.pause-animation {
-  animation: none !important;
-  box-shadow: none !important;
+.customer-card {
+  margin-top: 0 !important;
+  margin-bottom: 20px !important;
 }
 
 </style>
@@ -40,24 +33,16 @@
   $dispositions = is_array($customer->disposition)
     ? implode(', ', $customer->disposition)
     : ($customer->disposition ?? null);
-
-  $isSalesManager = auth()->user() && auth()->user()->hasRole('Sales Manager');
 @endphp
 
 
 
-   @if (
-  is_null($customer->disposition) &&
-  (
-    $isSalesManager || 
-    is_null($customer->transferred_to_user_id) || 
-    $customer->transferred_to_user_id == auth()->id()
-  )
-   )
+   @if (is_null($customer->disposition) 
+    && (is_null($customer->transferred_to_user_id) || $customer->transferred_to_user_id == auth()->id()) )
 
       <div
         id="card-{{ $customer->id }}"
-        class="customer-card max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mb-6 cursor-pointer transition-all duration-300"
+        class="customer-card  max-w-sm mx-auto bg-white shadow-md rounded-2xl p-4 border border-gray-200 mb-6 mt-0 cursor-pointer transition-all duration-300"
         data-name="{{ $customer->name }}"
         data-email="{{ $customer->email }}"
         data-phone="{{ $customer->phone ?? '' }}"
@@ -66,6 +51,7 @@
         data-disposition="{{ $dispositions }}"
         data-customer-id="{{ $customer->id }}"
         data-customer-name="{{ $customer->name }}"
+        data-notes="{{ $customer->notes ?? '' }}"
       >
 
         <div class="flex justify-between items-center">
@@ -81,6 +67,7 @@
           </p>
           <p><span class="font-medium text-gray-400">Name:</span> {{ $customer->name }}</p>
           <p><span class="font-medium text-gray-400">Email:</span> {{ $customer->email }}</p>
+          <p><span class="font-medium text-gray-400">Phone:</span> {{ $customer->phone }}</p>
           <p><span class="font-medium text-gray-400">Process:</span> {{ $latestProcess }}</p>
           <p><span class="font-medium text-gray-400">Disposition:</span> {{ $dispositions ?? 'N/A' }}</p>
         </div>

@@ -33,13 +33,15 @@
   }
 @endphp
 
-@if(
+
+  {{-- SHOW appointment card --}}
+  @if(
   $appointment &&
   !in_array($appointment->status, ['completed', 'canceled']) &&
-  auth()->id() === $appointment->salesperson_id &&
+  (auth()->id() === $appointment->salesperson_id || auth()->user()->hasRole('Sales Manager')) &&
   !$existingCustomer
 )
-  {{-- SHOW appointment card --}}
+
   <div id="customer-list" class="transition-opacity duration-300">
     <div
       id="appointment-card"

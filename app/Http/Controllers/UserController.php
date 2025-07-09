@@ -146,7 +146,12 @@ public function deleteSalesperson($id)
     if (!$user) {
         return response()->json(['message' => 'User not found'], 404);
     }
-
+    
+    if($user->hasRole('Admin')){
+        return response()->json([
+            'message' => 'Sale Manager Cannot deleted'
+        ], 403);
+    }
     $user->delete();
 
     return response()->json(['message' => 'User deleted successfully']);

@@ -312,13 +312,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             'Content-Type': 'application/json',
                         },
                     })
-                    .then(response => {
+                    .then(async response => {
+                        const data = await response.json();
+
                         if (!response.ok) {
-                            throw new Error('Failed to delete user');
+                            throw new Error(data.message || 'Failed to delete user');
                         }
-                        return response.json();
-                    })
-                    .then(data => {
+
                         Swal.fire({
                             title: 'Deleted!',
                             text: data.message,
@@ -330,7 +330,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         }).then(() => location.reload());
                     })
                     .catch(error => {
-                        Swal.fire('Error', error.message, 'error');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: error.message || 'Something went wrong.',
+                            confirmButtonColor: '#d33',
+                            customClass: {
+                                confirmButton: 'custom-ok-button'
+                            }
+                        });
                     });
                 }
             });
@@ -338,6 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+
 
 
 </x-app-layout>
