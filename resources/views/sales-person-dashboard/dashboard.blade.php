@@ -249,7 +249,7 @@
     </div>
    
 
-    <div class="flex-1 overflow-y-auto " id="customerCards">
+    <div class="flex-1 overflow-y-auto" id="customerCards">
       @include('partials.customers', ['customers' => $customers])
                   </div>
       <div id="appointment-wrapper" style="display: none;">
@@ -897,7 +897,15 @@ function updateNameInputState() {
           return;
         }
 
-     
+      if (!isMyTurn) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Hold On!',
+          text: ` It's not your turn to take a customer yet.`
+        });
+        resetTakeButtonUI();
+        return;
+      }
 
       
 
@@ -1013,54 +1021,62 @@ document.addEventListener('DOMContentLoaded', () => {
     customerSavedThisTurn = false;
   }, 3000);
 
- const fieldHandlers = new WeakMap();
+  const fieldHandlers = new WeakMap();
 
-const attachFieldListeners = () => {
-  const fields = form.querySelectorAll('input, textarea, select');
-  fields.forEach(field => {
-    // Remove old handler if exists
-    const oldHandler = fieldHandlers.get(field);
-    if (oldHandler) {
-      field.removeEventListener('input', oldHandler);
-      field.removeEventListener('change', oldHandler);
-    }
+  function isUserInteractingWithForm() {
+    const activeEl = document.activeElement;
+    return (
+      activeEl &&
+      (
+        activeEl.matches('input:not([type="hidden"])') ||
+        activeEl.matches('textarea') ||
+        activeEl.matches('select')
+      ) &&
+      !activeEl.readOnly &&
+      !activeEl.disabled
+    );
+  }
 
-    const handleFieldChange = () => {
-      console.log(`🖊️ Field changed: ${field.name}`);
-      if (!autosaveEnabled) return;
-
-      if (
-        loadedFromAppointment &&
-        ['email', 'name', 'phone', 'interest'].includes(field.name)
-      ) {
-        if (!hasStartedManualEdit && !idWasManuallyCleared) {
-          console.log('🔄 Clearing ID due to manual edit after appointment load');
-          idInput.value = '';
-          loadedFromAppointment = false;
-          idWasManuallyCleared = true;
-        }
-        hasStartedManualEdit = true;
+  const attachFieldListeners = () => {
+    const fields = form.querySelectorAll('input, textarea, select');
+    fields.forEach(field => {
+      const oldHandler = fieldHandlers.get(field);
+      if (oldHandler) {
+        field.removeEventListener('input', oldHandler);
+        field.removeEventListener('change', oldHandler);
       }
 
-      customerSavedThisTurn = false;
-      clearTimeout(debounceTimeout);
-      debounceTimeout = setTimeout(() => {
-        autoSaveForm();
-      }, 500);
-    };
+      const handleFieldChange = () => {
+        if (!autosaveEnabled) return;
 
-    fieldHandlers.set(field, handleFieldChange);
-    field.addEventListener('input', handleFieldChange);
-    field.addEventListener('change', handleFieldChange);
-  });
-};
+        if (
+          loadedFromAppointment &&
+          ['email', 'name', 'phone', 'interest'].includes(field.name)
+        ) {
+          if (!hasStartedManualEdit && !idWasManuallyCleared) {
+            idInput.value = '';
+            loadedFromAppointment = false;
+            idWasManuallyCleared = true;
+          }
+          hasStartedManualEdit = true;
+        }
+
+        customerSavedThisTurn = false;
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+          autoSaveForm();
+        }, 500);
+      };
+
+      fieldHandlers.set(field, handleFieldChange);
+      field.addEventListener('input', handleFieldChange);
+      field.addEventListener('change', handleFieldChange);
+    });
+  };
 
   if (newCustomerBtn) {
     newCustomerBtn.addEventListener('click', async () => {
-      if (!isMyTurn) {
-        console.log('⛔ Not your turn. Cannot take new customer.');
-        return;
-      }
+      if (!isMyTurn) return;
 
       const isFormDirty = !!(
         nameInput.value.trim() ||
@@ -1088,100 +1104,87 @@ const attachFieldListeners = () => {
     });
   }
 
-let isAutoSaving = false;
+  let isAutoSaving = false;
 
-async function autoSaveForm(allowWithoutId = false) {
-  console.log('autoSaveForm triggered');
+  async function autoSaveForm(allowWithoutId = false) {
+    const hasAppointment = appointmentInput && appointmentInput.value.trim() !== '';
+    const hasCustomerId = idInput && idInput.value.trim() !== '';
 
-  const appointmentInput = document.querySelector('[name="appointment_id"]');
-  const hasAppointment = appointmentInput && appointmentInput.value.trim() !== '';
-  const hasCustomerId = idInput && idInput.value.trim() !== '';
+    if (!hasCustomerId && !hasAppointment && !allowWithoutId) return;
+    if (customerSavedThisTurn || isAutoSaving) return;
 
-  if (!hasCustomerId && !hasAppointment && !allowWithoutId) {
-    console.log('🚫 No customer ID or appointment — skipping auto-save');
-    return;
-  }
+    customerSavedThisTurn = true;
+    isAutoSaving = true;
 
-  if (customerSavedThisTurn || isAutoSaving) {
-    console.log('⏳ Already saving or recently saved — skipping');
-    return;
-  }
+    const formData = new FormData(form);
 
-  customerSavedThisTurn = true;
-  isAutoSaving = true;
+    try {
+      const response = await fetch('{{ route('customer.sales.store') }}', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formData
+      });
 
-  const formData = new FormData(form);
+      const result = await response.json();
 
-  try {
-    const response = await fetch('{{ route('customer.sales.store') }}', {
-      method: 'POST',
-      headers: {
-        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: formData
-    });
-
-    const result = await response.json();
-    console.log('✅ Server Response:', result);
-
-    if (result.status === 'success') {
-      if (result.id) {
-        idInput.value = result.id;
-        localStorage.setItem('activeCustomerId', result.id);
-      }
-
-      const appointmentIdValue = appointmentInput?.value;
-
-      if (allowWithoutId && !hasCustomerId) {
-        form.querySelectorAll('input[type="hidden"]').forEach(el => {
-          if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
-            el.value = '';
-          }
-        });
-
-        if (appointmentInput && appointmentIdValue) {
-          appointmentInput.value = appointmentIdValue;
+      if (result.status === 'success') {
+        if (result.id) {
+          idInput.value = result.id;
+          localStorage.setItem('activeCustomerId', result.id);
         }
 
-        idInput.value = result.id;
-      }
+        const appointmentIdValue = appointmentInput?.value;
 
-      // ✅ Reload customer list only if not typing
-      if (autosaveEnabled && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-        skipApplyCardOnce = true;
-        await loadCustomers?.();
+        if (allowWithoutId && !hasCustomerId) {
+          form.querySelectorAll('input[type="hidden"]').forEach(el => {
+            if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
+              el.value = '';
+            }
+          });
+
+          if (appointmentInput && appointmentIdValue) {
+            appointmentInput.value = appointmentIdValue;
+          }
+
+          idInput.value = result.id;
+        }
+
+        if (autosaveEnabled && !isUserInteractingWithForm()) {
+          skipApplyCardOnce = true;
+          await loadCustomers?.();
+
+          setTimeout(() => {
+            skipApplyCardOnce = false;
+            applyActiveCard();
+          }, 300);
+        }
+
+        await loadCustomers();
 
         setTimeout(() => {
-          skipApplyCardOnce = false;
-          applyActiveCard();
-        }, 300);
+          const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
+          if (!newCard) return;
+
+          if (isUserInteractingWithForm()) return;
+
+          document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
+          newCard.classList.add('active-card');
+          newCard.click();
+        }, 150);
+
+      } else {
+        console.error('❌ Save failed:', result);
       }
 
-      // setTimeout(() => {
-      //   const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
-
-      //   if (newCard && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-      //     document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
-      //     newCard.classList.add('active-card');
-      //     newCard.click(); 
-      //   } else {
-      //     console.log('✋ Skipped card activation due to user typing');
-      //   }
-      // }, 300);
-
-    } else {
-      console.error('❌ Save failed:', result);
+    } catch (err) {
+      console.error('❌ Auto-save error:', err);
+    } finally {
+      isAutoSaving = false;
     }
-
-  } catch (err) {
-    console.error('❌ Auto-save error:', err);
-  } finally {
-    isAutoSaving = false;
   }
-}
-
-
 
   async function loadCustomers() {
     try {
@@ -1194,7 +1197,10 @@ async function autoSaveForm(allowWithoutId = false) {
 
       bindCardClickEvents();
       bindAppointmentCardClick();
-      applyActiveCard();
+      if (!isUserInteractingWithForm()) {
+        applyActiveCard();
+      }
+
     } catch (err) {
       console.error('Failed to load customers', err);
     }
@@ -1217,7 +1223,6 @@ async function autoSaveForm(allowWithoutId = false) {
         interestInput.value = card.dataset.interest ?? '';
         notesInput.value = card.dataset.notes ?? '';
 
-       
         if (card.dataset.process) {
           card.dataset.process.split(',').forEach(proc => {
             const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
@@ -1277,7 +1282,6 @@ async function autoSaveForm(allowWithoutId = false) {
       attachFieldListeners();
 
       setTimeout(() => {
-        console.log('🚀 Auto-saving after appointment click:', appointmentInput.value);
         autoSaveForm(true);
       }, 200);
 
@@ -1285,103 +1289,100 @@ async function autoSaveForm(allowWithoutId = false) {
     });
   }
 
-function clearFormFields() {
-  const preservedValues = {
-    appointment_id: appointmentInput?.value ?? '',
-    user_id: form.querySelector('input[name="user_id"]')?.value ?? '',
-  };
+  function clearFormFields() {
+    const preservedValues = {
+      appointment_id: appointmentInput?.value ?? '',
+      user_id: form.querySelector('input[name="user_id"]')?.value ?? '',
+    };
 
-
-  // 🧹 Clear hidden fields (except id, user_id, appointment_id)
-  form.querySelectorAll('input[type="hidden"]').forEach(el => {
-    if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
-      el.value = '';
-    }
-  });
-
-  // ✅ Restore preserved values
-  if (appointmentInput && preservedValues.appointment_id) {
-    appointmentInput.value = preservedValues.appointment_id;
-  }
-
-  const userInput = form.querySelector('input[name="user_id"]');
-  if (userInput && preservedValues.user_id) {
-    userInput.value = preservedValues.user_id;
-  }
-
-  form.querySelectorAll('input[name="process[]"]').forEach(cb => {
-    cb.checked = false;
-  });
-}
-
-
-
-function applyActiveCard() {
-  if (loadedFromAppointment || hasStartedManualEdit) return;
-
-  const savedId = localStorage.getItem('activeCustomerId');
-  const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
-
-  if (!savedCard || savedCard.id === 'appointment-card') return;
-
-  savedCard.classList.add('active-card');
-
-  if (!idInput.value || idInput.value === savedId) {
-    clearFormFields();
-
-    idInput.value = savedId;
-    nameInput.value = savedCard.dataset.name || '';
-    emailInput.value = savedCard.dataset.email ?? '';
-    phoneInput.value = savedCard.dataset.phone ?? '';
-    interestInput.value = savedCard.dataset.interest ?? '';
-    notesInput.value = savedCard.dataset.notes ?? '';
-
-    if (savedCard.dataset.process) {
-      savedCard.dataset.process.split(',').forEach(proc => {
-        const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
-          .find(cb => cb.value.trim() === proc.trim());
-        if (checkbox) checkbox.checked = true;
-      });
-    }
-
-    autosaveEnabled = true;
-    attachFieldListeners();
-  }
-}
-
-if (addCustomerBtn) {
-  addCustomerBtn.addEventListener('click', () => {
-    const activeCard = document.querySelector('.customer-card.active-card');
-    if (activeCard) {
-      activeCard.classList.add('paused'); // 🛑 Pause animation
-    }
-
-    const form = document.getElementById('salesForm');
-    if (form) {
-      form.reset();
-      form.querySelector('input[name="id"]').value = '';
-      form.querySelector('input[name="appointment_id"]').value = '';
-      form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
-    }
-  });
-}
-
-// 🟢 Resume animation on card click
-document.querySelectorAll('.customer-card').forEach(card => {
-  card.addEventListener('click', () => {
-    document.querySelectorAll('.customer-card').forEach(c => {
-      c.classList.remove('active-card', 'paused');
+    form.querySelectorAll('input[type="hidden"]').forEach(el => {
+      if (!['id', 'user_id', 'appointment_id'].includes(el.name)) {
+        el.value = '';
+      }
     });
-    card.classList.add('active-card'); // Animation starts
-  });
-})
 
+    if (appointmentInput && preservedValues.appointment_id) {
+      appointmentInput.value = preservedValues.appointment_id;
+    }
+
+    const userInput = form.querySelector('input[name="user_id"]');
+    if (userInput && preservedValues.user_id) {
+      userInput.value = preservedValues.user_id;
+    }
+
+    form.querySelectorAll('input[name="process[]"]').forEach(cb => {
+      cb.checked = false;
+    });
+  }
+
+  function applyActiveCard() {
+    const customerCards = document.querySelectorAll('.customer-card');
+    const realCustomerCards = [...customerCards].filter(card => card.id !== 'appointment-card');
+
+    if (realCustomerCards.length === 0) return;
+    if (loadedFromAppointment || hasStartedManualEdit || isUserInteractingWithForm()) return;
+
+    const savedId = localStorage.getItem('activeCustomerId');
+    const savedCard = document.querySelector(`.customer-card[data-customer-id="${savedId}"]`);
+
+    if (!savedCard || savedCard.id === 'appointment-card') return;
+
+    savedCard.classList.add('active-card');
+
+    if (!idInput.value || idInput.value === savedId) {
+      clearFormFields();
+
+      idInput.value = savedId;
+      nameInput.value = savedCard.dataset.name || '';
+      emailInput.value = savedCard.dataset.email ?? '';
+      phoneInput.value = savedCard.dataset.phone ?? '';
+      interestInput.value = savedCard.dataset.interest ?? '';
+      notesInput.value = savedCard.dataset.notes ?? '';
+
+      if (savedCard.dataset.process) {
+        savedCard.dataset.process.split(',').forEach(proc => {
+          const checkbox = [...form.querySelectorAll('input[name="process[]"]')]
+            .find(cb => cb.value.trim() === proc.trim());
+          if (checkbox) checkbox.checked = true;
+        });
+      }
+
+      autosaveEnabled = true;
+      attachFieldListeners();
+    }
+  }
+
+  if (addCustomerBtn) {
+    addCustomerBtn.addEventListener('click', () => {
+      const activeCard = document.querySelector('.customer-card.active-card');
+      if (activeCard) {
+        activeCard.classList.add('paused');
+      }
+
+      if (form) {
+        form.reset();
+        form.querySelector('input[name="id"]').value = '';
+        form.querySelector('input[name="appointment_id"]').value = '';
+        form.querySelectorAll('input[name="process[]"]').forEach(cb => cb.checked = false);
+      }
+    });
+  }
+
+  document.querySelectorAll('.customer-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.customer-card').forEach(c => {
+        c.classList.remove('active-card', 'paused');
+      });
+      card.classList.add('active-card');
+    });
+  });
 
   bindCardClickEvents();
   bindAppointmentCardClick();
   applyActiveCard();
 });
 </script>
+
 
 
 
