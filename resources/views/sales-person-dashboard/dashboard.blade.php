@@ -2,48 +2,19 @@
  <x-slot name="header">
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full px-4 py-2 space-y-2 sm:space-y-0">
-  <!-- Left Section -->
-  <div class="flex items-center space-x-3">
-    <!-- Avatar -->
-    <div class="bg-gray-300 h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold text-white">
-      {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
+  <div style="display:flex; justify-content: space-between;">
+    <div class="px-2">
+      <h1 class="text-xl font-semibold text-gray-800">Welcome, {{ Auth::user()->name }}</h1>
+      <p class="text-sm text-gray-500">Manage your check-in activity.</p>
     </div>
-
-    <!-- Text Info -->
-    <div class="flex flex-col">
-      <h1 class="text-base sm:text-lg font-semibold text-gray-800">
-        Welcome, {{ Auth::user()->name }}
-      </h1>
-      <p class="text-xs text-gray-500">Manage your check-in activity.</p>
+    <div>
+      @if(auth()->user()->hasrole('Sales person'))
+      <p id="turn-status" class="text-sm text-gray-700 font-medium my-2 animate-pulse-text text-center">
+        Checking status...
+      </p>
+      @endif
     </div>
   </div>
-
-  <!-- Right Section -->
-  <div class="flex flex-col items-start sm:items-end">
-    @if(auth()->user()->hasrole('Sales person'))
-    <p id="turn-status" class="text-sm text-gray-700 font-medium animate-pulse-text">
-      ⏳ Waiting for your turn...
-    </p>
-    @endif
-
-    <!-- Profile Dropdown (if applicable) -->
-    <div class="mt-1 sm:mt-0">
-      <!-- Place your dropdown trigger here -->
-      <!-- Example: -->
-      <div class="flex items-center space-x-2">
-        <div class="bg-gray-200 rounded-full h-8 w-8 flex items-center justify-center text-xs text-gray-700 font-bold uppercase">
-          {{ strtolower(substr(Auth::user()->name, 0, 2)) }}
-        </div>
-        <div class="text-sm text-gray-800">
-          {{ Auth::user()->name }}
-          <span class="block text-xs text-gray-500">Sales person</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 
   <style>
     @keyframes spin {
