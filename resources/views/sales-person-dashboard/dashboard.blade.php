@@ -249,7 +249,7 @@
     </div>
    
 
-    <div class="flex-1 overflow-y-auto pr-2" id="customerCards">
+    <div class="flex-1 overflow-y-auto " id="customerCards">
       @include('partials.customers', ['customers' => $customers])
                   </div>
       <div id="appointment-wrapper" style="display: none;">
@@ -897,15 +897,7 @@ function updateNameInputState() {
           return;
         }
 
-      if (!isMyTurn) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Hold On!',
-          text: ` It's not your turn to take a customer yet.`
-        });
-        resetTakeButtonUI();
-        return;
-      }
+     
 
       
 
@@ -1166,17 +1158,17 @@ async function autoSaveForm(allowWithoutId = false) {
         }, 300);
       }
 
-      setTimeout(() => {
-        const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
+      // setTimeout(() => {
+      //   const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
 
-        if (newCard && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-          document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
-          newCard.classList.add('active-card');
-          newCard.click(); 
-        } else {
-          console.log('✋ Skipped card activation due to user typing');
-        }
-      }, 300);
+      //   if (newCard && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      //     document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
+      //     newCard.classList.add('active-card');
+      //     newCard.click(); 
+      //   } else {
+      //     console.log('✋ Skipped card activation due to user typing');
+      //   }
+      // }, 300);
 
     } else {
       console.error('❌ Save failed:', result);
