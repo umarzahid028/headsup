@@ -2,22 +2,23 @@
  <x-slot name="header">
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 px-2 py-4">
-  <div>
-    <h1 class="text-lg sm:text-xl font-semibold text-gray-800">
-      Welcome, {{ Auth::user()->name }}
-    </h1>
-    <p class="text-sm text-gray-500">
-      Manage your check-in activity.
-    </p>
+<div class="flex flex-col items-start px-4 py-4 space-y-1 w-full">
+  <div class="flex items-center space-x-3 w-full">
+    <div class="bg-gray-200 rounded-full h-10 w-10 flex items-center justify-center text-sm font-bold text-gray-700">
+      {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
+    </div>
+    <div class="flex-1">
+      <h2 class="text-base font-semibold text-gray-900 leading-tight truncate">
+        Welcome, {{ Auth::user()->name }}
+      </h2>
+      <p class="text-xs text-gray-500">Manage your check-in activity.</p>
+    </div>
   </div>
-  
+
   @if(auth()->user()->hasrole('Sales person'))
-  <div class="w-full sm:w-auto text-left sm:text-right">
-    <p id="turn-status" class="text-sm text-gray-700 font-medium animate-pulse-text">
-      Checking status...
-    </p>
-  </div>
+  <p id="turn-status" class="text-sm text-gray-700 font-medium animate-pulse-text mt-2">
+    ⏳ Checking status...
+  </p>
   @endif
 </div>
 
