@@ -62,10 +62,14 @@
 
         <div class="space-y-2 text-gray-500 text-sm mt-3">
           <p>
-            <span class="font-medium text-gray-400">Sales Person:</span>
-            <span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full ml-2">
-              {{ $customer->user->name ?? 'Unknown' }}
-            </span>
+<span class="font-medium text-gray-400">
+  {{ optional($customer->user)?->hasRole('Sales Manager') ? 'Sales Manager :' : 'Sales Person :' }}
+</span>
+<span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full ml-2">
+  {{ $customer->user->name ?? 'Unknown' }}
+</span>
+
+
           </p>
           <p><span class="font-medium text-gray-400">Name:</span> {{ $customer->name }}</p>
           <p><span class="font-medium text-gray-400">Email:</span> {{ $customer->email }}</p>

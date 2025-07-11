@@ -2,19 +2,25 @@
  <x-slot name="header">
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <div style="display:flex; justify-content: space-between;">
-    <div class="px-2">
-      <h1 class="text-xl font-semibold text-gray-800">Welcome, {{ Auth::user()->name }}</h1>
-      <p class="text-sm text-gray-500">Manage your check-in activity.</p>
-    </div>
-    <div>
-      @if(auth()->user()->hasrole('Sales person'))
-      <p id="turn-status" class="text-sm text-gray-700 font-medium my-2 animate-pulse-text text-center">
-        Checking status...
-      </p>
-      @endif
-    </div>
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 px-2 py-4">
+  <div>
+    <h1 class="text-lg sm:text-xl font-semibold text-gray-800">
+      Welcome, {{ Auth::user()->name }}
+    </h1>
+    <p class="text-sm text-gray-500">
+      Manage your check-in activity.
+    </p>
   </div>
+  
+  @if(auth()->user()->hasrole('Sales person'))
+  <div class="w-full sm:w-auto text-left sm:text-right">
+    <p id="turn-status" class="text-sm text-gray-700 font-medium animate-pulse-text">
+      Checking status...
+    </p>
+  </div>
+  @endif
+</div>
+
 
   <style>
     @keyframes spin {
@@ -197,7 +203,6 @@
 
   <!-- RIGHT SIDE -->
   <div class="xl:col-span-1 flex flex-col h-[calc(100vh-10rem)]">
-    @if (Auth()->user()->hasRole('Sales person'))
     <div class="bg-white rounded-xl shadow p-3 w-full max-w-md mx-auto space-y-4 border mb-4">
       <div class="flex items-center justify-between">
         <span class="status-text text-sm font-semibold px-3 py-1 rounded-md flex items-center gap-1
@@ -248,10 +253,11 @@
         <button id="addCustomerBtn" type="button" class="w-full bg-gray-800 text-white px-6 py-2 rounded mb-4 hidden">Add Customer</button>
       </div>
     </div>
-    @endif
+   
 
     <div class="flex-1 overflow-y-auto pr-2" id="customerCards">
       @include('partials.customers', ['customers' => $customers])
+                  </div>
       <div id="appointment-wrapper" style="display: none;">
         @include('partials.appointment-card', ['appointment' => $appointment])
       </div>
@@ -1021,39 +1027,47 @@ document.addEventListener('DOMContentLoaded', () => {
     customerSavedThisTurn = false;
   }, 3000);
 
-  const attachFieldListeners = () => {
-    const fields = form.querySelectorAll('input, textarea, select');
-    fields.forEach(field => {
-      const handleFieldChange = () => {
-        console.log(`🖊️ Field changed: ${field.name}`);
-        if (!autosaveEnabled) return;
+ const fieldHandlers = new WeakMap();
 
-        if (
-          loadedFromAppointment &&
-          ['email', 'name', 'phone', 'interest'].includes(field.name)
-        ) {
-          if (!hasStartedManualEdit && !idWasManuallyCleared) {
-            console.log('🔄 Clearing ID due to manual edit after appointment load');
-            idInput.value = '';
-            loadedFromAppointment = false;
-            idWasManuallyCleared = true;
-          }
-          hasStartedManualEdit = true;
+const attachFieldListeners = () => {
+  const fields = form.querySelectorAll('input, textarea, select');
+  fields.forEach(field => {
+    // Remove old handler if exists
+    const oldHandler = fieldHandlers.get(field);
+    if (oldHandler) {
+      field.removeEventListener('input', oldHandler);
+      field.removeEventListener('change', oldHandler);
+    }
+
+    const handleFieldChange = () => {
+      console.log(`🖊️ Field changed: ${field.name}`);
+      if (!autosaveEnabled) return;
+
+      if (
+        loadedFromAppointment &&
+        ['email', 'name', 'phone', 'interest'].includes(field.name)
+      ) {
+        if (!hasStartedManualEdit && !idWasManuallyCleared) {
+          console.log('🔄 Clearing ID due to manual edit after appointment load');
+          idInput.value = '';
+          loadedFromAppointment = false;
+          idWasManuallyCleared = true;
         }
+        hasStartedManualEdit = true;
+      }
 
-        customerSavedThisTurn = false;
-        clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(() => {
-          autoSaveForm();
-        }, 500);
-      };
+      customerSavedThisTurn = false;
+      clearTimeout(debounceTimeout);
+      debounceTimeout = setTimeout(() => {
+        autoSaveForm();
+      }, 500);
+    };
 
-      field.removeEventListener('input', handleFieldChange);
-      field.addEventListener('input', handleFieldChange);
-      field.removeEventListener('change', handleFieldChange);
-      field.addEventListener('change', handleFieldChange);
-    });
-  };
+    fieldHandlers.set(field, handleFieldChange);
+    field.addEventListener('input', handleFieldChange);
+    field.addEventListener('change', handleFieldChange);
+  });
+};
 
   if (newCustomerBtn) {
     newCustomerBtn.addEventListener('click', async () => {
@@ -1088,6 +1102,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+let isAutoSaving = false;
+
 async function autoSaveForm(allowWithoutId = false) {
   console.log('autoSaveForm triggered');
 
@@ -1100,10 +1116,13 @@ async function autoSaveForm(allowWithoutId = false) {
     return;
   }
 
-  if (customerSavedThisTurn) {
-    console.log('Skipping save: Already saved recently');
+  if (customerSavedThisTurn || isAutoSaving) {
+    console.log('⏳ Already saving or recently saved — skipping');
     return;
   }
+
+  customerSavedThisTurn = true;
+  isAutoSaving = true;
 
   const formData = new FormData(form);
 
@@ -1126,8 +1145,6 @@ async function autoSaveForm(allowWithoutId = false) {
         localStorage.setItem('activeCustomerId', result.id);
       }
 
-      customerSavedThisTurn = true;
-
       const appointmentIdValue = appointmentInput?.value;
 
       if (allowWithoutId && !hasCustomerId) {
@@ -1144,30 +1161,40 @@ async function autoSaveForm(allowWithoutId = false) {
         idInput.value = result.id;
       }
 
-      // ✅ Load customers and apply active card ONLY IF user is NOT typing
+      // ✅ Reload customer list only if not typing
       if (autosaveEnabled && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        skipApplyCardOnce = true;
         await loadCustomers?.();
-        applyActiveCard();
+
+        setTimeout(() => {
+          skipApplyCardOnce = false;
+          applyActiveCard();
+        }, 300);
       }
 
-      // ✅ Visual update only
       setTimeout(() => {
         const newCard = document.querySelector(`.customer-card[data-customer-id="${result.id}"]`);
-        if (newCard) {
-          document.querySelectorAll('.customer-card').forEach(c => {
-            c.classList.remove('active-card');
-          });
 
+        if (newCard && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          document.querySelectorAll('.customer-card').forEach(c => c.classList.remove('active-card'));
           newCard.classList.add('active-card');
+          newCard.click(); 
+        } else {
+          console.log('✋ Skipped card activation due to user typing');
         }
       }, 300);
+
     } else {
       console.error('❌ Save failed:', result);
     }
+
   } catch (err) {
     console.error('❌ Auto-save error:', err);
+  } finally {
+    isAutoSaving = false;
   }
 }
+
 
 
   async function loadCustomers() {
@@ -1429,12 +1456,12 @@ document.querySelectorAll('.customer-card').forEach(card => {
     const form = e.target;
     const formData = new FormData(form);
 
-    // Get user role from server-side (Laravel)
-    const userRole = "{{ auth()->user()->role }}";
+    // ✅ Laravel will inject this via Blade
+    const isSalesManager = {{ auth()->user()->hasRole('Sales Manager') ? 'true' : 'false' }};
 
     try {
-      // ✅ Only check if user is NOT a sales_manager
-      if (userRole !== 'Sales Manager') {
+      // ✅ Only check if NOT Sales Manager
+      if (!isSalesManager) {
         const checkInRes = await fetch("{{ route('check.user.checkin') }}", {
           headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -1450,7 +1477,7 @@ document.querySelectorAll('.customer-card').forEach(card => {
             title: 'Not Checked In',
             text: 'You must check in before submitting this form.',
           });
-          return; // Stop submission
+          return;
         }
       }
 
@@ -1485,7 +1512,7 @@ document.querySelectorAll('.customer-card').forEach(card => {
           }
         });
 
-        form.reset(); // Optional
+        form.reset();
       } else {
         Swal.fire({
           icon: 'error',

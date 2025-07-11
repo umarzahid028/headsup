@@ -80,6 +80,46 @@
                     Add Appointments
                 </a>
             </div>
+                          <div class="flex justify-between items-end space-x-6">
+    <!-- Search Form -->
+    <form method="GET" action="{{ route('appointment.records') }}" class="flex items-end space-x-2">
+        <div>
+            <label for="search" class="block text-sm font-medium text-gray-700">Search by Name</label>
+            <input
+                type="text"
+                id="search"
+                name="search"
+                placeholder="Search by Name"
+                value="{{ request('search') }}"
+                class="border border-gray-300 rounded-md px-3 py-2 w-64"
+            >
+        </div>
+        <div>
+          
+        </div>
+    </form>
+
+    <!-- Date Filter Form -->
+    <form method="GET" action="{{ route('appointment.records') }}" class="flex items-end space-x-4">
+        <div>
+            <label for="from" class="block text-sm font-medium text-gray-700">From Date</label>
+            <input type="date" name="from_date" id="from"
+                class="mt-1 block w-34 border-gray-300 rounded-md shadow-sm">
+        </div>
+        <div>
+            <label for="to" class="block text-sm font-medium text-gray-700">To Date</label>
+            <input type="date" name="to_date" id="to"
+                class="mt-1 block w-34 border-gray-300 rounded-md shadow-sm">
+        </div>
+        <div class="pt-6">
+            <button type="submit"
+                class="bg-gray-800 text-white px-4 py-2 rounded">
+                Filter
+            </button>
+        </div>
+    </form>
+</div>
+
 
             <div id="appointmentsTable">
                 <div class="overflow-x-auto rounded-lg shadow border border-gray-200">

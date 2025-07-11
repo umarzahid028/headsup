@@ -88,15 +88,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-       if ($user->hasRole('Sales Manager')) {
-    $customers = CustomerSale::latest()->get(); // get ALL customers
-} else {
     $customers = CustomerSale::where('user_id', $user->id)->latest()->get(); // only own
-}
-
-
-
-
         $salespeople = User::role('Sales person')
             ->whereIn('id', function ($subquery) {
                 $subquery->select('user_id')

@@ -14,26 +14,36 @@ class SalesDashboardController extends Controller
 public function activityReport(Request $request)
 {
     $loggedInUser = Auth::user();
-    $isManager = $loggedInUser->hasRole('Sales Manager|Sales person', );
+    $isManager = $loggedInUser->hasRole('Sales Manager|Sales person');
 
-    // If Sales Manager and a user_id is passed, allow viewing that user's report
     $targetUserId = $isManager && $request->has('user_id')
         ? $request->input('user_id')
         : $loggedInUser->id;
 
-    // Prevent access to other users’ data if not a manager
     if (!$isManager && $targetUserId != $loggedInUser->id) {
         abort(403, 'Unauthorized access.');
     }
 
-    // ✅ Filter queue records by current month & year
-    $queueRecords = Queue::where('user_id', $targetUserId)
+    $from = $request->input('from');
+    $to = $request->input('to');
+
+    // ✅ Default: show all records (no date filter)
+    $query = Queue::where('user_id', $targetUserId)
         ->whereNotNull('checked_in_at')
-        ->whereNotNull('checked_out_at')
-        ->whereMonth('checked_in_at', now()->month)
-        ->whereYear('checked_in_at', now()->year)
-        ->orderByDesc('created_at')
-        ->get();
+        ->whereNotNull('checked_out_at');
+
+    if ($from && $to) {
+        $fromCarbon = Carbon::parse($from);
+        $toCarbon = Carbon::parse($to);
+
+        if ($fromCarbon->diffInDays($toCarbon) > 366) {
+            return back()->with('error', 'You can only select up to 1 year range.');
+        }
+
+        $query->whereBetween('checked_in_at', [$from, $to]);
+    }
+
+    $queueRecords = $query->orderByDesc('created_at')->get();
 
     $checkInCount = 0;
     $checkOutCount = 0;
@@ -60,13 +70,32 @@ public function activityReport(Request $request)
         ];
     });
 
-    return view('activity-records.activity-records', compact(
-        'report',
-        'checkInCount',
-        'checkOutCount',
-        'totalDurationMinutes'
-    ));
+    // ✅ If filtered and nothing found
+    if ($from && $to && $report->isEmpty()) {
+        return view('activity-records.activity-records', [
+            'report' => [],
+            'checkInCount' => 0,
+            'checkOutCount' => 0,
+            'totalDurationMinutes' => 0,
+            'from' => '',
+            'to' => '',
+            'infoMessage' => 'No records found in selected date range.',
+        ]);
+    }
+
+    return view('activity-records.activity-records', [
+        'report' => $report,
+        'checkInCount' => $checkInCount,
+        'checkOutCount' => $checkOutCount,
+        'totalDurationMinutes' => $totalDurationMinutes,
+        'from' => $from,
+        'to' => $to,
+        'infoMessage' => null,
+    ]);
 }
+
+
+
 
 }
 

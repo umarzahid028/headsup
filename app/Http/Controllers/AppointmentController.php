@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Appointment;
 use App\Models\CustomerSale;
@@ -11,9 +12,33 @@ class AppointmentController extends Controller
 {
 public function index(Request $request)
 {
-    $appointments = Appointment::latest()->paginate(10);
+    $search = $request->input('search');
+    $fromDate = $request->input('from_date');
+    $toDate = $request->input('to_date');
+
+    $appointments = Appointment::when($search, function ($query) use ($search) {
+        return $query->where(function ($q) use ($search) {
+            $q->where('customer_name', 'like', "%{$search}%")
+              ->orWhere('customer_phone', 'like', "%{$search}%");
+        });
+    })
+    ->when($fromDate && $toDate, function ($query) use ($fromDate, $toDate) {
+        return $query->whereBetween('created_at', [
+            Carbon::parse($fromDate)->startOfDay(),
+            Carbon::parse($toDate)->endOfDay()
+        ]);
+    })
+    ->latest()
+    ->paginate(10);
+
+    if ($request->ajax()) {
+        return view('appointments.partials.table-body', compact('appointments'))->render();
+    }
+
     return view('appointments.index', compact('appointments'));
 }
+
+
 
 
 

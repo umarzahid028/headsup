@@ -126,17 +126,11 @@ public function index(Request $request)
 {
     $user = auth()->user();
 
-    // 👇 Allow managers to see all, others only their own
-    if ($user->hasRole('Sales Manager')) {
-        $customers = CustomerSale::with('user')
-            ->latest()
-            ->get();
-    } else {
-        $customers = CustomerSale::with('user')
-            ->where('user_id', $user->id)
-            ->latest()
-            ->get();
-    }
+    // ✅ Always show only the logged-in user's customers
+    $customers = CustomerSale::with('user')
+        ->where('user_id', $user->id)
+        ->latest()
+        ->get();
 
     if ($request->ajax() || $request->boolean('partial')) {
         return view('partials.customers', compact('customers'))->render();

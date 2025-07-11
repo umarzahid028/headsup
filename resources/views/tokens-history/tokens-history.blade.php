@@ -79,11 +79,56 @@
 
     <div class="py-6">
         <div class="container mx-auto space-y-6 py-6 px-4">
-            <div class="flex items-center justify-end mb-4 px-6">
-                <a href="{{ route('add.customer') }}" class="bg-gray-800 text-white px-3 py-1.5 rounded ">
-                    Add Customer
-                </a>
-            </div>
+
+            {{-- ✅ Search and Add Button --}}
+            
+            <div class="mb-4 flex items-center px-6" style="display: flex; justify-content: end;">
+                           <a href="{{ route('add.customer') }}" class="bg-gray-800 text-white px-3 py-1.5 rounded">
+                               Add Customer
+                           </a>
+                       </div>
+             <div class="flex justify-between items-end space-x-6">
+    <!-- Search Form -->
+    <form method="GET" action="{{ route('token.history.view') }}" class="flex items-end space-x-2">
+        <div>
+            <label for="search" class="block text-sm font-medium text-gray-700">Search by Name</label>
+            <input
+                type="text"
+                id="search"
+                name="search"
+                placeholder="Search by Name"
+                value="{{ request('search') }}"
+                class="border border-gray-300 rounded-md px-3 py-2 w-64"
+            >
+        </div>
+        <div>
+          
+        </div>
+    </form>
+
+    <!-- Date Filter Form -->
+    <form method="GET" action="{{ route('token.history.view') }}" class="flex items-end space-x-4">
+        <div>
+            <label for="from" class="block text-sm font-medium text-gray-700">From Date</label>
+            <input type="date" name="from_date" id="from"
+                class="mt-1 block w-34 border-gray-300 rounded-md shadow-sm">
+        </div>
+        <div>
+            <label for="to" class="block text-sm font-medium text-gray-700">To Date</label>
+            <input type="date" name="to_date" id="to"
+                class="mt-1 block w-34 border-gray-300 rounded-md shadow-sm">
+        </div>
+        <div class="pt-6">
+            <button type="submit"
+                class="bg-gray-800 text-white px-4 py-2 rounded">
+                Filter
+            </button>
+        </div>
+    </form>
+</div>
+
+
+            {{-- ✅ Table --}}
             <div>
                 <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
                     <table class="min-w-full bg-white divide-y divide-gray-200">
@@ -119,10 +164,9 @@
                                             {{ $sale->disposition ?? 'N/A' }}
                                         </span>
                                     </td>
-<td class="border-b px-4 py-3">
-    {{ calculateDuration($sale) }}
-</td>
-
+                                    <td class="border-b px-4 py-3">
+                                        {{ calculateDuration($sale) }}
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
@@ -143,4 +187,7 @@
             </div>
         </div>
     </div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+   
 </x-app-layout>
