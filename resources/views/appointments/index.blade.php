@@ -215,7 +215,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="text-center py-6 text-gray-500 text-base italic">
+                                <td colspan="6" class="text-center py-6 text-gray-500 ">
                                     No appointments found.
                                 </td>
                             </tr>

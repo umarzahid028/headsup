@@ -14,7 +14,7 @@ class SalesDashboardController extends Controller
 public function activityReport(Request $request)
 {
     $loggedInUser = Auth::user();
-    $isManager = $loggedInUser->hasRole('Sales Manager|Sales person');
+    $isManager = $loggedInUser->hasRole('Sales Manager|Sales person|Admin');
 
     $targetUserId = $isManager && $request->has('user_id')
         ? $request->input('user_id')
@@ -56,12 +56,16 @@ public function activityReport(Request $request)
 
         if ($checkIn) $checkInCount++;
         if ($checkOut) $checkOutCount++;
+if ($checkIn && $checkOut) {
+    $durationInSeconds = $checkIn->diffInSeconds($checkOut);
+    $totalDurationMinutes += floor($durationInSeconds / 60);
 
-        if ($checkIn && $checkOut) {
-            $durationInMinutes = $checkIn->diffInMinutes($checkOut);
-            $totalDurationMinutes += $durationInMinutes;
-            $duration = $checkIn->diffForHumans($checkOut, true);
-        }
+    $hours = floor($durationInSeconds / 3600);
+    $minutes = floor(($durationInSeconds % 3600) / 60);
+
+    $duration = sprintf('%02dh %02dm', $hours, $minutes);
+}
+
 
         return [
             'checked_in_at' => $checkIn?->format('Y-m-d H:i:s'),
@@ -69,7 +73,6 @@ public function activityReport(Request $request)
             'duration' => $duration,
         ];
     });
-
     // ✅ If filtered and nothing found
     if ($from && $to && $report->isEmpty()) {
         return view('activity-records.activity-records', [
@@ -93,6 +96,7 @@ public function activityReport(Request $request)
         'infoMessage' => null,
     ]);
 }
+
 
 
 

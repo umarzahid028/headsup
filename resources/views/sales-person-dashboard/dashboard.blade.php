@@ -3,10 +3,18 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <div style="display:flex; justify-content: space-between;">
-    <div class="px-2">
+    @if (auth()->user()->hasRole('Sales person'))
+      <div class="px-2">
       <h1 class="text-xl font-semibold text-gray-800">Welcome, {{ Auth::user()->name }}</h1>
       <p class="text-sm text-gray-500">Manage your check-in activity.</p>
     </div>
+    @endif
+   @if (auth()->user()->hasRole(['Sales Manager' ,'Admin']))
+       <div class="px-2">
+      <h1 class="text-xl font-semibold text-gray-800">Welcome, {{ Auth::user()->name }}</h1>
+      <p class="text-sm text-gray-500">Manage your sales with ease.</p>
+    </div>
+   @endif
     <div>
       @if(auth()->user()->hasrole('Sales person'))
       <p id="turn-status" class="text-sm text-gray-700 font-medium my-2 animate-pulse-text text-center">
@@ -197,6 +205,7 @@
 
   <!-- RIGHT SIDE -->
   <div class="xl:col-span-1 flex flex-col h-[calc(100vh-10rem)]">
+    @if(auth()->user()->hasRole('Sales person'))
     <div class="bg-white rounded-xl shadow p-3 w-full max-w-md mx-auto space-y-4 border mb-4">
       <div class="flex items-center justify-between">
         <span class="status-text text-sm font-semibold px-3 py-1 rounded-md flex items-center gap-1
@@ -247,7 +256,7 @@
         <button id="addCustomerBtn" type="button" class="w-full bg-gray-800 text-white px-6 py-2 rounded mb-4 hidden">Add Customer</button>
       </div>
     </div>
-   
+   @endif
 
     <div class="flex-1 overflow-y-auto" id="customerCards">
       @include('partials.customers', ['customers' => $customers])

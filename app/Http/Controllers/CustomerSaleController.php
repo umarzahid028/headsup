@@ -14,6 +14,7 @@ class CustomerSaleController extends Controller
 {
   public function store(Request $request)
 {
+   
     try {
         $validated = $request->validate([
             'id'             => 'nullable|integer|exists:customer_sales,id',

@@ -130,27 +130,32 @@ class TokenController extends Controller
     $fromDate = $request->input('from_date');
     $toDate = $request->input('to_date');
 
-    $customerSales = CustomerSale::query()
-        ->when($search, function ($query, $search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('disposition', 'like', "%{$search}%");
-            });
-        })
-        ->when($fromDate, function ($query, $fromDate) {
-            $query->whereDate('created_at', '>=', $fromDate);
-        })
-        ->when($toDate, function ($query, $toDate) {
-            $query->whereDate('created_at', '<=', $toDate);
-        })
-        ->latest()
-        ->paginate(10)
-        ->appends([
-            'search' => $search,
-            'from_date' => $fromDate,
-            'to_date' => $toDate
-        ]);
-
+$customerSales = CustomerSale::query()
+ ->with('user')
+    ->when($search, function ($query, $search) {
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('disposition', 'like', "%{$search}%");
+        });
+    })
+    ->when($fromDate, function ($query, $fromDate) {
+        $query->whereDate('created_at', '>=', $fromDate);
+    })
+    ->when($toDate, function ($query, $toDate) {
+        $query->whereDate('created_at', '<=', $toDate);
+    })
+    ->when(Auth::user()->hasRole('Sales person'), function ($query) {
+        $query->where('user_id', Auth::id()); 
+    })
+    ->latest()
+    ->paginate(10)
+    ->appends([
+        'search' => $search,
+        'from_date' => $fromDate,
+        'to_date' => $toDate
+    ]);
+       
+  
     return view('tokens-history.tokens-history', compact('customerSales', 'search', 'fromDate', 'toDate'));
 }
 
