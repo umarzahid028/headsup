@@ -135,7 +135,9 @@
                         <thead>
                             <tr class="bg-gray-100">
                                 <th class="border-b px-4 py-2 text-left">Customer Name</th>
+                                @if (auth()->user()->hasRole(['Sales Manager', 'Admin']))
                                 <th class="border-b px-4 py-2 text-left">Sales person</th>
+                                @endif
                                 <th class="border-b px-4 py-2 text-left">Assigned At</th>
                                 <th class="border-b px-4 py-2 text-left">Activities</th>
                                 <th class="border-b px-4 py-2 text-left">Disposition</th>
@@ -146,7 +148,9 @@
                             @forelse ($customerSales as $sale)
                                 <tr>
                                     <td class="border-b px-4 py-3">{{ $sale->name ?? 'Unknown' }}</td>
+                                    @if (auth()->user()->hasRole(['Sales Manager', 'Admin']))
                                     <td class="border-b px-4 py-3">{{ $sale->user->name ?? 'Unknown' }}</td>
+                                    @endif
                                     <td class="border-b px-4 py-3">
                                         {{ optional($sale->created_at)->format('d M Y h:i A') ?? 'N/A' }}
                                     </td>
