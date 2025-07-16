@@ -153,5 +153,4 @@ Route::get('/appointment/section', function () {
 
 
 Route::post('/appointment/arrive', [CustomerSaleController::class, 'saveArrivalTime'])->name('appointment.arrive');
-
 require __DIR__ . '/auth.php';
